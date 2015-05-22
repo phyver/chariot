@@ -11,6 +11,7 @@ rule token = parse
   | [' ' '\n' '\t']      { token lexbuf }
   | '='             { EQUAL }
   | ':'             { COLON }
+  | "\n\n"          { SEMICOLON }
   | ';'             { SEMICOLON }
   | '('             { LPAR }
   | ')'             { RPAR }
@@ -19,7 +20,7 @@ rule token = parse
   | ','             { COMMA }
   | '|'             { PIPE }
   | "data"          { DATA }
-  | "codata"          { DATA }
+  | "codata"        { CODATA }
   | "where"         { WHERE }
   | "and"           { AND }
   | "->"            { ARROW }

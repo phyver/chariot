@@ -73,9 +73,9 @@ let unify_type (t1:type_expression) (t2:type_expression) : type_substitution * t
             | _ -> raise Exit
     in aux [ (t1,t2) ]
 
-type environment = { mutable types :  type_constant list              ;
-                     mutable consts : (term_constant * type_expression) list  ;
-                     mutable vars :   (string * type_expression) list }
+type environment = { types :  type_constant list              ;
+                     consts : (term_constant * type_expression) list  ;
+                     vars :   (string * type_expression) list }
 
 let get_type (c:term) env =
     match c with
@@ -96,3 +96,110 @@ let rec infer_type (u:term) (env:environment) : type_expression =
                     | _ -> raise Exit
             end
         | u -> try get_type u env with Not_found -> raise Exit
+
+
+
+
+
+
+
+
+(* commands *)
+type cmd =
+    | Eof
+    | Nothing
+    | TypeDef of (type_constant * type_expression list * (term_constant * type_expression) list) list
+             (*  -defined type-    -PVar arguments-        -constructors/destructors-          -mutual types- *)
+
+let process_type env defs =
+    (* all the types that were mutually defined by this definition *)
+    let new_types = List.map (function (t,args,_) -> (t,args)) defs
+    in
+
+    match defs with
+    | [] -> env
+    | ((t:type_constant), (args:type_expression list), (consts:(term_constant * type_expression) list))::defs ->
+            if List.exists (fun _t -> _t.name = t.name) env.types
+            then raise (Error ("there is a type named " ^ t.name))
+            else if List.exists (fun _c -> ((fst _c):term_constant).name = t.name) env.consts
+            then raise (Error ("there is a constructor named " ^ t.name))
+            else if List.exists (fun _x -> fst _x = t.name) env.vars
+            then raise (Error ("there is a constant named " ^ t.name))
+            else begin
+                assert (t.arity = List.length args);
+                assert (List.for_all (function PVar _ -> true | _ -> false) args);
+                (* 1/ all variables are distincts *)
+                (* 2/ no constructor / destructor already exists *)
+                (* TODO *)
+
+                (* get defined type with given name *)
+                let get_new_type t args =
+                    let rec get_new_type_aux = function
+                        | [] -> raise (Error ("type " ^ t.name ^ " doesn't exist"))
+                        | (_t,_args)::ts when _t.name = t.name && _args = args -> _t
+                        | (_t,_args)::ts when _t.name = t.name -> raise (Error ("cannot change parameter for defined type " ^ t.name))
+                        | _::ts -> get_new_type_aux ts
+                    in
+                    get_new_type_aux new_types
+                in
+
+                (* get type with given name *)
+                let get_type t args =
+                    let rec get_type_aux = function
+                        | [] -> get_new_type t args
+                        | _t::ts when _t.name = t.name && _t.arity = List.length args -> _t
+                        | _t::ts when _t.name = t.name -> raise (Error ("type " ^ t.name ^ " used with wrong number of parameters"))
+                        | _::ts -> get_type_aux ts
+                    in
+                    get_type_aux env.types
+                in
+
+
+                (* replace all SVar by either nullary constant types or PVar *)
+                let rec aux = function
+                    | Arrow(t1,t2) -> Arrow(aux t1, aux t2)
+                    | PVar x -> PVar x
+                    | Atom(t, args) -> Atom(t, List.map aux args)
+                    | SVar s -> try Atom(get_type {name = s; priority = -1; arity = 0} [], [])
+                                with Error _ -> aux (PVar s)
+                in
+                let consts = List.map (fun (c,t) -> (c, aux t)) consts in
+
+                (* instances of defined types have the same parameters
+                 * priority / arity should be the same as the one from the environment *)
+                let rec aux = function
+                    | Arrow(t1,t2) -> Arrow(aux t1, aux t2)
+                    | PVar x when List.mem (PVar x) args -> PVar x
+                    | PVar x -> raise (Error ("parameter " ^ x ^ " doesn't exist"))
+                    | Atom(_t, _args) when _t.name = t.name && args = _args -> Atom(t,args)
+                    | Atom(_t, _args) when _t.name = t.name -> raise (Error ("cannot use type " ^ t.name ^ " with different type arguments"))
+                    | Atom(_t, _args) -> let _t = get_type _t _args in Atom (_t, List.map aux _args)
+                    | SVar s -> assert false
+                in
+
+                let consts = List.map (fun (c,t) -> (c, aux t)) consts in
+
+                let rec get_result_type = function
+                    | Atom(t,args) -> Atom(t,args)
+                    | PVar x -> PVar x
+                    | SVar _ -> assert false
+                    | Arrow(_, t) -> get_result_type t
+                in
+
+                if t.priority mod 2 = 0
+                then
+                    List.iter (function (_,Arrow(Atom(_t,_args),(Atom _ | PVar _))) -> () | ((d:term_constant),_) -> raise (Error ("destructor " ^ d.name ^ "doesn't appropriate type"))) consts
+                else
+                    List.iter (function ((c:term_constant),_t) ->
+                        match get_result_type _t with
+                            | Atom (_t, _) when _t.name = t.name -> ()
+                            | _ -> raise (Error ("constructor " ^ c.name ^ " doesn't appropriate type"))) consts;
+
+
+                (* 3/ check types of constructors / destructors:
+                 *       if inductive, RHS of constructor types is t /
+                 *       if coinductive, LHS of destructor is t, and the destructor is unary *)
+
+                { types = t::env.types ; consts = consts @ env.consts ; vars = env.vars }
+            end
+
