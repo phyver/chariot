@@ -25,7 +25,7 @@ OPTFILES=$(MLFILES:.ml=.cmx)
 .ml.cmx:
 		$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $<
 
-all: opt
+all: very_clean depend opt
 
 byte: $(BYTEFILES)
 	$(OCAMLC) $(INCLUDES) $(BYTEFILES) -o proto main.ml

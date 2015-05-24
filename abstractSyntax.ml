@@ -128,7 +128,7 @@ let process_type env defs =
             else begin
                 assert (t.arity = List.length args);
                 assert (List.for_all (function PVar _ -> true | _ -> false) args);
-                (* 1/ all variables are distincts *)
+                (* 1/ replace priority -1 in constant types, or remove priority from constant type records *)
                 (* 2/ no constructor / destructor already exists *)
                 (* TODO *)
 
@@ -155,15 +155,6 @@ let process_type env defs =
                 in
 
 
-                (* replace all SVar by either nullary constant types or PVar *)
-                let rec aux = function
-                    | Arrow(t1,t2) -> Arrow(aux t1, aux t2)
-                    | PVar x -> PVar x
-                    | Atom(t, args) -> Atom(t, List.map aux args)
-                    | SVar s -> try Atom(get_type {name = s; priority = -1; arity = 0} [], [])
-                                with Error _ -> aux (PVar s)
-                in
-                let consts = List.map (fun (c,t) -> (c, aux t)) consts in
 
                 (* instances of defined types have the same parameters
                  * priority / arity should be the same as the one from the environment *)
@@ -185,16 +176,6 @@ let process_type env defs =
                     | SVar _ -> assert false
                     | Arrow(_, t) -> get_result_type t
                 in
-
-                if t.priority mod 2 = 0
-                then
-                    List.iter (function (_,Arrow(Atom(_t,_args),(Atom _ | PVar _))) -> () | ((d:term_constant),_) -> raise (Error ("destructor " ^ d.name ^ "doesn't appropriate type"))) consts
-                else
-                    List.iter (function ((c:term_constant),_t) ->
-                        match get_result_type _t with
-                            | Atom (_t, _) when _t.name = t.name -> ()
-                            | _ -> raise (Error ("constructor " ^ c.name ^ " doesn't appropriate type"))) consts;
-
 
                 (* 3/ check types of constructors / destructors:
                  *       if inductive, RHS of constructor types is t /

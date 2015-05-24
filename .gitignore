@@ -7,3 +7,5 @@ proto
 parser.ml
 parser.mli
 lexer.ml
+.vimrc
+.depend
