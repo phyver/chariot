@@ -1,11 +1,11 @@
 open Tools
 
+type type_constant = { tname:        string  ;
+                       arity:       int     }
+
 type term_constant = { name:        string  ;
                        priority:    int     }   (* should be odd for constructors and even for destructors *)
 
-type type_constant = { name:        string  ;
-                       arity:       int     ;
-                       priority:    int     }   (* should be odd for inductive and even for coinductive *)
 
 type type_expression =
     | PVar of string     (* polymorphic type variable *)
@@ -17,22 +17,10 @@ let rec check_type_arity = function
     | PVar _ | SVar _ -> ()
     | Atom(t,args) ->
             if t.arity <> List.length args
-            then raise (Error ("wrong number of type arguments for " ^ t.name));
+            then raise (Error ("wrong number of type arguments for " ^ t.tname));
             List.iter check_type_arity args
     | Arrow(t1,t2) -> check_type_arity t1 ; check_type_arity t2
 
-let rec doesnt_contain (t:type_expression) (x:type_constant) = match t with
-    | SVar _ -> assert false
-    | PVar _ -> true
-    | Atom(c,_) -> x.name <> c.name
-    | Arrow(t1,t2) -> doesnt_contain t1 x && doesnt_contain t2 x
-
-let rec is_strictly_positive (t:type_expression) (x:type_expression)
-  = match t,x with
-    | PVar _, Atom _ -> true
-    | Atom _, Atom _ -> t = x
-    | Arrow(t1,t2), Atom(a,_) -> is_strictly_positive t2 x && doesnt_contain t1 a
-    | _,_ -> assert false
 
 
 type term =
@@ -53,23 +41,21 @@ let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expressi
     | Arrow(t1,t2) -> Arrow(subst_type sigma t1, subst_type sigma t1)
     | Atom(a, args) -> Atom(a, List.map (subst_type sigma) args)
 
-let unify_type (t1:type_expression) (t2:type_expression) : type_substitution * type_substitution =
+let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
     let rec aux (eqs:(type_expression*type_expression) list ) = match eqs with
-            | [] -> [],[]
+            | [] -> []
             | (s,t)::eqs when s=t -> aux eqs
-            | (Atom(t1, args1),Atom(t2, args2))::eqs when t1.name=t2.name ->
+            | (Atom(t1, args1),Atom(t2, args2))::eqs when t1.tname=t2.tname ->
                 begin
                     try aux ((List.combine args1 args2)@eqs)
                     with Invalid_argument _ -> raise Exit
                 end
             | (t, PVar x)::eqs when not (occur_type x t) ->
                     let eqs = List.map (function (t1,t2) -> (subst_type [x,t] t1, subst_type [x,t] t2)) eqs in
-                    let sigma1,sigma2 = aux eqs in
-                    (sigma1, (x,t)::sigma2)
+                    (x,t)::(aux eqs)
             | (PVar x, t)::eqs when not (occur_type x t) ->
                     let eqs = List.map (function (t1,t2) -> (subst_type [x,t] t1, subst_type [x,t] t2)) eqs in
-                    let sigma1,sigma2 = aux eqs in
-                    ((x,t)::sigma1, sigma2)
+                    (x,t)::(aux eqs)
             | _ -> raise Exit
     in aux [ (t1,t2) ]
 
@@ -91,8 +77,8 @@ let rec infer_type (u:term) (env:environment) : type_expression =
                 let t2 = infer_type u2 env in
                 match t1 with
                     | Arrow(t11,t12) ->
-                            let sigma1,sigma2 = unify_type t11 t2
-                            in subst_type (sigma1 @ sigma2) t12
+                            let sigma = unify_type t11 t2
+                            in subst_type sigma t12
                     | _ -> raise Exit
             end
         | u -> try get_type u env with Not_found -> raise Exit
@@ -118,26 +104,21 @@ let process_type env defs =
 
     match defs with
     | [] -> env
-    | ((t:type_constant), (args:type_expression list), (consts:(term_constant * type_expression) list))::defs ->
-            if List.exists (fun _t -> _t.name = t.name) env.types
-            then raise (Error ("there is a type named " ^ t.name))
-            else if List.exists (fun _c -> ((fst _c):term_constant).name = t.name) env.consts
-            then raise (Error ("there is a constructor named " ^ t.name))
-            else if List.exists (fun _x -> fst _x = t.name) env.vars
-            then raise (Error ("there is a constant named " ^ t.name))
+    | (t, args, consts)::defs ->
+            if List.exists (fun _t -> _t.tname = t.tname) env.types
+            then raise (Error ("there is a type named " ^ t.tname))
             else begin
                 assert (t.arity = List.length args);
                 assert (List.for_all (function PVar _ -> true | _ -> false) args);
-                (* 1/ replace priority -1 in constant types, or remove priority from constant type records *)
                 (* 2/ no constructor / destructor already exists *)
                 (* TODO *)
 
                 (* get defined type with given name *)
                 let get_new_type t args =
                     let rec get_new_type_aux = function
-                        | [] -> raise (Error ("type " ^ t.name ^ " doesn't exist"))
-                        | (_t,_args)::ts when _t.name = t.name && _args = args -> _t
-                        | (_t,_args)::ts when _t.name = t.name -> raise (Error ("cannot change parameter for defined type " ^ t.name))
+                        | [] -> raise (Error ("type " ^ t.tname ^ " doesn't exist"))
+                        | (_t,_args)::ts when _t.tname = t.tname && _args = args -> _t
+                        | (_t,_args)::ts when _t.tname = t.tname -> raise (Error ("cannot change parameter for defined type " ^ t.tname))
                         | _::ts -> get_new_type_aux ts
                     in
                     get_new_type_aux new_types
@@ -147,8 +128,8 @@ let process_type env defs =
                 let get_type t args =
                     let rec get_type_aux = function
                         | [] -> get_new_type t args
-                        | _t::ts when _t.name = t.name && _t.arity = List.length args -> _t
-                        | _t::ts when _t.name = t.name -> raise (Error ("type " ^ t.name ^ " used with wrong number of parameters"))
+                        | _t::ts when _t.tname = t.tname && _t.arity = List.length args -> _t
+                        | _t::ts when _t.tname = t.tname -> raise (Error ("type " ^ t.tname ^ " used with wrong number of parameters"))
                         | _::ts -> get_type_aux ts
                     in
                     get_type_aux env.types
@@ -162,24 +143,13 @@ let process_type env defs =
                     | Arrow(t1,t2) -> Arrow(aux t1, aux t2)
                     | PVar x when List.mem (PVar x) args -> PVar x
                     | PVar x -> raise (Error ("parameter " ^ x ^ " doesn't exist"))
-                    | Atom(_t, _args) when _t.name = t.name && args = _args -> Atom(t,args)
-                    | Atom(_t, _args) when _t.name = t.name -> raise (Error ("cannot use type " ^ t.name ^ " with different type arguments"))
+                    | Atom(_t, _args) when _t.tname = t.tname && args = _args -> Atom(t,args)
+                    | Atom(_t, _args) when _t.tname = t.tname -> raise (Error ("cannot use type " ^ t.tname ^ " with different type arguments"))
                     | Atom(_t, _args) -> let _t = get_type _t _args in Atom (_t, List.map aux _args)
                     | SVar s -> assert false
                 in
 
                 let consts = List.map (fun (c,t) -> (c, aux t)) consts in
-
-                let rec get_result_type = function
-                    | Atom(t,args) -> Atom(t,args)
-                    | PVar x -> PVar x
-                    | SVar _ -> assert false
-                    | Arrow(_, t) -> get_result_type t
-                in
-
-                (* 3/ check types of constructors / destructors:
-                 *       if inductive, RHS of constructor types is t /
-                 *       if coinductive, LHS of destructor is t, and the destructor is unary *)
 
                 { types = t::env.types ; consts = consts @ env.consts ; vars = env.vars }
             end
