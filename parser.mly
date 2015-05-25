@@ -26,53 +26,63 @@ let rec replace_unknown_SVar type_args = function
     | Atom(t, args) -> Atom(t, List.map (replace_unknown_SVar type_args) args)
     | SVar s -> if List.mem (PVar s) type_args
                 then PVar s
-                else Atom({tname = s; arity=0}, [])
+                else Atom(s, [])
 
 (* check that a type doesn't contain an instance of some other type *)
-let rec check_doesnt_contain (t:type_expression) (x:type_constant) = match t with
-    | SVar _ -> assert false
-    | PVar _ -> ()
-    | Atom(c,_) when x.tname = c.tname -> raise @$ Error ("type " ^ c.tname ^ " appears in non strictly positive position")
-    | Atom(c,_) -> ()
-    | Arrow(t1,t2) -> check_doesnt_contain t1 x ; check_doesnt_contain t2 x
+let check_doesnt_contain (t:type_expression) (x:type_expression) =
+    let xname, xparams = match x with Atom(xname,xparams) -> xname,xparams | _ -> assert false in
+    let rec aux = function
+        | SVar _ -> assert false
+        | PVar _ -> ()
+        | Atom(c,_) when xname = c -> raise @$ Error ("type " ^ xname ^ " appears in non strictly positive position")
+        | Atom(c,_) -> ()
+        | Arrow(t1,t2) -> aux t1 ; aux t2
+    in aux t
 
 (* check that a type only appears strictly positively in another *)
-let rec check_is_strictly_positive (t:type_expression) (x:type_expression)
-  = match t,x with
-    | PVar _, Atom _ -> ()
-    | Atom _, Atom _ -> ()
-    | Arrow(t1,t2), Atom(a,_) -> check_is_strictly_positive t2 x; check_doesnt_contain t1 a
-    | _,_ -> assert false
+let rec check_is_strictly_positive (t:type_expression) (x:type_expression) =
+    let () = match x with Atom _ -> () | _ -> assert false in
+    let rec aux = function 
+        | PVar _ -> ()
+        | Atom _ -> ()
+        | Arrow(t1,t2) -> check_doesnt_contain t1 x; aux t2
+        | _ -> assert false
+    in aux t
 
 (* check that a type only appears strictly positively in all the arguments of a constant *)
-let rec check_is_strictly_positive_constant (t:type_expression) (x:type_expression)
- = match t,x with
-    | PVar _, Atom _ -> check_is_strictly_positive t x
-    | Atom _, Atom _ -> check_is_strictly_positive t x
-    | Arrow(t1,t2), Atom _ -> check_is_strictly_positive t1 x; check_is_strictly_positive_constant t2 x
-    | _,_ -> assert false
+let rec check_is_strictly_positive_constant (t:type_expression) (x:type_expression) =
+    let () = match x with Atom _ -> () | _ -> assert false in
+    let rec aux t = match t with
+        | PVar _ -> check_is_strictly_positive t x
+        | Atom _ -> check_is_strictly_positive t x
+        | Arrow(t1,t2) -> check_is_strictly_positive t1 x; aux t2
+        | _ -> assert false
+    in aux t
 
+(* FIXME:clean *)
 (* check the type of a destructor: it should be of the form T(...) -> ...
  * where "T(...)" is the type being defined *)
 let check_destructor (t:type_expression) (d:term_constant*type_expression) = match t,d with
-    | Atom(t,args), (_,Arrow(Atom(_t,_args), _)) when _t.tname=t.tname && _args=args -> ()
+    | Atom(t,args), (_,Arrow(Atom(_t,_args), _)) when _t=t && _args=args -> ()
     | Atom(t,args), (d,_) -> raise (Error ("Destructor " ^ d.name ^ " doesn't appropriate type"))
     | _,_ -> assert false
 
+(* FIXME:clean *)
 (* check the type of a constructor: it should be of the form ... -> T(...)
  * where "T(...)" is the type being defined *)
 let rec check_constructor (t:type_expression) (c:term_constant*type_expression) = match t,c with
-    | Atom(t,args), (_,Atom(_t,_args)) when _t.tname=t.tname && _args=args -> ()
+    | Atom(t,args), (_,Atom(_t,_args)) when _t=t && _args=args -> ()
     | Atom _, (c,Arrow(_,_t)) -> check_constructor t (c,_t)
     | Atom(t,args), (c,_) -> raise (Error ("Constructor " ^ c.name ^ " doesn't appropriate type"))
     | _,_ -> assert false
 
+(* FIXME:clean *)
 (* check that all the types being defined only appear with exactly the same parameters *)
 let rec check_parameters_of_defined_types (types:type_expression list) (t:type_expression) = match types,t with
     | _,PVar _ -> ()
     | [], Atom(t,args) -> ()
-    | Atom(_t,_args)::types, Atom(t,args) when _t.tname=t.tname && _args=args -> ()
-    | Atom(_t,_args)::types, Atom(t,args) when _t.tname=t.tname -> raise @$ Error("type " ^ t.tname ^ " should always use the same parameters in the definition")
+    | Atom(_t,_args)::types, Atom(t,args) when _t=t && _args=args -> ()
+    | Atom(_t,_args)::types, Atom(t,args) when _t=t -> raise @$ Error("type " ^ t ^ " should always use the same parameters in the definition")
     | Atom _::types, Atom _ -> check_parameters_of_defined_types types t
     | _::_, Atom _ -> assert false
     | types,Arrow(t1,t2) -> check_parameters_of_defined_types types t1; check_parameters_of_defined_types types t2
@@ -89,7 +99,7 @@ let rec check_parameters_of_defined_types (types:type_expression list) (t:type_e
 %start statement
 
 %type <AbstractSyntax.cmd> statement
-%type <(type_constant * type_expression list * (term_constant * type_expression) list) list> type_defs
+%type <(type_expression * (term_constant * type_expression) list) list> type_defs
 
 %%
 
@@ -104,18 +114,18 @@ type_defs:
         {
             if !priority mod 2 = 0 then incr priority;
             let defs = $2 in
-            List.iter (function t,args,consts -> List.iter (check_constructor (Atom(t,args))) consts) defs;
+            List.iter (function t,consts -> List.iter (check_constructor t) consts) defs;
 
             (* TODO check_parameters_of_defined_types *)
 
-            List.map (function t,args,consts ->(t,args,List.map (first (fun c -> { c with priority = !priority})) consts)) defs
+            List.map (second @$ List.map @$ first @$ fun c -> { c with priority = !priority}) defs
         }
   | CODATA type_defs
         {
             if !priority mod 2 = 1 then incr priority;
             let defs = $2 in
-            List.iter (function t,args,consts -> List.iter (check_destructor (Atom(t,args))) consts) defs;
-            List.map (function t,args,consts ->(t,args,List.map (first (fun c -> { c with priority = !priority})) consts)) defs
+            List.iter (function t,consts -> List.iter (check_destructor t) consts) defs;
+            List.map (second @$ List.map @$ first @$ fun c -> { c with priority = !priority}) defs
         }
 
 type_defs:
@@ -129,12 +139,12 @@ type_def:
             let params = $2 in
             check_type_parameters params;
 
-            let t:type_constant  =  { tname = $1; arity = List.length params} in
+            let t = Atom($1,params) in
 
             let consts = List.map (second @$ replace_unknown_SVar params) $4 in
-            List.iter (function (_,_t) -> check_is_strictly_positive_constant _t (Atom(t, params))) consts;
+            List.iter (function (_,_t) -> check_is_strictly_positive_constant _t t) consts;
 
-            (t, params, consts)
+            (t, consts)
         }
 
 type_parameters:
@@ -160,8 +170,8 @@ const_clause:
 
 const_type:
   | IDU                                 { SVar $1 }  /* we don't know yet if this is a polymorphic variable or a type constant... */
-  | IDU LPAR RPAR                       { Atom( {tname = $1; arity = 0}, [] ) }
-  | IDU LPAR const_type_args RPAR       { Atom( {tname = $1; arity = List.length $3}, $3 ) }
+  | IDU LPAR RPAR                       { Atom($1, []) }
+  | IDU LPAR const_type_args RPAR       { Atom($1,$3) }
   | const_type ARROW const_type         { Arrow($1, $3) }
 
 const_type_args:
