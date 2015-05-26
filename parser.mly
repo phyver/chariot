@@ -89,28 +89,30 @@ let rec check_parameters_of_defined_types (types:type_expression list) (t:type_e
     | _,SVar _ -> assert false
 %}
 
-%token EQUAL COLON SEMICOLON LPAR RPAR LBRAC RBRAC COMMA PIPE
-%token DATA CODATA WHERE AND ARROW
+%token EQUAL COLON EMPTYLINE LPAR RPAR LBRAC RBRAC COMMA PIPE DOT
+%token DATA CODATA WHERE AND ARROW VAL
 %token EOF
 %token <string> IDU IDL
 
 %right ARROW
+%left DOT
 
 %start statement
 
 %type <AbstractSyntax.cmd> statement
-%type <(type_expression * (term_constant * type_expression) list) list> type_defs
+%type <(type_expression * (term_constant * type_expression) list) list> new_types
 
 %%
 
 
 statement:
-  | SEMICOLON               { Nothing       }
-  | type_defs SEMICOLON     { TypeDef $1    }
-  | EOF                     { Eof           }
+    | EMPTYLINE                 { Nothing       }
+    | new_types EMPTYLINE       { TypeDef $1    }
+    | new_functions EMPTYLINE   { Nothing       }
+    | EOF                       { Eof           }
 
-type_defs:
-  |   DATA type_defs
+new_types:
+    |   DATA type_defs
         {
             if !priority mod 2 = 0 then incr priority;
             let defs = $2 in
@@ -120,7 +122,7 @@ type_defs:
 
             List.map (second @$ List.map @$ first @$ fun c -> { c with priority = !priority}) defs
         }
-  | CODATA type_defs
+    | CODATA type_defs
         {
             if !priority mod 2 = 1 then incr priority;
             let defs = $2 in
@@ -133,7 +135,7 @@ type_defs:
     | type_def AND type_defs    { $1::$3 }
 
 type_def:
-  | IDU type_parameters WHERE const_clauses
+    | IDU type_parameters WHERE const_clauses
         /* check strict positivity */
         {
             let params = $2 in
@@ -148,34 +150,66 @@ type_def:
         }
 
 type_parameters:
-  | /* nothing */                   { [] }
-  | LPAR type_parameters_aux RPAR   { $2 }
+    | /* nothing */                   { [] }
+    | LPAR type_parameters_aux RPAR   { $2 }
 
 type_parameters_aux:
-  | IDU                                 { [PVar $1] }
-  | IDU COMMA type_parameters_aux       { (PVar $1)::$3 }
+    | IDU                                 { [PVar $1] }
+    | IDU COMMA type_parameters_aux       { (PVar $1)::$3 }
 
 const_clauses:
-  | /* nothing */                   { [] }
-  | const_clause                    { [$1] }
-  | const_clause const_clauses2     { $1::$2 }
-  | const_clauses2                  { $1 }
+    | /* nothing */                   { [] }
+    | const_clause                    { [$1] }
+    | const_clause const_clauses2     { $1::$2 }
+    | const_clauses2                  { $1 }
 
 const_clauses2:
-  | PIPE const_clause                   { [$2] }
-  | PIPE const_clause const_clauses2    { $2::$3 }
+    | PIPE const_clause                   { [$2] }
+    | PIPE const_clause const_clauses2    { $2::$3 }
 
 const_clause:
-    | IDU COLON const_type      { ({name = $1; priority = !priority}, $3) }
+    | IDU COLON type_expression      { ({name = $1; priority = !priority}, $3) }
 
-const_type:
-  | IDU                                 { SVar $1 }  /* we don't know yet if this is a polymorphic variable or a type constant... */
-  | IDU LPAR RPAR                       { Atom($1, []) }
-  | IDU LPAR const_type_args RPAR       { Atom($1,$3) }
-  | const_type ARROW const_type         { Arrow($1, $3) }
+type_expression:
+    | IDU                                           { SVar $1 }  /* we don't know yet if this is a polymorphic variable or a type constant... */
+    | IDU LPAR RPAR                                 { Atom($1, []) }
+    | IDU LPAR type_expression_args RPAR            { Atom($1,$3) }
+    | type_expression ARROW type_expression         { Arrow($1, $3) }
+    | LPAR type_expression RPAR                     { $2 }
 
-const_type_args:
-    | const_type                            { [$1] }
-    | const_type COMMA const_type_args      { $1::$3 }
+type_expression_args:
+    | type_expression                               { [$1] }
+    | type_expression COMMA type_expression_args    { $1::$3 }
+
+new_functions:
+    | VAL function_defs         { $2 }
+
+function_defs:
+    | function_def { [$1] }
+    | function_def AND function_defs { $1::$3 }
+
+function_def:
+    | IDL COLON type_expression function_clauses    { () }
+
+function_clauses:
+    | /*nothing*/                               { [] }
+    | PIPE function_clause function_clauses     { $2::$3 }
+
+function_clause:
+    | pattern EQUAL term { () }
+
+term:
+    | atomic_term { $1 }
+    | term atomic_term { Apply($1, $2) }
+
+atomic_term:
+    | LPAR term RPAR { $2 }
+    | atomic_term DOT IDU { Apply(Constant({name = $3; priority = -2}), $1) }
+    | IDL { Var($1) }
+    | IDU { Constant({name = $1; priority = -1}) }
+
+pattern:
+    | term { $1 }
+
 
 
