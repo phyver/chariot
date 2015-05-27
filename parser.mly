@@ -100,7 +100,7 @@ let rec check_parameters_of_defined_types (types:type_expression list) (t:type_e
 %start statement
 
 %type <AbstractSyntax.cmd> statement
-%type <(type_expression * (term_constant * type_expression) list) list> new_types
+%type <(type_expression * priority * (term_constant * type_expression) list) list> new_types
 
 %%
 
@@ -109,6 +109,7 @@ statement:
     | EMPTYLINE                 { Nothing       }
     | new_types EMPTYLINE       { TypeDef $1    }
     | new_functions EMPTYLINE   { Nothing       }
+    | COLON IDL EMPTYLINE       { Cmd $2        }
     | EOF                       { Eof           }
 
 new_types:
@@ -120,15 +121,18 @@ new_types:
 
             (* TODO check_parameters_of_defined_types *)
 
-            List.map (second @$ List.map @$ first @$ fun c -> { c with priority = !priority}) defs
+            List.map
+                (function t,consts -> t, !priority, List.map (first (fun c -> {c with priority = !priority})) consts)
+                defs
         }
     | CODATA type_defs
         {
             if !priority mod 2 = 1 then incr priority;
             let defs = $2 in
             List.iter (function t,consts -> List.iter (check_destructor t) consts) defs;
-            List.map (second @$ List.map @$ first @$ fun c -> { c with priority = !priority}) defs
-        }
+
+            List.map (function t,consts -> t, !priority, List.map (first (fun c
+            -> {c with priority = !priority})) consts) defs }
 
 type_defs:
     | type_def                  { [$1] }

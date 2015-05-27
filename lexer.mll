@@ -8,8 +8,8 @@ let idU = upper(lower|upper|other)*
 let idL = lower(lower|upper|other)*
 
 rule token = parse
-    | [' ' '\n' '\t']   { token lexbuf }
     | "\n\n"            { EMPTYLINE }
+    | [' ' '\n' '\t']   { token lexbuf }
     | '='               { EQUAL }
     | ':'               { COLON }
     | '('               { LPAR }

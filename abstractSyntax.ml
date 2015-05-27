@@ -1,7 +1,9 @@
 open Tools
+exception Error of string
 
+type priority = int     (* odd for constructor / inductive types, even for destructors / coinductive types *)
 type term_constant = { name:        string  ;
-                       priority:    int     }   (* should be odd for constructors and even for destructors *)
+                       priority:    priority}
 
 
 type tname = string
@@ -47,7 +49,7 @@ let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
             | _ -> raise Exit
     in aux [ (t1,t2) ]
 
-type environment = { types :  type_expression list              ;
+type environment = { types :  (type_expression * priority * (term_constant * type_expression) list) list              ;
                      consts : (term_constant * type_expression) list  ;
                      vars :   (string * type_expression) list }
 
@@ -82,64 +84,72 @@ let rec infer_type (u:term) (env:environment) : type_expression =
 type cmd =
     | Eof
     | Nothing
-    | TypeDef of (type_expression * (term_constant * type_expression) list) list
-             (*  -defined type-        -constructors/destructors-          -mutual types- *)
+    | Cmd of string
+    | TypeDef of (type_expression * priority * (term_constant * type_expression) list) list
+             (*  -defined type-                  -constructors/destructors-            -mutual types- *)
 
-let process_type env defs =
+
+let process_type (env:environment) (defs:(type_expression * priority * (term_constant * type_expression) list) list) =
     (* all the types that were mutually defined by this definition *)
-    let new_types = List.map (function (t,_) -> t) defs
+    let new_types = List.map (function (t,_,_) -> t) defs
     in
 
-    match defs with
-    | [] -> env
-    | (Atom(t,params), consts)::defs ->
-            if List.exists (function Atom(_t,_) -> _t=t | _ -> assert false) env.types
-            then raise (Error ("there is a type named " ^ t))
-            else begin
-                assert (List.for_all (function PVar _ -> true | _ -> false) params);
-                (* 2/ no constructor / destructor already exists *)
-                (* TODO *)
+    let rec process_type_aux env defs =
+        match defs with
+        | [] -> env
+        | (Atom(t,params), p, consts)::defs ->
+                if List.exists (function Atom(_t,_),_,_ -> _t=t | _ -> assert false) env.types
+                then raise (Error ("there is a type named " ^ t))
+                else begin
+                    assert (List.for_all (function PVar _ -> true | _ -> false) params);
+                    (* 2/ no constructor / destructor already exists *)
+                    (* TODO *)
 
-                (* get defined type with given name *)
-                let get_new_type t params =
-                    let rec get_new_type_aux = function
-                        | [] -> raise (Error ("type " ^ t ^ " doesn't exist"))
-                        | Atom(_t,_params)::ts when _t = t && _params = params -> _t
-                        | Atom(_t,_params)::ts when _t = t -> raise (Error ("cannot change parameter for defined type " ^ t))
-                        | Atom(_,_)::ts -> get_new_type_aux ts
-                        | _ -> assert false
+                    (* get defined type with given name *)
+                    let get_new_type t params =
+                        let rec get_new_type_aux = function
+                            | [] -> raise (Error ("type " ^ t ^ " doesn't exist"))
+                            | Atom(_t,_params)::ts when _t = t && _params = params -> _t
+                            | Atom(_t,_params)::ts when _t = t -> raise (Error ("cannot change parameter for defined type " ^ t))
+                            | Atom(_,_)::ts -> get_new_type_aux ts
+                            | _ -> assert false
+                        in
+                        get_new_type_aux new_types
                     in
-                    get_new_type_aux new_types
-                in
 
-                (* get type with given name *)
-                let get_type t params =
-                    let rec get_type_aux = function
-                        | [] -> get_new_type t params
-                        | Atom(_t,_params)::ts when _t = t && List.length _params = List.length params -> _t
-                        | Atom(_t,_)::ts when _t = t -> raise (Error ("type " ^ t ^ " used with wrong number of parameters"))
-                        | Atom(_,_)::ts -> get_type_aux ts
-                        | _::ts -> assert false
+                    (* get type with given name *)
+                    let get_type t params =
+                        let rec get_type_aux = function
+                            | [] -> get_new_type t params
+                            | (Atom(_t,_params),_,_)::ts when _t = t && List.length _params = List.length params -> _t
+                            | (Atom(_t,_),_,_)::ts when _t = t -> raise (Error ("type " ^ t ^ " used with wrong number of parameters"))
+                            | (Atom(_,_),_,_)::ts -> get_type_aux ts
+                            | _::ts -> assert false
+                        in
+                        get_type_aux env.types
                     in
-                    get_type_aux env.types
-                in
 
 
 
-                (* priority / arity should be the same as the one from the environment *)
-                let rec aux = function
-                    | Arrow(t1,t2) -> Arrow(aux t1, aux t2)
-                    | PVar x when List.mem (PVar x) params -> PVar x
-                    | PVar x -> raise (Error ("parameter " ^ x ^ " doesn't exist"))     (* FIXME: to do in parser.mly? *)
-                    | Atom(_t, _params) when _t = t && params = _params -> Atom(t,params)   (* FIXME: to do in parser.mly? *)
-                    | Atom(_t, _params) when _t = t -> raise (Error ("cannot use type " ^ t ^ " with different type arguments"))   (* FIXME: to do in parser.mly? *)
-                    | Atom(_t, _params) -> let _t = get_type _t _params in Atom (_t, List.map aux _params)
-                    | SVar s -> assert false
-                in
+                    (* priority / arity should be the same as the one from the environment *)
+                    let rec aux = function
+                        | Arrow(t1,t2) -> Arrow(aux t1, aux t2)
+                        | PVar x when List.mem (PVar x) params -> PVar x
+                        | PVar x -> raise (Error ("parameter " ^ x ^ " doesn't exist"))     (* FIXME: to do in parser.mly? *)
+                        | Atom(_t, _params) when _t = t && params = _params -> Atom(t,params)   (* FIXME: to do in parser.mly? *)
+                        | Atom(_t, _params) when _t = t -> raise (Error ("cannot use type " ^ t ^ " with different type arguments"))   (* FIXME: to do in parser.mly? *)
+                        | Atom(_t, _params) -> let _t = get_type _t _params in Atom (_t, List.map aux _params)
+                        | SVar s -> assert false
+                    in
 
-                let consts = List.map (fun (c,t) -> (c, aux t)) consts in
+                    let consts = List.map (second aux) consts in
 
-                { types = Atom(t,params)::env.types ; consts = consts @ env.consts ; vars = env.vars }
-            end
-    | _::defs -> assert false
+                    let env = process_type_aux env defs in
+
+                    { types = (Atom(t,params),p,consts)::env.types ; consts = consts @ env.consts ; vars = env.vars }
+                end
+        | _::defs -> assert false
+    in
+    process_type_aux env defs
+
 
