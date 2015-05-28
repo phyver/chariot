@@ -44,9 +44,10 @@ let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
 type priority = int     (* odd for constructor / inductive types, even for destructors / coinductive types *)
 type arity = int
 
-type name = string
-type term_constant = { name:        name  ;
-                       priority:    priority}
+type const_name = string
+type var_name = string
+type term_constant = { name:        const_name  ;
+                       priority:    priority    }
 type term =
     | Var of string
     | Constant of term_constant
@@ -55,10 +56,10 @@ type term =
 type function_clause = term list * term
 type bloc_nb = int      (* number of the block of mutual definitions *)
 type environment = {
-    types:     (type_name * arity * priority * (term_constant * type_expression) list) list     ;
-    constants: (name * type_expression) list                                            ;
-    functions: (name * bloc_nb * type_expression * function_clause list) list           ;
-    vars:      (name * type_expression) list                                            }
+    types:     (type_name * arity * priority * const_name list) list     ;
+    constants: (const_name * priority * type_expression) list                                            ;
+    functions: (var_name * bloc_nb * type_expression * function_clause list) list           ;
+    vars:      (var_name * type_expression) list                                            }
 
 let get_arity (t:type_name) (env:environment) =
     let rec aux = function
@@ -68,14 +69,14 @@ let get_arity (t:type_name) (env:environment) =
     in
     aux env.types
 
-let get_type_const (c:name) (env:environment) =
+let get_type_const (c:const_name) (env:environment) =
     let rec aux = function
         | [] -> raise Not_found
-        | (_c,_t)::_ when _c=c -> _t
+        | (_c,_p,_t)::_ when _c=c -> _t
         | _::consts -> aux consts
     in aux env.constants
 
-let get_type_var (x:name) (env:environment) =
+let get_type_var (x:var_name) (env:environment) =
     let rec aux_function = function
         | [] -> raise Not_found
         | (f,_,t,_)::_ when f=x -> t
