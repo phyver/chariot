@@ -18,7 +18,7 @@ let main () =
                     | Eof -> raise Exit
                     | Nothing -> ()
                     | TypeDef(priority,defs) -> env := process_type_defs !env priority defs
-                    | Cmd "show" -> assert false
+                    | Cmd "showtypes" -> showtypes !env
                     | Cmd c -> print_string ("*** unknown command: " ^ c ^ "\n")
             with
                 | Parsing.Parse_error -> print_string "*** parse error\n"

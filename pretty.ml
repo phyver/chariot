@@ -25,8 +25,8 @@ let print_sub n =
     in
     List.iter print_string (aux n [])
 
-let rec print_list b1 sep b2 p = function
-    | [] -> print_string b1; print_string b2
+let rec print_list empty b1 sep b2 p = function
+    | [] -> print_string empty;
     | [x] -> print_string b1; p x; print_string b2
     | x::xs -> print_string b1; p x; List.iter (fun x -> print_string sep; p x) xs; print_string b2
 
@@ -35,12 +35,11 @@ let print_constant (c:const_name) (p:priority) =
     if !verbose>0 then print_exp p
 
 let rec print_type = function
-    | TVar(false,x) -> print_string x
-    | TVar(true,x) -> print_string @$ "_" ^ x
+    | TVar(false,x) -> print_string @$ "_" ^ x
+    | TVar(true,x) -> print_string x
     | Data(t,args) ->
             print_string t;
-            (* if !verbose>0 then print_exp t.priority; *)
-            print_list "(" "," ")" print_type args
+            print_list "" "(" "," ")" print_type args
     | Arrow((TVar _ | Data _) as t1,t2) ->
             print_type t1;
             print_string " → ";
@@ -50,18 +49,41 @@ let rec print_type = function
             print_string " → ";
             print_type t2
 
-let print_data_type (t,priority,consts) =
-    match t with
-        | Data(t,args) ->
-                if priority mod 2 = 0
-                then print_string "co";
-                print_string "data\n";
-                print_string "  ";
-                print_string t;
-                print_exp priority;
-                print_list "(" "," ")" (fun x -> match x with TVar(true,x) -> print_string x
-                                                                | _ -> assert false) args;
-                print_string " where";
-                print_list "\n    | " "\n    | " "\n" (function c,t -> print_string c; print_string " : "; print_type t;) consts
-        | _ -> assert false
 
+let showtypes env =
+
+    let print_data_type tname params priority consts =
+        print_string "  ";
+        print_string tname;
+        print_exp priority;
+        print_list "" "(" "," ")" print_string params;
+        print_string " where";
+        print_list "\n" "\n    | " "\n    | " "\n" (function c -> print_string c; print_string " : "; print_type (get_type_const c env) ;) consts
+    in
+
+    let rec showtypesaux = function
+        | [] -> assert false
+        | [(tname,params,priority,consts)] -> print_data_type tname params priority consts;
+        | (tname,params,priority,consts)::(((_,_,p,_)::_) as types) when priority=p ->
+                begin
+                    print_data_type tname params priority consts;
+                    showtypesaux types
+                end
+        | (tname,params,priority,consts)::(((_,_,p,_)::_) as types) ->
+                begin
+                    print_data_type tname params priority consts;
+                    print_newline();
+                    if p mod 2 = 0
+                    then print_string "codata\n"
+                    else print_string "data\n";
+                    showtypesaux types
+                end
+
+
+    in match env.types with
+    | [] -> ()
+    | (_,_,priority,_)::_ ->
+            if priority mod 2 = 0
+            then print_string "codata\n"
+            else print_string "data\n";
+            showtypesaux env.types

@@ -23,7 +23,7 @@ val map : (X -> Y) -> Stream(X) -> Stream(Y)
     | (map f s).Tail = map f s.Tail
 
 
-:show
+:showtypes
 
 
 
