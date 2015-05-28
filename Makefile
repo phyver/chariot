@@ -9,9 +9,7 @@ INCLUDES=
 OCAMLFLAGS=$(INCLUDES)
 OCAMLDEPFLAGS=$(INCLUDES)
 
-MLFILES:=$(wildcard *.ml)
-MLFILES:=$(filter-out main.ml, $(MLFILES))
-MLFILES=base.ml  lexer.ml  parser.ml  pretty.ml  utils.ml
+MLFILES=misc.ml  base.ml  pretty.ml  parser.ml  lexer.ml
 BYTEFILES=$(MLFILES:.ml=.cmo)
 OPTFILES=$(MLFILES:.ml=.cmx)
 
