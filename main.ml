@@ -1,7 +1,9 @@
 open Parser
 open Base
+open CheckTypes
 open Pretty
 open Misc
+open Commands
 
 let env = ref { types = []; constants = []; functions = []; vars = [] }
 

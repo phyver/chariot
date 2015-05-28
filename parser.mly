@@ -1,6 +1,7 @@
 %{
 open Base
 open Misc
+open Commands
 
 
 let priority = ref 0
@@ -99,7 +100,7 @@ let rec check_parameters_of_defined_types (types:type_expression list) (t:type_e
 
 %start statement
 
-%type <Base.cmd> statement
+%type <Commands.cmd> statement
 %type <(type_name * arity * (term_constant * type_expression) list) list> new_types
 
 %%
