@@ -1,7 +1,7 @@
 open Base
 
 
-let process_type_defs (env:environment) (priority:priority) (defs:(type_name * arity * (term_constant * type_expression) list) list) =
+let process_type_defs (env:environment) (priority:priority) (defs:(type_name * arity * (const_name * type_expression) list) list) =
     (* all the types that were mutually defined by this definition *)
     let new_types = List.map (function (t,_,_) -> t) defs in
 

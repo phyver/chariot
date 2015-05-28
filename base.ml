@@ -41,23 +41,22 @@ let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
     in aux [ (t1,t2) ]
 
 (* types for expressions, function definitions and environments *)
-type priority = int     (* odd for constructor / inductive types, even for destructors / coinductive types *)
 type arity = int
-
+type priority = int
 type const_name = string
 type var_name = string
-type term_constant = { name:        const_name  ;
-                       priority:    priority    }
+
 type term =
     | Var of string
-    | Constant of term_constant
+    | Constant of const_name
     | Apply of term*term
 
 type function_clause = term list * term
 type bloc_nb = int      (* number of the block of mutual definitions *)
 type environment = {
-    types:     (type_name * arity * priority * const_name list) list     ;
-    constants: (const_name * priority * type_expression) list                                            ;
+    current_priority: int                                                                   ;
+    types:     (type_name * arity * priority * const_name list) list                        ;
+    constants: (const_name * priority * type_expression) list                               ;
     functions: (var_name * bloc_nb * type_expression * function_clause list) list           ;
     vars:      (var_name * type_expression) list                                            }
 
@@ -102,7 +101,7 @@ let rec infer_type (u:term) (env:environment) : type_expression =
                             in subst_type sigma t12
                     | _ -> raise Exit
             end
-        | Constant(c) -> (try get_type_const c.name env with Not_found -> raise Exit)
+        | Constant(c) -> (try get_type_const c env with Not_found -> raise Exit)
         | Var(x) -> (try get_type_var x env with Not_found -> raise Exit)
 
 

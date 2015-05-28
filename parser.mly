@@ -63,18 +63,18 @@ let rec check_is_strictly_positive_constant (t:type_expression) (x:type_expressi
 (* FIXME:clean *)
 (* check the type of a destructor: it should be of the form T(...) -> ...
  * where "T(...)" is the type being defined *)
-let check_destructor (t:type_expression) (d:term_constant*type_expression) = match t,d with
+let check_destructor (t:type_expression) (d:const_name*type_expression) = match t,d with
     | Data(t,args), (_,Arrow(Data(_t,_args), _)) when _t=t && _args=args -> ()
-    | Data(t,args), (d,_) -> raise (Error ("Destructor " ^ d.name ^ " doesn't appropriate type"))
+    | Data(t,args), (d,_) -> raise (Error ("Destructor " ^ d ^ " doesn't appropriate type"))
     | _,_ -> assert false
 
 (* FIXME:clean *)
 (* check the type of a constructor: it should be of the form ... -> T(...)
  * where "T(...)" is the type being defined *)
-let rec check_constructor (t:type_expression) (c:term_constant*type_expression) = match t,c with
+let rec check_constructor (t:type_expression) (c:const_name*type_expression) = match t,c with
     | Data(t,args), (_,Data(_t,_args)) when _t=t && _args=args -> ()
     | Data _, (c,Arrow(_,_t)) -> check_constructor t (c,_t)
-    | Data(t,args), (c,_) -> raise (Error ("Constructor " ^ c.name ^ " doesn't appropriate type"))
+    | Data(t,args), (c,_) -> raise (Error ("Constructor " ^ c ^ " doesn't appropriate type"))
     | _,_ -> assert false
 
 (* FIXME:clean *)
@@ -101,7 +101,7 @@ let rec check_parameters_of_defined_types (types:type_expression list) (t:type_e
 %start statement
 
 %type <Commands.cmd> statement
-%type <(type_name * arity * (term_constant * type_expression) list) list> new_types
+%type <(type_name * arity * (const_name * type_expression) list) list> new_types
 
 %%
 
@@ -123,9 +123,9 @@ new_types:
 
             (* TODO check_parameters_of_defined_types, for all types*)
 
-            let (result:(type_name * arity * (term_constant * type_expression) list) list)
+            let (result:(type_name * arity * (const_name * type_expression) list) list)
              = List.map
-                    (function Data(t,params),consts -> t, List.length params, List.map (first (fun c -> {c with priority = !priority})) consts
+                    (function Data(t,params),consts -> t, List.length params, consts
                              | _ -> assert false)
                     defs
             in
@@ -137,9 +137,9 @@ new_types:
             let defs = $2 in
             List.iter (function t,consts -> List.iter (check_destructor t) consts) defs;
 
-            let (result:(type_name * arity * (term_constant * type_expression) list) list)
+            let (result:(type_name * arity * (const_name * type_expression) list) list)
              = List.map
-                    (function Data(t,params),consts -> t, List.length params, List.map (first (fun c -> {c with priority = !priority})) consts
+                    (function Data(t,params),consts -> t, List.length params, consts
                              | _ -> assert false)
                     defs
             in
@@ -184,7 +184,7 @@ const_clauses2:
     | PIPE const_clause const_clauses2    { $2::$3 }
 
 const_clause:
-    | IDU COLON type_expression      { ({name = $1; priority = !priority}, $3) }
+    | IDU COLON type_expression      { ($1, $3) }
 
 type_expression:
     | IDU                                           { TVar(false,$1) }  /* we don't know yet if this is a polymorphic variable or a type constant... */
@@ -220,9 +220,9 @@ term:
 
 atomic_term:
     | LPAR term RPAR { $2 }
-    | atomic_term DOT IDU { Apply(Constant({name = $3; priority = -2}), $1) }
+    | atomic_term DOT IDU { Apply(Constant($3), $1) }
     | IDL { Var($1) }
-    | IDU { Constant({name = $1; priority = -1}) }
+    | IDU { Constant($1) }
 
 pattern:
     | term { $1 }

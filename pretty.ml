@@ -30,9 +30,9 @@ let rec print_list b1 sep b2 p = function
     | [x] -> print_string b1; p x; print_string b2
     | x::xs -> print_string b1; p x; List.iter (fun x -> print_string sep; p x) xs; print_string b2
 
-let print_constant (c:term_constant) =
-    print_string c.name;
-    if !verbose>0 then print_exp c.priority
+let print_constant (c:const_name) (p:priority) =
+    print_string c;
+    if !verbose>0 then print_exp p
 
 let rec print_type = function
     | TVar(false,x) -> print_string x
@@ -62,6 +62,6 @@ let print_data_type (t,priority,consts) =
                 print_list "(" "," ")" (fun x -> match x with TVar(true,x) -> print_string x
                                                                 | _ -> assert false) args;
                 print_string " where";
-                print_list "\n    | " "\n    | " "\n" (function c,t -> print_string c.name; print_string " : "; print_type t;) consts
+                print_list "\n    | " "\n    | " "\n" (function c,t -> print_string c; print_string " : "; print_type t;) consts
         | _ -> assert false
 
