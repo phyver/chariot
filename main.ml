@@ -1,9 +1,9 @@
-open Tools
 open Parser
-open AbstractSyntax
+open Base
 open Pretty
+open Misc
 
-let env = ref { types = []; consts = []; vars = [] }
+let env = ref { types = []; constants = []; functions = []; vars = [] }
 
 let main () =
     try
@@ -15,8 +15,8 @@ let main () =
                 match Parser.statement Lexer.token lexbuf with
                     | Eof -> raise Exit
                     | Nothing -> ()
-                    | TypeDef defs -> env := process_type !env defs
-                    | Cmd "show" -> print_list "" "and\n" "\n\n" print_data_type !env.types
+                    | TypeDef(priority,defs) -> env := process_type_defs !env priority defs
+                    | Cmd "show" -> assert false
                     | Cmd c -> print_string ("*** unknown command: " ^ c ^ "\n")
             with
                 | Parsing.Parse_error -> print_string "*** parse error\n"

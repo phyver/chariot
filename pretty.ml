@@ -1,5 +1,5 @@
-open Tools
-open AbstractSyntax
+open Misc
+open Base
 
 let verbose = ref 0
 
@@ -35,13 +35,13 @@ let print_constant (c:term_constant) =
     if !verbose>0 then print_exp c.priority
 
 let rec print_type = function
-    | PVar x -> print_string x
-    | SVar x -> print_string @$ "_" ^ x
-    | Atom(t,args) ->
+    | TVar(false,x) -> print_string x
+    | TVar(true,x) -> print_string @$ "_" ^ x
+    | Data(t,args) ->
             print_string t;
             (* if !verbose>0 then print_exp t.priority; *)
             print_list "(" "," ")" print_type args
-    | Arrow((PVar _ | SVar _ | Atom _) as t1,t2) ->
+    | Arrow((TVar _ | Data _) as t1,t2) ->
             print_type t1;
             print_string " → ";
             print_type t2
@@ -52,14 +52,14 @@ let rec print_type = function
 
 let print_data_type (t,priority,consts) =
     match t with
-        | Atom(t,args) ->
+        | Data(t,args) ->
                 if priority mod 2 = 0
                 then print_string "co";
                 print_string "data\n";
                 print_string "  ";
                 print_string t;
                 print_exp priority;
-                print_list "(" "," ")" (fun x -> match x with PVar x -> print_string x
+                print_list "(" "," ")" (fun x -> match x with TVar(true,x) -> print_string x
                                                                 | _ -> assert false) args;
                 print_string " where";
                 print_list "\n    | " "\n    | " "\n" (function c,t -> print_string c.name; print_string " : "; print_type t;) consts
