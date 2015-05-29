@@ -1,55 +1,10 @@
-OCAMLYACC=ocamlyacc
-OCAMLLEX=ocamllex
-OCAMLC=ocamlc
-OCAMLOPT=ocamlopt
-OCAMLDEP=ocamldep
+all: native
 
-INCLUDES=
+native:
+	ocamlbuild -libs str,unix main.native
 
-OCAMLFLAGS=$(INCLUDES)
-OCAMLDEPFLAGS=$(INCLUDES)
-
-MLFILES=misc.ml  base.ml  pretty.ml  checkTypes.ml  checkFunctions.ml  commands.ml  parser.ml  lexer.ml
-BYTEFILES=$(MLFILES:.ml=.cmo)
-OPTFILES=$(MLFILES:.ml=.cmx)
-
-# Common rules
-.SUFFIXES: .ml .mli .cmo .cmi .cmx
-
-.ml.cmo:
-	$(OCAMLC) $(OCAMLFLAGS) -c $<
-
-.mli.cmi:
-	$(OCAMLC) $(OCAMLFLAGS) -c $<
-
-.ml.cmx:
-		$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $<
-
-all: very_clean depend opt
-
-byte: $(BYTEFILES)
-	$(OCAMLC) $(INCLUDES) unix.cma str.cma $(BYTEFILES) -o proto main.ml
-
-opt: $(OPTFILES)
-	$(OCAMLOPT) $(INCLUDES) unix.cmxa str.cmxa $(OPTFILES) -o proto main.ml
-
-depend: parser.ml lexer.ml
-	$(OCAMLDEP) $(OCAMLDEPFLAGS) *.ml *.mli > .depend
-
-parser.ml:
-	$(OCAMLYACC) $(OCAMLYACCFLAGS) parser.mly
-
-lexer.ml:
-	$(OCAMLLEX) $(OCAMLLEXFLAGS) lexer.mll
+byte:
+	ocamlbuild -libs str,unix main.byte
 
 clean:
-	rm -f *.cm[aoix] *.o
-	rm -f sct
-
-very_clean:
-	rm -f *.cm[aoix] *.o
-	rm -f lexer.ml parser.ml parser.mli
-	rm -f proto
-
-
-include .depend
+	ocamlbuild -clean
