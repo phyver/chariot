@@ -108,7 +108,7 @@ atomic_term:
 
 patterns:
     | /* nothing */     { [] }
-    | term patterns     { $1::$2 }
+    | atomic_term patterns     { $1::$2 }
 
 
 
