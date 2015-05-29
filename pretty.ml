@@ -67,6 +67,7 @@ let showtypes env =
         | (tname,params,priority,consts)::(((_,_,p,_)::_) as types) when priority=p ->
                 begin
                     print_data_type tname params priority consts;
+                    print_string "and\n";
                     showtypesaux types
                 end
         | (tname,params,priority,consts)::(((_,_,p,_)::_) as types) ->
@@ -80,10 +81,10 @@ let showtypes env =
                 end
 
 
-    in match env.types with
+    in match List.rev env.types with
     | [] -> ()
-    | (_,_,priority,_)::_ ->
+    | ((_,_,priority,_)::_) as types ->
             if priority mod 2 = 0
             then print_string "codata\n"
             else print_string "data\n";
-            showtypesaux env.types
+            showtypesaux types

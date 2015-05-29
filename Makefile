@@ -28,10 +28,10 @@ OPTFILES=$(MLFILES:.ml=.cmx)
 all: very_clean depend opt
 
 byte: $(BYTEFILES)
-	$(OCAMLC) $(INCLUDES) $(BYTEFILES) -o proto main.ml
+	$(OCAMLC) $(INCLUDES) str.cma $(BYTEFILES) -o proto main.ml
 
 opt: $(OPTFILES)
-	$(OCAMLOPT) $(INCLUDES) $(OPTFILES) -o proto main.ml
+	$(OCAMLOPT) $(INCLUDES) str.cmxa $(OPTFILES) -o proto main.ml
 
 depend: parser.ml lexer.ml
 	$(OCAMLDEP) $(OCAMLDEPFLAGS) *.ml *.mli > .depend

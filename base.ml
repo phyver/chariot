@@ -60,10 +60,10 @@ type environment = {
     functions: (var_name * bloc_nb * type_expression * function_clause list) list           ;
     vars:      (var_name * type_expression) list                                            }
 
-let get_arity (t:type_name) (env:environment) =
+let get_arity (t:type_name) (env:environment) : int =
     let rec aux = function
         | [] -> raise Not_found
-        | (_t, _a, _, _)::_ when _t=t -> _a
+        | (_t, _params, _, _)::_ when _t=t -> List.length _params
         | _::ts -> aux ts
     in
     aux env.types

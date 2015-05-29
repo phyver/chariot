@@ -1,11 +1,17 @@
 {
 open Parser
+
+let remove_exp s =
+    let re = Str.regexp "\\(⁰\\|¹\\|²\\|³\\|⁴\\|⁵\\|⁶\\|⁷\\|⁸\\|⁹\\)*$" in
+    Str.global_replace re s ""
+
 }
 let upper = [ 'A'-'Z' ]
 let lower = [ 'a'-'z' ]
 let other = [ '0'-'9' '_']
-let idU = upper(lower|upper|other)*
-let idL = lower(lower|upper|other)*
+let exp = ("⁰" | "¹" | "²" | "³" | "⁴" | "⁵" | "⁶" | "⁷" | "⁸" | "⁹")*
+let idU = upper(lower|upper|other)*exp
+let idL = lower(lower|upper|other)*exp
 
 rule token = parse
     | "\n\n"            { EMPTYLINE }
@@ -26,8 +32,8 @@ rule token = parse
     | "->"              { ARROW }
     | "→"               { ARROW }
     | "val"             { VAL }
-    | idU               { IDU(Lexing.lexeme lexbuf) }
-    | idL               { IDL(Lexing.lexeme lexbuf) }
+    | idU               { IDU(remove_exp (Lexing.lexeme lexbuf)) }
+    | idL               { IDL(remove_exp (Lexing.lexeme lexbuf)) }
     | eof               { EOF }
     | "(*"              { comments 0 lexbuf }
 and comments level = parse
