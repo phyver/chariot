@@ -1,3 +1,5 @@
+:prompt ""
+
 
 data N where Zero : N | Succ : N -> N
 
@@ -8,7 +10,6 @@ and
   BTree(B,X,Y) where
     | Leaf : Y → BTree(B,X,Y)
     | Node : X → (B → BTree(B,X,Y)) → BTree(B,X,Y)
-
 
 val length : List(X) -> N
     | length Nil = Z
@@ -22,8 +23,8 @@ val map : (X -> Y) -> Stream(X) -> Stream(Y)
     | (map f s).Head = f (s.Head)
     | (map f s).Tail = map f s.Tail
 
+:show types
 
-:showtypes
 
 
 

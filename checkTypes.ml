@@ -124,12 +124,17 @@ let rec check_constructor (t:type_name) (c:const_name*type_expression) = match c
     | (c,Arrow(_,_t)) -> check_constructor t (c,_t)
     | (c,_) -> raise (Error ("*** constructor " ^ c ^ " doesn't appropriate type"))
 
-let process_type_defs (env:environment) (priority:priority) (defs:(type_name * (type_expression list) * (const_name * type_expression) list) list) =
+let process_type_defs (env:environment)
+                      (priority:priority)
+                      (defs:(type_name * (type_expression list) * (const_name * type_expression) list) list) =
     (* all the types, with parameters, that were mutually defined by this definition *)
     let new_types_with_params = List.rev_map (function (t,params,_) -> (t,params)) defs in
 
     (* the real priority of this bunch of mutual type definitions *)
-    let priority = if (env.current_priority - priority) mod 2 = 0 then env.current_priority+2 else env.current_priority+1 in
+    let priority = if (env.current_priority - priority) mod 2 = 0
+                   then env.current_priority+2
+                   else env.current_priority+1
+    in
 
     let types = ref [] in
     let constants = ref [] in
@@ -154,7 +159,8 @@ let process_type_defs (env:environment) (priority:priority) (defs:(type_name * (
     check_new_consts_different_from_old new_consts old_functions;
 
     let process_single_type tname params consts =
-        types := (tname, List.map (function TVar(true, x) -> x | _ -> assert false) params, priority, List.map fst consts) :: !types;
+        types := (tname, List.map (function TVar(true, x) -> x
+                                          | _ -> assert false) params, priority, List.map fst consts) :: !types;
 
         (* we check that all the parameters are different *)
         check_uniqueness_parameters params;

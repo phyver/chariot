@@ -9,7 +9,7 @@ INCLUDES=
 OCAMLFLAGS=$(INCLUDES)
 OCAMLDEPFLAGS=$(INCLUDES)
 
-MLFILES=misc.ml  base.ml  checkTypes.ml  pretty.ml  commands.ml  parser.ml  lexer.ml
+MLFILES=misc.ml  base.ml  pretty.ml  checkTypes.ml  checkFunctions.ml  commands.ml  parser.ml  lexer.ml
 BYTEFILES=$(MLFILES:.ml=.cmo)
 OPTFILES=$(MLFILES:.ml=.cmx)
 
@@ -28,10 +28,10 @@ OPTFILES=$(MLFILES:.ml=.cmx)
 all: very_clean depend opt
 
 byte: $(BYTEFILES)
-	$(OCAMLC) $(INCLUDES) str.cma $(BYTEFILES) -o proto main.ml
+	$(OCAMLC) $(INCLUDES) unix.cma str.cma $(BYTEFILES) -o proto main.ml
 
 opt: $(OPTFILES)
-	$(OCAMLOPT) $(INCLUDES) str.cmxa $(OPTFILES) -o proto main.ml
+	$(OCAMLOPT) $(INCLUDES) unix.cmxa str.cmxa $(OPTFILES) -o proto main.ml
 
 depend: parser.ml lexer.ml
 	$(OCAMLDEP) $(OCAMLDEPFLAGS) *.ml *.mli > .depend
