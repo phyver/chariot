@@ -55,6 +55,8 @@ let mainloop () =
 (* let _ = mainloop () *)
 
 let _ =
-    if Array.length (Sys.argv) > 1
-    then loadfile (Sys.argv.(1));
+    for i=1 to (Array.length Sys.argv)-1
+    do
+        loadfile (Sys.argv.(i));
+    done;
     mainloop()
