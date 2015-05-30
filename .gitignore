@@ -3,9 +3,10 @@
 *.cmi
 *.cmo
 *.o
-proto
+main.native
+main.byte
 parser.ml
 parser.mli
 lexer.ml
 .vimrc
-.depend
+_build
