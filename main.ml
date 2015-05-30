@@ -23,6 +23,7 @@ let process_statement = function
     | FunDef(defs) -> env := process_function_defs !env defs
     | Cmd("show",["types"]) -> showtypes !env
     | Cmd("prompt", [s]) -> prompt := s
+    | Cmd("quit", _) -> raise Exit
     | Cmd(c,_) -> print_string ("*** unknown command: " ^ c ^ "\n")
 
 let loadfile path =
@@ -38,25 +39,25 @@ let loadfile path =
 
 
 let mainloop () =
-    try
-        while true
-        do
-            print_string !prompt; flush_all();
-            let lexbuf = Lexing.from_channel stdin in
-            flush_all ();
-            try
-                process_statement (Parser.single_statement Lexer.token lexbuf)
-            with
-                | Parsing.Parse_error -> print_string "*** parse error\n"; flush_all ()
-                | Error err -> print_string ("*** " ^ err ^ "\n"); flush_all ()
-        done
-    with Exit -> ()
+    while true
+    do
+        print_string !prompt; flush_all();
+        let lexbuf = Lexing.from_channel stdin in
+        flush_all ();
+        try
+            process_statement (Parser.single_statement Lexer.token lexbuf)
+        with
+            | Parsing.Parse_error -> print_string "*** parse error\n"; flush_all ()
+            | Error err -> print_string ("*** " ^ err ^ "\n"); flush_all ()
+    done
 
 (* let _ = mainloop () *)
 
 let _ =
-    for i=1 to (Array.length Sys.argv)-1
-    do
-        loadfile (Sys.argv.(i));
-    done;
-    mainloop()
+    try
+        for i=1 to (Array.length Sys.argv)-1
+        do
+            loadfile (Sys.argv.(i));
+        done;
+        mainloop()
+    with Exit -> ()
