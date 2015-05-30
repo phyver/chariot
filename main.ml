@@ -6,7 +6,7 @@ open Pretty
 open Misc
 open Commands
 
-let env = ref { current_priority = 0; types = []; constants = []; functions = []; vars = [] }
+let env = ref { current_priority = 0; types = []; constants = []; functions = [] }
 let prompt = ref ">>> "
 
 let istty () =

@@ -57,8 +57,7 @@ type environment = {
     current_priority: int                                                                   ;
     types:     (type_name * (type_name list) * priority * const_name list) list             ;
     constants: (const_name * priority * type_expression) list                               ;
-    functions: (var_name * bloc_nb * type_expression * function_clause list) list           ;
-    vars:      (var_name * type_expression) list                                            }
+    functions: (var_name * bloc_nb * type_expression * function_clause list) list           }
 
 let get_arity (t:type_name) (env:environment) : int =
     let rec aux = function
@@ -83,7 +82,7 @@ let get_type_const (c:const_name) (env:environment) =
         | _::consts -> aux consts
     in aux env.constants
 
-let get_type_var (x:var_name) (env:environment) =
+let get_type_var (x:var_name) (vars:(var_name*type_expression)list) (env:environment) =
     let rec aux_function = function
         | [] -> raise Not_found
         | (f,_,t,_)::_ when f=x -> t
@@ -94,15 +93,15 @@ let get_type_var (x:var_name) (env:environment) =
         | (_x,_t)::_ when _x=x -> _t
         | _::vars -> aux_var vars
     in
-    aux_var env.vars
+    aux_var vars
 
 
-let rec infer_type (u:term) (env:environment) : type_expression =
+let rec infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list): type_expression =
     match u with
         | Apply(u1,u2) ->
             begin
-                let t1 = infer_type u1 env in
-                let t2 = infer_type u2 env in
+                let t1 = infer_type u1 env vars in
+                let t2 = infer_type u2 env vars in
                 match t1 with
                     | Arrow(t11,t12) ->
                             let sigma = unify_type t11 t2
@@ -110,7 +109,7 @@ let rec infer_type (u:term) (env:environment) : type_expression =
                     | _ -> raise Exit
             end
         | Constant(c) -> (try get_type_const c env with Not_found -> raise Exit)
-        | Var(x) -> (try get_type_var x env with Not_found -> raise Exit)
+        | Var(x) -> (try get_type_var x vars env with Not_found -> raise Exit)
 
 
 
