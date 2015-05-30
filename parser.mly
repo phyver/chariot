@@ -11,24 +11,36 @@ open Commands
 %right ARROW
 %left DOT
 
-%start statement
+%start single_statement
+%start statements
 
-%type <Commands.cmd> statement
+%type <Commands.cmd list> statements
+%type <Commands.cmd> single_statement
+
 %type <priority * (type_name * (type_expression list) * (const_name * type_expression) list) list> new_types
 %type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
 %type <type_name * (type_expression list) * (const_name * type_expression) list> type_def
+
 %type <var_name * type_expression * (term * term) list> function_def
 %type <(var_name * type_expression * (term * term) list ) list> function_defs
 
 %%
 
+statements:
+    | statement statements      { $1::$2 }
+    | /*nothing*/ {[]}
+
+single_statement:
+    | statement { $1 }
+    | EOF { Eof }
 
 statement:
     | ENDSTATEMENT                      { Nothing }
     | new_types ENDSTATEMENT            { let priority,defs = $1 in TypeDef(priority, defs) }
     | new_functions ENDSTATEMENT        { FunDef($1) }
     | COLON IDL cmd_args ENDSTATEMENT   { Cmd($2,$3) }
-    | EOF                               { Eof }
+
+
 
 cmd_args:
     | /* nothing */ { [] }
@@ -111,13 +123,16 @@ atomic_term:
 
 lhs_term:
     | IDL   { Var($1) }
-    | lhs_term pattern { Apply($1,$2) }
+    | LPAR lhs_term RPAR { $2 }
     | lhs_term DOT IDU { Apply(Constant($3), $1) }
-    | lhs_term DOT DUMMY { Apply(Constant("_"), $1) }
+    | lhs_term atomic_pattern { Apply($1,$2) }
+
+atomic_pattern:
+    | IDL { Var($1) }
+    | IDU { Constant($1) }
+    | LPAR pattern RPAR { $2 }
 
 pattern:
-    | IDL { Var($1) }
-    | DUMMY { Var("_") }
-    | IDU pattern { Apply(Constant($1), $2) }
-
+    | atomic_pattern { $1 }
+    | pattern atomic_pattern { Apply($1, $2) }
 

@@ -184,5 +184,5 @@ let process_type_defs (env:environment)
     in List.iter (function tname,params,consts -> process_single_type tname params consts) defs;
 
     { env with  current_priority = priority;
-                types = List.rev_append !types env.types;
+                types = List.append !types env.types;
                 constants = List.rev_append !constants env.constants }

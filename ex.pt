@@ -1,4 +1,4 @@
-:prompt ""
+(* :prompt "" *)
 
 
 data N where Zero : N | Succ : N -> N

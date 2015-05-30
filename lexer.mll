@@ -3,7 +3,7 @@ open Parser
 
 let remove_exp s =
     let re = Str.regexp "\\(⁰\\|¹\\|²\\|³\\|⁴\\|⁵\\|⁶\\|⁷\\|⁸\\|⁹\\)*$" in
-    Str.global_replace re s ""
+    Str.global_replace re "" s
 
 }
 let upper = [ 'A'-'Z' ]

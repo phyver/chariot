@@ -34,20 +34,21 @@ let print_constant (c:const_name) (p:priority) =
     print_string c;
     if !verbose>0 then print_exp p
 
-let rec print_type = function
+let rec print_type env = function
     | TVar(false,x) -> print_string @$ "_" ^ x
     | TVar(true,x) -> print_string x
     | Data(t,args) ->
             print_string t;
-            print_list "" "(" "," ")" print_type args
+            print_exp (get_priority t env);
+            print_list "" "(" "," ")" (print_type env) args
     | Arrow((TVar _ | Data _) as t1,t2) ->
-            print_type t1;
+            print_type env t1;
             print_string " → ";
-            print_type t2
+            print_type env t2
     | Arrow(t1,t2) ->
-            print_string "(" ; print_type t1; print_string ")";
+            print_string "(" ; print_type env t1; print_string ")";
             print_string " → ";
-            print_type t2
+            print_type env t2
 
 
 let showtypes env =
@@ -58,7 +59,7 @@ let showtypes env =
         print_exp priority;
         print_list "" "(" "," ")" print_string params;
         print_string " where";
-        print_list "\n" "\n    | " "\n    | " "\n" (function c -> print_string c; print_string " : "; print_type (get_type_const c env) ;) consts
+        print_list "\n" "\n    | " "\n    | " "\n" (function c -> print_string c; print_exp priority; print_string " : "; print_type env (get_type_const c env) ;) consts
     in
 
     let rec showtypesaux = function
