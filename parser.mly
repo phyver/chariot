@@ -6,7 +6,7 @@ open Commands
 %token EQUAL COLON ENDSTATEMENT LPAR RPAR LBRAC RBRAC COMMA PIPE DOT
 %token DATA CODATA WHERE AND ARROW VAL DUMMY
 %token EOF
-%token <string> IDU IDL STR
+%token <string> IDU IDL STR TVAR
 
 %right ARROW
 %left DOT
@@ -57,15 +57,15 @@ type_defs:
     | type_def AND type_defs    { $1::$3 }
 
 type_def:
-    | IDU type_parameters WHERE const_clauses       { ($1, $2, $4) }
+    | IDL type_parameters WHERE const_clauses       { ($1, $2, $4) }
 
 type_parameters:
     | /* nothing */                         { [] }
     | LPAR type_parameters_aux RPAR         { $2 }
 
 type_parameters_aux:
-    | IDU                                   { [TVar(true,$1)] }
-    | IDU COMMA type_parameters_aux         { (TVar(true,$1))::$3 }
+    | TVAR                                  { [TVar(true,$1)] }
+    | TVAR COMMA type_parameters_aux        { (TVar(true,$1))::$3 }
 
 const_clauses:
     | /* nothing */                         { [] }
@@ -81,9 +81,10 @@ const_clause:
     | IDU COLON type_expression             { ($1, $3) }
 
 type_expression:
-    | IDU                                           { TVar(false,$1) }  /* we don't know yet if this is a polymorphic variable or a type constant... */
-    | IDU LPAR RPAR                                 { Data($1, []) }
-    | IDU LPAR type_expression_args RPAR            { Data($1,$3) }
+    | TVAR                                          { TVar(true,$1) }
+    | IDL                                           { Data($1, []) }
+    | IDL LPAR RPAR                                 { Data($1, []) }
+    | IDL LPAR type_expression_args RPAR            { Data($1,$3) }
     | type_expression ARROW type_expression         { Arrow($1, $3) }
     | LPAR type_expression RPAR                     { $2 }
 

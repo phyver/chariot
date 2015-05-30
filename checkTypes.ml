@@ -33,18 +33,6 @@ let check_new_consts_different_from_old new_consts old_consts =
         | None -> ()
         | Some t -> raise @$ Error ("*** constant " ^ t ^ " already exists")
 
-(* While parsing, we don't know if nullary types correspond to type parameters or other type constants.
- * The Parser uses the "TVar" constructor with the boolean field set to false for those...
- * We can later replace them by a type parameter (if it is one), or a nullary type constant.
- * (Checking that the nullary type constant actually exists is done later. *)
-let rec replace_unknown_TVar params = function
-    | Arrow(t1,t2) -> Arrow(replace_unknown_TVar params t1, replace_unknown_TVar params t2)
-    | TVar(true,x) -> TVar(true,x)
-    | Data(t, args) -> Data(t, List.map (replace_unknown_TVar params) args)
-    | TVar(false,x) -> if List.mem (TVar(true,x)) params
-                then TVar(true,x)
-                else Data(x, [])
-
 (* check that all the types being defined only appear with exactly the same parameters
  * and the other types have the appropriate arity *)
 let rec check_parameters (env:environment) (defs:(type_name*type_expression list) list) = function
@@ -146,9 +134,6 @@ let process_type_defs (env:environment)
 
         (* we check that all the parameters are different *)
         check_uniqueness_parameters params;
-
-        (* we replace the inapropriate TVar parts in types of new constants *)
-        let consts =  (List.map (function c,t -> c, replace_unknown_TVar params t) consts) in
 
         (* we check that all instances of defined type appear with the same parameters *)
         List.iter (function _,t -> check_parameters env new_types_with_params t) consts;

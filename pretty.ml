@@ -35,8 +35,8 @@ let print_constant (c:const_name) (p:priority) =
     if !verbose>0 then print_exp p
 
 let rec print_type env = function
-    | TVar(false,x) -> print_string @$ "_" ^ x
-    | TVar(true,x) -> print_string x
+    | TVar(false,x) -> print_string @$ "'_" ^ x
+    | TVar(true,x) -> print_string @$ "'" ^ x
     | Data(t,args) ->
             print_string t;
             print_exp (get_priority t env);

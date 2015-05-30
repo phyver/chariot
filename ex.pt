@@ -1,25 +1,25 @@
 (* :prompt "" *)
 
 
-data N where Zero : N | Succ : N -> N
+data nat where Zero : nat | Succ : nat -> nat
 
 data
-  List(X) where Nil : List(X)
-              | Cons : X -> List(X) -> List(X)
+  list('x) where Nil : list('x)
+              | Cons : 'x -> list('x) -> list('x)
 and
-  BTree(B,X,Y) where
-    | Leaf : Y → BTree(B,X,Y)
-    | Node : X → (B → BTree(B,X,Y)) → BTree(B,X,Y)
+  tree('b,'x,'y) where
+    | Leaf : 'y → tree('b,'x,'y)
+    | Node : 'x → ('b → tree('b,'x,'y)) → tree('b,'x,'y)
 
-val length : List(X) -> N
+val length : list('x) -> nat
     | length Nil = Z
     | length (Cons x xs) = S (length xs)
 
-codata Stream(X) where
-    | Head : Stream(X) -> X
-    | Tail : Stream(X) -> Stream(X)
+codata stream('x) where
+    | Head : stream('x) -> 'x
+    | Tail : stream('x) -> stream('x)
 
-val map : (X -> Y) -> Stream(X) -> Stream(Y)
+val map : ('x -> 'y) -> stream('x) -> stream('y)
     | (map f s).Head = f (s.Head)
     | (map f s).Tail = map f s.Tail
 
