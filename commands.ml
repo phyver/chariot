@@ -16,11 +16,11 @@ type cmd =
      * No sanity checking is done by the parser, everything is done in the "process_type_defs" function in file "checkTypes.ml"...
      *)
 
-    | FunDef of (var_name * type_expression * (term list * term) list) list
+    | FunDef of (var_name * type_expression * (term * term) list) list
     (* The output of a function definition from the parser consists of a list of
      *   - a function name
      *   - a function type
      *   - a list of clauses, each consisting of
-     *       - a list of LHS patterns, given by terms
-     *       - a RHS
+     *       - a LHS given by a term (possibly with "_" variables
+     *       - a RHS given by a term
      *)

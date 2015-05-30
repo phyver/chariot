@@ -4,7 +4,7 @@ open Commands
 %}
 
 %token EQUAL COLON ENDSTATEMENT LPAR RPAR LBRAC RBRAC COMMA PIPE DOT
-%token DATA CODATA WHERE AND ARROW VAL
+%token DATA CODATA WHERE AND ARROW VAL DUMMY
 %token EOF
 %token <string> IDU IDL STR
 
@@ -17,8 +17,8 @@ open Commands
 %type <priority * (type_name * (type_expression list) * (const_name * type_expression) list) list> new_types
 %type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
 %type <type_name * (type_expression list) * (const_name * type_expression) list> type_def
-%type <var_name * type_expression * (term list * term) list> function_def
-%type <(var_name * type_expression * (term list * term) list ) list> function_defs
+%type <var_name * type_expression * (term * term) list> function_def
+%type <(var_name * type_expression * (term * term) list ) list> function_defs
 
 %%
 
@@ -26,7 +26,7 @@ open Commands
 statement:
     | ENDSTATEMENT                      { Nothing }
     | new_types ENDSTATEMENT            { let priority,defs = $1 in TypeDef(priority, defs) }
-    | new_functions ENDSTATEMENT        { FunDef([]) }
+    | new_functions ENDSTATEMENT        { FunDef($1) }
     | COLON IDL cmd_args ENDSTATEMENT   { Cmd($2,$3) }
     | EOF                               { Eof }
 
@@ -94,7 +94,10 @@ function_clauses:
     | PIPE function_clause function_clauses     { $2::$3 }
 
 function_clause:
-    | patterns EQUAL term        { ($1,$3) }
+    | lhs_term EQUAL rhs_term        { ($1,$3) }
+
+rhs_term:
+    | term { $1 }
 
 term:
     | atomic_term               { $1 }
@@ -106,9 +109,15 @@ atomic_term:
     | IDL                       { Var($1) }
     | IDU                       { Constant($1) }
 
-patterns:
-    | /* nothing */     { [] }
-    | atomic_term patterns     { $1::$2 }
+lhs_term:
+    | IDL   { Var($1) }
+    | lhs_term pattern { Apply($1,$2) }
+    | lhs_term DOT IDU { Apply(Constant($3), $1) }
+    | lhs_term DOT DUMMY { Apply(Constant("_"), $1) }
 
+pattern:
+    | IDL { Var($1) }
+    | DUMMY { Var("_") }
+    | IDU pattern { Apply(Constant($1), $2) }
 
 
