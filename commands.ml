@@ -36,11 +36,16 @@ type cmd =
 let cmd_unify env t1 t2 =
     print_string "unifying type ";
     print_type env t1;
-    print_string " and ";
+    print_string "\n          and ";
     print_type env t2;
     print_newline();
     let sigma = unify_type t1 t2 in
-    print_string "result: ";
+    print_string "result: sigma = ";
     print_list "''" "" " ; " "" (function x,t -> print_string (x ^ ":="); print_type env t) sigma;
-    print_newline()
+    print_newline();
+    print_string "t1[sigma] = ";
+    print_type env (subst_type sigma t1);
+    print_string "\nt2[sigma] = ";
+    print_type env (subst_type sigma t2);
+    print_newline(); print_newline()
 

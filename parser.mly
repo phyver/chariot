@@ -44,7 +44,7 @@ statement:
 command:
     | CMDQUIT                                       { CmdQuit }
     | CMDINFER term                                 { CmdInfer $2 }
-    | CMDUNIFY type_expression type_expression      { CmdUnify($2,$3) }
+    | CMDUNIFY type_expression AND type_expression  { CmdUnify($2,$4) }
     | CMDPROMPT string                              { CmdPrompt($2) }
     | CMDSHOW string                                { CmdShow($2) }
 
@@ -86,7 +86,6 @@ const_clause:
     | IDU COLON type_expression             { ($1, $3) }
 
 type_expression:
-    /* TODO: add TSVAR for '_a --> TVar(false,"a") */
     | TVAR                                          { TVar(true,$1) }
     | TSVAR                                         { TVar(false,$1) }
     | IDL                                           { Data($1, []) }
