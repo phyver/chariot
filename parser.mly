@@ -5,8 +5,9 @@ open Commands
 
 %token EQUAL COLON ENDSTATEMENT LPAR RPAR LBRAC RBRAC COMMA PIPE DOT
 %token DATA CODATA WHERE AND ARROW VAL DUMMY
+%token CMDQUIT CMDPROMPT CMDINFER CMDUNIFY CMDSHOW
 %token EOF
-%token <string> IDU IDL STR TVAR
+%token <string> IDU IDL STR TVAR TSVAR
 
 %right ARROW
 %left DOT
@@ -38,15 +39,19 @@ statement:
     | ENDSTATEMENT                      { Nothing }
     | new_types ENDSTATEMENT            { let priority,defs = $1 in TypeDef(priority, defs) }
     | new_functions ENDSTATEMENT        { FunDef($1) }
-    | COLON IDL cmd_args ENDSTATEMENT   { Cmd($2,$3) }
+    | command ENDSTATEMENT              { $1 }
 
+command:
+    | CMDQUIT                                       { CmdQuit }
+    | CMDINFER term                                 { CmdInfer $2 }
+    | CMDUNIFY type_expression type_expression      { CmdUnify($2,$3) }
+    | CMDPROMPT string                              { CmdPrompt($2) }
+    | CMDSHOW string                                { CmdShow($2) }
 
-
-cmd_args:
-    | /* nothing */ { [] }
-    | IDL cmd_args { $1::$2 }
-    | IDU cmd_args { $1::$2 }
-    | STR cmd_args { $1::$2 }
+string:
+    | IDL { $1 }
+    | IDU { $1 }
+    | STR { $1 }
 
 new_types:
     |   DATA type_defs          { (-1,$2) }
@@ -81,7 +86,9 @@ const_clause:
     | IDU COLON type_expression             { ($1, $3) }
 
 type_expression:
+    /* TODO: add TSVAR for '_a --> TVar(false,"a") */
     | TVAR                                          { TVar(true,$1) }
+    | TSVAR                                         { TVar(false,$1) }
     | IDL                                           { Data($1, []) }
     | IDL LPAR RPAR                                 { Data($1, []) }
     | IDL LPAR type_expression_args RPAR            { Data($1,$3) }

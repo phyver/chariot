@@ -19,12 +19,16 @@ let istty () =
 let process_statement = function
     | Eof -> raise Exit
     | Nothing -> ()
+
+    | CmdShow("types") -> showtypes !env
+    | CmdShow(s) -> raise @$ Error ("*** what do you want to show?")
+    | CmdPrompt(s) -> prompt := s
+    | CmdQuit -> raise Exit
+    | CmdInfer(e) -> ()
+    | CmdUnify(t1,t2) -> cmd_unify !env t1 t2
+
     | TypeDef(priority,defs) -> env := process_type_defs !env priority defs
     | FunDef(defs) -> env := process_function_defs !env defs
-    | Cmd("show",["types"]) -> showtypes !env
-    | Cmd("prompt", [s]) -> prompt := s
-    | Cmd("quit", _) -> raise Exit
-    | Cmd(c,_) -> print_string ("*** unknown command: " ^ c ^ "\n")
 
 let loadfile path =
     try

@@ -50,6 +50,11 @@ let rec print_type env = function
             print_string " → ";
             print_type env t2
 
+let rec print_term = function
+    | Var(x) -> print_string x
+    | Constant(c) -> print_string c
+    | Apply(e1,((Var _ | Constant _) as e2)) -> print_term e1; print_string " "; print_term e2
+    | Apply(e1,e2) -> print_term e1; print_string " ("; print_term e2; print_string ")"
 
 let showtypes env =
 

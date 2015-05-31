@@ -34,9 +34,11 @@ let check_new_consts_different_from_old new_consts old_consts =
         | Some t -> raise @$ Error ("*** constant " ^ t ^ " already exists")
 
 (* check that all the types being defined only appear with exactly the same parameters
- * and the other types have the appropriate arity *)
+ * and the other types have the appropriate arity
+ * check also that the types do not contain "static" parameters... *)
 let rec check_parameters (env:environment) (defs:(type_name*type_expression list) list) = function
     | TVar(true,_) -> ()
+    | TVar(false,x) -> raise @$ Error ("*** types of constants cannot contain 'static' variables")
     | Arrow(t1,t2) -> check_parameters env defs t1; check_parameters env defs t2
     | Data(t,params) ->
             begin
@@ -50,7 +52,6 @@ let rec check_parameters (env:environment) (defs:(type_name*type_expression list
                         then raise @$ Error("*** type " ^ t ^ " should has arity" ^ (string_of_int a))
                     with Not_found -> raise @$ Error("*** type " ^ t ^ " doesn't exist")
             end
-    | TVar(false,_) -> assert false
 
 
 (* check that a type doesn't contain an instance of some other type *)
