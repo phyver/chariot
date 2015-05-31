@@ -7,7 +7,7 @@ open Commands
 %token DATA CODATA WHERE AND ARROW VAL DUMMY
 %token CMDQUIT CMDPROMPT CMDINFER CMDUNIFY CMDSHOW
 %token EOF
-%token <string> IDU IDL STR TVAR TSVAR
+%token <string> IDU IDL STR TVAR
 
 %right ARROW
 %left DOT
@@ -69,8 +69,8 @@ type_parameters:
     | LPAR type_parameters_aux RPAR         { $2 }
 
 type_parameters_aux:
-    | TVAR                                  { [TVar(true,$1)] }
-    | TVAR COMMA type_parameters_aux        { (TVar(true,$1))::$3 }
+    | TVAR                                  { [TVar($1)] }
+    | TVAR COMMA type_parameters_aux        { (TVar($1))::$3 }
 
 const_clauses:
     | /* nothing */                         { [] }
@@ -86,8 +86,7 @@ const_clause:
     | IDU COLON type_expression             { ($1, $3) }
 
 type_expression:
-    | TVAR                                          { TVar(true,$1) }
-    | TSVAR                                         { TVar(false,$1) }
+    | TVAR                                          { TVar($1) }
     | IDL                                           { Data($1, []) }
     | IDL LPAR RPAR                                 { Data($1, []) }
     | IDL LPAR type_expression_args RPAR            { Data($1,$3) }

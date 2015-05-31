@@ -5,7 +5,7 @@ open Misc
 let check_uniqueness_parameters params =
     match uniq params with
         | None -> ()
-        | Some(TVar(true,x)) -> raise @$ Error ("*** parameter " ^ x ^ " appears more than once")
+        | Some(TVar(x)) -> raise @$ Error ("*** parameter " ^ x ^ " appears more than once")
         | _ -> assert false
 
 (* check that all new types are different *)
@@ -37,8 +37,7 @@ let check_new_consts_different_from_old new_consts old_consts =
  * and the other types have the appropriate arity
  * check also that the types do not contain "static" parameters... *)
 let rec check_parameters (env:environment) (defs:(type_name*type_expression list) list) = function
-    | TVar(true,_) -> ()
-    | TVar(false,x) -> raise @$ Error ("*** types of constants cannot contain 'static' variables")
+    | TVar(_) -> ()
     | Arrow(t1,t2) -> check_parameters env defs t1; check_parameters env defs t2
     | Data(t,params) ->
             begin
@@ -57,8 +56,7 @@ let rec check_parameters (env:environment) (defs:(type_name*type_expression list
 (* check that a type doesn't contain an instance of some other type *)
 let check_doesnt_contain (t:type_expression) (x:type_name) =
     let rec check_doesnt_contain_aux = function
-        | TVar(false,_) -> assert false
-        | TVar(true,_) -> ()
+        | TVar(_) -> ()
         | Data(c,_) when x = c -> raise @$ Error ("*** type " ^ x ^ " appears in non strictly positive position")
         | Data(c,_) -> ()
         | Arrow(t1,t2) -> check_doesnt_contain_aux t1 ; check_doesnt_contain_aux t2
@@ -67,19 +65,17 @@ let check_doesnt_contain (t:type_expression) (x:type_name) =
 (* check that a type only appears strictly positively in another *)
 let rec check_is_strictly_positive (t:type_expression) (x:type_name) =
     let rec check_is_strictly_positive_aux = function 
-        | TVar(true,_) -> ()
+        | TVar(_) -> ()
         | Data _ -> ()
         | Arrow(t1,t2) -> check_doesnt_contain t1 x; check_is_strictly_positive_aux t2
-        | _ -> assert false
     in check_is_strictly_positive_aux t
 
 (* check that a type only appears strictly positively in all the arguments of a constant *)
 let rec check_is_strictly_positive_arguments (t:type_expression) (x:type_name) =
     let rec check_is_strictly_positive_arguments_aux t = match t with
-        | TVar(true,_) -> check_is_strictly_positive t x
+        | TVar(_) -> check_is_strictly_positive t x
         | Data _ -> check_is_strictly_positive t x
         | Arrow(t1,t2) -> check_is_strictly_positive t1 x; check_is_strictly_positive_arguments_aux t2
-        | _ -> assert false
     in check_is_strictly_positive_arguments_aux t
 
 (* check the type of a destructor: it should be of the form T(...) -> ...
@@ -130,7 +126,7 @@ let process_type_defs (env:environment)
     check_new_consts_different_from_old new_consts old_functions;
 
     let process_single_type tname params consts =
-        types := (tname, List.map (function TVar(true, x) -> x
+        types := (tname, List.map (function TVar(x) -> x
                                           | _ -> assert false) params, priority, List.map fst consts) :: !types;
 
         (* we check that all the parameters are different *)

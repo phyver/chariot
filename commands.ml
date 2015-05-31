@@ -48,7 +48,7 @@ let cmd_unify env t1 t2 =
     print_type env t1s;
     print_newline();
     print_string "          via   ";
-    print_list "''" "" " ; " "" (function x,t -> print_string ("'" ^ x ^ " := "); print_type env t) sigma;
+    print_list "''" "" "  ;  " "" (function x,t -> print_string ("'" ^ x ^ " := "); print_type env t) sigma;
     print_newline();
     print_string "=======================================================\n";
     print_newline()
@@ -63,7 +63,7 @@ let cmd_infer_type env u vars =
     print_type env t;
     print_newline();
     print_string "         when   ";
-    print_list "''" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) sigma;
+    print_list "''" "" "  ;  " "" (function x,t -> print_string (x ^ " : "); print_type env t) sigma;
     print_newline();
     print_string "=======================================================\n";
     print_newline ()

@@ -29,13 +29,6 @@ let rec get_variables_from_lhs = function
     | Constant _ -> []
     | Apply(t1,t2) -> (get_variables_from_lhs t1) @ (get_variables_from_lhs t2)
 
-let rec staticify_type t = match t with
-    | TVar(true,t) -> TVar(false,t)
-    | TVar(false,_) -> assert false
-    | Data(t,params) -> Data(t, List.map staticify_type params)
-    | Arrow(t1,t2) -> Arrow(staticify_type t1, staticify_type t2)
-
-
 let rec infer_type_of_variables env vars lhs_pattern
   =
       print_string "infer_type_of_variables: ";
@@ -87,13 +80,12 @@ let process_function_defs (env:environment)
             | Some(x) -> raise @$ Error ("*** variable " ^ x ^ " appears more than once"));
 
         (* add types *)
-        let vars = List.map (fun x -> if x=f then (f,staticify_type t) else (incr var_counter; (x,TVar(true,"X"^(string_of_int !var_counter))))) vars in
+        let vars = List.map (fun x -> if x=f then (f,t) else (incr var_counter; (x,TVar("x"^(string_of_int !var_counter))))) vars in
 
         List.iter (function x,t -> Printf.printf "var %s: " x; print_type env t; print_newline()) vars;
         print_string "\n\n";
 
         (* unify with t *)
-        let st = staticify_type t in
         let sigma = infer_type_of_variables env vars lhs_pattern in
 
         List.iter (function x,t -> print_string ("PARAM " ^ x ^ ": "); print_type env t; print_newline()) sigma;
