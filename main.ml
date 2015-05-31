@@ -24,7 +24,7 @@ let process_statement = function
     | CmdShow(s) -> raise @$ Error ("*** what do you want to show?")
     | CmdPrompt(s) -> prompt := s
     | CmdQuit -> raise Exit
-    | CmdInfer(e) -> ()
+    | CmdInfer(e) -> cmd_infer_type !env e []
     | CmdUnify(t1,t2) -> cmd_unify !env t1 t2
 
     | TypeDef(priority,defs) -> env := process_type_defs !env priority defs

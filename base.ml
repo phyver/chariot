@@ -4,10 +4,11 @@ exception Error of string
 (* types for type expressions and substitutions *)
 type type_name = string
 type type_expression =
-    | TVar of bool*string     (* polymorphic type variable, the boolean indicates if the variable can be instantiated *)
+    | TVar of bool*string     (* polymorphic type variable, the boolean indicates if the variable can be instantiated differently everytime we use the variable *)
     | Data of type_name * (type_expression list)
     | Arrow of type_expression * type_expression
 type type_substitution = (type_name * type_expression) list
+
 
 (* types for expressions, function definitions and environments *)
 type arity = int
@@ -63,4 +64,3 @@ let get_type_var (x:var_name) (vars:(var_name*type_expression)list) (env:environ
         | _::vars -> aux_var vars
     in
     aux_var vars
-

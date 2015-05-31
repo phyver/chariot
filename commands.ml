@@ -34,18 +34,36 @@ type cmd =
 
 
 let cmd_unify env t1 t2 =
-    print_string "unifying type ";
+    print_string "=======================================================\n";
+    print_string "unifying type   ";
     print_type env t1;
-    print_string "\n          and ";
+    print_string "\n          and   ";
     print_type env t2;
     print_newline();
     let sigma = unify_type t1 t2 in
-    print_string "result: sigma = ";
-    print_list "''" "" " ; " "" (function x,t -> print_string (x ^ ":="); print_type env t) sigma;
+    let t1s = subst_type sigma t1 in
+    let t2s = subst_type sigma t2 in
+    assert (t1s = t2s);
+    print_string "       result   ";
+    print_type env t1s;
     print_newline();
-    print_string "t1[sigma] = ";
-    print_type env (subst_type sigma t1);
-    print_string "\nt2[sigma] = ";
-    print_type env (subst_type sigma t2);
-    print_newline(); print_newline()
+    print_string "          via   ";
+    print_list "''" "" " ; " "" (function x,t -> print_string ("'" ^ x ^ " := "); print_type env t) sigma;
+    print_newline();
+    print_string "=======================================================\n";
+    print_newline()
 
+let cmd_infer_type env u vars =
+    print_string "=======================================================\n";
+    print_string "     the term   ";
+    print_term u;
+    print_newline();
+    let t,sigma = infer_type u env vars in
+    print_string "   is of type   ";
+    print_type env t;
+    print_newline();
+    print_string "         when   ";
+    print_list "''" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) sigma;
+    print_newline();
+    print_string "=======================================================\n";
+    print_newline ()
