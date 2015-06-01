@@ -1,6 +1,7 @@
 open Base
 open Pretty
 open Typing
+open Compute
 
 (* commands *)
 type cmd =
@@ -9,9 +10,11 @@ type cmd =
 
     | CmdQuit
     | CmdPrompt of string
-    | CmdUnify of type_expression*type_expression
+    | CmdUnifyType of type_expression*type_expression
+    | CmdUnifyTerm of term*term
     | CmdInfer of term
     | CmdShow of string
+    | CmdReduce of term
 
     | TypeDef of priority * (type_name * (type_expression list) * (const_name * type_expression) list) list
     (* The output of a type definition from the parser consists of
@@ -33,7 +36,7 @@ type cmd =
      *)
 
 
-let cmd_unify env t1 t2 =
+let cmd_unify_type env t1 t2 =
     print_string "=======================================================\n";
     print_string "unifying type   ";
     print_type env t1;
@@ -67,3 +70,19 @@ let cmd_infer_type env u vars =
     print_newline();
     print_string "=======================================================\n";
     print_newline ()
+
+let cmd_unify_term env pattern term =
+    print_string "=======================================================\n";
+    print_string "unifying pattern   ";
+    print_term env pattern;
+    print_string "\n        and term   ";
+    print_term env term;
+    print_newline();
+    (* let sigma = unify_pattern pattern term in *)
+    (* let new_term = subst_term pattern sigma in *)
+    (* assert (new_term = term); *)
+    (* print_string "          result   "; *)
+    (* print_list "''" "" "  ;  " "" (function x,t -> print_string (x ^ " := "); print_term env t) sigma; *)
+    (* print_newline(); *)
+    (* print_string "=======================================================\n"; *)
+    (* print_newline() *)

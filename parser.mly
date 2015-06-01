@@ -3,9 +3,9 @@ open Base
 open Commands
 %}
 
-%token EQUAL COLON LPAR RPAR COMMA PIPE DOT DUMMY DAIMON ARROW
+%token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY DAIMON ARROW
 %token DATA CODATA WHERE AND VAL
-%token CMDQUIT CMDPROMPT CMDINFER CMDUNIFY CMDSHOW
+%token CMDQUIT CMDPROMPT CMDINFER CMDUNIFYTYPE CMDUNIFYTERM CMDSHOW CMDREDUCE
 %token EOF
 %token <string> IDU IDL STR TVAR
 
@@ -29,24 +29,31 @@ open Commands
 
 statements:
     | statement statements      { $1::$2 }
-    | EOF {[]}
+    | eos statements            { $2 }
+    | EOF                       { [] }
 
 single_statement:
-    | /* nothing */ { Nothing }
-    | statement { $1 }
-    | EOF { Eof }
+    | statement eos     { $1 }
+    | eos               { Nothing }
+    | EOF               { Eof }
 
 statement:
-    | new_types             { let priority,defs = $1 in TypeDef(priority, defs) }
-    | new_functions         { FunDef($1) }
-    | command               { $1 }
+    | new_types       { let priority,defs = $1 in TypeDef(priority, defs) }
+    | new_functions   { FunDef($1) }
+    | command         { $1 }
+
+eos:
+    | SEMICOLON     {}
+    | BLANKLINE     {}
 
 command:
-    | CMDQUIT                                       { CmdQuit }
-    | CMDINFER term                                 { CmdInfer $2 }
-    | CMDUNIFY type_expression AND type_expression  { CmdUnify($2,$4) }
-    | CMDPROMPT string                              { CmdPrompt($2) }
-    | CMDSHOW string                                { CmdShow($2) }
+    | CMDQUIT                                           { CmdQuit }
+    | CMDINFER term                                     { CmdInfer $2 }
+    | CMDUNIFYTYPE type_expression AND type_expression  { CmdUnifyType($2,$4) }
+    | CMDUNIFYTERM term AND term                        { CmdUnifyTerm($2,$4) }
+    | CMDPROMPT string                                  { CmdPrompt($2) }
+    | CMDSHOW string                                    { CmdShow($2) }
+    | CMDREDUCE term                                    { CmdReduce($2) }
 
 string:
     | IDL { $1 }

@@ -2,6 +2,7 @@ open Parser
 open Base
 open CheckTypes
 open CheckFunctions
+open Compute
 open Pretty
 open Misc
 open Commands
@@ -26,7 +27,9 @@ let process_statement = function
     | CmdPrompt(s) -> prompt := s
     | CmdQuit -> raise Exit
     | CmdInfer(e) -> cmd_infer_type !env e []
-    | CmdUnify(t1,t2) -> cmd_unify !env t1 t2
+    | CmdUnifyType(t1,t2) -> cmd_unify_type !env t1 t2
+    | CmdUnifyTerm(t1,t2) -> cmd_unify_term !env t1 t2
+    | CmdReduce(t) -> print_term !env (reduce_all !env t); print_newline()
 
     | TypeDef(priority,defs) -> env := process_type_defs !env priority defs
     | FunDef(defs) -> env := process_function_defs !env defs

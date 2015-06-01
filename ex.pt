@@ -18,6 +18,12 @@ val length : list('x) -> nat
 (* addition of natural numbers *)
 val add : nat -> nat -> nat  | add n Zero = n | add n (Succ m) = Succ (add n m)
 
+val mult : nat -> nat -> nat | mult n Zero = Zero | mult n (Succ m) = add n (mult n m)
+
+val pow : nat -> nat -> nat | pow n Zero = Succ Zero | pow n (Succ m) = mult n (pow n m)
+
+
+
 (* rose trees *)
 data rtree where Fork : list(rtree) -> rtree
 
@@ -65,4 +71,5 @@ val oops2 : 'a -> 'b
 
 (* show all the defined functions *)
 :show functions
+
 

@@ -19,15 +19,19 @@ rule token = parse
     | ":quit"           { CMDQUIT }
     | ":prompt"         { CMDPROMPT }
     | ":infer"          { CMDINFER }
-    | ":unify"          { CMDUNIFY }
+    | ":term_unify"     { CMDUNIFYTERM }
+    | ":type_unify"     { CMDUNIFYTYPE }
     | ":show"           { CMDSHOW }
+    | ":reduce"         { CMDREDUCE }
     | '='               { EQUAL }
     | ':'               { COLON }
+    | ';'               { SEMICOLON }
     | '('               { LPAR }
     | ')'               { RPAR }
     | ','               { COMMA }
     | '|'               { PIPE }
     | '.'               { DOT }
+    | "\n\n"            { BLANKLINE }
     | "data"            { DATA }
     | "codata"          { CODATA }
     | "where"           { WHERE }

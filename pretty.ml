@@ -57,7 +57,7 @@ let rec print_term env = function
             let p = get_constant_priority c env in
             if p mod 2 = 0
             then (print_string "("; print_term env e2; print_string ")."; print_term env e1)
-            else ( print_term env e2; print_string " ("; print_term env e1; print_string ")")
+            else ( print_term env e1; print_string " ("; print_term env e2; print_string ")")
         end
     | Apply(e1,e2) ->
         begin
