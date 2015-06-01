@@ -72,4 +72,5 @@ val oops2 : 'a -> 'b
 (* show all the defined functions *)
 :show functions
 
-
+(* test compute *)
+:reduce (pow (Succ(Succ(Succ Zero))) (pow (Succ(Succ Zero)) (Succ(Succ Zero))))

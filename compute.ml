@@ -33,18 +33,24 @@ let reduce_all (env:environment) (u:term) : term
   = let clauses = List.concat (List.map (function (f,_,_,clauses) -> List.map (function x,y -> f,x,y)clauses) env.functions)
     in
 
+    let rec get_clauses (f:var_name) = function
+        | [] -> error ("function " ^ f ^ " doesn't exist")
+        | (_f,_,_,clauses)::_ when f=_f -> clauses
+        | _::defs -> get_clauses f defs
+    in
+
     (* look for the first clause that can be used to reduce u
      * the boolean in the result indicates if a reduction was made *)
-    let rec reduce_first_clause (u:term) clauses : term*bool =
+    let rec reduce_first_clause (u:term) f clauses : term*bool =
         match clauses with
             | [] -> u,false
-            | (f, pattern, def)::clauses ->
+            | (pattern, def)::clauses ->
                 begin
                     try
                         let sigma = unify_pattern pattern u f in
                         let new_term = subst_term def sigma in
                         new_term,true
-                    with Error _ -> reduce_first_clause u clauses
+                    with Error _ -> reduce_first_clause u f clauses
             end
     in
 
@@ -54,19 +60,23 @@ let reduce_all (env:environment) (u:term) : term
         match u with
             | Daimon -> Daimon,false
             | Constant(c) -> Constant(c),false
-            | Var(x) -> reduce_first_clause u clauses
+            | Var(x) -> reduce_first_clause u x (get_clauses x env.functions)
             | Apply(u1,u2) ->
                 begin
-                    let v,b = reduce_first_clause u clauses in
-                    if b
-                    then v,b
-                    else
-                        let v,b = reduce_leftmost u1 in
+                    try
+                        (* FIXME: rewrite... *)
+                        let f = CheckFunctions.get_function_name u in
+                        let v,b = reduce_first_clause u f (get_clauses f env.functions) in
                         if b
-                        then Apply(v, u2),b
-                        else
-                        let v,b = reduce_leftmost u2 in
-                        Apply(u1,v),b
+                        then v,true
+                        else error "nothing"
+                    with Error _ ->         (* either nothing as above, or because of "get_function_name" when u doesn't start with a function *)
+                            let v,b = reduce_leftmost u1 in
+                            if b
+                            then Apply(v, u2),b
+                            else
+                            let v,b = reduce_leftmost u2 in
+                            Apply(u1,v),b
                 end
     in
 
