@@ -14,7 +14,7 @@ let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expressi
     | Data(a, args) -> Data(a, List.map (subst_type sigma) args)
 
 (* unify two types, giving "priority" to "t1":
- * if t1 is more specialized than t2, then the substitution we compute doesn't affect t1 *)
+ * if t2 is more specialized than t1, then the substitution we compute doesn't affect t2 *)
 let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
     let rec aux (eqs:(type_expression*type_expression) list ) acc = match eqs with
             | [] -> acc
@@ -43,8 +43,8 @@ let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
 
 (* check if t1 is an instance of t2 *)
 let is_instance t1 t2 =
-    let sigma = unify_type t2 t1 in
-    t2 = subst_type sigma t2
+    let sigma = unify_type t1 t2 in
+    t1 = subst_type sigma t1
 
 (* infers most general type of "u" in environment "env"
  * "vars" contains the type of functions that are currently being defined
