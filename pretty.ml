@@ -3,27 +3,7 @@ open Base
 
 let verbose = ref 0
 
-let print_exp n =
-    let exp = ["⁰"; "¹"; "²"; "³"; "⁴"; "⁵"; "⁶"; "⁷"; "⁸"; "⁹"] in
-    let rec aux n acc =
-        if n = 0
-        then acc
-        else
-            let d = n mod 10 in
-            aux (n/10) ((List.nth exp d)::acc)
-    in
-    List.iter print_string (aux n [])
-
-let print_sub n =
-    let sub = ["₀"; "₁"; "₂"; "₃"; "₄"; "₅"; "₆"; "₇"; "₈"; "₉"] in
-    let rec aux n acc =
-        if n = 0
-        then acc
-        else
-            let d = n mod 10 in
-            aux (n/10) ((List.nth sub d)::acc)
-    in
-    List.iter print_string (aux n [])
+let print_exp n = print_string (exp_of_int n)
 
 let rec print_list empty b1 sep b2 p = function
     | [] -> print_string empty;

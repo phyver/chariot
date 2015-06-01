@@ -8,9 +8,9 @@ type cmd =
     | Nothing
 
     | CmdQuit
-    | CmdInfer of term
-    | CmdUnify of type_expression*type_expression
     | CmdPrompt of string
+    | CmdUnify of type_expression*type_expression
+    | CmdInfer of term
     | CmdShow of string
 
     | TypeDef of priority * (type_name * (type_expression list) * (const_name * type_expression) list) list

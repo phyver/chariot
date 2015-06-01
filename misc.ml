@@ -23,3 +23,25 @@ let common l1 l2 =
         | x1::_,x2::l2 (*when x1>x2*) -> aux l1 l2
     in aux (List.sort compare l1) (List.sort compare l2)
 
+let exp_of_int n =
+    let exp = ["⁰"; "¹"; "²"; "³"; "⁴"; "⁵"; "⁶"; "⁷"; "⁸"; "⁹"] in
+    let rec aux n acc =
+        if n = 0
+        then acc
+        else
+            let d = n mod 10 in
+            aux (n/10) ((List.nth exp d)::acc)
+    in
+    String.concat "" (aux n [])
+
+let sub_of_int n =
+    let sub = ["₀"; "₁"; "₂"; "₃"; "₄"; "₅"; "₆"; "₇"; "₈"; "₉"] in
+    let rec aux n acc =
+        if n = 0
+        then acc
+        else
+            let d = n mod 10 in
+            aux (n/10) ((List.nth sub d)::acc)
+    in
+    String.concat "" (aux n [])
+

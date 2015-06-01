@@ -25,3 +25,6 @@ val map : ('x -> 'y) -> stream('x) -> stream('y)
 
 :show types
 
+:quit
+
+
