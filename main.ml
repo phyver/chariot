@@ -21,7 +21,7 @@ let process_statement = function
     | Nothing -> ()
 
     | CmdShow("types") -> showtypes !env
-    | CmdShow(s) -> raise @$ Error ("*** what do you want to show?")
+    | CmdShow(s) -> error "what do you want to show?"
     | CmdPrompt(s) -> prompt := s
     | CmdQuit -> raise Exit
     | CmdInfer(e) -> cmd_infer_type !env e []

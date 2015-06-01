@@ -1,5 +1,4 @@
 open Misc
-exception Error of string
 
 (* types for type expressions and substitutions *)
 type type_name = string
@@ -65,3 +64,7 @@ let get_type_var (x:var_name) (vars:(var_name*type_expression)list) (env:environ
         | _::vars -> aux_var vars
     in
     aux_var vars
+
+
+exception Error of string
+let error s = raise (Error s)

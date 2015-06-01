@@ -22,7 +22,7 @@ let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
             | (Data(t1, args1),Data(t2, args2))::eqs when t1=t2 ->
                 begin
                     try aux ((List.combine args1 args2)@eqs) acc
-                    with Invalid_argument _ -> raise (Error ("ERROR: datatype " ^ t1 ^ " appears with different arities"))
+                    with Invalid_argument _ -> error ("ERROR: datatype " ^ t1 ^ " appears with different arities")
                 end
             | (Arrow(t1,t2),Arrow(s1,s2))::eqs -> aux ((t1,s1)::(t2,s2)::eqs) acc
             (* do not change order of next two cases *)
@@ -35,10 +35,10 @@ let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
                     let acc = List.map (function (_x,_t) -> (_x, subst_type [x,t] _t)) acc in
                     aux eqs ((x,t)::acc)
             | (TVar _,_)::_
-            | (_,TVar _)::_ -> raise  (Error "cannot unify: loop")
+            | (_,TVar _)::_ -> error "cannot unify: loop"
             | (Arrow _,Data _)::_
-            | (Data _,Arrow _)::_ -> raise (Error "cannot unify arrow and data type")
-            | (Data _, Data _)::_ -> raise (Error "cannot unify different datatypes")
+            | (Data _,Arrow _)::_ -> error "cannot unify arrow and data type"
+            | (Data _, Data _)::_ -> error "cannot unify different datatypes"
     in aux [ (t1,t2) ] []
 
 (* check if t1 is an instance of t2 *)
@@ -87,7 +87,12 @@ let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list)
     let rec aux u constraints =
         (* print_string "infer type of "; print_term u; print_string "\n  with constraints "; print_list "-no constraint-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) vars; print_newline(); *)
         match u with
-            | Constant(c) -> (try instantiate (get_type_const c env) , constraints with Not_found -> raise (Error ("*** cannot infer type of constant " ^ c)))
+            | Constant(c) ->
+                begin
+                    try
+                        instantiate (get_type_const c env) , constraints
+                    with Not_found -> error ("cannot infer type of constant " ^ c)
+                end
             | Var(x) ->
                 begin
                     try
@@ -110,8 +115,8 @@ let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list)
 
                                 (try
                                     subst_type sigma2 t12 , constraints
-                                with Error s -> raise (Error ("cannot type this term: " ^ s)))
-                        | _ -> raise @$ Error ("not a function type!!!")
+                                with Error s -> error ("cannot type this term: " ^ s))
+                        | _ -> error "not a function type!!!"
                 end
 
     in aux u vars

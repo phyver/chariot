@@ -10,17 +10,17 @@ let var_counter = ref 0
 let check_uniqueness_functions funs =
     match uniq funs with
         | None -> ()
-        | Some(f) -> raise @$ Error ("*** function " ^ f ^ " is defined more than once")
+        | Some(f) -> error ("function " ^ f ^ " is defined more than once")
 
 
 let check_new_funs_different_from_old new_funs old_funs =
     match common new_funs old_funs with
         | None -> ()
-        | Some f -> raise @$ Error ("*** function " ^ f ^ " already exists")
+        | Some f -> error ("function " ^ f ^ " already exists")
 
 let rec get_function_name = function
     | Var(f) -> f
-    | Constant c -> raise @$ Error ("*** " ^ c ^ " is not a function name")
+    | Constant c -> error (c ^ " is not a function name")
     | Apply(Constant _, p) -> get_function_name p
     | Apply(p,_) -> get_function_name p
 
@@ -48,13 +48,13 @@ let process_function_defs (env:environment)
     let check_single_clause (f:var_name) (t:type_expression) (lhs_pattern,rhs_term:term*term) =
         (* get function from LHS and check it is equal to f *)
         let _f = get_function_name lhs_pattern in
-        if not (_f = f) then raise @$ Error ("*** function names " ^ f ^ " and " ^ _f ^ " do not match");
+        if not (_f = f) then error ("function names " ^ f ^ " and " ^ _f ^ " do not match");
 
         (* get variables *)
         let lhs_vars = get_variables lhs_pattern in
         (match uniq lhs_vars with
             | None -> ()
-            | Some(x) -> raise @$ Error ("*** variable " ^ x ^ " appears more than once"));
+            | Some(x) -> error ("variable " ^ x ^ " appears more than once"));
 
         (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
         let infered_type_lhs, type_of_vars1 = infer_type lhs_pattern env [] in
@@ -67,7 +67,7 @@ let process_function_defs (env:environment)
         let infered_type_function = List.assoc f type_of_vars1 in
 (* print_string "infered type of function:  "; print_type env infered_type_function; print_newline(); *)
 (* print_string "           expected type:  "; print_type env t; print_newline(); *)
-        if not (is_instance t infered_type_function) then raise @$ Error "the LHS pattern doesn't type check";
+        if not (is_instance t infered_type_function) then error "the LHS pattern doesn't type check";
 
         (* check that all the constraints we got concern the remaining functions being defined *)
         List.iter (function x,t ->
@@ -76,8 +76,8 @@ let process_function_defs (env:environment)
                         assert (not (x=f));
                         try
                             if not (is_instance t (List.assoc x new_functions_with_types))
-                            then raise @$ Error ("*** function " ^ x ^ " doesn't have appropriate type")
-                        with Not_found -> raise @$ Error ("*** variable " ^ x ^ " is free!")
+                            then error ("function " ^ x ^ " doesn't have appropriate type")
+                        with Not_found -> error ("variable " ^ x ^ " is free!")
                     end
                   ) type_of_vars2;
 (* print_newline(); *)

@@ -5,33 +5,33 @@ open Misc
 let check_uniqueness_parameters params =
     match uniq params with
         | None -> ()
-        | Some(TVar(x)) -> raise @$ Error ("*** parameter " ^ x ^ " appears more than once")
+        | Some(TVar(x)) -> error ("parameter " ^ x ^ " appears more than once")
         | _ -> assert false
 
 (* check that all new types are different *)
 let check_new_types_different types =
     match uniq types with
         | None -> ()
-        | Some(t) -> raise @$ Error ("*** type " ^ t ^ " is defined more than once")
+        | Some(t) -> error ("type " ^ t ^ " is defined more than once")
 
 (* check that new types are different from old ones *)
 let check_new_types_different_from_old new_types old_types =
     match common new_types old_types with
         | None -> ()
-        | Some t -> raise @$ Error ("*** type " ^ t ^ " already exists")
+        | Some t -> error ("type " ^ t ^ " already exists")
 
 
 (* check that all new constants are different *)
 let check_new_consts_different consts =
     match uniq consts with
         | None -> ()
-        | Some(c) -> raise @$ Error ("*** constant " ^ c ^ " appears more than once")
+        | Some(c) -> error ("constant " ^ c ^ " appears more than once")
 
 (* check that new constants are different from old ones *)
 let check_new_consts_different_from_old new_consts old_consts =
     match common new_consts old_consts with
         | None -> ()
-        | Some t -> raise @$ Error ("*** constant " ^ t ^ " already exists")
+        | Some t -> error ("constant " ^ t ^ " already exists")
 
 (* check that all the types being defined only appear with exactly the same parameters
  * and the other types have the appropriate arity
@@ -43,13 +43,13 @@ let rec check_parameters (env:environment) (defs:(type_name*type_expression list
             begin
                 try
                     if not (params = List.assoc t defs)
-                    then raise @$ Error("*** type " ^ t ^ " should always use the same parameters in the definition")
+                    then error("type " ^ t ^ " should always use the same parameters in the definition")
                 with Not_found ->
                     try
                         let a = get_arity t env in
                         if not (a = List.length params)
-                        then raise @$ Error("*** type " ^ t ^ " should has arity" ^ (string_of_int a))
-                    with Not_found -> raise @$ Error("*** type " ^ t ^ " doesn't exist")
+                        then error ("type " ^ t ^ " should has arity" ^ (string_of_int a))
+                    with Not_found -> error ("type " ^ t ^ " doesn't exist")
             end
 
 
@@ -57,7 +57,7 @@ let rec check_parameters (env:environment) (defs:(type_name*type_expression list
 let check_doesnt_contain (t:type_expression) (x:type_name) =
     let rec check_doesnt_contain_aux = function
         | TVar(_) -> ()
-        | Data(c,_) when x = c -> raise @$ Error ("*** type " ^ x ^ " appears in non strictly positive position")
+        | Data(c,_) when x = c -> error ("type " ^ x ^ " appears in non strictly positive position")
         | Data(c,_) -> ()
         | Arrow(t1,t2) -> check_doesnt_contain_aux t1 ; check_doesnt_contain_aux t2
     in check_doesnt_contain_aux t
@@ -82,14 +82,14 @@ let rec check_is_strictly_positive_arguments (t:type_expression) (x:type_name) =
  * where "T(...)" is the type being defined *)
 let check_destructor (t:type_name) (d:const_name*type_expression) = match d with
     | (_,Arrow(Data(_t,_args), _)) when _t=t -> ()
-    | (d,_) -> raise (Error ("*** destructor " ^ d ^ " doesn't appropriate type"))
+    | (d,_) -> error ("destructor " ^ d ^ " doesn't appropriate type")
 
 (* check the type of a constructor: it should be of the form ... -> T(...)
  * where "T(...)" is the type being defined *)
 let rec check_constructor (t:type_name) (c:const_name*type_expression) = match c with
     | (_,Data(_t,_args)) when _t=t -> ()
     | (c,Arrow(_,_t)) -> check_constructor t (c,_t)
-    | (c,_) -> raise (Error ("*** constructor " ^ c ^ " doesn't appropriate type"))
+    | (c,_) -> error ("constructor " ^ c ^ " doesn't appropriate type")
 
 let process_type_defs (env:environment)
                       (priority:priority)
