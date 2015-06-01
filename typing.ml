@@ -1,7 +1,6 @@
 
 open Base
 open Misc
-open Pretty
 
 (* unification on on types *)
 let rec occur_type (x:type_name) (t:type_expression) = match t with
@@ -14,6 +13,8 @@ let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expressi
     | Arrow(t1,t2) -> Arrow(subst_type sigma t1, subst_type sigma t2)
     | Data(a, args) -> Data(a, List.map (subst_type sigma) args)
 
+(* unify two types, giving "priority" to "t1":
+ * if t1 is more specialized than t2, then the substitution we compute doesn't affect t1 *)
 let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
     let rec aux (eqs:(type_expression*type_expression) list ) acc = match eqs with
             | [] -> acc
@@ -24,6 +25,7 @@ let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
                     with Invalid_argument _ -> raise (Error ("ERROR: datatype " ^ t1 ^ " appears with different arities"))
                 end
             | (Arrow(t1,t2),Arrow(s1,s2))::eqs -> aux ((t1,s1)::(t2,s2)::eqs) acc
+            (* do not change order of next two cases *)
             | (t, TVar(x))::eqs when not (occur_type x t) ->
                     let eqs = List.map (function (t1,t2) -> (subst_type [x,t] t1, subst_type [x,t] t2)) eqs in
                     let acc = List.map (function (_x,_t) -> (_x, subst_type [x,t] _t)) acc in
@@ -39,7 +41,10 @@ let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
             | (Data _, Data _)::_ -> raise (Error "cannot unify different datatypes")
     in aux [ (t1,t2) ] []
 
-
+(* check if t1 is an instance of t2 *)
+let is_instance t1 t2 =
+    let sigma = unify_type t2 t1 in
+    t2 = subst_type sigma t2
 
 (* infers most general type of "u" in environment "env"
  * "vars" contains the type of functions that are currently being defined
