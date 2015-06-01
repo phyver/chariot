@@ -21,10 +21,11 @@ type term =
     | Constant of const_name
     | Apply of term*term
 
-type function_clause = term list * term
+type function_clause = term * term
 type bloc_nb = int      (* number of the block of mutual definitions *)
 type environment = {
     current_priority: int                                                                   ;
+    current_bloc: int                                                                       ;
     types:     (type_name * (type_name list) * priority * const_name list) list             ;
     constants: (const_name * priority * type_expression) list                               ;
     functions: (var_name * bloc_nb * type_expression * function_clause list) list           }

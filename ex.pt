@@ -12,8 +12,8 @@ and
     | Node : 'x → ('b → tree('b,'x,'y)) → tree('b,'x,'y)
 
 val length : list('x) -> nat
-    | length Nil = Z
-    | length (Cons x xs) = S (length xs)
+    | length Nil = Zero
+    | length (Cons x xs) = Succ (length xs)
 
 codata stream('x) where
     | Head : stream('x) -> 'x

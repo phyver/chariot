@@ -50,10 +50,10 @@ let is_instance t1 t2 =
  * "vars" contains the type of functions that are currently being defined
  * the result is the type of the term together with a map giving the type of all the free variables
  *)
+let new_nb = ref 0
+let fresh () = incr new_nb; TVar("x" ^ (string_of_int !new_nb))
 let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list): type_expression*(var_name*type_expression) list =
 
-    let new_nb = ref 0 in
-    let fresh () = incr new_nb; TVar("x" ^ (string_of_int !new_nb)) in
     let get_tvars t =
         let rec uniq acc = function
             | [] -> acc
@@ -91,7 +91,7 @@ let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list)
             | Var(x) ->
                 begin
                     try
-                        instantiate (get_type_var x constraints env) , constraints
+                        (get_type_var x constraints env , constraints)
                     with Not_found -> TVar("type_"^x), add_constraint (x, TVar("type_"^x)) constraints
                 end
             | Apply(u1,u2) ->
