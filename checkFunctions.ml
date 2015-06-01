@@ -21,10 +21,12 @@ let check_new_funs_different_from_old new_funs old_funs =
 let rec get_function_name = function
     | Var(f) -> f
     | Constant c -> error (c ^ " is not a function name")
+    | Daimon -> error ("you cannot redefine the daimon")
     | Apply(Constant _, p) -> get_function_name p
     | Apply(p,_) -> get_function_name p
 
 let rec get_variables = function
+    | Daimon -> []
     | Var(x) -> [x]
     | Constant _ -> []
     | Apply(t1,t2) -> (get_variables t1) @ (get_variables t2)

@@ -24,6 +24,7 @@ let rec print_type env = function
             print_type env t2
 
 let rec is_atomic env = function
+    | Daimon -> true
     | Var _ -> true
     | Constant _ -> true
     | Apply(Constant c,e2) ->
@@ -34,6 +35,7 @@ let rec is_atomic env = function
     | Apply(_,_) -> false
 
 let rec print_term env = function
+    | Daimon -> print_string "⊥"
     | Var(x) -> print_string x
     | Constant(c) ->
         begin

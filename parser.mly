@@ -3,8 +3,8 @@ open Base
 open Commands
 %}
 
-%token EQUAL COLON ENDSTATEMENT LPAR RPAR LBRAC RBRAC COMMA PIPE DOT
-%token DATA CODATA WHERE AND ARROW VAL DUMMY
+%token EQUAL COLON LPAR RPAR COMMA PIPE DOT DUMMY DAIMON ARROW
+%token DATA CODATA WHERE AND VAL
 %token CMDQUIT CMDPROMPT CMDINFER CMDUNIFY CMDSHOW
 %token EOF
 %token <string> IDU IDL STR TVAR
@@ -29,17 +29,17 @@ open Commands
 
 statements:
     | statement statements      { $1::$2 }
-    | /*nothing*/ {[]}
+    | EOF {[]}
 
 single_statement:
+    | /* nothing */ { Nothing }
     | statement { $1 }
     | EOF { Eof }
 
 statement:
-    | ENDSTATEMENT                      { Nothing }
-    | new_types ENDSTATEMENT            { let priority,defs = $1 in TypeDef(priority, defs) }
-    | new_functions ENDSTATEMENT        { FunDef($1) }
-    | command ENDSTATEMENT              { $1 }
+    | new_types             { let priority,defs = $1 in TypeDef(priority, defs) }
+    | new_functions         { FunDef($1) }
+    | command               { $1 }
 
 command:
     | CMDQUIT                                       { CmdQuit }
@@ -126,6 +126,7 @@ atomic_term:
     | atomic_term DOT IDU       { Apply(Constant($3), $1) }
     | IDL                       { Var($1) }
     | IDU                       { Constant($1) }
+    | DAIMON                    { Daimon }
 
 lhs_term:
     | IDL   { Var($1) }

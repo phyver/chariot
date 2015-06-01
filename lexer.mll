@@ -16,8 +16,6 @@ let str = "\"" ([^ '"'] | "\\\"")* "\""
 let tvar = "'" lower(lower|upper|other)*exp
 
 rule token = parse
-    | "\n\n"            { ENDSTATEMENT }
-    | ";"               { ENDSTATEMENT }
     | ":quit"           { CMDQUIT }
     | ":prompt"         { CMDPROMPT }
     | ":infer"          { CMDINFER }
@@ -27,8 +25,6 @@ rule token = parse
     | ':'               { COLON }
     | '('               { LPAR }
     | ')'               { RPAR }
-    | '['               { LBRAC }
-    | ']'               { RBRAC }
     | ','               { COMMA }
     | '|'               { PIPE }
     | '.'               { DOT }
@@ -39,6 +35,8 @@ rule token = parse
     | "->"              { ARROW }
     | "→"               { ARROW }
     | "val"             { VAL }
+    | "!!!"             { DAIMON }
+    | "⊥"               { DAIMON }
     | idU               { IDU(remove_exp (Lexing.lexeme lexbuf)) }
     | idL               { IDL(remove_exp (Lexing.lexeme lexbuf)) }
     | tvar              { let s = Lexing.lexeme lexbuf in TVAR(String.sub s 1 ((String.length s)-1)) }
@@ -48,6 +46,7 @@ rule token = parse
     | eof               { EOF }
     | "(*"              { comments 0 lexbuf }
 and comments level = parse
+    | "(*"              { comments (level+1) lexbuf }
     | "*)"              { if level = 0 then token lexbuf else comments (level-1) lexbuf }
     | _                 { comments level lexbuf }
     | eof               { EOF }

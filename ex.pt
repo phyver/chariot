@@ -1,5 +1,7 @@
+(* type of natural numbers *)
 data nat where Zero : nat | Succ : nat -> nat
 
+(* type of lists and branching trees *)
 data
   list('x) where Nil : list('x)
               | Cons : 'x -> list('x) -> list('x)
@@ -8,20 +10,39 @@ and
     | Leaf : 'y → tree('b,'x,'y)
     | Node : 'x → ('b → tree('b,'x,'y)) → tree('b,'x,'y)
 
+(* length of a list *)
 val length : list('x) -> nat
     | length Nil = Zero
     | length (Cons x xs) = Succ (length xs)
 
+(* addition of natural numbers *)
+val add : nat -> nat -> nat  | add n Zero = n | add n (Succ m) = Succ (add n m)
+
+(* rose trees *)
+data rtree where Fork : list(rtree) -> rtree
+
+
+(* size of a tree *)
+val size : rtree -> nat
+  | size (Fork Nil) = Zero
+  | size (Fork (Cons t ts)) = add (size t) (size (Fork ts))
+
+
+(* coinductive type: streams *)
 codata stream('x) where
     | Head : stream('x) -> 'x
     | Tail : stream('x) -> stream('x)
 
+
+  (* map on streams *)
 val map : ('x -> 'y) -> stream('x) -> stream('y)
     | (map f s).Head = f (s.Head)
     | (map f s).Tail = map f s.Tail
 
+(* oops... I need the booleans *)
 data bool where True : bool | False : bool
 
+(* and I can define mutually recursive functions" *)
 val
   even : nat -> bool
       | even Zero = True
@@ -31,7 +52,17 @@ and
       | odd Zero = False
       | odd (Succ n) = even n
 
+(* using the daimon *)
+val oops : 'a -> 'b
+  | oops a = !!!
+
+val oops2 : 'a -> 'b
+  | oops2 =!!!
+
+
+(* show all the defined types *)
 :show types
 
+(* show all the defined functions *)
 :show functions
 

@@ -16,6 +16,7 @@ type const_name = string
 type var_name = string
 
 type term =
+    | Daimon
     | Var of string
     | Constant of const_name
     | Apply of term*term
