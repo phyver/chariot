@@ -10,3 +10,4 @@ parser.mli
 lexer.ml
 .vimrc
 _build
+tmp
