@@ -56,7 +56,7 @@ let cmd_unify env t1 t2 =
 let cmd_infer_type env u vars =
     print_string "=======================================================\n";
     print_string "     the term   ";
-    print_term u;
+    print_term env u;
     print_newline();
     let t,sigma = infer_type u env vars in
     print_string "   is of type   ";

@@ -21,6 +21,7 @@ let process_statement = function
     | Nothing -> ()
 
     | CmdShow("types") -> showtypes !env
+    | CmdShow("functions") -> showfunctions !env
     | CmdShow(s) -> error "what do you want to show?"
     | CmdPrompt(s) -> prompt := s
     | CmdQuit -> raise Exit

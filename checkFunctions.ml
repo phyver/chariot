@@ -75,7 +75,7 @@ let process_function_defs (env:environment)
                     then begin
                         assert (not (x=f));
                         try
-                            if not (is_instance t (List.assoc x new_functions_with_types))
+                            if not (is_instance (List.assoc x new_functions_with_types) t)
                             then error ("function " ^ x ^ " doesn't have appropriate type")
                         with Not_found -> error ("variable " ^ x ^ " is free!")
                     end

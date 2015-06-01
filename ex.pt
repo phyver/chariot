@@ -1,6 +1,3 @@
-(* :prompt "" *)
-
-
 data nat where Zero : nat | Succ : nat -> nat
 
 data
@@ -23,8 +20,18 @@ val map : ('x -> 'y) -> stream('x) -> stream('y)
     | (map f s).Head = f (s.Head)
     | (map f s).Tail = map f s.Tail
 
+data bool where True : bool | False : bool
+
+val
+  even : nat -> bool
+      | even Zero = True
+      | even (Succ n) = odd n
+and
+  odd : nat -> bool
+      | odd Zero = False
+      | odd (Succ n) = even n
+
 :show types
 
-:quit
-
+:show functions
 

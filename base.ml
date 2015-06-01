@@ -37,13 +37,21 @@ let get_arity (t:type_name) (env:environment) : int =
     in
     aux env.types
 
-let get_priority (t:type_name) (env:environment) : int =
+let get_type_priority (t:type_name) (env:environment) : int =
     let rec aux = function
         | [] -> raise Not_found
         | (_t, _, _priority, _)::_ when _t=t -> _priority
         | _::ts -> aux ts
     in
     aux env.types
+
+let get_constant_priority (c:const_name) (env:environment) : int =
+    let rec aux = function
+        | [] -> raise Not_found
+        | (_c, _priority, _)::_ when _c=c -> _priority
+        | _::cs -> aux cs
+    in
+    aux env.constants
 
 let get_type_const (c:const_name) (env:environment) =
     let rec aux = function
