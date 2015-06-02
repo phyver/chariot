@@ -8,9 +8,11 @@ let rec subst_term (u:term) (sigma:(var_name*term) list) : term
         | Apply(u1,u2) -> Apply(subst_term u1 sigma, subst_term u2 sigma)
 
 
-(* the argument f represents the function defined by the pattern: this variable cannot be instantiated! *)
-let unify_pattern (pattern:term) (u:term) (f:var_name): (var_name*term) list
-  = let rec unify_aux (eqs:(term*term) list) acc =
+let unify_pattern (pattern:term) (u:term) : (var_name*term) list
+  = (* the function defined by the pattern: this variable cannot be instantiated! *)
+    let f = CheckFunctions.get_function_name pattern in
+
+    let rec unify_aux (eqs:(term*term) list) acc =
         match eqs with
             | [] -> acc
             | (s,t)::eqs when s=t -> unify_aux eqs acc
@@ -48,7 +50,7 @@ let reduce_all (env:environment) (u:term) : term
             | (pattern, def)::clauses ->
                 begin
                     try
-                        let sigma = unify_pattern pattern u f in
+                        let sigma = unify_pattern pattern u in
                         let new_term = subst_term def sigma in
                         new_term,true
                     with Error _ -> reduce_first_clause u f clauses

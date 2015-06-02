@@ -78,8 +78,7 @@ let cmd_unify_term env pattern term =
     print_string "\n        and term   ";
     print_term env term;
     print_newline();
-    let f = CheckFunctions.get_function_name pattern in
-    let sigma = unify_pattern pattern term f in
+    let sigma = unify_pattern pattern term in
     let new_term = subst_term pattern sigma in
     assert (new_term = term);
     print_string "          result   ";
