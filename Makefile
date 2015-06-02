@@ -1,5 +1,7 @@
 all: native
 
+tags:
+	ctags *.ml
 native:
 	ocamlbuild -libs str,unix main.native
 
@@ -8,3 +10,4 @@ byte:
 
 clean:
 	ocamlbuild -clean
+	rm -f tags
