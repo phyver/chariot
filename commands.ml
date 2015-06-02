@@ -2,6 +2,7 @@ open Base
 open Pretty
 open Typing
 open Compute
+open CheckCoverage
 
 (* commands *)
 type cmd =
@@ -10,8 +11,9 @@ type cmd =
 
     | CmdQuit
     | CmdPrompt of string
-    | CmdUnifyType of type_expression*type_expression
-    | CmdUnifyTerm of term*term
+    (* | CmdTest of type_expression*type_expression *)
+    (* | CmdTest of term*term *)
+    | CmdTest of term
     | CmdInfer of term
     | CmdShow of string
     | CmdReduce of term
@@ -56,6 +58,17 @@ let cmd_unify_type env t1 t2 =
     print_string "=======================================================\n";
     print_newline()
 
+let cmd_reduce env term =
+    print_string "reducing: ";
+    print_term env term;
+    print_newline();
+    print_string "  result: ";
+    print_term env (reduce_all env term);
+    print_newline();
+    print_newline()
+
+
+
 let cmd_infer_type env u vars =
     print_string "=======================================================\n";
     print_string "     the term   ";
@@ -87,12 +100,15 @@ let cmd_unify_term env pattern term =
     print_string "=======================================================\n";
     print_newline()
 
-let cmd_reduce env term =
-    print_string "reducing: ";
-    print_term env term;
+let cmd_pattern_to_cpattern env pattern =
+    print_string "=======================================================\n";
+    print_string "transforming pattern   ";
+    print_term env pattern;
     print_newline();
-    print_string "  result: ";
-    print_term env (reduce_all env term);
+    let cpatt = term_to_patterns pattern in
+    print_string "          result   ";
+    print_patterns cpatt;
     print_newline();
+    print_string "=======================================================\n";
     print_newline()
 

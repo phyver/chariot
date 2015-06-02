@@ -19,10 +19,9 @@ rule token = parse
     | ":quit"           { CMDQUIT }
     | ":prompt"         { CMDPROMPT }
     | ":infer"          { CMDINFER }
-    | ":term_unify"     { CMDUNIFYTERM }
-    | ":type_unify"     { CMDUNIFYTYPE }
     | ":show"           { CMDSHOW }
     | ":reduce"         { CMDREDUCE }
+    | ":test"           { CMDTEST }
     | '='               { EQUAL }
     | ':'               { COLON }
     | ';'               { SEMICOLON }

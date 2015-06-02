@@ -5,7 +5,7 @@ open Commands
 
 %token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY DAIMON ARROW
 %token DATA CODATA WHERE AND VAL
-%token CMDQUIT CMDPROMPT CMDINFER CMDUNIFYTYPE CMDUNIFYTERM CMDSHOW CMDREDUCE
+%token CMDQUIT CMDPROMPT CMDINFER CMDSHOW CMDREDUCE CMDTEST
 %token EOF
 %token <string> IDU IDL STR TVAR
 
@@ -49,8 +49,7 @@ eos:
 command:
     | CMDQUIT                                           { CmdQuit }
     | CMDINFER term                                     { CmdInfer $2 }
-    | CMDUNIFYTYPE type_expression AND type_expression  { CmdUnifyType($2,$4) }
-    | CMDUNIFYTERM term AND term                        { CmdUnifyTerm($2,$4) }
+    | CMDTEST lhs_term                                  { CmdTest($2) }
     | CMDPROMPT string                                  { CmdPrompt($2) }
     | CMDSHOW string                                    { CmdShow($2) }
     | CMDREDUCE term                                    { CmdReduce($2) }
