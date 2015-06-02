@@ -29,7 +29,7 @@ let process_statement = function
     | CmdInfer(e) -> cmd_infer_type !env e []
     | CmdUnifyType(t1,t2) -> cmd_unify_type !env t1 t2
     | CmdUnifyTerm(t1,t2) -> cmd_unify_term !env t1 t2
-    | CmdReduce(t) -> print_term !env (reduce_all !env t); print_newline()
+    | CmdReduce(t) -> cmd_reduce !env t
 
     | TypeDef(priority,defs) -> env := process_type_defs !env priority defs
     | FunDef(defs) -> env := process_function_defs !env defs

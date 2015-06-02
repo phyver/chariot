@@ -34,37 +34,51 @@ let rec is_atomic env = function
         end
     | Apply(_,_) -> false
 
-let rec print_term env = function
-    | Daimon -> print_string "⊥"
-    | Var(x) -> print_string x
-    | Constant(c) ->
-        begin
-            try
+
+let print_term_int u =
+    let rec aux n = function
+        | Constant("Zero") -> n
+        | Apply(Constant("Succ"),u) -> aux (n+1) u
+        | _ -> raise (Invalid_argument "print_term_int")
+    in
+        let n = aux 0 u in
+        print_string "<"; print_int n; print_string ">"
+
+let rec print_term env u =
+    try
+        print_term_int u
+    with Invalid_argument "print_term_int" ->
+        match u with
+        | Daimon -> print_string "⊥"
+        | Var(x) -> print_string x
+        | Constant(c) ->
+            begin
+                try
+                    let p = get_constant_priority c env in
+                    print_string c;
+                    print_exp p;
+                with Not_found -> print_string c;print_string "⁽⁾"
+            end
+        | Apply(((Constant c) as e1), e2) when is_atomic env e2 ->
+            begin
                 let p = get_constant_priority c env in
-                print_string c;
-                print_exp p;
-            with Not_found -> print_string c;print_string "⁽⁾"
-        end
-    | Apply(((Constant c) as e1), e2) when is_atomic env e2 ->
-        begin
-            let p = get_constant_priority c env in
-            if p mod 2 = 0
-            then (print_term env e2; print_string "."; print_term env e1)
-            else (print_term env e1; print_string " "; print_term env e2;)
-        end
-    | Apply(((Constant c) as e1), e2) ->
-        begin
-            let p = get_constant_priority c env in
-            if p mod 2 = 0
-            then (print_string "("; print_term env e2; print_string ")."; print_term env e1)
-            else ( print_term env e1; print_string " ("; print_term env e2; print_string ")")
-        end
-    | Apply(e1,e2) ->
-        begin
-            if is_atomic env e2
-            then (print_term env e1; print_string " "; print_term env e2;)
-            else ( print_term env e1; print_string " ("; print_term env e2; print_string ")")
-        end
+                if p mod 2 = 0
+                then (print_term env e2; print_string "."; print_term env e1)
+                else (print_term env e1; print_string " "; print_term env e2;)
+            end
+        | Apply(((Constant c) as e1), e2) ->
+            begin
+                let p = get_constant_priority c env in
+                if p mod 2 = 0
+                then (print_string "("; print_term env e2; print_string ")."; print_term env e1)
+                else ( print_term env e1; print_string " ("; print_term env e2; print_string ")")
+            end
+        | Apply(e1,e2) ->
+            begin
+                if is_atomic env e2
+                then (print_term env e1; print_string " "; print_term env e2;)
+                else ( print_term env e1; print_string " ("; print_term env e2; print_string ")")
+            end
 
 let showtypes env =
 

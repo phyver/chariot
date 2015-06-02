@@ -73,4 +73,7 @@ val oops2 : 'a -> 'b
 :show functions
 
 (* test compute *)
-:reduce (pow (Succ(Succ(Succ Zero))) (pow (Succ(Succ Zero)) (Succ(Succ Zero))))
+val two : nat | two = Succ (Succ Zero)
+val three : nat | three = Succ (two)
+
+:reduce pow three (pow two two)

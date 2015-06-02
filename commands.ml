@@ -77,7 +77,7 @@ let cmd_unify_term env pattern term =
     print_term env pattern;
     print_string "\n        and term   ";
     print_term env term;
-    print_newline();
+    print_newline()
     (* let sigma = unify_pattern pattern term in *)
     (* let new_term = subst_term pattern sigma in *)
     (* assert (new_term = term); *)
@@ -86,3 +86,13 @@ let cmd_unify_term env pattern term =
     (* print_newline(); *)
     (* print_string "=======================================================\n"; *)
     (* print_newline() *)
+
+let cmd_reduce env term =
+    print_string "reducing: ";
+    print_term env term;
+    print_newline();
+    print_string "  result: ";
+    print_term env (reduce_all env term);
+    print_newline();
+    print_newline()
+
