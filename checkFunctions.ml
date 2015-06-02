@@ -20,15 +20,14 @@ let check_new_funs_different_from_old new_funs old_funs =
 
 let rec get_function_name = function
     | Var(f) -> f
-    | Constant c -> error (c ^ " is not a function name")
+    | Const c | Proj c -> error (c ^ " is not a function name")
     | Daimon -> error ("you cannot redefine the daimon")
-    | Apply(Constant _, p) -> get_function_name p       (* the constant should be a projection *)
+    | Apply(Proj _, p) -> get_function_name p       (* the constant should be a projection *)
     | Apply(p,_) -> get_function_name p
 
 let rec get_variables = function
-    | Daimon -> []
+    | Daimon | Const _ | Proj _ -> []
     | Var(x) -> [x]
-    | Constant _ -> []
     | Apply(t1,t2) -> (get_variables t1) @ (get_variables t2)
 
 let process_function_defs (env:environment)

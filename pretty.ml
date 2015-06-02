@@ -26,19 +26,16 @@ let rec print_type env = function
 let rec is_atomic env = function
     | Daimon -> true
     | Var _ -> true
-    | Constant _ -> true
-    | Apply(Constant c,e2) ->
-        begin
-            let p = get_constant_priority c env in
-            0 = p mod 2 && is_atomic env e2
-        end
+    | Const _ -> true
+    | Proj _ -> true
+    | Apply(Proj _,_) -> true
     | Apply(_,_) -> false
 
 
 let print_term_int u =
     let rec aux n = function
-        | Constant("Zero") -> n
-        | Apply(Constant("Succ"),u) -> aux (n+1) u
+        | Const("Zero") -> n
+        | Apply(Const("Succ"),u) -> aux (n+1) u
         | _ -> raise (Invalid_argument "print_term_int")
     in
         let n = aux 0 u in
@@ -51,7 +48,7 @@ let rec print_term env u =
         match u with
         | Daimon -> print_string "⊥"
         | Var(x) -> print_string x
-        | Constant(c) ->
+        | Const(c) | Proj(c) ->
             begin
                 try
                     let p = get_constant_priority c env in
@@ -59,20 +56,14 @@ let rec print_term env u =
                     print_exp p;
                 with Not_found -> print_string c;print_string "⁽⁾"
             end
-        | Apply(((Constant c) as e1), e2) when is_atomic env e2 ->
-            begin
-                let p = get_constant_priority c env in
-                if p mod 2 = 0
-                then (print_term env e2; print_string "."; print_term env e1)
-                else (print_term env e1; print_string " "; print_term env e2;)
-            end
-        | Apply(((Constant c) as e1), e2) ->
-            begin
-                let p = get_constant_priority c env in
-                if p mod 2 = 0
-                then (print_string "("; print_term env e2; print_string ")."; print_term env e1)
-                else ( print_term env e1; print_string " ("; print_term env e2; print_string ")")
-            end
+        | Apply(((Const _) as e1), e2) when is_atomic env e2 ->
+                print_term env e1; print_string " "; print_term env e2;
+        | Apply(((Proj _) as e1), e2) when is_atomic env e2 ->
+                print_term env e2; print_string "."; print_term env e1
+        | Apply(((Const _) as e1), e2) ->
+                print_term env e1; print_string " ("; print_term env e2; print_string ")"
+        | Apply(((Proj _) as e1), e2) ->
+                print_string "("; print_term env e2; print_string ")."; print_term env e1
         | Apply(e1,e2) ->
             begin
                 if is_atomic env e2

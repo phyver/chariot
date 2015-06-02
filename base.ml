@@ -18,7 +18,8 @@ type var_name = string
 type term =
     | Daimon
     | Var of string
-    | Constant of const_name
+    | Const of const_name
+    | Proj of const_name
     | Apply of term*term
 
 type function_clause = term * term

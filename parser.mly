@@ -130,20 +130,20 @@ term:
 
 atomic_term:
     | LPAR term RPAR            { $2 }
-    | atomic_term DOT IDU       { Apply(Constant($3), $1) }
+    | atomic_term DOT IDU       { Apply(Proj($3), $1) }
     | IDL                       { Var($1) }
-    | IDU                       { Constant($1) }
+    | IDU                       { Const($1) }
     | DAIMON                    { Daimon }
 
 lhs_term:
     | IDL   { Var($1) }
     | LPAR lhs_term RPAR { $2 }
-    | lhs_term DOT IDU { Apply(Constant($3), $1) }
+    | lhs_term DOT IDU { Apply(Proj($3), $1) }
     | lhs_term atomic_pattern { Apply($1,$2) }
 
 atomic_pattern:
     | IDL { Var($1) }
-    | IDU { Constant($1) }
+    | IDU { Const($1) }
     | LPAR pattern RPAR { $2 }
 
 pattern:

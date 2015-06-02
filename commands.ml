@@ -77,15 +77,16 @@ let cmd_unify_term env pattern term =
     print_term env pattern;
     print_string "\n        and term   ";
     print_term env term;
+    print_newline();
+    let f = CheckFunctions.get_function_name pattern in
+    let sigma = unify_pattern pattern term f in
+    let new_term = subst_term pattern sigma in
+    assert (new_term = term);
+    print_string "          result   ";
+    print_list "''" "" "  ;  " "" (function x,t -> print_string (x ^ " := "); print_term env t) sigma;
+    print_newline();
+    print_string "=======================================================\n";
     print_newline()
-    (* let sigma = unify_pattern pattern term in *)
-    (* let new_term = subst_term pattern sigma in *)
-    (* assert (new_term = term); *)
-    (* print_string "          result   "; *)
-    (* print_list "''" "" "  ;  " "" (function x,t -> print_string (x ^ " := "); print_term env t) sigma; *)
-    (* print_newline(); *)
-    (* print_string "=======================================================\n"; *)
-    (* print_newline() *)
 
 let cmd_reduce env term =
     print_string "reducing: ";

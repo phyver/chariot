@@ -4,8 +4,7 @@ open Pretty
 let rec subst_term (u:term) (sigma:(var_name*term) list) : term
   = match u with
         | Var(x) -> (try List.assoc x sigma with Not_found -> u)
-        | Constant _ -> u
-        | Daimon -> u
+        | Daimon | Const _ | Proj _-> u
         | Apply(u1,u2) -> Apply(subst_term u1 sigma, subst_term u2 sigma)
 
 
@@ -15,9 +14,12 @@ let unify_pattern (pattern:term) (u:term) (f:var_name): (var_name*term) list
         match eqs with
             | [] -> acc
             | (s,t)::eqs when s=t -> unify_aux eqs acc
-            | (Constant(c1),Constant(c2))::eqs when c1=c2 -> acc
-            | (Constant(c1), Constant(c2))::_ -> error ("cannot unify constants " ^ c1 ^ " and " ^ c2)
-            | (Constant _, _)::_ -> error "cannot unify constant and non-constant"
+            | (Const(c1),Const(c2))::eqs when c1=c2 -> acc
+            | (Proj(c1),Proj(c2))::eqs when c1=c2 -> acc
+            | (Const(c1), Const(c2))::_ -> error ("cannot unify constructors " ^ c1 ^ " and " ^ c2)
+            | (Proj(c1), Proj(c2))::_ -> error ("cannot unify projections " ^ c1 ^ " and " ^ c2)
+            | (Const _, Proj _)::_ | (Proj _, Const _)::_ -> error "cannot unify constant and projection"
+            | (Proj _,_)::_ | (_,Proj _)::_ ->  error "cannot unify projection and non-projection"
             | (Apply(u1,u2),Apply(v1,v2))::eqs -> unify_aux ((u1,v1)::(u2,v2)::eqs) acc
             | (Apply _, _)::_ -> error "cannot unify application with non-application"
             | (Var x, _)::_ when x = f -> error "cannot unify the function name"
@@ -25,6 +27,7 @@ let unify_pattern (pattern:term) (u:term) (f:var_name): (var_name*term) list
                     let eqs = List.map (function u1,u2 -> (subst_term u1 [x,u], subst_term u2 [x,u])) eqs in
                     let acc = List.map (function _x,_u -> (_x, subst_term _u [x,u])) acc in
                     unify_aux eqs ((x,u)::acc)
+            | (Const _,_)::_ | (_,Const _)::_ ->  error "cannot unify constructor and non-constructor"
             | (Daimon,_)::_ -> error "cannot unify daimon"
     in unify_aux [pattern,u] []
 
@@ -57,7 +60,7 @@ let reduce_all (env:environment) (u:term) : term
     let rec reduce_leftmost (u:term) : term*bool =
         match u with
             | Daimon -> Daimon,false
-            | Constant(c) -> Constant(c),false
+            | Const _ | Proj _ -> u,false
             | Var(x) -> reduce_first_clause u x (get_clauses x env.functions)
             | Apply(u1,u2) ->
                 begin

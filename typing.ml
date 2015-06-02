@@ -88,7 +88,7 @@ let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list)
         (* print_string "infer type of "; print_term u; print_string "\n  with constraints "; print_list "-no constraint-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) vars; print_newline(); *)
         match u with
             | Daimon -> instantiate (TVar("daimon")) , constraints
-            | Constant(c) ->
+            | Const(c) | Proj(c) ->
                 begin
                     try
                         instantiate (get_type_const c env) , constraints
