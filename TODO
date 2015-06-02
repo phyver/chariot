@@ -1,10 +1,15 @@
 allow untyped definitions, and infer type
 
-allow non recursive definitions
+allow "val f x y z = ..." for untyped / single case definitions
 
-parse a natural number as Succ(Succ ... Zero)
+add "priority option" argument to Const / Proj in terms (parsing puts None, and checkTypes / checkFunctions adds the priority)
+
+parse a <natural number> as Succ(Succ ... Zero)
 
 idem for lists [ ; ; ; ; ] ::
+
+
+-- allow non recursive definitions
 
 
 
