@@ -30,9 +30,7 @@ let unify_pattern (pattern:term) (u:term) (f:var_name): (var_name*term) list
 
 
 let reduce_all (env:environment) (u:term) : term
-  = let clauses = List.concat (List.map (function (f,_,_,clauses) -> List.map (function x,y -> f,x,y)clauses) env.functions)
-    in
-
+  =
     let rec get_clauses (f:var_name) = function
         | [] -> error ("function " ^ f ^ " doesn't exist")
         | (_f,_,_,clauses)::_ when f=_f -> clauses
