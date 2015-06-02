@@ -60,8 +60,12 @@ let process_function_defs (env:environment)
 
         (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
         let infered_type_lhs, type_of_vars1 = infer_type lhs_pattern env [] in
+(* print_string "infered type of lhs:  "; print_type env infered_type_lhs; print_newline(); *)
         (* infer type of RHS *)
         let infered_type_rhs, type_of_vars2 = infer_type rhs_term env type_of_vars1 in
+(* print_string "infered type of rhs:  "; print_type env infered_type_rhs; print_newline(); *)
+        if not (is_instance infered_type_rhs infered_type_lhs)
+        then error ("rhs and lhs do not have the same type");
 (* print_string "type_of_vars1, after "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) type_of_vars1; print_newline(); *)
 (* print_string "type_of_vars2, after "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) type_of_vars2; print_newline(); *)
 
@@ -70,6 +74,12 @@ let process_function_defs (env:environment)
 (* print_string "infered type of function:  "; print_type env infered_type_function; print_newline(); *)
 (* print_string "           expected type:  "; print_type env t; print_newline(); *)
         if not (is_instance t infered_type_function) then error "the LHS pattern doesn't type check";
+
+        (* check that the function is applied to all its arguments *)
+        let sigma = unify_type t infered_type_function in
+        match subst_type sigma infered_type_rhs with
+            | Arrow _ -> error "functions should be η-expanded"
+            | _ -> ();
 
         (* check that all the constraints we got concern the remaining functions being defined *)
         List.iter (function x,t ->

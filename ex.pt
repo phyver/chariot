@@ -77,3 +77,20 @@ val two : nat | two = Succ (Succ Zero)
 val three : nat | three = Succ (two)
 
 :reduce pow three (pow two two)
+
+
+(* streams *)
+val arith : nat -> nat -> stream(nat)
+  | (arith n r).Head = n
+  | (arith n r).Tail = arith (add n r) r
+
+val get_nth : nat -> stream('a) -> 'a
+  | get_nth Zero s = s.Head
+  | get_nth (Succ n) s = get_nth n s.Tail
+
+
+val double : nat -> nat | double n = mult n two
+
+:reduce get_nth (mult three three) (map double (arith three three))
+
+:reduce map double (arith three three)
