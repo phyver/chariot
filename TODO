@@ -2,7 +2,6 @@ allow untyped definitions, and infer type
 
 allow non recursive definitions
 
-print Succ(Succ ... Zero) as a natural number
 parse a natural number as Succ(Succ ... Zero)
 
 idem for lists [ ; ; ; ; ] ::
