@@ -5,7 +5,7 @@ open Commands
 let rec int_to_term n u =
     if n=0
     then u
-    else int_to_term (n-1) (Apply(Const("Succ"),u))
+    else int_to_term (n-1) (App(Const("Succ"),[u]))
 %}
 
 %token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY DAIMON ARROW PLUS
@@ -59,7 +59,7 @@ command:
     | CMDPROMPT string                                  { CmdPrompt($2) }
     | CMDSHOW string                                    { CmdShow($2) }
     | CMDREDUCE term                                    { CmdReduce($2) }
-    | CMDTEST IDL                                       { CmdTest($2) }
+    | CMDTEST type_expression AND type_expression                         { CmdTest($2,$4) }
 
 string:
     | IDL { $1 }
@@ -132,35 +132,35 @@ rhs_term:
 
 term:
     | atomic_term               { $1 }
-    | term atomic_term          { Apply($1, $2) }
+    | term atomic_term          { app $1 [$2] }
 
-    | term PLUS atomic_term            { Apply(Apply(Var("add"),$1),$3) }
+    | term PLUS atomic_term                { App(Var("add"),[$1;$3]) }
 
 atomic_term:
     | LPAR term RPAR            { $2 }
-    | atomic_term DOT IDU       { Apply(Proj($3), $1) }
-    | IDL                       { Var($1) }
-    | IDU                       { Const($1) }
-    | DAIMON                    { Daimon }
+    | atomic_term DOT IDU       { App(Proj($1,$3), []) }
+    | IDL                       { App(Var($1),[]) }
+    | IDU                       { App(Const($1),[]) }
+    | DAIMON                    { App(Daimon,[]) }
 
-    | INT                       { int_to_term $1 (Const("Zero")) }
+    | INT                       { int_to_term $1 (App(Const("Zero"),[])) }
 
 lhs_term:
-    | IDL                           { Var($1) }
+    | IDL                           { App(Var($1),[]) }
     | LPAR lhs_term RPAR            { $2 }
-    | lhs_term DOT IDU              { Apply(Proj($3), $1) }
-    | lhs_term atomic_pattern       { Apply($1,$2) }
+    | lhs_term DOT IDU              { App(Proj($1,$3), []) }
+    | lhs_term atomic_pattern       { app $1 [$2]  }
 
 atomic_pattern:
-    | IDL                   { Var($1) }
-    | IDU                   { Const($1) }
+    | IDL                   { App(Var($1),[]) }
+    | IDU                   { App(Const($1),[]) }
     | LPAR pattern RPAR     { $2 }
 
-    | INT                   { int_to_term $1 (Const("Zero")) }
+    | INT                   { int_to_term $1 (App(Const("Zero"),[])) }
 
 pattern:
     | atomic_pattern            { $1 }
-    | pattern atomic_pattern    { Apply($1, $2) }
+    | pattern atomic_pattern    { app $1 [$2] }
 
     | pattern PLUS INT          { int_to_term $3 $1 }
 

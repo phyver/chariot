@@ -20,12 +20,16 @@ type const_name = string
 type var_name = string
 type bloc_nb = int      (* number of the block of mutual definitions *)
 
-type term =
+type atomic_term =
     | Daimon
     | Var of string
     | Const of const_name
-    | Proj of const_name
-    | Apply of term*term
+    | Proj of term * const_name
+and
+    term =
+    | App of atomic_term * term list
+
+let app (App(u,args1)) args2 = App(u,args1 @ args2)
 
 type function_clause = term * term
 type environment = {
@@ -88,10 +92,9 @@ let get_clauses (f:var_name) (env:environment) =
     aux_function env.functions
 
 (* get the function name from a pattern *)
-let rec get_function_name = function
-    | Var(f) -> f
-    | Const c | Proj c -> error (c ^ " is not a function name")
+let rec get_function_name (App(u,args)) = match u with
+    | Const c -> error (c ^ " is not a function name")
     | Daimon -> error ("you cannot redefine the daimon")
-    | Apply(Proj _, p) -> get_function_name p       (* the constant should be a projection *)
-    | Apply(p,_) -> get_function_name p
+    | Var f -> f
+    | Proj(u,d) -> get_function_name u
 

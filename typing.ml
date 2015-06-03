@@ -2,6 +2,8 @@
 open Base
 open Misc
 
+open Pretty
+
 (* unification on on types *)
 let rec occur_type (x:type_name) (t:type_expression) = match t with
     | TVar(y) -> x=y
@@ -54,6 +56,8 @@ let new_nb = ref 0
 let fresh () = incr new_nb; TVar("x" ^ (string_of_int !new_nb))
 let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list): type_expression*(var_name*type_expression) list =
 
+(* print_string "infer_type for "; print_term u; print_newline(); *)
+
     let get_tvars t =
         let rec uniq acc = function
             | [] -> acc
@@ -84,11 +88,12 @@ let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list)
 
 
 
-    let rec aux u constraints =
-        (* print_string "infer type of "; print_term u; print_string "\n  with constraints "; print_list "-no constraint-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) vars; print_newline(); *)
+    let rec
+      infer_type_and_constraints_atomic (u:atomic_term) constraints =
+(* print_string "infer_type_and_constraints_atomic of "; print_atomic_term u; print_string "\n  with constraints "; print_list "-no constraint-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) vars; print_newline(); *)
         match u with
             | Daimon -> instantiate (TVar("daimon")) , constraints
-            | Const(c) | Proj(c) ->
+            | Const(c) ->
                 begin
                     try
                         instantiate (get_type_const c env) , constraints
@@ -100,27 +105,68 @@ let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list)
                         (get_type_var x constraints env , constraints)
                     with Not_found -> TVar("type_"^x), add_constraint (x, TVar("type_"^x)) constraints
                 end
-            | Apply(u1,u2) ->
+            | Proj(u,d) ->
                 begin
-                    let t1,constraints = aux u1 constraints in
-                    let t2,constraints = aux u2 constraints in
-                    let sigma1= unify_type t1 (instantiate (Arrow(TVar("'x"),TVar("'y")))) in
-                    let constraints = List.map (second (subst_type sigma1)) constraints in
-                    let t1 = subst_type sigma1 t1 in
-                    let t2 = subst_type sigma1 t2 in
-                    match t1 with
-                        | Arrow(t11,t12) ->
-                                let sigma2 = unify_type t11 t2 in
-                                let constraints = List.map (second (subst_type sigma2)) constraints in
-(* print_string "constraints2, after "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) constraints2; print_newline(); *)
+                    try
+                        let td, constraints = instantiate (get_type_const d env) , constraints in
+(* print_string d; print_string " td "; print_type env td; print_newline(); *)
+(* print_string "constraints "; print_list "" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) constraints; print_newline(); *)
+(* print_term u; print_newline(); *)
+                        infer_type_and_constraints_application td u constraints
 
-                                (try
-                                    subst_type sigma2 t12 , constraints
-                                with Error s -> error ("cannot type this term: " ^ s))
-                        | _ -> error "not a function type!!!"
+                    with Not_found -> error ("cannot infer type of constant " ^ d)
                 end
 
-    in aux u vars
+    and
+
+      infer_type_and_constraints_application (t:type_expression) (arg:term) constraints =
+(* print_string "infer_type_and_constraints_application of "; print_term arg; print_string " with function type "; print_type env t; print_newline(); *)
+        let targ,constraints = infer_type_and_constraints_term arg constraints in
+(* print_string "targ "; print_type env targ; print_newline(); *)
+        let sigma= unify_type t (instantiate (Arrow(TVar("'x"),TVar("'y")))) in
+(* print_string "sigma "; print_list "" "" " ; " "" (function x,t -> print_string ("'" ^ x ^ "="); print_type env t) sigma; print_newline(); *)
+        let constraints = List.map (second (subst_type sigma)) constraints in
+        let t = subst_type sigma t in
+(* print_string "constraints "; print_list "-no constraint-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) vars; print_newline(); *)
+        let targ = subst_type sigma targ in
+(* print_string "targ bis "; print_type env targ; print_newline(); *)
+
+        match t with
+            | Arrow(t1,t2) ->
+                    let tau = unify_type t1 targ in
+(* print_string "tau "; print_list "" "" " ; " "" (function x,t -> print_string ("'" ^ x ^ "="); print_type env t) tau; print_newline(); *)
+                    let constraints = List.map (second (subst_type tau)) constraints in
+(* print_string "constraints "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) constraints; print_newline(); *)
+
+                    (try
+                        subst_type tau t2 , constraints
+                    with Error s -> error ("cannot type this term: " ^ s))
+            | _ -> error "not a function type!!!"
+
+    and
+      infer_type_and_constraints_applications (t:type_expression) (args:term list) constraints =
+(* print_string "infer_type_and_constraints_applications of "; print_list "" "" " , " "" print_term args; print_string "\n  with function type "; print_type env t; print_newline(); *)
+          match args with
+            | [] -> t,constraints
+            | arg::args ->
+                    let t,constraints = infer_type_and_constraints_application t arg constraints in
+                    infer_type_and_constraints_applications t args constraints
+
+    and
+      infer_type_and_constraints_term (App(u1,args):term) constraints =
+(* print_string "infer_type_and_constraints_term of "; print_term (App(u1,args)); print_newline(); *)
+            let tu1,constraints = infer_type_and_constraints_atomic u1 constraints in
+(* print_string "tu1 "; print_type env tu1; print_newline(); *)
+            match args with
+                | [] -> tu1,constraints
+                | args -> 
+                    let sigma= unify_type tu1 (instantiate (Arrow(TVar("'x"),TVar("'y")))) in
+                    let constraints = List.map (second (subst_type sigma)) constraints in
+                    let tu1 = subst_type sigma tu1 in
+                    infer_type_and_constraints_applications tu1 args constraints
+
+
+    in infer_type_and_constraints_term u vars
 
 
 

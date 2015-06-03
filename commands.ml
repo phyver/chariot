@@ -11,10 +11,10 @@ type cmd =
 
     | CmdQuit
     | CmdPrompt of string
-    (* | CmdTest of type_expression*type_expression *)
+    | CmdTest of type_expression*type_expression
     (* | CmdTest of term*term *)
     (* | CmdTest of term *)
-    | CmdTest of var_name
+    (* | CmdTest of var_name *)
     | CmdInfer of term
     | CmdShow of string
     | CmdReduce of term
@@ -61,10 +61,10 @@ let cmd_unify_type env t1 t2 =
 
 let cmd_reduce env term =
     print_string "reducing: ";
-    print_term env term;
+    print_term term;
     print_newline();
     print_string "  result: ";
-    print_term env (reduce_all env term);
+    print_term (reduce_all env term);
     print_newline();
     print_newline()
 
@@ -73,7 +73,7 @@ let cmd_reduce env term =
 let cmd_infer_type env u vars =
     print_string "=======================================================\n";
     print_string "     the term   ";
-    print_term env u;
+    print_term u;
     print_newline();
     let t,sigma = infer_type u env vars in
     print_string "   is of type   ";
@@ -88,15 +88,15 @@ let cmd_infer_type env u vars =
 let cmd_unify_term env pattern term =
     print_string "=======================================================\n";
     print_string "unifying pattern   ";
-    print_term env pattern;
+    print_term pattern;
     print_string "\n        and term   ";
-    print_term env term;
+    print_term term;
     print_newline();
     let sigma = unify_pattern pattern term in
     let new_term = subst_term pattern sigma in
     assert (new_term = term);
     print_string "          result   ";
-    print_list "''" "" "  ;  " "" (function x,t -> print_string (x ^ " := "); print_term env t) sigma;
+    print_list "''" "" "  ;  " "" (function x,t -> print_string (x ^ " := "); print_term t) sigma;
     print_newline();
     print_string "=======================================================\n";
     print_newline()
@@ -104,7 +104,7 @@ let cmd_unify_term env pattern term =
 let cmd_pattern_to_cpattern env pattern =
     print_string "=======================================================\n";
     print_string "transforming pattern   ";
-    print_term env pattern;
+    print_term pattern;
     print_newline();
     let cpatt = term_to_patterns pattern in
     print_string "          result   ";

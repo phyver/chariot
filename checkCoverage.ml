@@ -31,33 +31,24 @@ type dpattern = const_name
 type pattern = C of cpattern | P of dpattern
 
 
-let term_to_patterns (u:term) : pattern list
-  = let f = get_function_name u in
-    let rec get_pattern u =
+let term_to_patterns (v:term) : pattern list
+  =
+    let rec get_pattern (App(u,args)) =
         match u with
             | Daimon -> assert false
-            | Var(_f) when _f=f -> assert false
-            | Proj(d) -> assert false
             | Var(x) -> PVar x
-            | Const(c) -> PConst(c,[])
-            | Apply(u1,u2) ->
-                begin
-                    match get_pattern u1 with
-                        | PConst(c,l) -> PConst(c, l @ [(get_pattern u2)]) (* FIXME *)
-                        | _ -> assert false
-                end
+            | Proj _ -> assert false
+            | Const(c) -> PConst(c,List.map get_pattern args)
     in
-    let rec aux = function
-        | Var(_f) when _f=f -> []
-        | Apply(Proj d,u2) -> (P d)::(aux u2)
-        | Apply(u1,u2) -> (C(get_pattern u2))::(aux u1)
+
+    let rec aux (App(u,args)) = match u with
+        | Var(f) -> List.map (fun p -> C (get_pattern p)) args
+        | Proj(u,d) -> (aux u)@(P d)::(List.map (fun p -> C (get_pattern p)) args)
 
         | Daimon -> assert false
-        | Proj _ -> assert false
-        | Var _ -> assert false
         | Const _ -> assert false
     in
-    List.rev (aux u)
+    aux v
 
 
 (* NOTE: I don't need to look at the RHS of definitions if I don't want to "compile" my terms to CASE-definitions *

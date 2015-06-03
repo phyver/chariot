@@ -1,11 +1,13 @@
 open Base
 open Pretty
 
-let rec subst_term (u:term) (sigma:(var_name*term) list) : term
-  = match u with
-        | Var(x) -> (try List.assoc x sigma with Not_found -> u)
-        | Daimon | Const _ | Proj _-> u
-        | Apply(u1,u2) -> Apply(subst_term u1 sigma, subst_term u2 sigma)
+
+let rec subst_term (App(u,args):term) (sigma:(var_name*term) list) : term
+  = let args = List.map (fun u -> subst_term u sigma) args in
+      match u with
+        | Var(x) -> app (try List.assoc x sigma with Not_found -> App(Var x,[])) args
+        | Daimon | Const _ -> App(u, args)
+        | Proj(u,d) -> App(Proj(subst_term u sigma, d), args)
 
 
 let unify_pattern (pattern:term) (u:term) : (var_name*term) list
@@ -16,25 +18,32 @@ let unify_pattern (pattern:term) (u:term) : (var_name*term) list
         match eqs with
             | [] -> acc
             | (s,t)::eqs when s=t -> unify_aux eqs acc
-            | (Const(c1),Const(c2))::eqs when c1=c2 -> acc
-            | (Proj(c1),Proj(c2))::eqs when c1=c2 -> acc
-            | (Const(c1), Const(c2))::_ -> error ("cannot unify constructors " ^ c1 ^ " and " ^ c2)
-            | (Proj(c1), Proj(c2))::_ -> error ("cannot unify projections " ^ c1 ^ " and " ^ c2)
-            | (Const _, Proj _)::_ | (Proj _, Const _)::_ -> error "cannot unify constant and projection"
-            | (Proj _,_)::_ | (_,Proj _)::_ ->  error "cannot unify projection and non-projection"
-            | (Apply(u1,u2),Apply(v1,v2))::eqs -> unify_aux ((u1,v1)::(u2,v2)::eqs) acc
-            | (Apply _, _)::_ -> error "cannot unify application with non-application"
-            | (Var x, _)::_ when x = f -> error "cannot unify the function name"
-            | (Var x, u)::eqs ->
-                    let eqs = List.map (function u1,u2 -> (subst_term u1 [x,u], subst_term u2 [x,u])) eqs in
-                    let acc = List.map (function _x,_u -> (_x, subst_term _u [x,u])) acc in
-                    unify_aux eqs ((x,u)::acc)
-            | (Const _,_)::_ | (_,Const _)::_ ->  error "cannot unify constructor and non-constructor"
-            | (Daimon,_)::_ -> error "cannot unify daimon"
+            | (App(u1,args1),(App(u2,args2) as v2))::eqs ->
+                begin
+                    match u1,u2 with
+                        | (Const(c1),Const(c2)) when c1=c2 -> unify_aux ((List.combine args1 args2)@eqs) acc
+                        | (Const(c1), Const(c2)) -> error ("cannot unify constructors " ^ c1 ^ " and " ^ c2)
+
+                        | (Proj(v1,d1),Proj(v2,d2)) when d1=d2 -> unify_aux ((v1,v2)::(List.combine args1 args2)@eqs) acc
+                        | (Proj(_,d1), Proj(_,d2)) -> error ("cannot unify projections " ^ d1 ^ " and " ^ d2)
+
+                        | (Const _, Proj _) | (Proj _, Const _) -> error "cannot unify constant and projection"
+                        | (Proj _,_) | (_,Proj _) ->  error "cannot unify projection and non-projection"
+
+                        | (Var x, _) when x = f -> error "cannot unify the function name"
+                        | (Var x, _) ->
+                                let eqs = List.map (function u1,u2 -> (subst_term u1 [x,v2], subst_term u2 [x,v2])) eqs in
+                                let acc = List.map (function _x,_u -> (_x, subst_term _u [x,v2])) acc in
+                                assert (args1 = []);
+                                unify_aux eqs ((x,u)::acc)
+
+                        | (Const _,_) | (_,Const _) ->  error "cannot unify constructor and non-constructor"
+                        | (Daimon,_) -> error "cannot unify daimon"
+                end
     in unify_aux [pattern,u] []
 
 
-let reduce_all (env:environment) (u:term) : term
+let reduce_all (env:environment) (v:term) : term
   =
     let rec get_clauses (f:var_name) = function
         | [] -> error ("function " ^ f ^ " doesn't exist")
@@ -44,7 +53,7 @@ let reduce_all (env:environment) (u:term) : term
 
     (* look for the first clause that can be used to reduce u
      * the boolean in the result indicates if a reduction was made *)
-    let rec reduce_first_clause (u:term) f clauses : term*bool =
+    let rec reduce_first_clause (u:term) clauses : term*bool =
         match clauses with
             | [] -> u,false
             | (pattern, def)::clauses ->
@@ -53,40 +62,27 @@ let reduce_all (env:environment) (u:term) : term
                         let sigma = unify_pattern pattern u in
                         let new_term = subst_term def sigma in
                         new_term,true
-                    with Error _ -> reduce_first_clause u f clauses
-            end
-    in
-
-    (* reduce the leftmost redex
-     * the boolean in the result ndicates if a reduction was made *)
-    let rec reduce_leftmost (u:term) : term*bool =
-        match u with
-            | Daimon -> Daimon,false
-            | Const _ | Proj _ -> u,false
-            | Var(x) -> reduce_first_clause u x (get_clauses x env.functions)
-            | Apply(u1,u2) ->
-                begin
-                    try
-                        (* FIXME: rewrite... *)
-                        let f = get_function_name u in
-                        let v,b = reduce_first_clause u f (get_clauses f env.functions) in
-                        if b
-                        then v,true
-                        else error "nothing"
-                    with Error _ ->         (* either nothing as above, or because of "get_function_name" when u doesn't start with a function *)
-                            let v,b = reduce_leftmost u1 in
-                            if b
-                            then Apply(v, u2),b
-                            else
-                            let v,b = reduce_leftmost u2 in
-                            Apply(u1,v),b
+                    with Error _ -> reduce_first_clause u clauses
                 end
     in
+    let rec
+      reduce_all_atomic u = match u with
+          | Var _ | Const _ | Daimon -> App(u,[]),false
+          | Proj(v,d) -> let v,b = reduce v in App(Proj(v,d),[]),b
+    and
+      reduce (v:term) : term*bool =
+        let App(u,args) = v in
+        let args,bs = List.split (List.map reduce args) in
+        let b1 = List.exists (fun b -> b) bs in
+        let u,b2 = reduce_all_atomic u in
+        let v,b3 = try reduce_first_clause (app u args) (get_clauses (get_function_name v) env.functions)
+                   with Error _ -> v,false
+        in v, b1&&b2&&b3
+    in
 
-    let rec aux u =
-      let v,b = reduce_leftmost u in
+    let rec aux v =
+      let v,b = reduce v in
       if b then aux v else v
+    in
 
-    in aux u
-
-
+    aux v

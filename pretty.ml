@@ -23,53 +23,35 @@ let rec print_type env = function
             print_string " → ";
             print_type env t2
 
-let rec is_atomic env = function
-    | Daimon -> true
-    | Var _ -> true
-    | Const _ -> true
-    | Proj _ -> true
-    | Apply(Proj _,_) -> true
-    | Apply(_,_) -> false
-
 
 let print_term_int u =
-    let rec aux n = function
-        | Const("Zero") -> n
-        | Apply(Const("Succ"),u) -> aux (n+1) u
+    let rec aux n (App(u,args)) = match u,args with
+        | Const("Zero"),[] -> n
+        | Const("Succ"),[v] -> aux (n+1) v
         | _ -> raise (Invalid_argument "print_term_int")
     in
         let n = aux 0 u in
         print_int n
 
-let rec print_term env u =
+let rec
+  print_paren_term v =
+      match v with
+        | App(_,[]) -> print_term v
+        | v -> print_string "("; print_term v; print_string ")"
+
+and
+  print_atomic_term = function
+    | Daimon -> print_string "⊥"
+    | Var(x) -> print_string x
+    | Const(c) -> print_string c
+    | Proj(u,d) -> print_paren_term u; print_string "." ; print_string d
+and
+  print_term v =
+    let (App(u,args)) = v in
     try
-        print_term_int u
-    with Invalid_argument "print_term_int" ->
-        match u with
-        | Daimon -> print_string "⊥"
-        | Var(x) -> print_string x
-        | Const(c) | Proj(c) ->
-            begin
-                try
-                    let p = get_constant_priority c env in
-                    print_string c;
-                    print_exp p;
-                with Not_found -> print_string c;print_string "⁽⁾"
-            end
-        | Apply(((Const _) as e1), e2) when is_atomic env e2 ->
-                print_term env e1; print_string " "; print_term env e2;
-        | Apply(((Proj _) as e1), e2) when is_atomic env e2 ->
-                print_term env e2; print_string "."; print_term env e1
-        | Apply(((Const _) as e1), e2) ->
-                print_term env e1; print_string " ("; print_term env e2; print_string ")"
-        | Apply(((Proj _) as e1), e2) ->
-                print_string "("; print_term env e2; print_string ")."; print_term env e1
-        | Apply(e1,e2) ->
-            begin
-                if is_atomic env e2
-                then (print_term env e1; print_string " "; print_term env e2;)
-                else ( print_term env e1; print_string " ("; print_term env e2; print_string ")")
-            end
+        print_term_int v
+    with Invalid_argument "print_term_int" -> print_atomic_term u; print_list "" " " " " "" print_paren_term args
+
 
 let showtypes env =
 
@@ -124,7 +106,7 @@ let showfunctions env =
         print_type env t;
         print_list "\n"
                     "\n    | " "\n    | " "\n"
-                    (function pattern,term -> print_term env pattern; print_string " = "; print_term env term)
+                    (function pattern,term -> print_term pattern; print_string " = "; print_term term)
                     clauses;
     in
 

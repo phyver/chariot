@@ -19,10 +19,12 @@ let check_new_funs_different_from_old new_funs old_funs =
         | None -> ()
         | Some f -> error ("function " ^ f ^ " already exists")
 
-let rec get_variables = function
-    | Daimon | Const _ | Proj _ -> []
+let rec get_variables (App(u,args)) =
+    let vars = List.concat (List.map get_variables args) in
+    match u with
+    | Daimon | Const _ -> vars
+    | Proj(v,d) -> (get_variables v)@vars
     | Var(x) -> [x]
-    | Apply(t1,t2) -> (get_variables t1) @ (get_variables t2)
 
 let process_function_defs (env:environment)
                           (defs:(var_name * type_expression * (term * term) list) list)
@@ -54,13 +56,13 @@ let process_function_defs (env:environment)
         (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
         let infered_type_lhs, type_of_vars1 = infer_type lhs_pattern env [] in
 (* print_string "infered type of lhs:  "; print_type env infered_type_lhs; print_newline(); *)
+(* print_string "type_of_vars1:  "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) type_of_vars1; print_newline(); *)
         (* infer type of RHS *)
         let infered_type_rhs, type_of_vars2 = infer_type rhs_term env type_of_vars1 in
 (* print_string "infered type of rhs:  "; print_type env infered_type_rhs; print_newline(); *)
+(* print_string "type_of_vars2:  "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) type_of_vars2; print_newline(); *)
         if not (is_instance infered_type_rhs infered_type_lhs)
         then error ("rhs and lhs do not have the same type");
-(* print_string "type_of_vars1, after "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) type_of_vars1; print_newline(); *)
-(* print_string "type_of_vars2, after "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) type_of_vars2; print_newline(); *)
 
 
         let infered_type_function = List.assoc f type_of_vars1 in
