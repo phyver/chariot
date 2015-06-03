@@ -13,7 +13,8 @@ type cmd =
     | CmdPrompt of string
     (* | CmdTest of type_expression*type_expression *)
     (* | CmdTest of term*term *)
-    | CmdTest of term
+    (* | CmdTest of term *)
+    | CmdTest of var_name
     | CmdInfer of term
     | CmdShow of string
     | CmdReduce of term
@@ -112,3 +113,12 @@ let cmd_pattern_to_cpattern env pattern =
     print_string "=======================================================\n";
     print_newline()
 
+let cmd_exhaustive_function env f =
+    print_string "=======================================================\n";
+    print_string ("checking if definition " ^ f ^ " is exhaustive\n");
+    if exhaustive env (get_clauses f env)
+    then print_string "OK"
+    else print_string "PROBLEM";
+    print_newline();
+    print_string "=======================================================\n";
+    print_newline()

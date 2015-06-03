@@ -49,10 +49,10 @@ eos:
 command:
     | CMDQUIT                                           { CmdQuit }
     | CMDINFER term                                     { CmdInfer $2 }
-    | CMDTEST lhs_term                                  { CmdTest($2) }
     | CMDPROMPT string                                  { CmdPrompt($2) }
     | CMDSHOW string                                    { CmdShow($2) }
     | CMDREDUCE term                                    { CmdReduce($2) }
+    | CMDTEST IDL                                       { CmdTest($2) }
 
 string:
     | IDL { $1 }

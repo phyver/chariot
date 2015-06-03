@@ -2,6 +2,7 @@ open Base
 open Misc
 open Pretty
 open Typing
+open CheckCoverage
 
 let var_counter = ref 0
 
@@ -17,13 +18,6 @@ let check_new_funs_different_from_old new_funs old_funs =
     match common new_funs old_funs with
         | None -> ()
         | Some f -> error ("function " ^ f ^ " already exists")
-
-let rec get_function_name = function
-    | Var(f) -> f
-    | Const c | Proj c -> error (c ^ " is not a function name")
-    | Daimon -> error ("you cannot redefine the daimon")
-    | Apply(Proj _, p) -> get_function_name p       (* the constant should be a projection *)
-    | Apply(p,_) -> get_function_name p
 
 let rec get_variables = function
     | Daimon | Const _ | Proj _ -> []
@@ -98,7 +92,11 @@ let process_function_defs (env:environment)
 
     let process_single_def (f:var_name) (t:type_expression) (clauses:(term*term) list) =
         List.iter (check_single_clause f t) clauses;
-        (f, env.current_bloc, t, clauses)
+
+        (* check coverage *)
+        if exhaustive env clauses
+        then (f, env.current_bloc, t, clauses)
+        else error ("function " ^ f ^ " is not exhaustive")
     in
 
     let functions = List.map (function f,t,clauses -> process_single_def f t clauses) defs in

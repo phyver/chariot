@@ -10,7 +10,7 @@ let rec subst_term (u:term) (sigma:(var_name*term) list) : term
 
 let unify_pattern (pattern:term) (u:term) : (var_name*term) list
   = (* the function defined by the pattern: this variable cannot be instantiated! *)
-    let f = CheckFunctions.get_function_name pattern in
+    let f = get_function_name pattern in
 
     let rec unify_aux (eqs:(term*term) list) acc =
         match eqs with
@@ -68,7 +68,7 @@ let reduce_all (env:environment) (u:term) : term
                 begin
                     try
                         (* FIXME: rewrite... *)
-                        let f = CheckFunctions.get_function_name u in
+                        let f = get_function_name u in
                         let v,b = reduce_first_clause u f (get_clauses f env.functions) in
                         if b
                         then v,true

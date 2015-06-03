@@ -23,6 +23,16 @@ let common l1 l2 =
         | x1::_,x2::l2 (*when x1>x2*) -> aux l1 l2
     in aux (List.sort compare l1) (List.sort compare l2)
 
+(* find a value that appears in l1 but not in l2 *)
+let find_in_not_in l1 l2 =
+    let rec aux l1 l2 = match l1,l2 with
+        | [],_ -> None
+        | x::_,[] -> Some x
+        | x1::_,x2::_ when x1<x2 -> Some x1
+        | x1::l1,x2::_ when x1>x2 -> aux l1 l2
+        | x1::l1,x2::l2 (*when x1=x2*) -> aux l1 l2
+    in aux (List.sort compare l1) (List.sort compare l2)
+
 let exp_of_int n =
     let exp = ["⁰"; "¹"; "²"; "³"; "⁴"; "⁵"; "⁶"; "⁷"; "⁸"; "⁹"] in
     let rec aux n acc =

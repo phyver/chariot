@@ -1,5 +1,9 @@
 open Misc
 
+exception Error of string
+let error s = raise (Error s)
+
+
 (* types for type expressions and substitutions *)
 type type_name = string
 type type_expression =
@@ -14,6 +18,7 @@ type arity = int
 type priority = int
 type const_name = string
 type var_name = string
+type bloc_nb = int      (* number of the block of mutual definitions *)
 
 type term =
     | Daimon
@@ -23,7 +28,6 @@ type term =
     | Apply of term*term
 
 type function_clause = term * term
-type bloc_nb = int      (* number of the block of mutual definitions *)
 type environment = {
     current_priority: int                                                                   ;
     current_bloc: int                                                                       ;
@@ -75,6 +79,19 @@ let get_type_var (x:var_name) (vars:(var_name*type_expression)list) (env:environ
     in
     aux_var vars
 
+let get_clauses (f:var_name) (env:environment) =
+    let rec aux_function = function
+        | [] -> raise Not_found
+        | (_f,_,_,clauses)::_ when _f=f -> clauses
+        | _::fcts -> aux_function fcts
+    in
+    aux_function env.functions
 
-exception Error of string
-let error s = raise (Error s)
+(* get the function name from a pattern *)
+let rec get_function_name = function
+    | Var(f) -> f
+    | Const c | Proj c -> error (c ^ " is not a function name")
+    | Daimon -> error ("you cannot redefine the daimon")
+    | Apply(Proj _, p) -> get_function_name p       (* the constant should be a projection *)
+    | Apply(p,_) -> get_function_name p
+
