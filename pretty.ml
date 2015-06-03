@@ -39,7 +39,7 @@ let print_term_int u =
         | _ -> raise (Invalid_argument "print_term_int")
     in
         let n = aux 0 u in
-        print_string "<"; print_int n; print_string ">"
+        print_int n
 
 let rec print_term env u =
     try

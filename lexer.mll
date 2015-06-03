@@ -14,6 +14,7 @@ let idU = upper(lower|upper|other)*exp
 let idL = lower(lower|upper|other)*exp
 let str = "\"" ([^ '"'] | "\\\"")* "\""
 let tvar = "'" lower(lower|upper|other)*exp
+let int = [ '0'-'9' ][ '0'-'9' ]*
 
 rule token = parse
     | ":quit"           { CMDQUIT }
@@ -30,6 +31,7 @@ rule token = parse
     | ','               { COMMA }
     | '|'               { PIPE }
     | '.'               { DOT }
+    | '+'               { PLUS }
     | "\n\n"            { BLANKLINE }
     | "data"            { DATA }
     | "codata"          { CODATA }
@@ -44,6 +46,7 @@ rule token = parse
     | idL               { IDL(remove_exp (Lexing.lexeme lexbuf)) }
     | tvar              { let s = Lexing.lexeme lexbuf in TVAR(String.sub s 1 ((String.length s)-1)) }
     | str               { let s = Lexing.lexeme lexbuf in STR(String.sub s 1 ((String.length s)-2)) }
+    | int               { INT(int_of_string (Lexing.lexeme lexbuf)) }
 
     | [' ' '\n' '\t']   { token lexbuf }
     | eof               { EOF }

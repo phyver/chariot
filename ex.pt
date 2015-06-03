@@ -16,11 +16,17 @@ val length : list('x) -> nat
     | length (Cons x xs) = Succ (length xs)
 
 (* addition of natural numbers *)
-val add : nat -> nat -> nat  | add n Zero = n | add n (Succ m) = Succ (add n m)
+val add : nat -> nat -> nat
+    | add n 0 = n
+    | add n (m+1) = Succ (add n m)
 
-val mult : nat -> nat -> nat | mult n Zero = Zero | mult n (Succ m) = add n (mult n m)
+val mult : nat -> nat -> nat
+    | mult n 0 = 0
+    | mult n (m+1) = n + (mult n m)
 
-val pow : nat -> nat -> nat | pow n Zero = Succ Zero | pow n (Succ m) = mult n (pow n m)
+val pow : nat -> nat -> nat
+    | pow n 0 = 1
+    | pow n (m+1) = mult n (pow n m)
 
 
 

@@ -1,16 +1,23 @@
 %{
 open Base
 open Commands
+
+let rec int_to_term n u =
+    if n=0
+    then u
+    else int_to_term (n-1) (Apply(Const("Succ"),u))
 %}
 
-%token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY DAIMON ARROW
+%token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY DAIMON ARROW PLUS
 %token DATA CODATA WHERE AND VAL
 %token CMDQUIT CMDPROMPT CMDINFER CMDSHOW CMDREDUCE CMDTEST
 %token EOF
 %token <string> IDU IDL STR TVAR
+%token <int> INT
 
 %right ARROW
 %left DOT
+
 
 %start single_statement
 %start statements
@@ -127,6 +134,8 @@ term:
     | atomic_term               { $1 }
     | term atomic_term          { Apply($1, $2) }
 
+    | term PLUS atomic_term            { Apply(Apply(Var("add"),$1),$3) }
+
 atomic_term:
     | LPAR term RPAR            { $2 }
     | atomic_term DOT IDU       { Apply(Proj($3), $1) }
@@ -134,18 +143,24 @@ atomic_term:
     | IDU                       { Const($1) }
     | DAIMON                    { Daimon }
 
+    | INT                       { int_to_term $1 (Const("Zero")) }
+
 lhs_term:
-    | IDL   { Var($1) }
-    | LPAR lhs_term RPAR { $2 }
-    | lhs_term DOT IDU { Apply(Proj($3), $1) }
-    | lhs_term atomic_pattern { Apply($1,$2) }
+    | IDL                           { Var($1) }
+    | LPAR lhs_term RPAR            { $2 }
+    | lhs_term DOT IDU              { Apply(Proj($3), $1) }
+    | lhs_term atomic_pattern       { Apply($1,$2) }
 
 atomic_pattern:
-    | IDL { Var($1) }
-    | IDU { Const($1) }
-    | LPAR pattern RPAR { $2 }
+    | IDL                   { Var($1) }
+    | IDU                   { Const($1) }
+    | LPAR pattern RPAR     { $2 }
+
+    | INT                   { int_to_term $1 (Const("Zero")) }
 
 pattern:
-    | atomic_pattern { $1 }
-    | pattern atomic_pattern { Apply($1, $2) }
+    | atomic_pattern            { $1 }
+    | pattern atomic_pattern    { Apply($1, $2) }
+
+    | pattern PLUS INT          { int_to_term $3 $1 }
 
