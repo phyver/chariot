@@ -12,5 +12,10 @@ idem for lists [ ; ; ; ; ] ::
 -- allow non recursive definitions
 
 
+allow "{ proj1 = u1 ; ... ; projn = un }" in terms and patterns (=> lexer, parser, term, ...)
+unification now has
+{ proj1 = u1 ; ... ; projn = un } ~ t   ==>   u1 ~ t.proj1, ..., un ~ t.projn
+
+In the end, the substitution should only contain "simple" patterns, and substitution should use "simple pattern matching"
 
 
