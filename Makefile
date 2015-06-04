@@ -11,3 +11,4 @@ byte:
 clean:
 	ocamlbuild -clean
 	rm -f tags
+	rm -f main.native main.byte
