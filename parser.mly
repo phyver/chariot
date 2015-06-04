@@ -5,7 +5,7 @@ open Commands
 let rec int_to_term n u =
     if n=0
     then u
-    else int_to_term (n-1) (App(Const("Succ"),[u]))
+    else int_to_term (n-1) (App(Const("Succ",()),[u]))
 %}
 
 %token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY DAIMON ARROW PLUS
@@ -29,8 +29,8 @@ let rec int_to_term n u =
 %type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
 %type <type_name * (type_expression list) * (const_name * type_expression) list> type_def
 
-%type <var_name * type_expression * (term * term) list> function_def
-%type <(var_name * type_expression * (term * term) list ) list> function_defs
+%type <var_name * type_expression * (unit term * unit term) list> function_def
+%type <(var_name * type_expression * (unit term * unit term) list ) list> function_defs
 
 %%
 
@@ -138,25 +138,25 @@ term:
 
 atomic_term:
     | LPAR term RPAR            { $2 }
-    | atomic_term DOT IDU       { App(Proj($1,$3), []) }
+    | atomic_term DOT IDU       { App(Proj($1,$3,()), []) }
     | IDL                       { App(Var($1),[]) }
-    | IDU                       { App(Const($1),[]) }
+    | IDU                       { App(Const($1,()),[]) }
     | DAIMON                    { App(Daimon,[]) }
 
-    | INT                       { int_to_term $1 (App(Const("Zero"),[])) }
+    | INT                       { int_to_term $1 (App(Const("Zero",()),[])) }
 
 lhs_term:
     | IDL                           { App(Var($1),[]) }
     | LPAR lhs_term RPAR            { $2 }
-    | lhs_term DOT IDU              { App(Proj($1,$3), []) }
+    | lhs_term DOT IDU              { App(Proj($1,$3,()), []) }
     | lhs_term atomic_pattern       { app $1 [$2]  }
 
 atomic_pattern:
     | IDL                   { App(Var($1),[]) }
-    | IDU                   { App(Const($1),[]) }
+    | IDU                   { App(Const($1,()),[]) }
     | LPAR pattern RPAR     { $2 }
 
-    | INT                   { int_to_term $1 (App(Const("Zero"),[])) }
+    | INT                   { int_to_term $1 (App(Const("Zero",()),[])) }
 
 pattern:
     | atomic_pattern            { $1 }

@@ -20,20 +20,21 @@ type const_name = string
 type var_name = string
 type bloc_nb = int      (* number of the block of mutual definitions *)
 
-type atomic_term =
+type 'a atomic_term =
     | Daimon
     | Var of string
-    | Const of const_name
-    | Proj of term * const_name
+    | Const of const_name * 'a
+    | Proj of 'a term * const_name * 'a
 and
-    term =
-    | App of atomic_term * term list
+    'a term =
+    | App of 'a atomic_term * 'a term list
 
 let app (App(u,args1)) args2 = App(u,args1 @ args2)
 
-type function_clause = term * term
+type function_clause = priority term * priority term
+
 type environment = {
-    current_priority: int                                                                   ;
+    current_priority: priority                                                              ;
     current_bloc: int                                                                       ;
     types:     (type_name * (type_name list) * priority * const_name list) list             ;
     constants: (const_name * priority * type_expression) list                               ;
@@ -55,7 +56,7 @@ let get_type_priority (t:type_name) (env:environment) : int =
     in
     aux env.types
 
-let get_constant_priority (c:const_name) (env:environment) : int =
+let get_constant_priority (env:environment) (c:const_name) : int =
     let rec aux = function
         | [] -> raise Not_found
         | (_c, _priority, _)::_ when _c=c -> _priority
@@ -93,8 +94,8 @@ let get_clauses (f:var_name) (env:environment) =
 
 (* get the function name from a pattern *)
 let rec get_function_name (App(u,args)) = match u with
-    | Const c -> error (c ^ " is not a function name")
+    | Const(c,_) -> error (c ^ " is not a function name")
     | Daimon -> error ("you cannot redefine the daimon")
     | Var f -> f
-    | Proj(u,d) -> get_function_name u
+    | Proj(u,d,_) -> get_function_name u
 

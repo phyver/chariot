@@ -2,8 +2,6 @@ allow untyped definitions, and infer type
 
 allow "val f x y z = ..." for untyped / single case definitions
 
-add "priority option" argument to Const / Proj in terms (parsing puts None, and checkTypes / checkFunctions adds the priority)
-
 idem for lists [ ; ; ; ; ] ::
 
 

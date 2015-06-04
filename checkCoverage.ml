@@ -31,19 +31,19 @@ type dpattern = const_name
 type pattern = C of cpattern | P of dpattern
 
 
-let term_to_patterns (v:term) : pattern list
+let term_to_patterns (v:'a term) : pattern list
   =
     let rec get_pattern (App(u,args)) =
         match u with
             | Daimon -> assert false
             | Var(x) -> PVar x
             | Proj _ -> assert false
-            | Const(c) -> PConst(c,List.map get_pattern args)
+            | Const(c,_) -> PConst(c,List.map get_pattern args)
     in
 
     let rec aux (App(u,args)) = match u with
         | Var(f) -> List.map (fun p -> C (get_pattern p)) args
-        | Proj(u,d) -> (aux u)@(P d)::(List.map (fun p -> C (get_pattern p)) args)
+        | Proj(u,d,_) -> (aux u)@(P d)::(List.map (fun p -> C (get_pattern p)) args)
 
         | Daimon -> assert false
         | Const _ -> assert false

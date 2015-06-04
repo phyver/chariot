@@ -26,8 +26,8 @@ let rec print_type env = function
 
 let print_term_int u =
     let rec aux n (App(u,args)) = match u,args with
-        | Const("Zero"),[] -> n
-        | Const("Succ"),[v] -> aux (n+1) v
+        | Const("Zero",_),[] -> n
+        | Const("Succ",_),[v] -> aux (n+1) v
         | _ -> raise (Invalid_argument "print_term_int")
     in
         let n = aux 0 u in
@@ -46,8 +46,8 @@ and
   print_atomic_term = function
     | Daimon -> print_string "⊥"
     | Var(x) -> print_string x
-    | Const(c) -> print_string c
-    | Proj(u,d) -> print_paren_term u; print_string "." ; print_string d
+    | Const(c,p) -> print_string c; print_exp p
+    | Proj(u,d,p) -> print_paren_term u; print_string "." ; print_string d; print_exp p
 and
   print_term v =
     let (App(u,args)) = v in

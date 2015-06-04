@@ -3,6 +3,7 @@ open Pretty
 open Typing
 open Compute
 open CheckCoverage
+open CheckFunctions
 
 (* commands *)
 type cmd =
@@ -12,12 +13,12 @@ type cmd =
     | CmdQuit
     | CmdPrompt of string
     (* | CmdTest of type_expression*type_expression *)
-    | CmdTest of term*term
+    | CmdTest of unit term*unit term
     (* | CmdTest of term *)
     (* | CmdTest of var_name *)
-    | CmdInfer of term
+    | CmdInfer of unit term
     | CmdShow of string
-    | CmdReduce of term
+    | CmdReduce of unit term
 
     | TypeDef of priority * (type_name * (type_expression list) * (const_name * type_expression) list) list
     (* The output of a type definition from the parser consists of
@@ -29,7 +30,7 @@ type cmd =
      * No sanity checking is done by the parser, everything is done in the "process_type_defs" function in file "checkTypes.ml"...
      *)
 
-    | FunDef of (var_name * type_expression * (term * term) list) list
+    | FunDef of (var_name * type_expression * (unit term * unit term) list) list
     (* The output of a function definition from the parser consists of a list of
      *   - a function name
      *   - a function type
@@ -60,6 +61,7 @@ let cmd_unify_type env t1 t2 =
     print_newline()
 
 let cmd_reduce env term =
+    let term = put_priority env term in
     print_string "reducing: ";
     print_term term;
     print_newline();
@@ -73,6 +75,7 @@ let cmd_reduce env term =
 let cmd_infer_type env u vars =
     print_string "=======================================================\n";
     print_string "     the term   ";
+    let u = put_priority env u in
     print_term u;
     print_newline();
     let t,sigma = infer_type u env vars in
@@ -87,6 +90,8 @@ let cmd_infer_type env u vars =
 
 let cmd_unify_term env pattern term =
     print_string "=======================================================\n";
+    let pattern = put_priority env pattern in
+    let term = put_priority env term in
     print_string "unifying pattern   ";
     print_term pattern;
     print_string "\n        and term   ";

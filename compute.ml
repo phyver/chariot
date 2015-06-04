@@ -3,19 +3,19 @@ open Pretty
 open Misc
 
 
-let rec subst_term (App(u,args):term) (sigma:(var_name*term) list) : term
+let rec subst_term (App(u,args):'a term) (sigma:(var_name*'a term) list) : 'a term
   = let args = List.map (fun u -> subst_term u sigma) args in
       match u with
         | Var(x) -> app (try List.assoc x sigma with Not_found -> App(Var x,[])) args
         | Daimon | Const _ -> App(u, args)
-        | Proj(u,d) -> App(Proj(subst_term u sigma, d), args)
+        | Proj(u,d,p) -> App(Proj(subst_term u sigma, d,p), args)
 
 
-let unify_pattern (pattern,def:term*term) (v:term) : term
+let unify_pattern (pattern,def:'a term*'a term) (v:'a term) : 'a term
   = (* the function defined by the pattern: this variable cannot be instantiated! *)
     let f = get_function_name pattern in
 
-    let rec unify_aux (eqs:(term*term) list) acc =
+    let rec unify_aux (eqs:('a term*'a term) list) acc =
 (* print_string "eqs "; print_list "[]" "" " , " "" (function v1,v2 -> print_term v1; print_string "~"; print_term v2) eqs; print_newline(); *)
 (* print_string "sigma "; print_list "''" "" "  ;  " "" (function x,t -> print_string ("'" ^ x ^ " := "); print_term t) acc; print_newline(); *)
         match eqs with
@@ -28,11 +28,11 @@ let unify_pattern (pattern,def:term*term) (v:term) : term
 (* print_string "v2 "; print_atomic_term u2; *) 
 (* print_string "  args2 "; print_list "" "" "," "\n" print_term args2;print_newline(); *)
                     match u1,u2 with
-                        | (Const(c1),Const(c2)) when c1=c2 -> unify_aux ((List.combine args1 args2)@eqs) acc
-                        | (Const(c1), Const(c2)) -> error ("cannot unify constructors " ^ c1 ^ " and " ^ c2)
+                        | (Const(c1,p1),Const(c2,p2)) when c1=c2 -> assert (p1=p2); unify_aux ((List.combine args1 args2)@eqs) acc
+                        | (Const(c1,_), Const(c2,_)) -> error ("cannot unify constructors " ^ c1 ^ " and " ^ c2)
 
-                        | (Proj(v1,d1),Proj(v2,d2)) when d1=d2 -> unify_aux ((v1,v2)::(List.combine args1 args2)@eqs) acc
-                        | (Proj(_,d1), Proj(_,d2)) -> error ("cannot unify projections " ^ d1 ^ " and " ^ d2)
+                        | (Proj(v1,d1,p1),Proj(v2,d2,p2)) when d1=d2 -> assert (p1=p2); unify_aux ((v1,v2)::(List.combine args1 args2)@eqs) acc
+                        | (Proj(_,d1,_), Proj(_,d2,_)) -> error ("cannot unify projections " ^ d1 ^ " and " ^ d2)
 
                         | (Const _, Proj _) | (Proj _, Const _) -> error "cannot unify constant and projection"
                         | (Proj _,_) | (_,Proj _) ->  error "cannot unify projection and non-projection"
@@ -68,7 +68,7 @@ let unify_pattern (pattern,def:term*term) (v:term) : term
     with Invalid_argument "combine_suffix" -> error "cannot unify: not enough arguments"
 
 
-let reduce_all (env:environment) (v:term) : term
+let reduce_all (env:environment) (v:'a term) : 'a term
   =
     let rec get_clauses (f:var_name) = function
         | [] -> error ("function " ^ f ^ " doesn't exist")
@@ -78,7 +78,7 @@ let reduce_all (env:environment) (v:term) : term
 
     (* look for the first clause that can be used to reduce u
      * the boolean in the result indicates if a reduction was made *)
-    let rec reduce_first_clause (v:term) clauses : term*bool =
+    let rec reduce_first_clause (v:'a term) clauses : 'a term*bool =
 (* print_string "reduce_first_clause "; print_term v; print_newline(); *)
         match clauses with
             | [] -> v,false
@@ -93,9 +93,9 @@ let reduce_all (env:environment) (v:term) : term
     let rec
       reduce_all_atomic u = match u with
           | Var _ | Const _ | Daimon -> App(u,[]),false
-          | Proj(v,d) -> let v,b = reduce v in App(Proj(v,d),[]),b
+          | Proj(v,d,p) -> let v,b = reduce v in App(Proj(v,d,p),[]),b
     and
-      reduce (v:term) : term*bool =
+      reduce (v:'a term) : 'a term*bool =
 (* print_string "\n1 -> "; print_term v; print_string "...\n"; *)
         let App(u,args) = v in
         let args,bs = List.split (List.map reduce args) in

@@ -23,11 +23,20 @@ let rec get_variables (App(u,args)) =
     let vars = List.concat (List.map get_variables args) in
     match u with
     | Daimon | Const _ -> vars
-    | Proj(v,d) -> (get_variables v)@vars
+    | Proj(v,_,_) -> (get_variables v)@vars
     | Var(x) -> [x]
 
+let rec put_priority env (App(u,args):unit term) : priority term =
+    let args = List.map (put_priority env) args in
+    match u with
+        | Daimon -> App(Daimon,args)
+        | Var(x) -> App(Var(x),args)
+        | Proj(v,d,()) -> let v = put_priority env v in App(Proj(v,d,get_constant_priority env d),args)
+        | Const(c,()) -> App(Const(c,get_constant_priority env c), args)
+
 let process_function_defs (env:environment)
-                          (defs:(var_name * type_expression * (term * term) list) list)
+                          (defs:(var_name * type_expression * (unit term * unit term) list) list)
+  : environment
   =
     (* bloc number *)
     let new_bloc_nb = env.current_bloc + 1 in
@@ -42,7 +51,7 @@ let process_function_defs (env:environment)
 
     let new_functions_with_types = List.rev_map (function f,t,_ -> f,t) defs in
 
-    let check_single_clause (f:var_name) (t:type_expression) (lhs_pattern,rhs_term:term*term) =
+    let check_single_clause (f:var_name) (t:type_expression) (lhs_pattern,rhs_term:unit term*unit term) =
         (* get function from LHS and check it is equal to f *)
         let _f = get_function_name lhs_pattern in
         if not (_f = f) then error ("function names " ^ f ^ " and " ^ _f ^ " do not match");
@@ -93,12 +102,12 @@ let process_function_defs (env:environment)
     in
 
 
-    let process_single_def (f:var_name) (t:type_expression) (clauses:(term*term) list) =
+    let process_single_def (f:var_name) (t:type_expression) (clauses:(unit term*unit term) list) =
         List.iter (check_single_clause f t) clauses;
 
         (* check coverage *)
         if exhaustive env clauses
-        then (f, env.current_bloc, t, clauses)
+        then (f, env.current_bloc, t, List.map (function p,v -> put_priority env p, put_priority env v) clauses)
         else error ("function " ^ f ^ " is not exhaustive")
     in
 

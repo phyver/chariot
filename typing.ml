@@ -55,7 +55,7 @@ let is_instance t1 t2 =
 let new_nb = ref 0
 let reset_fresh () = new_nb := 0
 let fresh () = incr new_nb; TVar("x" ^ (string_of_int !new_nb))
-let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list): type_expression*(var_name*type_expression) list =
+let infer_type (u:'a term) (env:environment) (vars:(var_name*type_expression) list): type_expression*(var_name*type_expression) list =
 
 (* print_string "infer_type for "; print_term u; print_newline(); *)
 
@@ -90,11 +90,11 @@ let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list)
 
 
     let rec
-      infer_type_and_constraints_atomic (u:atomic_term) constraints =
+      infer_type_and_constraints_atomic (u:'a atomic_term) constraints =
 (* print_string "infer_type_and_constraints_atomic of "; print_atomic_term u; print_string "\n  with constraints "; print_list "-no constraint-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) vars; print_newline(); *)
         match u with
             | Daimon -> instantiate (TVar("daimon")) , constraints
-            | Const(c) ->
+            | Const(c,_) ->
                 begin
                     try
                         instantiate (get_type_const c env) , constraints
@@ -106,7 +106,7 @@ let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list)
                         (get_type_var x constraints env , constraints)
                     with Not_found -> TVar("type_"^x), add_constraint (x, TVar("type_"^x)) constraints
                 end
-            | Proj(u,d) ->
+            | Proj(u,d,_) ->
                 begin
                     try
                         let td, constraints = instantiate (get_type_const d env) , constraints in
@@ -120,7 +120,7 @@ let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list)
 
     and
 
-      infer_type_and_constraints_application (t:type_expression) (arg:term) constraints =
+      infer_type_and_constraints_application (t:type_expression) (arg:'a term) constraints =
 (* print_string "infer_type_and_constraints_application of "; print_term arg; print_string " with function type "; print_type env t; print_newline(); *)
         let targ,constraints = infer_type_and_constraints_term arg constraints in
 (* print_string "targ "; print_type env targ; print_newline(); *)
@@ -145,7 +145,7 @@ let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list)
             | _ -> error "not a function type!!!"
 
     and
-      infer_type_and_constraints_applications (t:type_expression) (args:term list) constraints =
+      infer_type_and_constraints_applications (t:type_expression) (args:'a term list) constraints =
 (* print_string "infer_type_and_constraints_applications of "; print_list "" "" " , " "" print_term args; print_string "\n  with function type "; print_type env t; print_newline(); *)
           match args with
             | [] -> t,constraints
@@ -154,7 +154,7 @@ let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list)
                     infer_type_and_constraints_applications t args constraints
 
     and
-      infer_type_and_constraints_term (App(u1,args):term) constraints =
+      infer_type_and_constraints_term (App(u1,args):'a term) constraints =
 (* print_string "infer_type_and_constraints_term of "; print_term (App(u1,args)); print_newline(); *)
             let tu1,constraints = infer_type_and_constraints_atomic u1 constraints in
 (* print_string "tu1 "; print_type env tu1; print_newline(); *)
