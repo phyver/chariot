@@ -10,7 +10,7 @@ let rec int_to_term n u =
 
 %token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS
 %token DATA CODATA WHERE AND VAL
-%token CMDQUIT CMDPROMPT CMDINFER CMDSHOW CMDREDUCE CMDTEST
+%token CMDQUIT CMDPROMPT CMDSHOW CMDREDUCE CMDTEST
 %token EOF
 %token <string> IDU IDL STR TVAR
 %token <int> INT
@@ -54,11 +54,11 @@ eos:
     | BLANKLINE     {}
 
 command:
+    | COLON term                                        { CmdReduce $2 }
     | CMDQUIT                                           { CmdQuit }
-    | CMDINFER term                                     { CmdInfer $2 }
     | CMDPROMPT string                                  { CmdPrompt($2) }
     | CMDSHOW string                                    { CmdShow($2) }
-    | CMDREDUCE term                                    { CmdReduce($2) }
+
     | CMDTEST term AND term                             { CmdTest($2,$4) }
 
 string:

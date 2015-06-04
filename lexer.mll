@@ -19,7 +19,6 @@ let int = [ '0'-'9' ][ '0'-'9' ]*
 rule token = parse
     | ":quit"           { CMDQUIT }
     | ":prompt"         { CMDPROMPT }
-    | ":infer"          { CMDINFER }
     | ":show"           { CMDSHOW }
     | ":reduce"         { CMDREDUCE }
     | ":test"           { CMDTEST }

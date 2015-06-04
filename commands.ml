@@ -16,8 +16,8 @@ type cmd =
     | CmdTest of unit term*unit term
     (* | CmdTest of term *)
     (* | CmdTest of var_name *)
-    | CmdInfer of unit term
     | CmdShow of string
+
     | CmdReduce of unit term
 
     | TypeDef of priority * (type_name * (type_expression list) * (const_name * type_expression) list) list
@@ -39,6 +39,58 @@ type cmd =
      *       - a RHS given by a term
      *)
 
+let cmd_reduce env term =
+    let term = put_priority env term in
+    reset_fresh ();
+    let t,constraints = infer_type env term [] in
+    print_string "      result: ";
+    print_term (reduce_all env term);
+    print_newline();
+    print_string "     of type: "; print_type t;
+    print_newline();
+    match constraints with
+        | [] -> print_newline()
+        | constraints ->
+            begin
+                print_list ""
+                           " constraints: " "  ,  " "\n\n"
+                           (function x,t -> print_string (x ^ " : "); print_type t) constraints
+            end
+
+let cmd_show env s =
+    if s = "types" then show_types env
+    else
+    if s = "functions" then show_functions env
+    else
+    let rec auxt = function
+        | [] -> raise Exit
+        | (tname,params,priority,consts)::_ when s=tname ->
+            begin
+                if priority mod 2 = 0
+                then print_string "codata\n"
+                else print_string "data\n";
+                show_data_type env tname params priority consts;
+                print_newline()
+            end
+        | _::types -> auxt types
+    in
+    let rec auxf = function
+        | [] -> raise Exit
+        | (f,m,t,clauses)::_ when s=f ->
+            begin
+                print_string "val\n"; show_function f t clauses;
+                print_newline()
+            end
+        | _::defs -> auxf defs
+    in
+    try auxt env.types
+    with Exit -> try auxf env.functions with Exit -> print_endline ("*** no type or function " ^ s ^ " in environment\n")
+
+
+
+
+
+
 
 let cmd_unify_type env t1 t2 =
     print_string "=======================================================\n";
@@ -59,34 +111,6 @@ let cmd_unify_type env t1 t2 =
     print_newline();
     print_string "=======================================================\n";
     print_newline()
-
-let cmd_reduce env term =
-    let term = put_priority env term in
-    print_string "reducing: ";
-    print_term term;
-    print_newline();
-    print_string "  result: ";
-    print_term (reduce_all env term);
-    print_newline();
-    print_newline()
-
-
-
-let cmd_infer_type env u vars =
-    print_string "=======================================================\n";
-    print_string "     the term   ";
-    let u = put_priority env u in
-    print_term u;
-    print_newline();
-    let t,sigma = infer_type env u vars in
-    print_string "   is of type   ";
-    print_type t;
-    print_newline();
-    print_string "         when   ";
-    print_list "''" "" "  ;  " "" (function x,t -> print_string (x ^ " : "); print_type t) sigma;
-    print_newline();
-    print_string "=======================================================\n";
-    print_newline ()
 
 let cmd_unify_term env pattern term =
     print_string "=======================================================\n";

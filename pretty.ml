@@ -55,32 +55,30 @@ and
     with Invalid_argument "print_term_int" -> print_atomic_term u; print_list "" " " " " "" print_paren_term args
 
 
-let showtypes env =
+let show_data_type env tname params priority consts =
+    print_string "  ";
+    print_string tname;
+    print_list "" "(" "," ")" print_string params;
+    print_string " where";
+    print_list "\n"
+               "\n    | " "\n    | " "\n"
+               (function c -> print_string c; print_exp priority; print_string " : "; print_type (get_type_const env c) ;)
+               consts
 
-    let print_data_type tname params priority consts =
-        print_string "  ";
-        print_string tname;
-        (* print_exp priority; *)
-        print_list "" "(" "," ")" print_string params;
-        print_string " where";
-        print_list "\n"
-                   "\n    | " "\n    | " "\n"
-                   (function c -> print_string c; print_exp priority; print_string " : "; print_type (get_type_const env c) ;)
-                   consts
-    in
+let show_types env =
 
     let rec showtypesaux = function
         | [] -> assert false
-        | [(tname,params,priority,consts)] -> print_data_type tname params priority consts;
+        | [(tname,params,priority,consts)] -> show_data_type env tname params priority consts;
         | (tname,params,priority,consts)::(((_,_,p,_)::_) as types) when priority=p ->
                 begin
-                    print_data_type tname params priority consts;
+                    show_data_type env tname params priority consts;
                     print_string "and\n";
                     showtypesaux types
                 end
         | (tname,params,priority,consts)::(((_,_,p,_)::_) as types) ->
                 begin
-                    print_data_type tname params priority consts;
+                    show_data_type env tname params priority consts;
                     print_newline();
                     if p mod 2 = 0
                     then print_string "codata\n"
@@ -100,30 +98,29 @@ let showtypes env =
                 print_string "\n(* ================================================== *)\n\n"
 
 
-let showfunctions env =
-    let print_function f t clauses =
-        print_string "   ";
-        print_string f;
-        print_string " : ";
-        print_type t;
-        print_list "\n"
-                    "\n    | " "\n    | " "\n"
-                    (function pattern,term -> print_term pattern; print_string " = "; print_term term)
-                    clauses;
-    in
+let show_function f t clauses =
+    print_string "   ";
+    print_string f;
+    print_string " : ";
+    print_type t;
+    print_list "\n"
+                "\n    | " "\n    | " "\n"
+                (function pattern,term -> print_term pattern; print_string " = "; print_term term)
+                clauses
 
+let show_functions env =
     let rec showfunctionsaux = function
         | [] -> ()
-        | [ (f,_,t,clauses) ] -> print_function f t clauses
+        | [ (f,_,t,clauses) ] -> show_function f t clauses
         | (f,m,t,clauses)::((_,n,_,_)::_ as defs) when m=n ->
             begin
-                print_function f t clauses;
+                show_function f t clauses;
                 print_string "and\n";
                 showfunctionsaux defs
             end
         | (f,m,t,clauses)::((_,n,_,_)::_ as defs) ->
             begin
-                print_function f t clauses;
+                show_function f t clauses;
                 print_newline ();
                 print_string "val\n";
                 showfunctionsaux defs
