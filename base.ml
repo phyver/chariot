@@ -21,7 +21,7 @@ type var_name = string
 type bloc_nb = int      (* number of the block of mutual definitions *)
 
 type 'a atomic_term =
-    | Daimon
+    | Angel
     | Var of string
     | Const of const_name * 'a
     | Proj of 'a term * const_name * 'a
@@ -95,7 +95,7 @@ let get_clauses (env:environment) (f:var_name) =
 (* get the function name from a pattern *)
 let rec get_function_name (App(u,args)) = match u with
     | Const(c,_) -> error (c ^ " is not a function name")
-    | Daimon -> error ("you cannot redefine the daimon")
+    | Angel -> error ("you cannot redefine the angel")
     | Var f -> f
     | Proj(u,d,_) -> get_function_name u
 

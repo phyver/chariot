@@ -22,14 +22,14 @@ let check_new_funs_different_from_old new_funs old_funs =
 let rec get_variables (App(u,args)) =
     let vars = List.concat (List.map get_variables args) in
     match u with
-    | Daimon | Const _ -> vars
+    | Angel | Const _ -> vars
     | Proj(v,_,_) -> (get_variables v)@vars
     | Var(x) -> [x]
 
 let rec put_priority env (App(u,args):unit term) : priority term =
     let args = List.map (put_priority env) args in
     match u with
-        | Daimon -> App(Daimon,args)
+        | Angel -> App(Angel,args)
         | Var(x) -> App(Var(x),args)
         | Proj(v,d,()) -> let v = put_priority env v in App(Proj(v,d,get_constant_priority env d),args)
         | Const(c,()) -> App(Const(c,get_constant_priority env c), args)

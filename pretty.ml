@@ -43,7 +43,7 @@ let rec
 
 and
   print_atomic_term = function
-    | Daimon -> print_string "⊥"
+    | Angel -> print_string "⊥"
     | Var(x) -> print_string x
     | Const(c,p) -> print_string c; print_exp p
     | Proj(u,d,p) -> print_paren_term u; print_string "." ; print_string d; print_exp p

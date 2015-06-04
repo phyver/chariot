@@ -64,12 +64,12 @@ and
       | odd Zero = False
       | odd (Succ n) = even n
 
-(* using the daimon *)
+(* using the angel *)
 val oops : 'a -> 'b
-  | oops a = !!!
+  | oops a = ???
 
 val oops2 : 'a -> 'b
-  | oops2 =!!!
+  | oops2 = ???
 
 
 (* show all the defined types *)

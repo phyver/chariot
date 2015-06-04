@@ -40,8 +40,8 @@ rule token = parse
     | "->"              { ARROW }
     | "→"               { ARROW }
     | "val"             { VAL }
-    | "!!!"             { DAIMON }
-    | "⊥"               { DAIMON }
+    | "???"             { ANGEL }
+    | "⊤"               { ANGEL }
     | idU               { IDU(remove_exp (Lexing.lexeme lexbuf)) }
     | idL               { IDL(remove_exp (Lexing.lexeme lexbuf)) }
     | tvar              { let s = Lexing.lexeme lexbuf in TVAR(String.sub s 1 ((String.length s)-1)) }

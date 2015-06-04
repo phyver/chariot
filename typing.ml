@@ -93,7 +93,7 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
       infer_type_and_constraints_atomic (u:'a atomic_term) constraints =
 (* print_string "infer_type_and_constraints_atomic of "; print_atomic_term u; print_string "\n  with constraints "; print_list "-no constraint-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) vars; print_newline(); *)
         match u with
-            | Daimon -> instantiate (TVar("daimon")) , constraints
+            | Angel -> instantiate (TVar("angel")) , constraints
             | Const(c,_) ->
                 begin
                     try

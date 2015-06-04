@@ -8,7 +8,7 @@ let rec int_to_term n u =
     else int_to_term (n-1) (App(Const("Succ",()),[u]))
 %}
 
-%token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY DAIMON ARROW PLUS
+%token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS
 %token DATA CODATA WHERE AND VAL
 %token CMDQUIT CMDPROMPT CMDINFER CMDSHOW CMDREDUCE CMDTEST
 %token EOF
@@ -141,7 +141,7 @@ atomic_term:
     | atomic_term DOT IDU       { App(Proj($1,$3,()), []) }
     | IDL                       { App(Var($1),[]) }
     | IDU                       { App(Const($1,()),[]) }
-    | DAIMON                    { App(Daimon,[]) }
+    | ANGEL                     { App(Angel,[]) }
 
     | INT                       { int_to_term $1 (App(Const("Zero",()),[])) }
 

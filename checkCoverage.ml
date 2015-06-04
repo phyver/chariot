@@ -35,7 +35,7 @@ let term_to_patterns (v:'a term) : pattern list
   =
     let rec get_pattern (App(u,args)) =
         match u with
-            | Daimon -> assert false
+            | Angel -> assert false
             | Var(x) -> PVar x
             | Proj _ -> assert false
             | Const(c,_) -> PConst(c,List.map get_pattern args)
@@ -45,7 +45,7 @@ let term_to_patterns (v:'a term) : pattern list
         | Var(f) -> List.map (fun p -> C (get_pattern p)) args
         | Proj(u,d,_) -> (aux u)@(P d)::(List.map (fun p -> C (get_pattern p)) args)
 
-        | Daimon -> assert false
+        | Angel -> assert false
         | Const _ -> assert false
     in
     aux v

@@ -7,7 +7,7 @@ let rec subst_term (App(u,args):'a term) (sigma:(var_name*'a term) list) : 'a te
   = let args = List.map (fun u -> subst_term u sigma) args in
       match u with
         | Var(x) -> app (try List.assoc x sigma with Not_found -> App(Var x,[])) args
-        | Daimon | Const _ -> App(u, args)
+        | Angel | Const _ -> App(u, args)
         | Proj(u,d,p) -> App(Proj(subst_term u sigma, d,p), args)
 
 
@@ -53,7 +53,7 @@ let unify_pattern (pattern,def:'a term*'a term) (v:'a term) : 'a term
                                 unify_aux eqs ((x,v2)::acc)
 
                         | (Const _,_) | (_,Const _) ->  error "cannot unify constructor and non-constructor"
-                        | (Daimon,_) -> error "cannot unify daimon"
+                        | (Angel,_) -> error "cannot unify angel"
                 end
     in
     let App(pu,pargs) = pattern in
@@ -92,7 +92,7 @@ let reduce_all (env:environment) (v:'a term) : 'a term
     in
     let rec
       reduce_all_atomic u = match u with
-          | Var _ | Const _ | Daimon -> App(u,[]),false
+          | Var _ | Const _ | Angel -> App(u,[]),false
           | Proj(v,d,p) -> let v,b = reduce v in App(Proj(v,d,p),[]),b
     and
       reduce (v:'a term) : 'a term*bool =
