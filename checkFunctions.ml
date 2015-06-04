@@ -54,6 +54,7 @@ let process_function_defs (env:environment)
             | Some(x) -> error ("variable " ^ x ^ " appears more than once"));
 
         (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
+        reset_fresh();
         let infered_type_lhs, type_of_vars1 = infer_type lhs_pattern env [] in
 (* print_string "infered type of lhs:  "; print_type env infered_type_lhs; print_newline(); *)
 (* print_string "type_of_vars1:  "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) type_of_vars1; print_newline(); *)

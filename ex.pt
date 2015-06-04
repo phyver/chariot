@@ -79,10 +79,7 @@ val oops2 : 'a -> 'b
 :show functions
 
 (* test compute *)
-val two : nat | two = Succ (Succ Zero)
-val three : nat | three = Succ (two)
-
-:reduce pow three (pow two two)
+:reduce pow 3 (pow 2 2)
 
 
 (* streams *)
@@ -95,8 +92,8 @@ val get_nth : nat -> stream('a) -> 'a
   | get_nth (Succ n) s = get_nth n s.Tail
 
 
-val double : nat -> nat | double n = mult n two
+val double : nat -> nat | double n = mult n 2
 
-:reduce get_nth (mult three three) (map double (arith three three))
+:reduce get_nth (mult 3 3) (map double (arith 3 3))
 
-:reduce map double (arith three three)
+:reduce map double (arith 3 3)

@@ -27,8 +27,8 @@ let process_statement = function
     | CmdPrompt(s) -> prompt := s
     | CmdQuit -> raise Exit
     | CmdInfer(e) -> cmd_infer_type !env e []
-    | CmdTest(t1,t2) -> cmd_unify_type !env t1 t2
-    (* | CmdTest(t1,t2) -> cmd_unify_term !env t1 t2 *)
+    (* | CmdTest(t1,t2) -> cmd_unify_type !env t1 t2 *)
+    | CmdTest(t1,t2) -> cmd_unify_term !env t1 t2
     (* | CmdTest(pattern) -> cmd_pattern_to_cpattern !env pattern *)
     (* | CmdTest(f) -> cmd_exhaustive_function !env f *)
     | CmdReduce(t) -> cmd_reduce !env t

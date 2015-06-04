@@ -35,6 +35,9 @@ let print_term_int u =
 
 let rec
   print_paren_term v =
+    try
+        print_term_int v
+    with Invalid_argument "print_term_int" ->
       match v with
         | App(_,[]) -> print_term v
         | v -> print_string "("; print_term v; print_string ")"

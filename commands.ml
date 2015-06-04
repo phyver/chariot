@@ -11,8 +11,8 @@ type cmd =
 
     | CmdQuit
     | CmdPrompt of string
-    | CmdTest of type_expression*type_expression
-    (* | CmdTest of term*term *)
+    (* | CmdTest of type_expression*type_expression *)
+    | CmdTest of term*term
     (* | CmdTest of term *)
     (* | CmdTest of var_name *)
     | CmdInfer of term
@@ -92,11 +92,9 @@ let cmd_unify_term env pattern term =
     print_string "\n        and term   ";
     print_term term;
     print_newline();
-    let sigma = unify_pattern pattern term in
-    let new_term = subst_term pattern sigma in
-    assert (new_term = term);
+    let new_term = unify_pattern (pattern,pattern) term in
     print_string "          result   ";
-    print_list "''" "" "  ;  " "" (function x,t -> print_string (x ^ " := "); print_term t) sigma;
+    print_term new_term;
     print_newline();
     print_string "=======================================================\n";
     print_newline()

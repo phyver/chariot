@@ -55,3 +55,8 @@ let sub_of_int n =
     in
     String.concat "" (aux n [])
 
+let rec combine_suffix short long =
+    match short,long with
+        | [],l -> [],l
+        | _,[] -> raise (Invalid_argument "combine_suffix")
+        | a::short,b::long -> let l,s = combine_suffix short long in ((a,b)::l,s)

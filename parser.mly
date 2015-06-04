@@ -59,7 +59,7 @@ command:
     | CMDPROMPT string                                  { CmdPrompt($2) }
     | CMDSHOW string                                    { CmdShow($2) }
     | CMDREDUCE term                                    { CmdReduce($2) }
-    | CMDTEST type_expression AND type_expression                         { CmdTest($2,$4) }
+    | CMDTEST term AND term                             { CmdTest($2,$4) }
 
 string:
     | IDL { $1 }

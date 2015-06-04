@@ -53,6 +53,7 @@ let is_instance t1 t2 =
  * the result is the type of the term together with a map giving the type of all the free variables
  *)
 let new_nb = ref 0
+let reset_fresh () = new_nb := 0
 let fresh () = incr new_nb; TVar("x" ^ (string_of_int !new_nb))
 let infer_type (u:term) (env:environment) (vars:(var_name*type_expression) list): type_expression*(var_name*type_expression) list =
 
