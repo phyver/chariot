@@ -64,11 +64,11 @@ let process_function_defs (env:environment)
 
         (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
         reset_fresh();
-        let infered_type_lhs, type_of_vars1 = infer_type lhs_pattern env [] in
+        let infered_type_lhs, type_of_vars1 = infer_type env lhs_pattern [] in
 (* print_string "infered type of lhs:  "; print_type env infered_type_lhs; print_newline(); *)
 (* print_string "type_of_vars1:  "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) type_of_vars1; print_newline(); *)
         (* infer type of RHS *)
-        let infered_type_rhs, type_of_vars2 = infer_type rhs_term env type_of_vars1 in
+        let infered_type_rhs, type_of_vars2 = infer_type env rhs_term type_of_vars1 in
 (* print_string "infered type of rhs:  "; print_type env infered_type_rhs; print_newline(); *)
 (* print_string "type_of_vars2:  "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) type_of_vars2; print_newline(); *)
         if not (is_instance infered_type_rhs infered_type_lhs)

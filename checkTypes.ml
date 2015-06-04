@@ -46,7 +46,7 @@ let rec check_parameters (env:environment) (defs:(type_name*type_expression list
                     then error("type " ^ t ^ " should always use the same parameters in the definition")
                 with Not_found ->
                     try
-                        let a = get_arity t env in
+                        let a = get_arity env t in
                         if not (a = List.length params)
                         then error ("type " ^ t ^ " should has arity" ^ (string_of_int a))
                     with Not_found -> error ("type " ^ t ^ " doesn't exist")

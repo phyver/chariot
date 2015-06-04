@@ -40,7 +40,7 @@ type environment = {
     constants: (const_name * priority * type_expression) list                               ;
     functions: (var_name * bloc_nb * type_expression * function_clause list) list           }
 
-let get_arity (t:type_name) (env:environment) : int =
+let get_arity (env:environment) (t:type_name) : int =
     let rec aux = function
         | [] -> raise Not_found
         | (_t, _params, _, _)::_ when _t=t -> List.length _params
@@ -48,7 +48,7 @@ let get_arity (t:type_name) (env:environment) : int =
     in
     aux env.types
 
-let get_type_priority (t:type_name) (env:environment) : int =
+let get_type_priority (env:environment) (t:type_name) : int =
     let rec aux = function
         | [] -> raise Not_found
         | (_t, _, _priority, _)::_ when _t=t -> _priority
@@ -64,14 +64,14 @@ let get_constant_priority (env:environment) (c:const_name) : int =
     in
     aux env.constants
 
-let get_type_const (c:const_name) (env:environment) =
+let get_type_const (env:environment) (c:const_name) =
     let rec aux = function
         | [] -> raise Not_found
         | (_c,_p,_t)::_ when _c=c -> _t
         | _::consts -> aux consts
     in aux env.constants
 
-let get_type_var (x:var_name) (vars:(var_name*type_expression)list) (env:environment) =
+let get_type_var (env:environment) (x:var_name) (vars:(var_name*type_expression)list) =
     let rec aux_function = function
         | [] -> raise Not_found
         | (f,_,t,_)::_ when f=x -> t
@@ -84,7 +84,7 @@ let get_type_var (x:var_name) (vars:(var_name*type_expression)list) (env:environ
     in
     aux_var vars
 
-let get_clauses (f:var_name) (env:environment) =
+let get_clauses (env:environment) (f:var_name) =
     let rec aux_function = function
         | [] -> raise Not_found
         | (_f,_,_,clauses)::_ when _f=f -> clauses

@@ -8,7 +8,7 @@ open Pretty
 let rec occur_type (x:type_name) (t:type_expression) = match t with
     | TVar(y) -> x=y
     | Arrow(t1,t2) -> occur_type x t1 || occur_type x t2
-    | Data(_, args) -> List.exists (occur_type x) args
+    | Data(_,args) -> List.exists (occur_type x) args
 
 let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expression = match t with
     | TVar (y) -> (try List.assoc y sigma with Not_found -> t)
@@ -55,7 +55,7 @@ let is_instance t1 t2 =
 let new_nb = ref 0
 let reset_fresh () = new_nb := 0
 let fresh () = incr new_nb; TVar("x" ^ (string_of_int !new_nb))
-let infer_type (u:'a term) (env:environment) (vars:(var_name*type_expression) list): type_expression*(var_name*type_expression) list =
+let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) list): type_expression*(var_name*type_expression) list =
 
 (* print_string "infer_type for "; print_term u; print_newline(); *)
 
@@ -97,19 +97,19 @@ let infer_type (u:'a term) (env:environment) (vars:(var_name*type_expression) li
             | Const(c,_) ->
                 begin
                     try
-                        instantiate (get_type_const c env) , constraints
+                        instantiate (get_type_const env c) , constraints
                     with Not_found -> error ("cannot infer type of constant " ^ c)
                 end
             | Var(x) ->
                 begin
                     try
-                        (get_type_var x constraints env , constraints)
+                        (get_type_var env x constraints , constraints)
                     with Not_found -> TVar("type_"^x), add_constraint (x, TVar("type_"^x)) constraints
                 end
             | Proj(u,d,_) ->
                 begin
                     try
-                        let td, constraints = instantiate (get_type_const d env) , constraints in
+                        let td, constraints = instantiate (get_type_const env d) , constraints in
 (* print_string d; print_string " td "; print_type env td; print_newline(); *)
 (* print_string "constraints "; print_list "" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) constraints; print_newline(); *)
 (* print_term u; print_newline(); *)

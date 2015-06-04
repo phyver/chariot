@@ -43,19 +43,19 @@ type cmd =
 let cmd_unify_type env t1 t2 =
     print_string "=======================================================\n";
     print_string "unifying type   ";
-    print_type env t1;
+    print_type t1;
     print_string "\n          and   ";
-    print_type env t2;
+    print_type t2;
     print_newline();
     let sigma = unify_type t1 t2 in
     let t1s = subst_type sigma t1 in
     let t2s = subst_type sigma t2 in
     assert (t1s = t2s);
     print_string "       result   ";
-    print_type env t1s;
+    print_type t1s;
     print_newline();
     print_string "          via   ";
-    print_list "''" "" "  ;  " "" (function x,t -> print_string ("'" ^ x ^ " := "); print_type env t) sigma;
+    print_list "''" "" "  ;  " "" (function x,t -> print_string ("'" ^ x ^ " := "); print_type t) sigma;
     print_newline();
     print_string "=======================================================\n";
     print_newline()
@@ -78,12 +78,12 @@ let cmd_infer_type env u vars =
     let u = put_priority env u in
     print_term u;
     print_newline();
-    let t,sigma = infer_type u env vars in
+    let t,sigma = infer_type env u vars in
     print_string "   is of type   ";
-    print_type env t;
+    print_type t;
     print_newline();
     print_string "         when   ";
-    print_list "''" "" "  ;  " "" (function x,t -> print_string (x ^ " : "); print_type env t) sigma;
+    print_list "''" "" "  ;  " "" (function x,t -> print_string (x ^ " : "); print_type t) sigma;
     print_newline();
     print_string "=======================================================\n";
     print_newline ()
@@ -119,7 +119,7 @@ let cmd_pattern_to_cpattern env pattern =
 let cmd_exhaustive_function env f =
     print_string "=======================================================\n";
     print_string ("checking if definition " ^ f ^ " is exhaustive\n");
-    if exhaustive env (get_clauses f env)
+    if exhaustive env (get_clauses env f)
     then print_string "OK"
     else print_string "PROBLEM";
     print_newline();

@@ -8,20 +8,19 @@ let rec print_list empty b1 sep b2 p = function
     | [x] -> print_string b1; p x; print_string b2
     | x::xs -> print_string b1; p x; List.iter (fun x -> print_string sep; p x) xs; print_string b2
 
-let rec print_type env = function
+let rec print_type = function
     | TVar(x) -> print_string @$ "'" ^ x
     | Data(t,args) ->
             print_string t;
-            print_exp (get_type_priority t env);
-            print_list "" "(" "," ")" (print_type env) args
+            print_list "" "(" "," ")" print_type args
     | Arrow((TVar _ | Data _) as t1,t2) ->
-            print_type env t1;
+            print_type t1;
             print_string " → ";
-            print_type env t2
+            print_type t2
     | Arrow(t1,t2) ->
-            print_string "(" ; print_type env t1; print_string ")";
+            print_string "(" ; print_type t1; print_string ")";
             print_string " → ";
-            print_type env t2
+            print_type t2
 
 
 let print_term_int u =
@@ -61,12 +60,12 @@ let showtypes env =
     let print_data_type tname params priority consts =
         print_string "  ";
         print_string tname;
-        print_exp priority;
+        (* print_exp priority; *)
         print_list "" "(" "," ")" print_string params;
         print_string " where";
         print_list "\n"
                    "\n    | " "\n    | " "\n"
-                   (function c -> print_string c; print_exp priority; print_string " : "; print_type env (get_type_const c env) ;)
+                   (function c -> print_string c; print_exp priority; print_string " : "; print_type (get_type_const env c) ;)
                    consts
     in
 
@@ -106,7 +105,7 @@ let showfunctions env =
         print_string "   ";
         print_string f;
         print_string " : ";
-        print_type env t;
+        print_type t;
         print_list "\n"
                     "\n    | " "\n    | " "\n"
                     (function pattern,term -> print_term pattern; print_string " = "; print_term term)
