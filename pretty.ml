@@ -23,16 +23,23 @@ let rec print_type = function
             print_type t2
 
 
-let print_term_int u =
-    let rec aux n (App(u,args)) = match u,args with
-        | Const("Zero",_),[] -> n
-        | Const("Succ",_),[v] -> aux (n+1) v
-        | _ -> raise (Invalid_argument "print_term_int")
-    in
-        let n = aux 0 u in
-        print_int n
-
 let rec
+  print_term_int u =
+    let rec aux n v =
+        let App(u,args) = v in
+        match u,args with
+        | Const("Zero",_),[] -> n,None
+        | Const("Zero",_),_ -> raise (Invalid_argument "print_term_int")
+        | Const("Succ",_),[v] -> aux (n+1) v
+        | Const("Succ",_),_ -> raise (Invalid_argument "print_term_int")
+        | _ -> n,Some v
+    in
+        match aux 0 u with
+            | n,None -> print_int n
+            | 0,Some v -> raise (Invalid_argument "print_term_int")
+            | n,Some v -> print_term v; print_string "+"; print_int n
+
+and
   print_paren_term v =
     try
         print_term_int v
