@@ -1,8 +1,5 @@
-allow untyped definitions, and infer type
-
-allow "val f x y z = ..." for untyped / single case definitions
-
-idem for lists [ ; ; ; ; ] ::
+show lists with [ ; ; ; ; ] and ::
+show Succ(Succ x) as x+2
 
 
 -- allow non recursive definitions

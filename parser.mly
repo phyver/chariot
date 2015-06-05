@@ -29,8 +29,8 @@ let rec int_to_term n u =
 %type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
 %type <type_name * (type_expression list) * (const_name * type_expression) list> type_def
 
-%type <var_name * type_expression * (unit term * unit term) list> function_def
-%type <(var_name * type_expression * (unit term * unit term) list ) list> function_defs
+%type <var_name * type_expression option * (unit term * unit term) list> function_def
+%type <(var_name * type_expression option * (unit term * unit term) list ) list> function_defs
 
 %%
 
@@ -118,7 +118,8 @@ function_defs:
     | function_def AND function_defs    { $1::$3 }
 
 function_def:
-    | IDL COLON type_expression function_clauses    { ($1,$3,$4) }
+    | IDL COLON type_expression function_clauses    { ($1,Some($3),$4) }
+    | function_clause function_clauses              { (get_function_name (fst $1),None,$1::$2) }
 
 function_clauses:
     | /*nothing*/                               { [] }

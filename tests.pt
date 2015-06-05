@@ -108,3 +108,5 @@ val fourtimes : ('a -> 'a) -> ('a ->'a)
     | fourtimes = twice twice
 
 : fourtimes double 2
+
+val k x y = x

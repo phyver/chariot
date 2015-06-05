@@ -30,7 +30,7 @@ type cmd =
      * No sanity checking is done by the parser, everything is done in the "process_type_defs" function in file "checkTypes.ml"...
      *)
 
-    | FunDef of (var_name * type_expression * (unit term * unit term) list) list
+    | FunDef of (var_name * type_expression option * (unit term * unit term) list) list
     (* The output of a function definition from the parser consists of a list of
      *   - a function name
      *   - a function type
