@@ -82,9 +82,9 @@ let process_function_defs (env:environment)
 
         (* check that the function is applied to all its arguments *)
         let sigma = unify_type t infered_type_function in
-        match subst_type sigma infered_type_rhs with
-            | Arrow _ -> error "functions should be η-expanded"
-            | _ -> ();
+        (* match subst_type sigma infered_type_rhs with *)
+        (*     | Arrow _ -> error "functions should be η-expanded" *)
+        (*     | _ -> (); *)
 
         (* check that all the constraints we got concern the remaining functions being defined *)
         List.iter (function x,t ->

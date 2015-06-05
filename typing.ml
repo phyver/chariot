@@ -103,8 +103,11 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
             | Var(x) ->
                 begin
                     try
-                        (get_type_var env x constraints , constraints)
-                    with Not_found -> TVar("type_"^x), add_constraint (x, TVar("type_"^x)) constraints
+                        List.assoc x constraints, constraints
+                    with Not_found ->
+                        try
+                            (instantiate (get_type_var env x) , constraints)
+                        with Not_found -> TVar("type_"^x), add_constraint (x, TVar("type_"^x)) constraints
                 end
             | Proj(u,d,_) ->
                 begin
@@ -160,7 +163,7 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
 (* print_string "tu1 "; print_type env tu1; print_newline(); *)
             match args with
                 | [] -> tu1,constraints
-                | args -> 
+                | args ->
                     let sigma= unify_type tu1 (instantiate (Arrow(TVar("'x"),TVar("'y")))) in
                     let constraints = List.map (second (subst_type sigma)) constraints in
                     let tu1 = subst_type sigma tu1 in

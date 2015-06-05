@@ -71,18 +71,13 @@ let get_type_const (env:environment) (c:const_name) =
         | _::consts -> aux consts
     in aux env.constants
 
-let get_type_var (env:environment) (x:var_name) (vars:(var_name*type_expression)list) =
-    let rec aux_function = function
+let get_type_var (env:environment) (x:var_name) =
+    let rec aux = function
         | [] -> raise Not_found
         | (f,_,t,_)::_ when f=x -> t
-        | _::fcts -> aux_function fcts
+        | _::fcts -> aux fcts
     in
-    let rec aux_var = function
-        | [] -> aux_function env.functions
-        | (_x,_t)::_ when _x=x -> _t
-        | _::vars -> aux_var vars
-    in
-    aux_var vars
+    aux env.functions
 
 let get_clauses (env:environment) (f:var_name) =
     let rec aux_function = function
