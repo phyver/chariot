@@ -99,7 +99,7 @@ let cmd_unify_type env t1 t2 =
     print_string "\n          and   ";
     print_type t2;
     print_newline();
-    let sigma = unify_type t1 t2 in
+    let sigma = unify_type_mgu t1 t2 in
     let t1s = subst_type sigma t1 in
     let t2s = subst_type sigma t2 in
     assert (t1s = t2s);

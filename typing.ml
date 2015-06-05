@@ -17,7 +17,7 @@ let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expressi
 
 (* unify two types, giving "priority" to "t1":
  * if t2 is more specialized than t1, then the substitution we compute doesn't affect t2 *)
-let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
+let unify_type_mgu (t1:type_expression) (t2:type_expression) : type_substitution =
     let rec aux (eqs:(type_expression*type_expression) list ) acc = match eqs with
             | [] -> acc
             | (s,t)::eqs when s=t -> aux eqs acc
@@ -43,9 +43,13 @@ let unify_type (t1:type_expression) (t2:type_expression) : type_substitution =
             | (Data _, Data _)::_ -> error "cannot unify different datatypes"
     in aux [ (t1,t2) ] []
 
+let unify_type (t1:type_expression) (t2:type_expression) : type_expression =
+    let sigma = unify_type_mgu t1 t2 in
+    subst_type sigma t1
+
 (* check if t1 is an instance of t2 *)
 let is_instance t1 t2 =
-    let sigma = unify_type t1 t2 in
+    let sigma = unify_type_mgu t1 t2 in
     t1 = subst_type sigma t1
 
 (* infers most general type of "u" in environment "env"
@@ -83,8 +87,7 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
         | (y,s)::_ when x<y -> (x,t)::constraints
         | (y,s)::constraints when x>y -> (y,s)::(add_constraint (x,t) constraints)
         | (y,s)::constraints (* when x=y *) ->
-                let sigma = unify_type t s in
-                (x,subst_type sigma t)::constraints
+                (x,unify_type s t)::constraints
     in
 
 
@@ -127,7 +130,7 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
 (* print_string "infer_type_and_constraints_application of "; print_term arg; print_string " with function type "; print_type env t; print_newline(); *)
         let targ,constraints = infer_type_and_constraints_term arg constraints in
 (* print_string "targ "; print_type env targ; print_newline(); *)
-        let sigma= unify_type t (instantiate (Arrow(TVar("'x"),TVar("'y")))) in
+        let sigma= unify_type_mgu t (instantiate (Arrow(TVar("'x"),TVar("'y")))) in
 (* print_string "sigma "; print_list "" "" " ; " "" (function x,t -> print_string ("'" ^ x ^ "="); print_type env t) sigma; print_newline(); *)
         let constraints = List.map (second (subst_type sigma)) constraints in
         let t = subst_type sigma t in
@@ -137,7 +140,7 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
 
         match t with
             | Arrow(t1,t2) ->
-                    let tau = unify_type t1 targ in
+                    let tau = unify_type_mgu t1 targ in
 (* print_string "tau "; print_list "" "" " ; " "" (function x,t -> print_string ("'" ^ x ^ "="); print_type env t) tau; print_newline(); *)
                     let constraints = List.map (second (subst_type tau)) constraints in
 (* print_string "constraints "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) constraints; print_newline(); *)
@@ -164,7 +167,7 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
             match args with
                 | [] -> tu1,constraints
                 | args ->
-                    let sigma= unify_type tu1 (instantiate (Arrow(TVar("'x"),TVar("'y")))) in
+                    let sigma= unify_type_mgu tu1 (instantiate (Arrow(TVar("'x"),TVar("'y")))) in
                     let constraints = List.map (second (subst_type sigma)) constraints in
                     let tu1 = subst_type sigma tu1 in
                     infer_type_and_constraints_applications tu1 args constraints
