@@ -81,7 +81,7 @@ and
   coverProj env (ps:pattern list list) (d:const_name) : unit =
       let allprojs = get_constants env d in
       let projs = List.map (function (P d)::_ -> d | _ -> assert false) ps in
-      match find_in_not_in allprojs projs with
+      match find_in_difference allprojs projs with
         | None -> cover env (List.map List.tl ps)
         | Some p -> ()
 and
@@ -89,7 +89,7 @@ and
   coverConst env (ps:pattern list list) c =
       let allconsts = get_constants env c in
       let consts = List.map (function (C(PConst(c,_)))::_ -> c | _ -> assert false) ps in
-      match find_in_not_in allconsts consts with
+      match find_in_difference allconsts consts with
         | None -> cover env (List.map (function (C(PConst(c,qs)))::ps -> (List.map (fun x -> C x) qs)@ps | _ -> assert false) ps)
         | Some p -> ()
 

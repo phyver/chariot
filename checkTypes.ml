@@ -3,33 +3,33 @@ open Misc
 
 (* check that all the type parameters of a definition are different *)
 let check_uniqueness_parameters params =
-    match uniq params with
+    match find_dup params with
         | None -> ()
         | Some(TVar(x)) -> error ("parameter " ^ x ^ " appears more than once")
         | _ -> assert false
 
 (* check that all new types are different *)
 let check_new_types_different types =
-    match uniq types with
+    match find_dup types with
         | None -> ()
         | Some(t) -> error ("type " ^ t ^ " is defined more than once")
 
 (* check that new types are different from old ones *)
 let check_new_types_different_from_old new_types old_types =
-    match common new_types old_types with
+    match find_common new_types old_types with
         | None -> ()
         | Some t -> error ("type " ^ t ^ " already exists")
 
 
 (* check that all new constants are different *)
 let check_new_consts_different consts =
-    match uniq consts with
+    match find_dup consts with
         | None -> ()
         | Some(c) -> error ("constant " ^ c ^ " appears more than once")
 
 (* check that new constants are different from old ones *)
 let check_new_consts_different_from_old new_consts old_consts =
-    match common new_consts old_consts with
+    match find_common new_consts old_consts with
         | None -> ()
         | Some t -> error ("constant " ^ t ^ " already exists")
 
@@ -46,12 +46,11 @@ let rec check_parameters (env:environment) (defs:(type_name*type_expression list
                     then error("type " ^ t ^ " should always use the same parameters in the definition")
                 with Not_found ->
                     try
-                        let a = get_arity env t in
+                        let a = get_type_arity env t in
                         if not (a = List.length params)
                         then error ("type " ^ t ^ " should has arity" ^ (string_of_int a))
                     with Not_found -> error ("type " ^ t ^ " doesn't exist")
             end
-
 
 (* check that a type doesn't contain an instance of some other type *)
 let check_doesnt_contain (t:type_expression) (x:type_name) =
@@ -93,19 +92,18 @@ let rec check_constructor (t:type_name) (c:const_name*type_expression) = match c
 
 let process_type_defs (env:environment)
                       (priority:priority)
-                      (defs:(type_name * (type_expression list) * (const_name * type_expression) list) list) =
+                      (defs:(type_name * (type_expression list) * (const_name * type_expression) list) list)
+  : environment
+    =
     (* all the types, with parameters, that were mutually defined by this definition *)
-    let new_types_with_params = List.rev_map (function (t,params,_) -> (t,params)) defs in
+    let new_types_with_params = List.rev_map (function (t,params,_) -> (t,params)) defs
+    in
 
     (* the real priority of this bunch of mutual type definitions *)
     let priority = if (env.current_priority - priority) mod 2 = 0
                    then env.current_priority+2
                    else env.current_priority+1
     in
-
-    (* FIXME: I can probably do without references... *)
-    let types = ref [] in
-    let constants = ref [] in
 
     (* we check that all the new types are different *)
     let new_types_without_params = List.rev_map (function (t,_,_) -> t) defs in
@@ -126,17 +124,16 @@ let process_type_defs (env:environment)
     let old_functions = List.map (function f,_,_,_ -> f) env.functions in
     check_new_consts_different_from_old new_consts old_functions;
 
-    let process_single_type tname params consts =
-        types := (tname, List.map (function TVar(x) -> x
-                                          | _ -> assert false) params, priority, List.map fst consts) :: !types;
-
+    let process_single_type (tname:type_name)
+                            (params:type_expression list)
+                            (consts:(const_name*type_expression) list)
+      : (type_name * type_name list * priority * const_name list) * (const_name * priority * type_expression) list
+        =
         (* we check that all the parameters are different *)
         check_uniqueness_parameters params;
 
         (* we check that all instances of defined type appear with the same parameters *)
         List.iter (function _,t -> check_parameters env new_types_with_params t) consts;
-
-        constants := (List.map (function c,t -> c,priority, t) consts) @ !constants;
 
         (* we check that the type comes from a strictly positive functor *)
         List.iter (function _,t -> check_is_strictly_positive_arguments t tname) consts;
@@ -146,8 +143,22 @@ let process_type_defs (env:environment)
         then List.iter (check_destructor tname) consts
         else List.iter (check_constructor tname) consts;
 
-    in List.iter (function tname,params,consts -> process_single_type tname params consts) defs;
+        let params = List.map (function TVar(x) -> x | _ -> assert false) params in
+        (tname, params, priority, List.map fst consts) , (List.map (function c,t -> c,priority, t) consts)
+
+    in
+
+    (* process all the definitions *)
+    let types,consts = List.fold_left
+                            (fun r def ->
+                                let tname, params,consts = def in
+                                let t,consts = process_single_type tname params consts in
+                                let rtypes,rconsts = r in
+                                ((t::rtypes), (consts@rconsts)))
+                            ([],[])
+                            defs
+    in
 
     { env with  current_priority = priority;
-                types = List.append !types env.types;
-                constants = List.rev_append !constants env.constants }
+                types = types @ env.types;
+                constants = consts @ env.constants }

@@ -22,6 +22,7 @@ rule token = parse
     | ":show"           { CMDSHOW }
     | ":reduce"         { CMDREDUCE }
     | ":test"           { CMDTEST }
+    | ":verbose"        { CMDVERBOSE }
     | '='               { EQUAL }
     | ':'               { COLON }
     | ';'               { SEMICOLON }

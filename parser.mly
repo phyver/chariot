@@ -10,7 +10,7 @@ let rec int_to_term n u =
 
 %token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS
 %token DATA CODATA WHERE AND VAL
-%token CMDQUIT CMDPROMPT CMDSHOW CMDREDUCE CMDTEST
+%token CMDQUIT CMDPROMPT CMDSHOW CMDREDUCE CMDTEST CMDVERBOSE
 %token EOF
 %token <string> IDU IDL STR TVAR
 %token <int> INT
@@ -58,6 +58,7 @@ command:
     | CMDQUIT                                           { CmdQuit }
     | CMDPROMPT string                                  { CmdPrompt($2) }
     | CMDSHOW string                                    { CmdShow($2) }
+    | CMDVERBOSE INT                                    { CmdVerbose($2) }
 
     | CMDTEST term AND term                             { CmdTest($2,$4) }
 

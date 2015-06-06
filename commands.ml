@@ -17,6 +17,7 @@ type cmd =
     (* | CmdTest of term *)
     (* | CmdTest of var_name *)
     | CmdShow of string
+    | CmdVerbose of int
 
     | CmdReduce of unit term
 
@@ -41,7 +42,7 @@ type cmd =
 
 let cmd_reduce env term =
     let term = put_priority env term in
-    reset_fresh ();
+    reset_fresh_variable_generator ();
     let t,constraints = infer_type env term [] in
     print_string "      result: ";
     print_term (reduce_all env term);
@@ -143,7 +144,7 @@ let cmd_pattern_to_cpattern env pattern =
 let cmd_exhaustive_function env f =
     print_string "=======================================================\n";
     print_string ("checking if definition " ^ f ^ " is exhaustive\n");
-    if exhaustive env (get_clauses env f)
+    if exhaustive env (get_function_clauses env f)
     then print_string "OK"
     else print_string "PROBLEM";
     print_newline();

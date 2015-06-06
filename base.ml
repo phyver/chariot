@@ -1,8 +1,18 @@
-open Misc
+(*
+ * the types for representing
+ *   - types
+ *   - terms
+ *   - environments
+ *)
 
 exception Error of string
 let error s = raise (Error s)
 
+exception UnificationError of string
+let unificationError s = raise (UnificationError s)
+
+let verbose = ref 0     (* for information messages *)
+let message k m = if !verbose > k then (print_string "--- "; m ())
 
 (* types for type expressions and substitutions *)
 type type_name = string
@@ -13,47 +23,70 @@ type type_expression =
 type type_substitution = (type_name * type_expression) list
 
 
-(* types for expressions, function definitions and environments *)
-type priority = int
+(* type for expressions *)
 type const_name = string
 type var_name = string
-type bloc_nb = int      (* number of the block of mutual definitions *)
-
-type 'a atomic_term =
-    | Angel
-    | Var of string
-    | Const of const_name * 'a
-    | Proj of 'a term * const_name * 'a
+type 'a atomic_term =                       (* the 'a parameter is used for priorities after parsing *)
+    | Angel                                 (* generic meta variable, living in all types *)
+    | Var of var_name
+    | Const of const_name * 'a              (* constructor, with a priority *)
+    | Proj of 'a term * const_name * 'a     (* destructor, necessarily applied to a term, with a priority *)
 and
     'a term =
-    | App of 'a atomic_term * 'a term list
+    | App of 'a atomic_term * 'a term list  (* actual terms are applications, possibly empty *)
 
+(* helper function to apply a term to arguments *)
 let app (App(u,args1)) args2 = App(u,args1 @ args2)
 
-type function_clause = priority term * priority term
 
+type priority = int     (* priority of types and constants: odd for data and even for codata *)
+type bloc_nb = int      (* number of the block of mutual function definitions *)
+
+type 'a pattern = 'a term                                   (* a pattern (LHS of a clause in a definition) is just a special kind of term *)
+type function_clause = priority pattern * priority term     (* clause of a function definition *)
+
+(* type for the environment *)
 type environment = {
     current_priority: priority                                                              ;
     current_bloc: int                                                                       ;
+
+    (* we keep the names of type arguments of a definition in the environment,
+     * together with its priority and the list of its constants
+     * (constructors/destrucors) *)
     types:     (type_name * (type_name list) * priority * const_name list) list             ;
+
+    (* each constant (type constructor/destructor) has a type and a priority *)
     constants: (const_name * priority * type_expression) list                               ;
+
+    (* each function is defined inside a bloc of definitions and has a type and
+     * a list of defining clauses *)
     functions: (var_name * bloc_nb * type_expression * function_clause list) list           }
 
-let get_arity (env:environment) (t:type_name) : int =
-    let rec aux = function
+(*
+ * some utility functions
+ *)
+let get_type_arity (env:environment) (t:type_name) : int =
+    let rec get_type_arity_aux = function
         | [] -> raise Not_found
         | (_t, _params, _, _)::_ when _t=t -> List.length _params
-        | _::ts -> aux ts
+        | _::ts -> get_type_arity_aux ts
     in
-    aux env.types
+    get_type_arity_aux env.types
 
 let get_type_priority (env:environment) (t:type_name) : int =
-    let rec aux = function
+    let rec get_type_priority_aux = function
         | [] -> raise Not_found
         | (_t, _, _priority, _)::_ when _t=t -> _priority
-        | _::ts -> aux ts
+        | _::ts -> get_type_priority_aux ts
     in
-    aux env.types
+    get_type_priority_aux env.types
+
+let get_type_constants (env:environment) (c:const_name) =
+    let rec get_type_constants_aux = function
+        | [] -> raise Not_found
+        | (_c,_p,_t)::_ when _c=c -> _t
+        | _::consts -> get_type_constants_aux consts
+    in get_type_constants_aux env.constants
 
 let get_constant_priority (env:environment) (c:const_name) : int =
     let rec aux = function
@@ -63,31 +96,26 @@ let get_constant_priority (env:environment) (c:const_name) : int =
     in
     aux env.constants
 
-let get_type_const (env:environment) (c:const_name) =
-    let rec aux = function
-        | [] -> raise Not_found
-        | (_c,_p,_t)::_ when _c=c -> _t
-        | _::consts -> aux consts
-    in aux env.constants
-
-let get_type_var (env:environment) (x:var_name) =
-    let rec aux = function
+let get_function_type (env:environment) (x:var_name) =
+    let rec get_function_type_aux = function
         | [] -> raise Not_found
         | (f,_,t,_)::_ when f=x -> t
-        | _::fcts -> aux fcts
+        | _::fcts -> get_function_type_aux fcts
     in
-    aux env.functions
+    get_function_type_aux env.functions
 
-let get_clauses (env:environment) (f:var_name) =
-    let rec aux_function = function
+let get_function_clauses (env:environment) (f:var_name) =
+    let rec get_function_clauses_aux = function
         | [] -> raise Not_found
         | (_f,_,_,clauses)::_ when _f=f -> clauses
-        | _::fcts -> aux_function fcts
+        | _::fcts -> get_function_clauses_aux fcts
     in
-    aux_function env.functions
+    get_function_clauses_aux env.functions
 
 (* get the function name from a pattern *)
-let rec get_function_name (App(u,args)) = match u with
+let rec get_function_name (p:'a pattern) =
+    let  App(u,args) = p in
+    match u with
     | Const(c,_) -> error (c ^ " is not a function name")
     | Angel -> error ("you cannot redefine the angel")
     | Var f -> f

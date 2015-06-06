@@ -16,17 +16,11 @@ let unify_pattern (pattern,def:'a term*'a term) (v:'a term) : 'a term
     let f = get_function_name pattern in
 
     let rec unify_aux (eqs:('a term*'a term) list) acc =
-(* print_string "eqs "; print_list "[]" "" " , " "" (function v1,v2 -> print_term v1; print_string "~"; print_term v2) eqs; print_newline(); *)
-(* print_string "sigma "; print_list "''" "" "  ;  " "" (function x,t -> print_string ("'" ^ x ^ " := "); print_term t) acc; print_newline(); *)
         match eqs with
             | [] -> acc
             | (s,t)::eqs when s=t -> unify_aux eqs acc
             | (App(u1,args1),(App(u2,args2) as v2))::eqs ->
                 begin
-(* print_string "\nv1 "; print_atomic_term u1; *)
-(* print_string "  args1 "; print_list "" "" "," "\n" print_term args1;print_newline(); *)
-(* print_string "v2 "; print_atomic_term u2; *) 
-(* print_string "  args2 "; print_list "" "" "," "\n" print_term args2;print_newline(); *)
                     match u1,u2 with
                         | (Const(c1,p1),Const(c2,p2)) when c1=c2 -> assert (p1=p2); unify_aux ((List.combine args1 args2)@eqs) acc
                         | (Const(c1,_), Const(c2,_)) -> error ("cannot unify constructors " ^ c1 ^ " and " ^ c2)
@@ -39,16 +33,10 @@ let unify_pattern (pattern,def:'a term*'a term) (v:'a term) : 'a term
 
                         (* | (Var x, _) when x = f -> error "cannot unify the function name" *)
                         | (Var _f1, Var _f2) when _f1=f && _f2=f ->
-(* print_string "args1 "; print_list "" "" "," "\n" print_term args1;print_newline(); *)
-(* print_string "args2 "; print_list "" "" "," "\n" print_term args2;print_newline(); *)
                         unify_aux ((List.combine args1 args2)@eqs) acc
                         | (Var x, _) ->
                                 let eqs = List.map (function u1,u2 -> (subst_term u1 [x,v2], subst_term u2 [x,v2])) eqs in
                                 let acc = List.map (function _x,_u -> (_x, subst_term _u [x,v2])) acc in
-(* print_string "ARGS1 "; print_list "" "" "," "\n" print_term args1;print_newline(); *)
-(* print_string "ARGS2 "; print_list "" "" "," "\n" print_term args2;print_newline(); *)
-(* print_string "v1 "; print_term v1; print_newline(); *)
-(* print_string "v2 "; print_term v2; print_newline(); *)
                                 assert (args1 = []);
                                 unify_aux eqs ((x,v2)::acc)
 
@@ -62,8 +50,6 @@ let unify_pattern (pattern,def:'a term*'a term) (v:'a term) : 'a term
     try
         let eqs,rest = combine_suffix pargs args in
         let sigma = unify_aux ((App(pu,[]),App(u,[]))::eqs) [] in
-    (* print_string "SIGMA "; print_list "''" "" "  ;  " "" (function x,t -> print_string ("'" ^ x ^ " := "); print_term t) sigma; print_newline(); *)
-    (* print_string "term "; print_term (subst_term pattern sigma);print_newline(); *)
         app (subst_term def sigma) rest
     with Invalid_argument "combine_suffix" -> error "cannot unify: not enough arguments"
 
@@ -79,7 +65,6 @@ let reduce_all (env:environment) (v:'a term) : 'a term
     (* look for the first clause that can be used to reduce u
      * the boolean in the result indicates if a reduction was made *)
     let rec reduce_first_clause (v:'a term) clauses : 'a term*bool =
-(* print_string "reduce_first_clause "; print_term v; print_newline(); *)
         match clauses with
             | [] -> v,false
             | (pattern, def)::clauses ->
@@ -96,18 +81,14 @@ let reduce_all (env:environment) (v:'a term) : 'a term
           | Proj(v,d,p) -> let v,b = reduce v in App(Proj(v,d,p),[]),b
     and
       reduce (v:'a term) : 'a term*bool =
-(* print_string "\n1 -> "; print_term v; print_string "...\n"; *)
         let App(u,args) = v in
         let args,bs = List.split (List.map reduce args) in
         let b1 = List.exists (fun b -> b) bs in
         let u,b2 = reduce_all_atomic u in
-(* print_string "2 -> "; print_term u; print_string "...\n"; *)
         let v = app u args in
-(* print_string "3 -> "; print_term v; print_string "...\n"; *)
         let v,b3 = try reduce_first_clause v (get_clauses (get_function_name v) env.functions)
                    with Error _ -> v,false
         in
-(* print_string "4 -> "; print_term v; print_string "...\n"; *)
         v, b1||b2||b3
     in
 

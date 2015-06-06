@@ -19,6 +19,7 @@ let process_statement = function
 
     | CmdShow(s) -> cmd_show !env s
     | CmdPrompt(s) -> prompt := s
+    | CmdVerbose(v) -> verbose := v
 
     | CmdReduce(t) -> cmd_reduce !env t
 

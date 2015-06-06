@@ -69,7 +69,7 @@ let show_data_type env tname params priority consts =
     print_string " where";
     print_list "\n"
                "\n    | " "\n    | " "\n"
-               (function c -> print_string c; print_exp priority; print_string " : "; print_type (get_type_const env c) ;)
+               (function c -> print_string c; print_exp priority; print_string " : "; print_type (get_type_constants env c) ;)
                consts
 
 let show_types env =
