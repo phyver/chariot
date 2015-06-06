@@ -41,7 +41,8 @@ let unify_type_mgu (t1:type_expression) (t2:type_expression) : type_substitution
             | (Arrow _,Data _)::_
             | (Data _,Arrow _)::_ -> error "cannot unify arrow and data type"
             | (Data _, Data _)::_ -> error "cannot unify different datatypes"
-    in aux [ (t1,t2) ] []
+    in
+    aux [ (t1,t2) ] []
 
 let unify_type (t1:type_expression) (t2:type_expression) : type_expression =
     let sigma = unify_type_mgu t1 t2 in
@@ -58,30 +59,37 @@ let is_instance t1 t2 =
  *)
 let new_nb = ref 0
 let reset_fresh () = new_nb := 0
-let fresh () = incr new_nb; TVar("x" ^ (string_of_int !new_nb))
+let fresh () =
+    let alpha = ["a";"b";"c";"d";"e";"f";"g";"h";"i";"j";"k";"l";"m";"n";"o";"p";"q";"r";"s";"t";"u";"v";"w";"x";"y";"z"] in
+    let n = !new_nb / 26 in
+    let var = !new_nb mod 26 in
+    let x = (List.nth alpha var) ^ (if n = 0 then "" else (string_of_int n)) in
+    incr new_nb;
+    TVar(x)
+
+let get_tvars (t:type_expression) : var_name list =
+    let rec uniq acc = function
+        | [] -> acc
+        | [a] -> a::acc
+        | a::b::l when a=b -> uniq acc (b::l)
+        | a::b::l -> uniq (a::acc) (b::l)
+    in
+    let rec aux = function
+        | TVar(x) -> [x]
+        | Data(_, params) -> List.concat (List.map aux params)
+        | Arrow(t1,t2) -> (aux t1) @ (aux t2)
+    in
+    uniq [] (List.sort compare (aux t))
+
+let instantiate t =
+    let vars = get_tvars t in
+    let sigma = List.map (fun x -> (x,fresh())) vars in
+    subst_type sigma t
+
 let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) list): type_expression*(var_name*type_expression) list =
 
 (* print_string "infer_type for "; print_term u; print_newline(); *)
 
-    let get_tvars t =
-        let rec uniq acc = function
-            | [] -> acc
-            | [a] -> a::acc
-            | a::b::l when a=b -> uniq acc (b::l)
-            | a::b::l -> uniq (a::acc) (b::l)
-        in
-        let rec aux = function
-            | TVar(x) -> [x]
-            | Data(_, params) -> List.concat (List.map aux params)
-            | Arrow(t1,t2) -> (aux t1) @ (aux t2)
-        in
-        uniq (List.sort compare (aux t)) []
-    in
-    let instantiate t =
-        let vars = get_tvars t in
-        let sigma = List.map (fun x -> (x,fresh())) vars in
-        subst_type sigma t
-    in
     let rec add_constraint (x,t) constraints = match constraints with
         | [] -> [(x,t)]
         | (y,s)::_ when x<y -> (x,t)::constraints
@@ -89,9 +97,6 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
         | (y,s)::constraints (* when x=y *) ->
                 (x,unify_type s t)::constraints
     in
-
-
-
     let rec
       infer_type_and_constraints_atomic (u:'a atomic_term) constraints =
 (* print_string "infer_type_and_constraints_atomic of "; print_atomic_term u; print_string "\n  with constraints "; print_list "-no constraint-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) vars; print_newline(); *)
@@ -101,6 +106,7 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
                 begin
                     try
                         instantiate (get_type_const env c) , constraints
+                        (* TODO: check it is a constructor (odd priority) *)
                     with Not_found -> error ("cannot infer type of constant " ^ c)
                 end
             | Var(x) ->
@@ -116,6 +122,7 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
                 begin
                     try
                         let td, constraints = instantiate (get_type_const env d) , constraints in
+                        (* TODO: check it is a destructor (even priority) *)
 (* print_string d; print_string " td "; print_type env td; print_newline(); *)
 (* print_string "constraints "; print_list "" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type env t) constraints; print_newline(); *)
 (* print_term u; print_newline(); *)
@@ -151,6 +158,7 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
             | _ -> error "not a function type!!!"
 
     and
+
       infer_type_and_constraints_applications (t:type_expression) (args:'a term list) constraints =
 (* print_string "infer_type_and_constraints_applications of "; print_list "" "" " , " "" print_term args; print_string "\n  with function type "; print_type env t; print_newline(); *)
           match args with
@@ -160,6 +168,7 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
                     infer_type_and_constraints_applications t args constraints
 
     and
+
       infer_type_and_constraints_term (App(u1,args):'a term) constraints =
 (* print_string "infer_type_and_constraints_term of "; print_term (App(u1,args)); print_newline(); *)
             let tu1,constraints = infer_type_and_constraints_atomic u1 constraints in
@@ -171,14 +180,6 @@ let infer_type (env:environment) (u:'a term) (vars:(var_name*type_expression) li
                     let constraints = List.map (second (subst_type sigma)) constraints in
                     let tu1 = subst_type sigma tu1 in
                     infer_type_and_constraints_applications tu1 args constraints
-
-
-    in infer_type_and_constraints_term u vars
-
-
-
-
-
-
-
+    in
+    infer_type_and_constraints_term u vars
 

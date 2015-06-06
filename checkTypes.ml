@@ -103,6 +103,7 @@ let process_type_defs (env:environment)
                    else env.current_priority+1
     in
 
+    (* FIXME: I can probably do without references... *)
     let types = ref [] in
     let constants = ref [] in
 

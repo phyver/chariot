@@ -14,7 +14,6 @@ type type_substitution = (type_name * type_expression) list
 
 
 (* types for expressions, function definitions and environments *)
-type arity = int
 type priority = int
 type const_name = string
 type var_name = string

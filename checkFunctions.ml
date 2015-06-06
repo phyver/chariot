@@ -4,15 +4,11 @@ open Pretty
 open Typing
 open CheckCoverage
 
-let var_counter = ref 0
-
-
-(* check tha all the functions are different *)
+(* check that all the functions are different *)
 let check_uniqueness_functions funs =
     match uniq funs with
         | None -> ()
         | Some(f) -> error ("function " ^ f ^ " is defined more than once")
-
 
 let check_new_funs_different_from_old new_funs old_funs =
     match common new_funs old_funs with
@@ -34,10 +30,6 @@ let rec put_priority env (App(u,args):unit term) : priority term =
         | Proj(v,d,()) -> let v = put_priority env v in App(Proj(v,d,get_constant_priority env d),args)
         | Const(c,()) -> App(Const(c,get_constant_priority env c), args)
 
-let rec get_rightmost t = match t with
-    | TVar _ | Data _ -> t
-    | Arrow(_,t) -> get_rightmost t
-
 let process_function_defs (env:environment)
                           (defs:(var_name * type_expression option * (unit term * unit term) list) list)
   : environment
@@ -55,7 +47,7 @@ let process_function_defs (env:environment)
 
     let new_functions_with_types = List.rev_map (function f,t,_ -> f,t) defs in
 
-    let check_single_clause (f:var_name) (lhs_pattern,rhs_term:unit term*unit term) : type_expression =
+    let type_single_clause (f:var_name) (lhs_pattern,rhs_term:unit term*unit term) : type_expression =
 (* print_string ("\nCHECK SINGLE CLAUSE OF FUNCTION " ^ f ^ "\n"); *)
 (* print_string "given type:  "; print_type t; print_newline(); *)
         (* get function from LHS and check it is equal to f *)
@@ -69,7 +61,6 @@ let process_function_defs (env:environment)
             | Some(x) -> error ("variable " ^ x ^ " appears more than once"));
 
         (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
-        reset_fresh();
         let infered_type_lhs, constraints = infer_type env lhs_pattern [] in
 (* print_string "infered type of lhs:  "; print_type infered_type_lhs; print_newline(); *)
 (* print_string "constraints:  "; print_list "-" "" " ; " "" (function x,t -> print_string (x ^ ":"); print_type t) constraints; print_newline(); *)
@@ -112,15 +103,20 @@ let process_function_defs (env:environment)
 
 
     let process_single_def (f:var_name) (t:type_expression option) (clauses:(unit term*unit term) list) =
+        reset_fresh();
         let t = match t with None -> TVar("type_" ^ f) | Some t -> t in
+        let t = instantiate t in 
 
         let t = List.fold_left
                         (fun t clause ->
-                            let t2 = check_single_clause f clause in
+                            let t2 = type_single_clause f clause in
                             unify_type t2 t)
                         t
                         clauses
         in
+
+        reset_fresh();
+        let t = instantiate t in 
 
         (* check coverage *)
         if exhaustive env clauses
