@@ -84,7 +84,15 @@ let get_type_priority (env:environment) (t:type_name) : int =
     in
     get_type_priority_aux env.types
 
-let get_type_constants (env:environment) (c:const_name) =
+let get_type_constants (env:environment) (t:type_name) : const_name list =
+    let rec get_type_constants_aux = function
+        | [] -> raise Not_found
+        | (_t, _, _, _constants)::_ when _t=t -> _constants
+        | _::ts -> get_type_constants_aux ts
+    in
+    get_type_constants_aux env.types
+
+let get_constant_type (env:environment) (c:const_name) =
     let rec get_type_constants_aux = function
         | [] -> raise Not_found
         | (_c,_p,_t)::_ when _c=c -> _t

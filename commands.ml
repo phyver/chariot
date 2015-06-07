@@ -4,6 +4,7 @@ open Typing
 open Compute
 open CheckCoverage
 open CheckFunctions
+open Explore
 
 (* commands *)
 type cmd =
@@ -13,7 +14,7 @@ type cmd =
     | CmdQuit
     | CmdPrompt of string
     (* | CmdTest of type_expression*type_expression *)
-    | CmdTest of term*term
+    | CmdTest of term*int
     (* | CmdTest of term *)
     (* | CmdTest of var_name *)
     | CmdShow of string
@@ -147,6 +148,14 @@ let cmd_exhaustive_function env f =
     if exhaustive env (get_function_clauses env f)
     then print_string "OK"
     else print_string "PROBLEM";
+    print_newline();
+    print_string "=======================================================\n";
+    print_newline()
+
+let cmd_print_depth env t depth =
+    print_string "=======================================================\n";
+    let t = put_priority env t in
+    print_term_depth env t depth;
     print_newline();
     print_string "=======================================================\n";
     print_newline()

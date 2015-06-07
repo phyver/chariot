@@ -11,7 +11,7 @@ let env = ref { current_priority = 0; current_bloc = 0; types = []; constants = 
 let prompt = ref ">>> "
 
 let process_statement = function
-    | CmdTest(t1,t2) -> cmd_unify_term !env t1 t2
+    | CmdTest(v,d) -> cmd_print_depth !env v d
 
     | Eof -> raise Exit
     | CmdQuit -> raise Exit

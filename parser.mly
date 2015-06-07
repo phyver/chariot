@@ -43,6 +43,7 @@ single_statement:
     | statement eos     { $1 }
     | eos               { Nothing }
     | EOF               { Eof }
+    | term eos          { CmdReduce $1 }
 
 statement:
     | new_types       { let priority,defs = $1 in TypeDef(priority, defs) }
@@ -60,7 +61,7 @@ command:
     | CMDSHOW string                                    { CmdShow($2) }
     | CMDVERBOSE INT                                    { CmdVerbose($2) }
 
-    | CMDTEST term AND term                             { CmdTest($2,$4) }
+    | CMDTEST term AND INT                              { CmdTest($2,$4) }
 
 string:
     | IDL { $1 }

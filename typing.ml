@@ -140,7 +140,7 @@ let infer_type (env:environment) (v:term) (constraints:(var_name*type_expression
             | Const(c,_) ->
                 begin
                     try
-                        let t = instantiate_type (get_type_constants env c) in
+                        let t = instantiate_type (get_constant_type env c) in
                         let p = get_constant_priority env c in
                         if p mod 2 = 0 then typeError (c ^ " is not a constructor");    (* FIXME: this should be done by a check_term function *)
                         (t , constraints)
@@ -149,7 +149,7 @@ let infer_type (env:environment) (v:term) (constraints:(var_name*type_expression
             | Proj(u,d,_) ->
                 begin
                     try
-                        let t = instantiate_type (get_type_constants env d) in
+                        let t = instantiate_type (get_constant_type env d) in
                         let p = get_constant_priority env d in
                         if p mod 2 = 1 then typeError (d ^ " is not a destructor");     (* FIXME: this should be done by a check_term function *)
                         check_type_single_application t u constraints
