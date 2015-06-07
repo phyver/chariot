@@ -28,10 +28,10 @@ type cpattern =
     | PConst of const_name * cpattern list
     | PVar of var_name
 type dpattern = const_name
-type pattern = C of cpattern | P of dpattern
+type coverage_pattern = C of cpattern | P of dpattern
 
 
-let term_to_patterns (v:'a term) : pattern list
+let term_to_patterns (v:term) : coverage_pattern list
   =
     let rec get_pattern (App(u,args)) =
         match u with
@@ -60,14 +60,14 @@ let  isVar = function
       | [] -> 3
 let rec
   (* raise Exit if all patterns are matched, returns () otherwise *)
-  cover env (ps:pattern list list) : unit =
+  cover env (ps:coverage_pattern list list) : unit =
       match ps with
         | [] -> raise Exit
         | ps -> List.iter (coverVarConstProj env) (partition isVar ps)
 and
-  (* all the patterns in ps start with the same kind (PVar, PConst, PProj) of pattern.
+  (* all the patterns in ps start with the same kind (PVar, PConst, PProj) of coverage_pattern.
    * This function just calls the appropriate function on ps *)
-  coverVarConstProj env (ps:pattern list list) : unit = match ps with
+  coverVarConstProj env (ps:coverage_pattern list list) : unit = match ps with
     | [] -> assert false
     | []::ps -> cover env ps
     | ((C(PVar _))::_)::_ -> coverVar env ps
@@ -75,10 +75,10 @@ and
     | ((P d)::_)::_ -> coverProj env ps d
 and
   (* all the patterns in ps start with a variable: we remove it and continue... *)
-  coverVar env (ps:pattern list list) : unit = cover env (List.map List.tl ps)
+  coverVar env (ps:coverage_pattern list list) : unit = cover env (List.map List.tl ps)
 and
   (* all the patterns in ps start with a projection: *)
-  coverProj env (ps:pattern list list) (d:const_name) : unit =
+  coverProj env (ps:coverage_pattern list list) (d:const_name) : unit =
       let allprojs = get_constants env d in
       let projs = List.map (function (P d)::_ -> d | _ -> assert false) ps in
       match find_in_difference allprojs projs with
@@ -86,7 +86,7 @@ and
         | Some p -> ()
 and
   (* all the patterns in ps start with a constructor: *)
-  coverConst env (ps:pattern list list) c =
+  coverConst env (ps:coverage_pattern list list) c =
       let allconsts = get_constants env c in
       let consts = List.map (function (C(PConst(c,_)))::_ -> c | _ -> assert false) ps in
       match find_in_difference allconsts consts with

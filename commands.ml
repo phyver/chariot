@@ -13,13 +13,13 @@ type cmd =
     | CmdQuit
     | CmdPrompt of string
     (* | CmdTest of type_expression*type_expression *)
-    | CmdTest of unit term*unit term
+    | CmdTest of term*term
     (* | CmdTest of term *)
     (* | CmdTest of var_name *)
     | CmdShow of string
     | CmdVerbose of int
 
-    | CmdReduce of unit term
+    | CmdReduce of term
 
     | TypeDef of priority * (type_name * (type_expression list) * (const_name * type_expression) list) list
     (* The output of a type definition from the parser consists of
@@ -31,7 +31,7 @@ type cmd =
      * No sanity checking is done by the parser, everything is done in the "process_type_defs" function in file "checkTypes.ml"...
      *)
 
-    | FunDef of (var_name * type_expression option * (unit term * unit term) list) list
+    | FunDef of (var_name * type_expression option * (term * term) list) list
     (* The output of a function definition from the parser consists of a list of
      *   - a function name
      *   - a function type

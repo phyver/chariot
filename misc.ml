@@ -52,7 +52,9 @@ let exp_of_int n =
             let d = n mod 10 in
             exp_of_int_aux (n/10) ((List.nth exp d)::acc)
     in
-    String.concat "" (exp_of_int_aux n [])
+    let sign = if n<0 then "⁻" else "" in
+    let n = abs n in
+    String.concat "" (sign::(exp_of_int_aux n []))
 
 (* transforms a positive integer into a UTF-8 string of subscripts *)
 let sub_of_int n =

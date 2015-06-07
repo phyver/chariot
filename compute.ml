@@ -3,7 +3,7 @@ open Pretty
 open Misc
 
 
-let rec subst_term (App(u,args):'a term) (sigma:(var_name*'a term) list) : 'a term
+let rec subst_term (App(u,args):term) (sigma:(var_name*term) list) : term
   = let args = List.map (fun u -> subst_term u sigma) args in
       match u with
         | Var(x) -> app (try List.assoc x sigma with Not_found -> App(Var x,[])) args
@@ -11,11 +11,11 @@ let rec subst_term (App(u,args):'a term) (sigma:(var_name*'a term) list) : 'a te
         | Proj(u,d,p) -> App(Proj(subst_term u sigma, d,p), args)
 
 
-let unify_pattern (pattern,def:'a term*'a term) (v:'a term) : 'a term
+let unify_pattern (pattern,def:term*term) (v:term) : term
   = (* the function defined by the pattern: this variable cannot be instantiated! *)
     let f = get_function_name pattern in
 
-    let rec unify_aux (eqs:('a term*'a term) list) acc =
+    let rec unify_aux (eqs:(term*term) list) acc =
         match eqs with
             | [] -> acc
             | (s,t)::eqs when s=t -> unify_aux eqs acc
@@ -54,7 +54,7 @@ let unify_pattern (pattern,def:'a term*'a term) (v:'a term) : 'a term
     with Invalid_argument "combine_suffix" -> error "cannot unify: not enough arguments"
 
 
-let reduce_all (env:environment) (v:'a term) : 'a term
+let reduce_all (env:environment) (v:term) : term
   =
     let rec get_clauses (f:var_name) = function
         | [] -> error ("function " ^ f ^ " doesn't exist")
@@ -64,7 +64,7 @@ let reduce_all (env:environment) (v:'a term) : 'a term
 
     (* look for the first clause that can be used to reduce u
      * the boolean in the result indicates if a reduction was made *)
-    let rec reduce_first_clause (v:'a term) clauses : 'a term*bool =
+    let rec reduce_first_clause (v:term) clauses : term*bool =
         match clauses with
             | [] -> v,false
             | (pattern, def)::clauses ->
@@ -80,7 +80,7 @@ let reduce_all (env:environment) (v:'a term) : 'a term
           | Var _ | Const _ | Angel -> App(u,[]),false
           | Proj(v,d,p) -> let v,b = reduce v in App(Proj(v,d,p),[]),b
     and
-      reduce (v:'a term) : 'a term*bool =
+      reduce (v:term) : term*bool =
         let App(u,args) = v in
         let args,bs = List.split (List.map reduce args) in
         let b1 = List.exists (fun b -> b) bs in

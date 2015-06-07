@@ -22,25 +22,24 @@ let rec get_variables (App(u,args)) =
     | Proj(v,_,_) -> (get_variables v)@vars
     | Var(x) -> [x]
 
-let rec put_priority env (App(u,args):unit term) : priority term =
+let rec put_priority env (App(u,args):term) : term =
     let args = List.map (put_priority env) args in
     match u with
         | Angel -> App(Angel,args)
         | Var(x) -> App(Var(x),args)
-        | Proj(v,d,()) -> let v = put_priority env v in App(Proj(v,d,get_constant_priority env d),args)
-        | Const(c,()) -> App(Const(c,get_constant_priority env c), args)
+        | Proj(v,d,k)  when k<0 -> let v = put_priority env v in App(Proj(v,d,get_constant_priority env d),args)
+        | Proj _  -> error "priority is already present"
+        | Const(c,k) when k<0 -> App(Const(c,get_constant_priority env c), args)
+        | Const _ -> error "priority is already present"
 
 let process_function_defs (env:environment)
-                          (defs:(var_name * type_expression option * (unit term * unit term) list) list)
+                          (defs:(var_name * type_expression option * (term * term) list) list)
   : environment
   =
 
       (* TODO: I shouldn't look at the types of functions anywhere but should
        * keep accumulating constrainst about the functions type, and check that
        * they coincide with the given types at the very end *)
-
-    (* bloc number *)
-    let new_bloc_nb = env.current_bloc + 1 in
 
     (* check that the functions are all different *)
     let new_functions = List.rev_map (function f,_,_ -> f) defs in
@@ -50,9 +49,11 @@ let process_function_defs (env:environment)
     let old_functions = List.rev_map (function f,_,_,_ -> f) env.functions in
     check_new_funs_different_from_old new_functions old_functions;
 
-    let new_functions_with_types = List.rev_map (function f,t,_ -> f,t) defs in
-
-    let type_single_clause (f:var_name) (lhs_pattern,rhs_term:priority term*priority term) : type_expression =
+    (* gather the constraints on the functions by looking at a single clause *)
+    let type_single_clause (f:var_name) (lhs_pattern,rhs_term:term*term) 
+      : (var_name*type_expression) list
+        =
+        reset_fresh_variable_generator ();
 
         (* get function from LHS and check it is equal to f *)
         let _f = get_function_name lhs_pattern in
@@ -70,6 +71,12 @@ let process_function_defs (env:environment)
         (* infer type of RHS *)
         let infered_type_rhs, constraints = infer_type env rhs_term constraints_lhs in
 
+        (* check that all the variables appearing on the RHS were also on the LHS *)
+        List.iter (function x,t ->
+                    if not (List.mem_assoc x constraints_lhs) && not (List.mem x new_functions)
+                    then error (x ^ " is free!")
+                  ) constraints;
+
         (* unify types of LHS and RHS *)
         let sigma = unify_type_mgu infered_type_rhs infered_type_lhs in
 
@@ -77,56 +84,57 @@ let process_function_defs (env:environment)
         if not (infered_type_rhs = subst_type sigma infered_type_rhs)
         then error ("rhs and lhs do not have the same type");
 
-        (* we can now get the infered type of the function by looking at the constraints *)
-        let infered_type_function = List.assoc f constraints in
-        let infered_type_function = subst_type sigma infered_type_function in
 
-        (* check that all the variables appearing on the RHS were also on the LHS *)
-        List.iter (function x,t ->
-                    if not (List.mem_assoc x constraints_lhs)
-                    then begin
-                        assert (not (x=f));
-                        try
-                            match List.assoc x new_functions_with_types with
-                                | None -> ()
-                                | Some tx -> if not (is_instance tx t)
-                                             then error ("function " ^ x ^ " doesn't have appropriate type")
-                        with Not_found -> error (x ^ " is free!")
-                    end
-                  ) constraints;
-        infered_type_function
+        let constraints = List.filter (function x,_ -> List.mem x new_functions) constraints in
+
+        let constraints = List.rev_map (second (subst_type sigma)) constraints in
+
+       constraints
     in
 
 
-    let process_single_def (f:var_name) (t:type_expression option) (clauses:(unit term*unit term) list)
-      : var_name * bloc_nb * type_expression * function_clause list =
-
-        (* put actual priorities in terms *)
-        let clauses = List.map (function p,v -> put_priority env p, put_priority env v) clauses in
-
-        reset_fresh_variable_generator();
-        let t = match t with None -> TVar("type_" ^ f) | Some t -> t in
-        let t = instantiate_type t in 
-
-        let t = List.fold_left
-                        (fun t clause ->
-                            let t2 = type_single_clause f clause in
-                            unify_type t2 t)
-                        t
+    let process_single_def (f:var_name) (clauses:(term*term) list)
+      : (var_name*type_expression) list
+      = 
+        let constraints = List.fold_left
+                        (fun constraints clause -> merge_constraints constraints (type_single_clause f clause))
+                        []
                         clauses
         in
-
-        reset_fresh_variable_generator();
-        let t = instantiate_type t in
 
         (* check coverage *)
         if not (exhaustive env clauses)
         then error ("function " ^ f ^ " is not exhaustive");
 
-        (f, env.current_bloc, t, clauses)
-
+        constraints
     in
 
-    let functions = List.map (function f,t,clauses -> process_single_def f t clauses) defs in
+    let process_all_defs defs =
+        (* gather all the constraints on the functions *)
+        let constraints = List.fold_left
+                        (fun constraints def ->
+                            let f, _, clauses = def in
+                            merge_constraints constraints (process_single_def f clauses))
+                        []
+                        defs
+        in
+       constraints
+    in
+    let constraints : (var_name*type_expression) list = process_all_defs defs in
 
-    { env with current_bloc = new_bloc_nb; functions = functions @ env.functions }
+    let choose_type f t =
+        reset_fresh_variable_generator ();
+        let infered = instantiate_type (List.assoc f constraints) in
+        match t with
+        | None -> infered
+        | Some t ->
+            if (is_instance (instantiate_type t) infered)
+            then t
+            else error ("function " ^ f ^ "doesn't have appropriate type")
+    in
+
+    let functions = List.rev_map
+        (function f,t,clauses -> (f,env.current_bloc+1,choose_type f t,List.map (function p,v -> put_priority env p, put_priority env v) clauses)) defs
+    in
+
+    { env with current_bloc = env.current_bloc+1; functions = functions @ env.functions }

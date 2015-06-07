@@ -11,8 +11,11 @@ let error s = raise (Error s)
 exception UnificationError of string
 let unificationError s = raise (UnificationError s)
 
+exception TypeError of string
+let typeError s = raise (TypeError s)
+
 let verbose = ref 0     (* for information messages *)
-let message k m = if !verbose > k then (print_string "--- "; m ())
+let message k m = if !verbose > k then (print_string (" " ^ (String.make k '-') ^ " "); m ())
 
 (* types for type expressions and substitutions *)
 type type_name = string
@@ -26,24 +29,24 @@ type type_substitution = (type_name * type_expression) list
 (* type for expressions *)
 type const_name = string
 type var_name = string
-type 'a atomic_term =                       (* the 'a parameter is used for priorities after parsing *)
-    | Angel                                 (* generic meta variable, living in all types *)
+type priority = int     (* priority of types and constants: odd for data and even for codata *)
+type atomic_term =
+    | Angel                                    (* generic meta variable, living in all types *)
     | Var of var_name
-    | Const of const_name * 'a              (* constructor, with a priority *)
-    | Proj of 'a term * const_name * 'a     (* destructor, necessarily applied to a term, with a priority *)
+    | Const of const_name * priority           (* constructor, with a priority *)
+    | Proj of term * const_name * priority     (* destructor, necessarily applied to a term, with a priority *)
 and
-    'a term =
-    | App of 'a atomic_term * 'a term list  (* actual terms are applications, possibly empty *)
+    term =
+    | App of atomic_term * term list  (* actual terms are applications, possibly empty *)
 
 (* helper function to apply a term to arguments *)
 let app (App(u,args1)) args2 = App(u,args1 @ args2)
 
 
-type priority = int     (* priority of types and constants: odd for data and even for codata *)
 type bloc_nb = int      (* number of the block of mutual function definitions *)
 
-type 'a pattern = 'a term                                   (* a pattern (LHS of a clause in a definition) is just a special kind of term *)
-type function_clause = priority pattern * priority term     (* clause of a function definition *)
+type pattern = term                                   (* a pattern (LHS of a clause in a definition) is just a special kind of term *)
+type function_clause = pattern * term     (* clause of a function definition *)
 
 (* type for the environment *)
 type environment = {
@@ -113,7 +116,7 @@ let get_function_clauses (env:environment) (f:var_name) =
     get_function_clauses_aux env.functions
 
 (* get the function name from a pattern *)
-let rec get_function_name (p:'a pattern) =
+let rec get_function_name (p:pattern) =
     let  App(u,args) = p in
     match u with
     | Const(c,_) -> error (c ^ " is not a function name")
