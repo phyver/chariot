@@ -30,17 +30,12 @@ type type_substitution = (type_name * type_expression) list
 type const_name = string
 type var_name = string
 type priority = int     (* priority of types and constants: odd for data and even for codata *)
-type atomic_term =
-    | Angel                                    (* generic meta variable, living in all types *)
+type term =
+    | Angel                                     (* generic meta variable, living in all types *)
     | Var of var_name
-    | Const of const_name * priority           (* constructor, with a priority *)
-    | Proj of term * const_name * priority     (* destructor, necessarily applied to a term, with a priority *)
-and
-    term =
-    | App of atomic_term * term list  (* actual terms are applications, possibly empty *)
-
-(* helper function to apply a term to arguments *)
-let app (App(u,args1)) args2 = App(u,args1 @ args2)
+    | Const of const_name * priority            (* constructor, with a priority *)
+    | Proj of const_name * priority             (* destructor, with a priority *)
+    | App of term * term
 
 
 type bloc_nb = int      (* number of the block of mutual function definitions *)
@@ -124,11 +119,10 @@ let get_function_clauses (env:environment) (f:var_name) =
     get_function_clauses_aux env.functions
 
 (* get the function name from a pattern *)
-let rec get_function_name (p:pattern) =
-    let  App(u,args) = p in
-    match u with
-    | Const(c,_) -> error (c ^ " is not a function name")
-    | Angel -> error ("you cannot redefine the angel")
+let rec get_function_name (pattern:pattern) =
+    match pattern with
     | Var f -> f
-    | Proj(u,d,_) -> get_function_name u
+    | App(Proj _, pattern) -> get_function_name pattern
+    | App(pattern,_) -> get_function_name pattern
+    | _ -> error "get_function_name: not a pattern"
 

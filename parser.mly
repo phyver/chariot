@@ -5,7 +5,7 @@ open Commands
 let rec int_to_term n u =
     if n=0
     then u
-    else int_to_term (n-1) (App(Const("Succ",-1),[u]))
+    else int_to_term (n-1) (App(Const("Succ",-1),u))
 %}
 
 %token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS
@@ -135,35 +135,35 @@ rhs_term:
 
 term:
     | atomic_term               { $1 }
-    | term atomic_term          { app $1 [$2] }
+    | term atomic_term          { App($1,$2) }
 
-    | term PLUS atomic_term                { App(Var("add"),[$1;$3]) }
+    | term PLUS atomic_term                { App(App(Var("add"),$1),$3) }
 
 atomic_term:
     | LPAR term RPAR            { $2 }
-    | atomic_term DOT IDU       { App(Proj($1,$3,-1), []) }
-    | IDL                       { App(Var($1),[]) }
-    | IDU                       { App(Const($1,-1),[]) }
-    | ANGEL                     { App(Angel,[]) }
+    | atomic_term DOT IDU       { App(Proj($3,-1), $1) }
+    | IDL                       { Var($1) }
+    | IDU                       { Const($1,-1) }
+    | ANGEL                     { Angel }
 
-    | INT                       { int_to_term $1 (App(Const("Zero",-1),[])) }
+    | INT                       { int_to_term $1 (Const("Zero",-1)) }
 
 lhs_term:
-    | IDL                           { App(Var($1),[]) }
+    | IDL                           { Var($1) }
     | LPAR lhs_term RPAR            { $2 }
-    | lhs_term DOT IDU              { App(Proj($1,$3,-1), []) }
-    | lhs_term atomic_pattern       { app $1 [$2]  }
+    | lhs_term DOT IDU              { App(Proj($3,-1), $1) }
+    | lhs_term atomic_pattern       { App($1,$2) }
 
 atomic_pattern:
-    | IDL                   { App(Var($1),[]) }
-    | IDU                   { App(Const($1,-1),[]) }
+    | IDL                   { Var($1) }
+    | IDU                   { Const($1,-1) }
     | LPAR pattern RPAR     { $2 }
 
-    | INT                   { int_to_term $1 (App(Const("Zero",-1),[])) }
+    | INT                   { int_to_term $1 (Const("Zero",-1)) }
 
 pattern:
     | atomic_pattern            { $1 }
-    | pattern atomic_pattern    { app $1 [$2] }
+    | pattern atomic_pattern    { App($1,$2) }
 
     | pattern PLUS INT          { int_to_term $3 $1 }
 

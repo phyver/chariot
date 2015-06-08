@@ -33,20 +33,23 @@ type coverage_pattern = C of cpattern | P of dpattern
 
 let term_to_patterns (v:term) : coverage_pattern list
   =
-    let rec get_pattern (App(u,args)) =
-        match u with
-            | Angel -> assert false
-            | Var(x) -> PVar x
-            | Proj _ -> assert false
-            | Const(c,_) -> PConst(c,List.map get_pattern args)
+
+    let rec get_pattern = function
+        | Var x -> PVar x
+        | Proj _ | Angel -> assert false
+        | Const(c,_) -> PConst(c,[])
+        | App(v1,v2) ->
+            begin
+                match get_pattern v1 with
+                    | PConst(c,args) -> PConst(c,args @ [get_pattern v2])
+                    | _ -> assert false
+            end
     in
-
-    let rec aux (App(u,args)) = match u with
-        | Var(f) -> List.map (fun p -> C (get_pattern p)) args
-        | Proj(u,d,_) -> (aux u)@(P d)::(List.map (fun p -> C (get_pattern p)) args)
-
-        | Angel -> assert false
-        | Const _ -> assert false
+    let rec aux = function
+        | Var(f) -> []
+        | Proj _ | Angel | Const _ -> assert false
+        | App(Proj(d,p),v) -> (P d)::(aux v)
+        | App(v1,v2) -> (aux v1) @ [C (get_pattern v2)]
     in
     aux v
 

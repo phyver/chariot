@@ -15,22 +15,19 @@ let check_new_funs_different_from_old new_funs old_funs =
         | None -> ()
         | Some f -> error ("function " ^ f ^ " already exists")
 
-let rec get_variables (App(u,args)) =
-    let vars = List.concat (List.map get_variables args) in
-    match u with
-    | Angel | Const _ -> vars
-    | Proj(v,_,_) -> (get_variables v)@vars
+let rec get_variables = function
+    | Angel | Const _ | Proj _ -> []
     | Var(x) -> [x]
+    | App(v1,v2) -> (get_variables v1) @ (get_variables v2)
 
-let rec put_priority env (App(u,args):term) : term =
-    let args = List.map (put_priority env) args in
-    match u with
-        | Angel -> App(Angel,args)
-        | Var(x) -> App(Var(x),args)
-        | Proj(v,d,k)  when k<0 -> let v = put_priority env v in App(Proj(v,d,get_constant_priority env d),args)
+let rec put_priority env = function
+        | Angel -> Angel
+        | Var(x) -> Var(x)
+        | Proj(d,k)  when k<0 -> Proj(d,get_constant_priority env d)
         | Proj _  -> error "priority is already present"
-        | Const(c,k) when k<0 -> App(Const(c,get_constant_priority env c), args)
+        | Const(c,k)  when k<0 -> Const(c,get_constant_priority env c)
         | Const _ -> error "priority is already present"
+        | App(v1,v2) -> App(put_priority env v1,put_priority env v2)
 
 let process_function_defs (env:environment)
                           (defs:(var_name * type_expression option * (term * term) list) list)

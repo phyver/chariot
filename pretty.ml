@@ -22,16 +22,17 @@ let rec print_type = function
             print_string " → ";
             print_type t2
 
+let rec is_atomic = function
+    | Var _ | Angel | Const _ | Proj _ -> true
+    | App(Proj _, v) -> is_atomic v
+    | App _ -> false
 
 let rec
   print_term_int u =
     let rec aux n v =
-        let App(u,args) = v in
-        match u,args with
-        | Const("Zero",_),[] -> n,None
-        | Const("Zero",_),_ -> raise (Invalid_argument "print_term_int")
-        | Const("Succ",_),[v] -> aux (n+1) v
-        | Const("Succ",_),_ -> raise (Invalid_argument "print_term_int")
+        match v with
+        | Const("Zero",_) -> n,None
+        | App(Const("Succ",_),v) -> aux (n+1) v
         | _ -> n,Some v
     in
         match aux 0 u with
@@ -44,23 +45,23 @@ and
     try
         print_term_int v
     with Invalid_argument "print_term_int" ->
-      match v with
-        | App(_,[]) -> print_term v
-        | v -> print_string "("; print_term v; print_string ")"
+        if is_atomic v
+        then print_term v
+        else (print_string "("; print_term v; print_string ")")
 
-and
-  print_atomic_term = function
-    | Angel -> print_string "⊥"
-    | Var(x) -> print_string x
-    | Const(c,p) -> print_string c; print_exp p
-    | Proj(u,d,p) -> print_paren_term u; print_string "." ; print_string d; print_exp p
 and
   print_term v =
-    let (App(u,args)) = v in
     try
         print_term_int v
-    with Invalid_argument "print_term_int" -> print_atomic_term u; print_list "" " " " " "" print_paren_term args
-
+    with Invalid_argument "print_term_int" ->
+        begin
+        match v with
+            | Angel -> print_string "⊥"
+            | Var(x) -> print_string x
+            | Const(c,p) -> print_string c; print_exp p
+            | Proj(d,p) -> print_string "." ; print_string d; print_exp p
+            | App(v1,v2) -> print_term v1; print_string " "; print_paren_term v2
+        end
 
 let show_data_type env tname params priority consts =
     print_string "  ";
