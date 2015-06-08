@@ -53,6 +53,10 @@ val map : ('x -> 'y) -> stream('x) -> stream('y)
     | (map f s).Head = f (s.Head)
     | (map f s).Tail = map f s.Tail
 
+val (fib n m).Head = n
+  | (fib n m).Tail.Head = m
+  | (fib n m).Tail.Tail = fib (n+m) (n+m+m)
+
 (* oops... I need the booleans *)
 data bool where True : bool | False : bool
 
