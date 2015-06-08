@@ -1,4 +1,5 @@
 %{
+open Misc
 open Base
 open Commands
 
@@ -6,6 +7,10 @@ let rec int_to_term n u =
     if n=0
     then u
     else int_to_term (n-1) (App(Const("Succ",-1),u))
+
+let dummy_nb = ref 0
+
+let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb))
 %}
 
 %token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS
@@ -89,16 +94,20 @@ type_parameters_aux:
 
 const_clauses:
     | /* nothing */                         { [] }
-    | const_clause                          { [$1] }
-    | const_clause const_clauses2           { $1::$2 }
+    | const_clause                          { $1 }
+    | const_clause const_clauses2           { $1@$2 }
     | const_clauses2                        { $1 }
 
 const_clauses2:
-    | PIPE const_clause                     { [$2] }
-    | PIPE const_clause const_clauses2      { $2::$3 }
+    | PIPE const_clause                     { $2 }
+    | PIPE const_clause const_clauses2      { $2@$3 }
 
 const_clause:
-    | IDU COLON type_expression             { ($1, $3) }
+    | IDU consts_type COLON type_expression             { ($1, $4)::(List.map (fun c -> (c,$4)) $2) }
+
+consts_type:
+    | /* nothing */         { [] }
+    | PIPE IDU consts_type  { $2::$3 }
 
 type_expression:
     | TVAR                                          { TVar($1) }
@@ -155,6 +164,7 @@ lhs_term:
     | lhs_term atomic_pattern       { App($1,$2) }
 
 atomic_pattern:
+    | DUMMY                 { dummy() }
     | IDL                   { Var($1) }
     | IDU                   { Const($1,-1) }
     | LPAR pattern RPAR     { $2 }

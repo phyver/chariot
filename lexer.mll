@@ -10,11 +10,13 @@ let upper = [ 'A'-'Z' ]
 let lower = [ 'a'-'z' ]
 let other = [ '0'-'9' '_']
 let exp = ("⁰" | "¹" | "²" | "³" | "⁴" | "⁵" | "⁶" | "⁷" | "⁸" | "⁹")*
+let sub = ("₀" | "₁" | "₂" | "₃" | "₄" | "₅" | "₆" | "₇" | "₈" | "₉")*
 let idU = upper(lower|upper|other)*exp
 let idL = lower(lower|upper|other)*exp
 let str = "\"" ([^ '"'] | "\\\"")* "\""
 let tvar = "'" lower(lower|upper|other)*exp
 let int = [ '0'-'9' ][ '0'-'9' ]*
+let dummy = "_" sub
 
 rule token = parse
     | ":quit"           { CMDQUIT }
@@ -42,6 +44,7 @@ rule token = parse
     | "val"             { VAL }
     | "???"             { ANGEL }
     | "⊤"               { ANGEL }
+    | dummy             { DUMMY }
     | idU               { IDU(remove_exp (Lexing.lexeme lexbuf)) }
     | idL               { IDL(remove_exp (Lexing.lexeme lexbuf)) }
     | tvar              { let s = Lexing.lexeme lexbuf in TVAR(String.sub s 1 ((String.length s)-1)) }

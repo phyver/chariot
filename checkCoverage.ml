@@ -17,83 +17,80 @@ let get_constants env (c:const_name) : const_name list =
         | _::types -> get_aux types
     in get_aux env.types
 
-(* type cov_term = *)
-(*     | Struct of (const_name * cov_term) list *)
-(*     | Case of var_name * (conts_name * cov_term) list *)
-(*     | Seq of cov_term * cov_term *)
-(*     | Fail *)
-(*     | Term of term *)
 
-type cpattern =
-    | PConst of const_name * cpattern list
-    | PVar of var_name
-type dpattern = const_name
-type coverage_pattern = C of cpattern | P of dpattern
-
-
-let term_to_patterns (v:term) : coverage_pattern list
+let term_to_patterns (v:term) : term list
   =
-
-    let rec get_pattern = function
-        | Var x -> PVar x
-        | Proj _ | Angel -> assert false
-        | Const(c,_) -> PConst(c,[])
-        | App(v1,v2) ->
-            begin
-                match get_pattern v1 with
-                    | PConst(c,args) -> PConst(c,args @ [get_pattern v2])
-                    | _ -> assert false
-            end
+    let rec p = function
+        | Var(x) -> Var(x)
+        | Const(c,p) -> Const(c,p)
+        | Proj _ | Angel | App(Proj _,_) -> assert false
+        | App(v1,v2) -> App(p v1,p v2)
     in
+
     let rec aux = function
-        | Var(f) -> []
-        | Proj _ | Angel | Const _ -> assert false
-        | App(Proj(d,p),v) -> (P d)::(aux v)
-        | App(v1,v2) -> (aux v1) @ [C (get_pattern v2)]
+        | Var _ | Const _ -> []
+        | Proj _ | Angel -> assert false
+        | App(Proj(d,p),v) -> (aux v) @ [(Proj(d,p))]
+        | App(v1,v2) -> (aux v1) @ [p v2]
     in
     aux v
 
+let rec get_head_const = function
+    | Const(c,p) -> c
+    | App(p,_) -> get_head_const p
+    | _ -> assert false
 
 (* NOTE: I don't need to look at the RHS of definitions if I don't want to "compile" my terms to CASE-definitions *
  * I can only look at the LHS definition and don't need to use any substitution... *)
 let  isVar = function
-      | (C(PVar _))::_ -> 0
-      | (C(PConst _))::_ -> 1
-      | (P _)::_ -> 2
+      | Var _::_ -> 0
+      | (Proj _)::_ -> 1
+      |  _::_ -> 2
       | [] -> 3
 let rec
   (* raise Exit if all patterns are matched, returns () otherwise *)
-  cover env (ps:coverage_pattern list list) : unit =
-      match ps with
+  cover env (ps:term list list) : unit =
+(* print_string "cover patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
+      match List.filter (function [] -> false | _ -> true) ps with
         | [] -> raise Exit
         | ps -> List.iter (coverVarConstProj env) (partition isVar ps)
 and
-  (* all the patterns in ps start with the same kind (PVar, PConst, PProj) of coverage_pattern.
+  (* all the patterns in ps start with the same kind (Var, Const, Proj) of pattern
    * This function just calls the appropriate function on ps *)
-  coverVarConstProj env (ps:coverage_pattern list list) : unit = match ps with
+  coverVarConstProj env (ps:term list list) : unit =
+(* print_string "coverVarConstProj patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
+      match ps with
     | [] -> assert false
-    | []::ps -> cover env ps
-    | ((C(PVar _))::_)::_ -> coverVar env ps
-    | ((C(PConst(c,_)))::_)::_ -> coverConst env ps c
-    | ((P d)::_)::_ -> coverProj env ps d
+    | []::ps -> assert false
+    | ((Var _)::_)::_ -> coverVar env ps
+    | (Proj(d,p)::_)::_ -> coverProj env ps d
+    | (p::_)::_ -> coverConst env ps (get_head_const p)
 and
   (* all the patterns in ps start with a variable: we remove it and continue... *)
-  coverVar env (ps:coverage_pattern list list) : unit = cover env (List.map List.tl ps)
+  coverVar env (ps:term list list) : unit =
+(* print_string "coverVar patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
+      cover env (List.map List.tl ps)
 and
   (* all the patterns in ps start with a projection: *)
-  coverProj env (ps:coverage_pattern list list) (d:const_name) : unit =
+  coverProj env (ps:term list list) (d:const_name) : unit =
+(* print_string "coverProj patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
       let allprojs = get_constants env d in
-      let projs = List.map (function (P d)::_ -> d | _ -> assert false) ps in
+      let projs = List.map (function Proj(d,_)::_ -> d | _ -> assert false) ps in
+(* print_list "" "projs: " "," "\n" print_string projs; *)
+(* print_list "" "allprojs: " "," "\n" print_string allprojs; *)
       match find_in_difference allprojs projs with
         | None -> cover env (List.map List.tl ps)
         | Some p -> ()
 and
   (* all the patterns in ps start with a constructor: *)
-  coverConst env (ps:coverage_pattern list list) c =
+  coverConst env (ps:term list list) c =
+(* print_string "coverConst patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
       let allconsts = get_constants env c in
-      let consts = List.map (function (C(PConst(c,_)))::_ -> c | _ -> assert false) ps in
+      let consts = List.map (function p::_ -> get_head_const p | _ -> assert false) ps in
+(* print_list "" "consts: " "," "\n" print_string consts; *)
+(* print_list "" "allconsts: " "," "\n" print_string allconsts; *)
       match find_in_difference allconsts consts with
-        | None -> cover env (List.map (function (C(PConst(c,qs)))::ps -> (List.map (fun x -> C x) qs)@ps | _ -> assert false) ps)
+        | None -> cover env (List.map (function p::ps -> (term_to_patterns p)@ps | _ -> assert false) ps)
         | Some p -> ()
 
 let exhaustive env clauses =
@@ -103,14 +100,3 @@ let exhaustive env clauses =
         false
     with Exit -> true
 
-
-
-let rec print_cpattern = function
-    | PVar x -> print_string x
-    | PConst(c,ps) -> print_string c; print_list "" " " " " "" print_cpattern ps
-
-let print_pattern = function
-    | C p -> print_cpattern p
-    | P p -> print_string ("." ^ p)
-
-let print_patterns ps = print_list "[]" "[ " " , " " ]" print_pattern ps

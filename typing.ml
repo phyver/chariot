@@ -118,16 +118,34 @@ let infer_type (env:environment) (v:term) (constraints:(var_name*type_expression
                         print_term v; print_newline());
 
     let rec
-      (* infer the type of an atomic term:
-       *    - for constructor: look in the environment
-       *    - for variables: look in the environment, and if it doesn't exist,
-       *      add a constraint
-       *    - for a destructor: look in the environment and proceed as with an
-       *      application *)
-      infer_type_and_constraints_atomic (u:term) constraints
+      (* check the type of an application of a function to an argument.
+       *    - t is the type of the function
+       *    - arg is the argument: its type should be the the same as the type
+       *      on the left of the arrow of t *)
+      check_type_application (t:type_expression) (arg:term) constraints
       : type_expression * (var_name * type_expression) list
-      = match u with
-            | App _ -> assert false
+      = let targ,constraints = infer_type_and_constraints_term arg constraints in
+        let sigma= unify_type_mgu t (instantiate_type (Arrow(TVar("arg"),TVar("result")))) in
+        let constraints = List.map (second (subst_type sigma)) constraints in
+        let t = subst_type sigma t in
+        let targ = subst_type sigma targ in
+        match t with
+            | Arrow(t1,t2) ->
+                begin
+                    let tau = unify_type_mgu t1 targ in
+                    let constraints = List.map (second (subst_type tau)) constraints in
+                    try (subst_type tau t2, constraints)
+                    with UnificationError s -> typeError ("cannot type this term: " ^ s)
+                end
+            | _ -> typeError "not a function type!!!"
+
+    and
+
+      (* infer the type of a term and gather constraints on free variables *)
+      infer_type_and_constraints_term (v:term) constraints
+      : type_expression * (var_name * type_expression) list
+      =
+          match v with
             | Angel -> instantiate_type (TVar("angel")) , constraints
             | Var(x) ->
                 begin
@@ -158,46 +176,14 @@ let infer_type (env:environment) (v:term) (constraints:(var_name*type_expression
                         (t , constraints)
                     with Not_found -> typeError ("cannot infer type of constant " ^ d)
                 end
-
-    and
-
-      (* check the type of an application of a function to an argument.
-       *    - t is the type of the function
-       *    - arg is the argument: its type should be the the same as the type
-       *      on the left of the arrow of t *)
-      check_type_single_application (t:type_expression) (arg:term) constraints
-      : type_expression * (var_name * type_expression) list
-      = let targ,constraints = infer_type_and_constraints_term arg constraints in
-        let sigma= unify_type_mgu t (instantiate_type (Arrow(TVar("arg"),TVar("result")))) in
-        let constraints = List.map (second (subst_type sigma)) constraints in
-        let t = subst_type sigma t in
-        let targ = subst_type sigma targ in
-        match t with
-            | Arrow(t1,t2) ->
-                begin
-                    let tau = unify_type_mgu t1 targ in
-                    let constraints = List.map (second (subst_type tau)) constraints in
-                    try (subst_type tau t2, constraints)
-                    with UnificationError s -> typeError ("cannot type this term: " ^ s)
-                end
-            | _ -> typeError "not a function type!!!"
-
-    and
-
-      (* infer the type of a term and gather constraints on free variables *)
-      infer_type_and_constraints_term (v:term) constraints
-      : type_expression * (var_name * type_expression) list
-      =
-          match v with
             | App(v1,v2) -> 
                 begin
                     let tu,constraints = infer_type_and_constraints_term v1 constraints in
                     let sigma= unify_type_mgu tu (instantiate_type (Arrow(TVar("arg"),TVar("result")))) in
                     let constraints = List.map (second (subst_type sigma)) constraints in
                     let tu = subst_type sigma tu in
-                    check_type_single_application tu v2 constraints
+                    check_type_application tu v2 constraints
                 end
-            | a -> infer_type_and_constraints_atomic a constraints
     in
     infer_type_and_constraints_term v constraints
 

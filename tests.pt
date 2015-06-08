@@ -1,4 +1,4 @@
-:verbose 5
+:verbose 0
 
 (* type of natural numbers *)
 data nat where Zero : nat | Succ : nat -> nat
@@ -117,4 +117,4 @@ val fourtimes : ('a -> 'a) -> ('a ->'a)
 
 val k x y = x
 
-
+:verbose 0

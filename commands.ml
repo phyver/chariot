@@ -130,18 +130,6 @@ let cmd_unify_term env pattern term =
     print_string "=======================================================\n";
     print_newline()
 
-let cmd_pattern_to_cpattern env pattern =
-    print_string "=======================================================\n";
-    print_string "transforming pattern   ";
-    print_term pattern;
-    print_newline();
-    let cpatt = term_to_patterns pattern in
-    print_string "          result   ";
-    print_patterns cpatt;
-    print_newline();
-    print_string "=======================================================\n";
-    print_newline()
-
 let cmd_exhaustive_function env f =
     print_string "=======================================================\n";
     print_string ("checking if definition " ^ f ^ " is exhaustive\n");

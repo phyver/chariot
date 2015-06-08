@@ -78,9 +78,9 @@ let process_function_defs (env:environment)
         let sigma = unify_type_mgu infered_type_rhs infered_type_lhs in
 
         (* the type of the RHS should be an instance of the type of the LHS *)
-        if not (infered_type_rhs = subst_type sigma infered_type_rhs)
-        then error ("rhs and lhs do not have the same type");
-
+        (* oups: val s.Tail = ??? doesn't work with this... *)
+        (* if not (infered_type_rhs = subst_type sigma infered_type_rhs) *)
+        (* then error ("rhs and lhs do not have the same type"); *)
 
         let constraints = List.filter (function x,_ -> List.mem x new_functions) constraints in
 
