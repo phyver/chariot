@@ -28,9 +28,6 @@ let unify_pattern (pattern,def:term*term) (v:term) : term
                         | (Proj(v1,d1,p1),Proj(v2,d2,p2)) when d1=d2 -> assert (p1=p2); unify_aux ((v1,v2)::(List.combine args1 args2)@eqs) acc
                         | (Proj(_,d1,_), Proj(_,d2,_)) -> error ("cannot unify projections " ^ d1 ^ " and " ^ d2)
 
-                        | (Const _, Proj _) | (Proj _, Const _) -> error "cannot unify constant and projection"
-                        | (Proj _,_) | (_,Proj _) ->  error "cannot unify projection and non-projection"
-
                         (* | (Var x, _) when x = f -> error "cannot unify the function name" *)
                         | (Var _f1, Var _f2) when _f1=f && _f2=f ->
                         unify_aux ((List.combine args1 args2)@eqs) acc
@@ -40,7 +37,9 @@ let unify_pattern (pattern,def:term*term) (v:term) : term
                                 assert (args1 = []);
                                 unify_aux eqs ((x,v2)::acc)
 
+                        | (Const _, Proj _) | (Proj _, Const _) -> error "cannot unify constant and projection"
                         | (Const _,_) | (_,Const _) ->  error "cannot unify constructor and non-constructor"
+                        | (Proj _,_) | (_,Proj _) ->  error "cannot unify projection and non-projection"
                         | (Angel,_) -> error "cannot unify angel"
                 end
     in
