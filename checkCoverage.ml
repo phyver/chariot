@@ -35,11 +35,6 @@ let term_to_patterns (v:term) : term list
     in
     aux v
 
-let rec get_head_const = function
-    | Const(c,p) -> c
-    | App(p,_) -> get_head_const p
-    | _ -> assert false
-
 (* NOTE: I don't need to look at the RHS of definitions if I don't want to "compile" my terms to CASE-definitions *
  * I can only look at the LHS definition and don't need to use any substitution... *)
 let  isVar = function

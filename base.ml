@@ -119,10 +119,19 @@ let get_function_clauses (env:environment) (f:var_name) =
     get_function_clauses_aux env.functions
 
 (* get the function name from a pattern *)
-let rec get_function_name (pattern:pattern) =
-    match pattern with
-    | Var f -> f
-    | App(Proj _, pattern) -> get_function_name pattern
-    | App(pattern,_) -> get_function_name pattern
-    | _ -> error "get_function_name: not a pattern"
+let rec get_head v = match v with
+    | Const _ | Angel | Var _ -> v
+    | App(Proj _,v) -> get_head v
+    | App(v,_) -> get_head v
+    | Proj _ -> assert false
+
+let get_head_const v =
+    match get_head v with
+        | Const(c,_) -> c
+        | _ -> error "no head constructor"
+
+let rec get_function_name v =
+    match get_head v with
+        | Var(f) -> f
+        | _ -> error "no head function"
 
