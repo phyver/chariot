@@ -23,8 +23,8 @@ codata stream('a) where Unfreeze : stream('a) -> stream_aux('a,stream('a))
 val freeze : stream_aux('a,stream('a)) -> stream('a)
   | (freeze x).Unfreeze = x
 
-val map f s = map_aux f s.Unfreeze
-and map_aux f (Cons x s) = freeze (Cons (f x) (map f s))
+val (map f s).Unfreeze = map_aux f s.Unfreeze
+and map_aux f (Cons x s) = Cons (f x) (map f s)
 
 val zeros.Unfreeze = Cons 0 zeros
 
