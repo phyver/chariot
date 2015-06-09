@@ -63,10 +63,10 @@ let process_function_defs (env:environment)
             | Some(x) -> error ("pattern is not linear: variable " ^ x ^ " appears more than once"));
 
         (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
-        let infered_type_lhs, constraints_lhs = infer_type env lhs_pattern [] in
+        let infered_type_lhs, constraints_lhs,sigma = infer_type env lhs_pattern [] [] in
 
         (* infer type of RHS *)
-        let infered_type_rhs, constraints = infer_type env rhs_term constraints_lhs in
+        let infered_type_rhs, constraints,sigma = infer_type env rhs_term constraints_lhs sigma in
 
         (* check that all the variables appearing on the RHS were also on the LHS *)
         List.iter (function x,t ->
@@ -75,7 +75,20 @@ let process_function_defs (env:environment)
                   ) constraints;
 
         (* unify types of LHS and RHS *)
-        let sigma = unify_type_mgu infered_type_rhs infered_type_lhs in
+        let tau = unify_type_mgu infered_type_rhs infered_type_lhs in
+        let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
+
+        message 4 (fun () ->
+            print_string "infered type of pattern: ";
+            print_type infered_type_lhs;
+            print_string " and infered type of definition: ";
+            print_type infered_type_rhs;
+            print_string "\n\t\tgiving "; print_type (subst_type sigma infered_type_rhs); print_newline();
+            print_string "types: ";
+            print_list "none\n" "" "," "\n" (function x,t -> print_string ("'"^x^ "="); print_type t) sigma;
+            print_string "\n\t\twith constraints ";
+            print_list "none" "" " , " "" (function x,t -> print_string (x^":"); print_type t) constraints;
+            );
 
         (* the type of the RHS should be an instance of the type of the LHS *)
         (* oups: val s.Tail = ??? doesn't work with this... *)

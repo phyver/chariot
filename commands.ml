@@ -44,7 +44,7 @@ type cmd =
 let cmd_reduce env term =
     let term = put_priority env term in
     reset_fresh_variable_generator ();
-    let t,constraints = infer_type env term [] in
+    let t,constraints,sigma = infer_type env term [] [] in
     print_string "      result: ";
     print_term (reduce_all env term);
     print_newline();
@@ -57,6 +57,14 @@ let cmd_reduce env term =
                 print_list ""
                            " constraints: " "  ,  " "\n\n"
                            (function x,t -> print_string (x ^ " : "); print_type t) constraints
+            end;
+    match sigma with
+        | [] -> print_newline()
+        | sigma ->
+            begin
+                print_list ""
+                           " type: " "  ,  " "\n\n"
+                           (function x,t -> print_string ("'" ^ x ^ " = "); print_type t) sigma
             end
 
 let cmd_show env s =

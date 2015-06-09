@@ -2,8 +2,6 @@ show lists with [ ; ; ; ; ] and ::
 show Succ(Succ x) as x+2
 
 
--- allow non recursive definitions
-
 
 allow "{ proj1 = u1 ; ... ; projn = un }" in terms and patterns (=> lexer, parser, term, ...)
 unification now has

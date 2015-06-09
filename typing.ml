@@ -110,80 +110,104 @@ let rec merge_constraints cs1 cs2 = match cs1,cs2 with
     | (x1,t1)::cs1, (x2,t2)::cs2 (*when x1=x2*) -> (x1,unify_type t1 t2)::(merge_constraints cs1 cs2)
 
 (* infers most general type of "u" in environment "env"
- * "vars" contains the type of functions that are currently being defined
- * the result is the type of the term together with a map giving the type of all the free variables
+ *   - "constraints" contains the type of some free variables (the function
+ *     being defined for exemple)
+ *   - "sigma" contains some type substitution that we need to apply
+ *
+ * the result is the type of the term together with
+ *   - the updated types of the free variables: we can discover new free
+ *     variables, or discover some new constraints on existing variables
+ *   - the updated list of type substitutions: we can discover that type 'x is
+ *     supposed to be nat.
  *)
-let infer_type (env:environment) (v:term) (constraints:(var_name*type_expression) list): type_expression*(var_name*type_expression) list =
-    message 2 (fun _ -> print_string "infering type for ";
+let infer_type (env:environment)
+               (v:term)
+               (constraints:(var_name*type_expression) list)    (* constraints for the types of free variables *)
+               (sigma:(type_name*type_expression) list)         (* all the type substitution that need to be applied *)
+  : type_expression * (var_name*type_expression) list * (type_name*type_expression) list
+  = message 2 (fun _ -> print_string "infering type for ";
                         print_term v; print_newline());
 
-    let rec
-      (* check the type of an application of a function to an argument.
-       *    - t is the type of the function
-       *    - arg is the argument: its type should be the the same as the type
-       *      on the left of the arrow of t *)
-      check_type_application (t:type_expression) (arg:term) constraints
-      : type_expression * (var_name * type_expression) list
-      = let targ,constraints = infer_type_and_constraints_term arg constraints in
-        let sigma= unify_type_mgu t (instantiate_type (Arrow(TVar("arg"),TVar("result")))) in
-        let constraints = List.map (second (subst_type sigma)) constraints in
-        let t = subst_type sigma t in
-        let targ = subst_type sigma targ in
-        match t with
-            | Arrow(t1,t2) ->
-                begin
-                    let tau = unify_type_mgu t1 targ in
-                    let constraints = List.map (second (subst_type tau)) constraints in
-                    try (subst_type tau t2, constraints)
-                    with UnificationError s -> typeError ("cannot type this term: " ^ s)
-                end
-            | _ -> typeError "not a function type!!!"
-
-    and
-
-      (* infer the type of a term and gather constraints on free variables *)
-      infer_type_and_constraints_term (v:term) constraints
-      : type_expression * (var_name * type_expression) list
+    let rec infer_type_aux (v:term) constraints sigma
+      : type_expression * (var_name*type_expression) list * (type_name*type_expression) list
       =
-          match v with
-            | Angel -> instantiate_type (TVar("angel")) , constraints
-            | Var(x) ->
-                begin
-                    try List.assoc x constraints, constraints
-                    with Not_found ->
-                        begin
-                            try
-                                let t = get_function_type env x in
-                                (instantiate_type t, constraints)
-                            with Not_found -> let t = TVar("type_"^x) in (t, add_constraint (x,t) constraints)
-                        end
-                end
-            | Const(c,_) ->
-                begin
-                    try
-                        let t = instantiate_type (get_constant_type env c) in
-                        let p = get_constant_priority env c in
-                        if p mod 2 = 0 then typeError (c ^ " is not a constructor");    (* FIXME: this should be done by a check_term function *)
-                        (t , constraints)
-                    with Not_found -> typeError ("cannot infer type of constant " ^ c)
-                end
-            | Proj(d,_) ->
-                begin
-                    try
-                        let t = instantiate_type (get_constant_type env d) in
-                        let p = get_constant_priority env d in
-                        if p mod 2 = 1 then typeError (d ^ " is not a destructor");     (* FIXME: this should be done by a check_term function *)
-                        (t , constraints)
-                    with Not_found -> typeError ("cannot infer type of constant " ^ d)
-                end
-            | App(v1,v2) -> 
-                begin
-                    let tu,constraints = infer_type_and_constraints_term v1 constraints in
-                    let sigma= unify_type_mgu tu (instantiate_type (Arrow(TVar("arg"),TVar("result")))) in
-                    let constraints = List.map (second (subst_type sigma)) constraints in
-                    let tu = subst_type sigma tu in
-                    check_type_application tu v2 constraints
-                end
+        message 4 (fun () ->
+            print_string "infering type of (recursive call) ";
+            print_term v;
+            print_string "\n\t\twith constraints ";
+            print_list "none" "" " , " "" (function x,t -> print_string (x^":"); print_type t) constraints;
+            print_string "\n\t\tand types ";
+            print_list "none" "" " , " "\n" (function x,t -> print_string ("'"^x^"="); print_type t) sigma;
+            print_newline()
+        );
+
+        match v with
+          | Angel -> instantiate_type (TVar("angel")) , constraints, sigma
+          | Var(x) ->
+              begin
+                  try List.assoc x constraints, constraints, sigma
+                  with Not_found ->
+                      begin
+                          try
+                              let t = get_function_type env x in
+                              (instantiate_type t, constraints, sigma)
+                          with Not_found -> let t = TVar("type_"^x) in (t, add_constraint (x,t) constraints, sigma)
+                      end
+              end
+          | Const(c,_) ->
+              begin
+                  try
+                      let t = instantiate_type (get_constant_type env c) in
+                      let p = get_constant_priority env c in
+                      if p mod 2 = 0 then typeError (c ^ " is not a constructor");    (* FIXME: this should be done by a check_term function *)
+                      (t , constraints, [])
+                  with Not_found -> typeError ("cannot infer type of constant " ^ c)
+              end
+          | Proj(d,_) ->
+              begin
+                  try
+                      let t = instantiate_type (get_constant_type env d) in
+                      let p = get_constant_priority env d in
+                      if p mod 2 = 1 then typeError (d ^ " is not a destructor");     (* FIXME: this should be done by a check_term function *)
+                      (t , constraints, [])
+                  with Not_found -> typeError ("cannot infer type of constant " ^ d)
+              end
+          | App(v1,v2) ->
+              begin
+                  let tv1,constraints,sigma = infer_type_aux v1 constraints sigma in
+                  let tv2,constraints,sigma = infer_type_aux v2 constraints sigma in
+
+                  let tfunc = instantiate_type (Arrow(TVar("arg"),TVar("result"))) in
+                  let tau = unify_type_mgu tfunc tv1 in
+                  let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
+
+                  let tfunc = subst_type sigma tfunc in
+
+                  let targ,tres = match tfunc with
+                      | Arrow(t1,t2) -> t1,t2
+                      | _ -> assert false
+                  in
+
+                  (* NOTE: do not swap the arguments of unify_type_mgu below!!! TODO: understand... *)
+                  let tau = unify_type_mgu targ tv2 in
+                  let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
+
+                  let constraints = List.map (second (subst_type sigma)) constraints in
+                  let tres = subst_type sigma tres in
+                  tres,constraints,sigma
+              end
     in
-    infer_type_and_constraints_term v constraints
+    let t,constraints,sigma = infer_type_aux v constraints [] in
+    message 3 (fun () ->
+        print_string "infered type of ";
+        print_term v;
+        print_string " : ";
+        print_type t;
+        print_string "\n\t\twith constraints ";
+        print_list "none" "" " , " "" (function x,t -> print_string (x^":"); print_type t) constraints;
+        print_string "\n\t\tand types ";
+        print_list "none" "" " , " "\n" (function x,t -> print_string ("'"^x^"="); print_type t) sigma;
+        print_newline()
+    );
+    t,constraints,sigma
 

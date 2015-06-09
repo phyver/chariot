@@ -63,3 +63,8 @@ codata stream('x) where
 val map_stream : ('x -> 'y) -> stream('x) -> stream('y)
     | (map_stream f s).Head = f (s.Head)
     | (map_stream f s).Tail = map_stream f s.Tail
+
+codata lazy('a) where Unfreeze : lazy('a) -> 'a
+
+val freeze : 'a -> lazy('a)
+  | (freeze x).Unfreeze = x
