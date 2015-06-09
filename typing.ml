@@ -103,11 +103,22 @@ let rec add_constraint (x,t) constraints = match constraints with
     | (y,s)::constraints (* when x=y *) -> (x,unify_type s t)::constraints
 
 (* merge two sorted lists of constraints *)
-let rec merge_constraints cs1 cs2 = match cs1,cs2 with
-    | [],cs | cs,[] -> cs
-    | (x1,t1)::cs1, (x2,_)::_ when x1<x2 -> (x1,t1)::(merge_constraints cs1 cs2)
-    | (x1,_)::_, (x2,t2)::cs2 when x1>x2 -> (x2,t2)::(merge_constraints cs1 cs2)
-    | (x1,t1)::cs1, (x2,t2)::cs2 (*when x1=x2*) -> (x1,unify_type t1 t2)::(merge_constraints cs1 cs2)
+let merge_constraints cs1 cs2 =
+    let rec merge_constraints_aux cs1 cs2 sigma = match cs1,cs2 with
+        | [],cs | cs,[] -> cs,sigma
+        | (x1,t1)::cs1, (x2,_)::_ when x1<x2 ->
+            let cs,sigma = merge_constraints_aux cs1 cs2 sigma in
+            (x1,t1)::cs , sigma
+        | (x1,_)::_, (x2,t2)::cs2 when x1>x2 ->
+            let cs,sigma = merge_constraints_aux cs1 cs2 sigma in
+            (x2,t2)::cs , sigma
+        | (x1,t1)::cs1, (x2,t2)::cs2 (*when x1=x2*) ->
+            let cs,sigma = merge_constraints_aux cs1 cs2 sigma in
+            let tau = unify_type_mgu t1 t2 in
+            (x1,subst_type tau t1)::cs , tau @ (List.map (second (subst_type tau)) sigma)
+    in
+    let cs,sigma = merge_constraints_aux cs1 cs2 [] in
+    List.map (second (subst_type sigma)) cs
 
 (* infers most general type of "u" in environment "env"
  *   - "constraints" contains the type of some free variables (the function
