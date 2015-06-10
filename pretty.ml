@@ -10,8 +10,9 @@ let rec print_list empty b1 sep b2 p = function
 
 let rec print_type = function
     | TVar(x) -> print_string @$ "'" ^ x
-    | Data(t,args) ->
+    | Data(t,args,p) ->
             print_string t;
+            (*if p > 0 then*) print_exp p;
             print_list "" "(" "," ")" print_type args
     | Arrow((TVar _ | Data _) as t1,t2) ->
             print_type t1;

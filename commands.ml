@@ -42,7 +42,6 @@ type cmd =
      *)
 
 let cmd_reduce env term =
-    let term = put_priority env term in
     reset_fresh_variable_generator ();
     let t,constraints,sigma = infer_type env term [] [] in
     print_string "      result: ";
@@ -124,8 +123,6 @@ let cmd_unify_type env t1 t2 =
 
 let cmd_unify_term env pattern term =
     print_string "=======================================================\n";
-    let pattern = put_priority env pattern in
-    let term = put_priority env term in
     print_string "unifying pattern   ";
     print_term pattern;
     print_string "\n        and term   ";
@@ -150,7 +147,6 @@ let cmd_exhaustive_function env f =
 
 let cmd_print_depth env t depth =
     print_string "=======================================================\n";
-    let t = put_priority env t in
     print_term_depth env t depth;
     print_newline();
     print_string "=======================================================\n";

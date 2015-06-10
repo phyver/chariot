@@ -32,9 +32,8 @@ let print_term_depth (env:environment) (v:term) (depth:int) : unit
             begin
                 match infer_type env v [] [] with
                     | Arrow _,_,_ | TVar _,_,_ -> print_non_codata_term v depth
-                    | Data(t,_),_,_ ->
+                    | Data(t,_,p),_,_ ->
                         begin
-                            let p = get_type_priority env t in
                             if p mod 2 = 1
                             then print_non_codata_term v depth
                             else

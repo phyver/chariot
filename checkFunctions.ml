@@ -20,14 +20,129 @@ let rec get_variables = function
     | Var(x) -> [x]
     | App(v1,v2) -> (get_variables v1) @ (get_variables v2)
 
-let rec put_priority env = function
-        | Angel -> Angel
-        | Var(x) -> Var(x)
-        | Proj(d,k)  when k<0 -> Proj(d,get_constant_priority env d)
-        | Proj _  -> error "priority is already present"
-        | Const(c,k)  when k<0 -> Const(c,get_constant_priority env c)
-        | Const _ -> error "priority is already present"
-        | App(v1,v2) -> App(put_priority env v1,put_priority env v2)
+
+let put_priorities (env:environment)
+                   (defs:(var_name * bloc_nb * type_expression * (term * term) list) list)
+  : (var_name * bloc_nb * type_expression * (term * term) list) list
+  =
+
+    (* specialize the type of a constant so that the corresponding (co)data type is t*)
+    let specialize_constant t c =
+          match t with
+            | Data(tname,_,_) ->
+                begin
+                    let tc = instantiate_type (get_constant_type env c) in
+                    let _t = if (get_type_priority env tname mod 2) = 0
+                             then (match tc with Arrow(t,_) -> t | _ -> assert false)
+                             else get_result_type tc
+                    in
+                    let tau = unify_type_mgu t _t in
+                    let tc = subst_type tau tc in
+                    tc
+                end
+            | _ -> assert false
+    in
+
+    let rec get_subtypes acc = function
+        | t when List.mem t acc -> acc
+        | TVar _ -> acc
+        | Data(tname,params,_) as t ->
+            let stparams = List.concat (List.map (get_subtypes acc) params) in
+            let consts = get_type_constants env tname in
+            let acc=t::stparams@acc in
+            let stconst = List.concat (List.map (fun c -> get_subtypes acc (specialize_constant t c)) consts) in
+            stconst@acc
+        | Arrow(t1,t2) -> (get_subtypes acc t1)@(get_subtypes acc t2)
+      in
+
+    (* check if a datatype occurs inside another type and return +1 / -1 *)
+    let rec occur dt = function
+        | t when dt=t -> -1
+        | TVar _ -> +1
+        | Arrow(t1,t2) -> min (occur dt t1) (occur dt t2)
+        | Data(_,params,_) -> List.fold_left (fun r t -> min r (occur dt t)) 1 params
+    in
+
+    (* replace every _exact_ occurence of a datatype by another *)
+    let rec replace_type t_before t_after = function
+        | t when t=t_before -> t_after
+        | Arrow(t1,t2) -> Arrow(replace_type t_before t_after t1, replace_type t_before t_after t2)
+        | Data(t,params,p) -> Data(t,List.map (replace_type t_before t_after) params,p)
+        | TVar(x) -> TVar(x)
+    in
+
+    (* find the constants corresponding to a type, and add the corresponding specialized type *)
+    (* TODO: should I put better priority ? *)
+    let find_consts t = match t with
+          | Data(tname,_,p) ->
+                let consts = get_type_constants env tname in
+                List.map (fun c -> (c,p,specialize_constant t c)) consts
+          | _ -> assert false
+    in
+
+    (* add the real priority into the list of types (which is supposed to be sorted) and the types of constants *)
+    let rec add_priorities_to_types k consts types = function
+        | [] -> consts,types
+        | (Data(tname,params,_) as t)::ts ->
+                let p = get_type_priority env tname mod 2 in
+                let newt,k = if p = (k mod 2)
+                             then Data(tname,params,k),k+1
+                             else Data(tname,params,k+1),k+2
+                in
+                let consts = List.map (function c,_,tc -> c,p,replace_type t newt tc) consts in
+                let types = List.map (replace_type t newt) types in
+                add_priorities_to_types k consts types ts
+        | _ -> assert false
+    in
+
+    (* add the real priorities to the constants themselves *)
+    let rec add_priorities_to_consts = function
+        | [] -> []
+        | (c,p,t)::consts ->
+              begin
+                  let td = if p mod 2 = 0
+                           then (match t with Arrow(t,_) -> t | _ -> assert false)
+                           else get_result_type t
+                  in
+                  match td with
+                      | Data(_,_,p) -> (c,p,t)::add_priorities_to_consts consts
+                      | _ -> assert false
+              end
+    in
+
+
+    let local_types = List.sort occur (uniq (List.concat (List.map (function _,_,t,_ -> get_subtypes [] t) defs))) in
+    let local_constants = List.concat (List.map find_consts local_types) in
+
+    let local_constants, local_types = add_priorities_to_types 1 local_constants local_types local_types in
+    print_list "" "local constants: " ", " "\n\n\n" (function c,p,t -> print_string c; print_exp p; print_string ":"; print_type t; ) local_constants;
+    let local_constants = add_priorities_to_consts local_constants in
+
+    print_list "" "types for " ", " "" print_string (List.map (function f,_,_,_ -> f) defs);
+    print_list "" ": " ", " "\n" print_type local_types;
+    print_list "" "local constants: " ", " "\n\n\n" (function c,p,t -> print_string c; print_exp p; print_string ":"; print_type t; ) local_constants;
+
+    (* let rec put_prioritie_term v t = *)
+    (*     match v,t with *)
+    (*       | Const(c,_), t -> find_const c t *)
+    (* in *)
+
+
+
+(*       let put_priorities_single_clause pattern,def = *)
+(*           let fun_pattern = get_function_name pattern in *)
+(*           let fun_type = List.assoc fun_pattern function_types in *)
+(*           let args_pattern = get_args pattern in *)
+
+
+(*           pattern,def *)
+
+
+
+
+
+      defs
+
 
 let process_function_defs (env:environment)
                           (defs:(var_name * type_expression option * (term * term) list) list)
@@ -47,7 +162,7 @@ let process_function_defs (env:environment)
     check_new_funs_different_from_old new_functions old_functions;
 
     (* gather the constraints on the functions by looking at a single clause *)
-    let type_single_clause (f:var_name) (lhs_pattern,rhs_term:term*term) 
+    let type_single_clause (f:var_name) (lhs_pattern,rhs_term:term*term)
       : (var_name*type_expression) list
         =
         reset_fresh_variable_generator ();
@@ -105,7 +220,7 @@ let process_function_defs (env:environment)
 
     let process_single_def (f:var_name) (clauses:(term*term) list)
       : (var_name*type_expression) list
-      = 
+      =
         let constraints = List.fold_left
                         (fun constraints clause -> merge_constraints constraints (type_single_clause f clause))
                         []
@@ -144,7 +259,9 @@ let process_function_defs (env:environment)
     in
 
     let functions = List.rev_map
-        (function f,t,clauses -> (f,env.current_bloc+1,choose_type f t,List.map (function p,v -> put_priority env p, put_priority env v) clauses)) defs
+        (function f,t,clauses -> (f,env.current_function_bloc+1,choose_type f t, clauses)) defs
     in
 
-    { env with current_bloc = env.current_bloc+1; functions = functions @ env.functions }
+    put_priorities env functions;
+
+    { env with current_function_bloc = env.current_function_bloc+1; functions = functions @ env.functions }

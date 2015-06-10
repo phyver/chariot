@@ -39,7 +39,7 @@ let check_new_consts_different_from_old new_consts old_consts =
 let rec check_parameters (env:environment) (defs:(type_name*type_expression list) list) = function
     | TVar(_) -> ()
     | Arrow(t1,t2) -> check_parameters env defs t1; check_parameters env defs t2
-    | Data(t,params) ->
+    | Data(t,params,_) ->
             begin
                 try
                     if not (params = List.assoc t defs)
@@ -56,8 +56,8 @@ let rec check_parameters (env:environment) (defs:(type_name*type_expression list
 let check_doesnt_contain (t:type_expression) (x:type_name) =
     let rec check_doesnt_contain_aux = function
         | TVar(_) -> ()
-        | Data(c,_) when x = c -> error ("type " ^ x ^ " appears in non strictly positive position")
-        | Data(c,_) -> ()
+        | Data(c,_,_) when x = c -> error ("type " ^ x ^ " appears in non strictly positive position")
+        | Data(c,_,_) -> ()
         | Arrow(t1,t2) -> check_doesnt_contain_aux t1 ; check_doesnt_contain_aux t2
     in check_doesnt_contain_aux t
 
@@ -80,13 +80,13 @@ let rec check_is_strictly_positive_arguments (t:type_expression) (x:type_name) =
 (* check the type of a destructor: it should be of the form T(...) -> ...
  * where "T(...)" is the type being defined *)
 let check_destructor (t:type_name) (d:const_name*type_expression) = match d with
-    | (_,Arrow(Data(_t,_args), _)) when _t=t -> ()
+    | (_,Arrow(Data(_t,_args,_), _)) when _t=t -> ()
     | (d,_) -> error ("destructor " ^ d ^ " doesn't appropriate type")
 
 (* check the type of a constructor: it should be of the form ... -> T(...)
  * where "T(...)" is the type being defined *)
 let rec check_constructor (t:type_name) (c:const_name*type_expression) = match c with
-    | (_,Data(_t,_args)) when _t=t -> ()
+    | (_,Data(_t,_args,_)) when _t=t -> ()
     | (c,Arrow(_,_t)) -> check_constructor t (c,_t)
     | (c,_) -> error ("constructor " ^ c ^ " doesn't appropriate type")
 
@@ -100,9 +100,9 @@ let process_type_defs (env:environment)
     in
 
     (* the real priority of this bunch of mutual type definitions *)
-    let priority = if (env.current_priority - priority) mod 2 = 0
-                   then env.current_priority+2
-                   else env.current_priority+1
+    let priority = if (env.current_type_bloc - priority) mod 2 = 0
+                   then env.current_type_bloc+2
+                   else env.current_type_bloc+1
     in
 
     (* we check that all the new types are different *)
@@ -159,6 +159,6 @@ let process_type_defs (env:environment)
                             defs
     in
 
-    { env with  current_priority = priority;
+    { env with  current_type_bloc = priority;
                 types = types @ env.types;
                 constants = consts @ env.constants }
