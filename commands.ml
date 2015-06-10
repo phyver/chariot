@@ -22,9 +22,9 @@ type cmd =
 
     | CmdReduce of term
 
-    | TypeDef of priority * (type_name * (type_expression list) * (const_name * type_expression) list) list
+    | TypeDef of bool * (type_name * (type_expression list) * (const_name * type_expression) list) list
     (* The output of a type definition from the parser consists of
-     *   - a priority odd/even to distinguish data / codada types
+     *   - a boolean to distinguish data / codada types
      *   - a list of (possibly) mutual type definitions:
      *        - a type name
      *        - a list of type parameters, all of the form TVar(true,x)
@@ -78,7 +78,7 @@ let cmd_show env s =
                 if priority mod 2 = 0
                 then print_string "codata\n"
                 else print_string "data\n";
-                show_data_type env tname params priority consts;
+                show_data_type env tname params consts (priority mod 2 = 1);
                 print_newline()
             end
         | _::types -> auxt types

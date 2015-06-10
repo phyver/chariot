@@ -20,8 +20,8 @@ let print_term_depth (env:environment) (v:term) (depth:int) : unit
       print_non_codata_term u depth = match u with
         | Angel -> print_string "⊤"
         | Var(x) -> print_string x
-        | Const(c,p) -> print_string c; print_exp p
-        | Proj(d,p) -> print_string "." ; print_string d; print_exp p
+        | Const(c,p) -> print_string c; (match p with None ->  print_string "⁽⁾" | Some n -> print_exp n)
+        | Proj(d,p) -> print_string "." ; print_string d; (match p with None ->  print_string "⁽⁾" | Some n -> print_exp n)
         | App(v1,v2) -> print_term_depth_aux v1 depth; print_string " "; print_paren_term v2 depth
 
     and
@@ -34,7 +34,7 @@ let print_term_depth (env:environment) (v:term) (depth:int) : unit
                     | Arrow _,_,_ | TVar _,_,_ -> print_non_codata_term v depth
                     | Data(t,_,p),_,_ ->
                         begin
-                            if p mod 2 = 1
+                            if is_data env t
                             then print_non_codata_term v depth
                             else
                                 if depth = 0 then print_string "..."

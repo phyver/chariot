@@ -31,10 +31,11 @@ let put_priorities (env:environment)
           match t with
             | Data(tname,_,_) ->
                 begin
-                    let tc = instantiate_type (get_constant_type env c) in
-                    let _t = if (get_type_priority env tname mod 2) = 0
-                             then (match tc with Arrow(t,_) -> t | _ -> assert false)
-                             else get_result_type tc
+                    let bdata = is_data env tname in
+                    let tc = instantiate_type (if bdata then get_constructor_type env c else get_projection_type env c) in
+                    let _t = if bdata
+                             then get_result_type tc
+                             else (match tc with Arrow(t,_) -> t | _ -> assert false)
                     in
                     let tau = unify_type_mgu t _t in
                     let tc = subst_type tau tc in
@@ -74,23 +75,24 @@ let put_priorities (env:environment)
     (* find the constants corresponding to a type, and add the corresponding specialized type *)
     (* TODO: should I put better priority ? *)
     let find_consts t = match t with
-          | Data(tname,_,p) ->
+          | Data(tname,_,_) ->
                 let consts = get_type_constants env tname in
-                List.map (fun c -> (c,p,specialize_constant t c)) consts
+                List.map (fun c -> (c,is_data env tname,specialize_constant t c)) consts
           | _ -> assert false
     in
 
     (* add the real priority into the list of types (which is supposed to be sorted) and the types of constants *)
     let rec add_priorities_to_types k consts types = function
         | [] -> consts,types
-        | (Data(tname,params,_) as t)::ts ->
-                let p = get_type_priority env tname mod 2 in
-                let newt,k = if p = (k mod 2)
-                             then Data(tname,params,k),k+1
-                             else Data(tname,params,k+1),k+2
+        | (Data(tname,params,None) as t)::ts ->
+                let p = is_data env tname in
+                let newt,k = if p = (k mod 2 = 1)
+                             then Data(tname,params,Some(k)),k+1
+                             else Data(tname,params,Some(k+1)),k+2
                 in
-                let consts = List.map (function c,_,tc -> c,p,replace_type t newt tc) consts in
+                let consts = List.map (function c,p,tc -> c,p,replace_type t newt tc) consts in
                 let types = List.map (replace_type t newt) types in
+                let ts = List.map (replace_type t newt) ts in
                 add_priorities_to_types k consts types ts
         | _ -> assert false
     in
@@ -98,15 +100,15 @@ let put_priorities (env:environment)
     (* add the real priorities to the constants themselves *)
     let rec add_priorities_to_consts = function
         | [] -> []
-        | (c,p,t)::consts ->
+        | (c,bdata,t)::consts ->
               begin
-                  let td = if p mod 2 = 0
-                           then (match t with Arrow(t,_) -> t | _ -> assert false)
-                           else get_result_type t
+                  let td = if bdata
+                           then get_result_type t
+                           else (match t with Arrow(t,_) -> t | _ -> assert false)
                   in
                   match td with
-                      | Data(_,_,p) -> (c,p,t)::add_priorities_to_consts consts
-                      | _ -> assert false
+                      | Data(_,_,Some(p)) -> (c,p,t)::add_priorities_to_consts consts
+                      | _ -> print_string "OUPS "; print_type td; print_newline(); assert false
               end
     in
 
@@ -115,7 +117,9 @@ let put_priorities (env:environment)
     let local_constants = List.concat (List.map find_consts local_types) in
 
     let local_constants, local_types = add_priorities_to_types 1 local_constants local_types local_types in
-    print_list "" "local constants: " ", " "\n\n\n" (function c,p,t -> print_string c; print_exp p; print_string ":"; print_type t; ) local_constants;
+    print_list "" "types for " ", " "" print_string (List.map (function f,_,_,_ -> f) defs);
+    print_list "" ": " ", " "\n" print_type local_types;
+
     let local_constants = add_priorities_to_consts local_constants in
 
     print_list "" "types for " ", " "" print_string (List.map (function f,_,_,_ -> f) defs);
@@ -190,6 +194,7 @@ let process_function_defs (env:environment)
                   ) constraints;
 
         (* unify types of LHS and RHS *)
+
         let tau = unify_type_mgu infered_type_rhs infered_type_lhs in
         let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
 

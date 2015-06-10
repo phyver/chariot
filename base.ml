@@ -18,7 +18,7 @@ let verbose = ref 0     (* for information messages *)
 let message k m = if !verbose > k then (print_string (" " ^ (String.make k '-') ^ " "); m ())
 
 (* types for type expressions and substitutions *)
-type priority = int     (* priority of types and constants: odd for data and even for codata *)
+type priority = int option     (* priority of types and constants: odd for data and even for codata *)
 type type_name = string
 type type_expression =
     | TVar of type_name
@@ -45,8 +45,8 @@ type function_clause = pattern * term     (* clause of a function definition *)
 
 (* type for the environment *)
 type environment = {
-    current_type_bloc: int                                                                  ;
-    current_function_bloc: int                                                              ;
+    current_type_bloc: bloc_nb                                                              ;
+    current_function_bloc: bloc_nb                                                           ;
 
     (* we keep the names of type arguments of a definition in the environment,
      * together with bloc number and the list of its constants
@@ -55,9 +55,9 @@ type environment = {
     types:     (type_name * (type_name list) * bloc_nb * const_name list) list             ;
 
     (* each constant (type constructor/destructor) has a type and a priority
-     * the priority is either 0 for destructors or 1 for constructors
-     * TODO: separate lists? *)
-    constants: (const_name * priority * type_expression) list                               ;
+     * the priority is either 0 for destructors or 1 for constructors *)
+    constructors: (const_name * type_expression) list                               ;
+    projections:  (const_name * type_expression) list                               ;
 
     (* each function is defined inside a bloc of definitions and has a type and
      * a list of defining clauses *)
@@ -74,13 +74,13 @@ let get_type_arity (env:environment) (t:type_name) : int =
     in
     get_type_arity_aux env.types
 
-let get_type_priority (env:environment) (t:type_name) : int =
-    let rec get_type_priority_aux = function
+let is_data (env:environment) (t:type_name) : bool =
+    let rec is_data_aux = function
         | [] -> raise Not_found
-        | (_t, _, _priority, _)::_ when _t=t -> _priority
-        | _::ts -> get_type_priority_aux ts
+        | (_t, _, _n, _)::_ when _t=t -> _n mod 2 = 1
+        | _::ts -> is_data_aux ts
     in
-    get_type_priority_aux env.types
+    is_data_aux env.types
 
 let get_type_constants (env:environment) (t:type_name) : const_name list =
     let rec get_type_constants_aux = function
@@ -90,20 +90,19 @@ let get_type_constants (env:environment) (t:type_name) : const_name list =
     in
     get_type_constants_aux env.types
 
-let get_constant_type (env:environment) (c:const_name) =
-    let rec get_type_constants_aux = function
+let get_constructor_type (env:environment) (c:const_name) =
+    let rec get_type_constructors_aux = function
         | [] -> raise Not_found
-        | (_c,_p,_t)::_ when _c=c -> _t
-        | _::consts -> get_type_constants_aux consts
-    in get_type_constants_aux env.constants
+        | (_c,_t)::_ when _c=c -> _t
+        | _::consts -> get_type_constructors_aux consts
+    in get_type_constructors_aux env.constructors
 
-let get_constant_priority (env:environment) (c:const_name) : int =
-    let rec aux = function
+let get_projection_type (env:environment) (c:const_name) =
+    let rec get_type_projections_aux = function
         | [] -> raise Not_found
-        | (_c, _priority, _)::_ when _c=c -> _priority
-        | _::cs -> aux cs
-    in
-    aux env.constants
+        | (_c,_t)::_ when _c=c -> _t
+        | _::consts -> get_type_projections_aux consts
+    in get_type_projections_aux env.projections
 
 let get_function_type (env:environment) (x:var_name) =
     let rec get_function_type_aux = function

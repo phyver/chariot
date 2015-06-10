@@ -6,7 +6,7 @@ open Commands
 let rec int_to_term n u =
     if n=0
     then u
-    else int_to_term (n-1) (App(Const("Succ",0),u))
+    else int_to_term (n-1) (App(Const("Succ",None),u))
 
 let dummy_nb = ref 0
 
@@ -30,7 +30,7 @@ let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb))
 %type <Commands.cmd list> statements
 %type <Commands.cmd> single_statement
 
-%type <priority * (type_name * (type_expression list) * (const_name * type_expression) list) list> new_types
+%type <bool * (type_name * (type_expression list) * (const_name * type_expression) list) list> new_types
 %type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
 %type <type_name * (type_expression list) * (const_name * type_expression) list> type_def
 
@@ -51,7 +51,7 @@ single_statement:
     | term eos          { CmdReduce $1 }
 
 statement:
-    | new_types       { let priority,defs = $1 in TypeDef(priority, defs) }
+    | new_types       { let data,defs = $1 in TypeDef(data, defs) }
     | new_functions   { FunDef($1) }
     | command         { $1 }
 
@@ -74,8 +74,8 @@ string:
     | STR { $1 }
 
 new_types:
-    |   DATA type_defs          { (-1,$2) }
-    | CODATA type_defs          { (-2,$2) }
+    |   DATA type_defs          { (true,$2) }
+    | CODATA type_defs          { (false,$2) }
 
 type_defs:
     | type_def                  { [$1] }
@@ -111,9 +111,9 @@ consts_type:
 
 type_expression:
     | TVAR                                          { TVar($1) }
-    | IDL                                           { Data($1,[],0) }
-    | IDL LPAR RPAR                                 { Data($1,[],0) }
-    | IDL LPAR type_expression_args RPAR            { Data($1,$3,0) }
+    | IDL                                           { Data($1,[],None) }
+    | IDL LPAR RPAR                                 { Data($1,[],None) }
+    | IDL LPAR type_expression_args RPAR            { Data($1,$3,None) }
     | type_expression ARROW type_expression         { Arrow($1, $3) }
     | LPAR type_expression RPAR                     { $2 }
 
@@ -150,26 +150,26 @@ term:
 
 atomic_term:
     | LPAR term RPAR            { $2 }
-    | atomic_term DOT IDU       { App(Proj($3,0), $1) }
+    | atomic_term DOT IDU       { App(Proj($3,None), $1) }
     | IDL                       { Var($1) }
-    | IDU                       { Const($1,0) }
+    | IDU                       { Const($1,None) }
     | ANGEL                     { Angel }
 
-    | INT                       { int_to_term $1 (Const("Zero",0)) }
+    | INT                       { int_to_term $1 (Const("Zero",None)) }
 
 lhs_term:
     | IDL                           { Var($1) }
     | LPAR lhs_term RPAR            { $2 }
-    | lhs_term DOT IDU              { App(Proj($3,0), $1) }
+    | lhs_term DOT IDU              { App(Proj($3,None), $1) }
     | lhs_term atomic_pattern       { App($1,$2) }
 
 atomic_pattern:
     | DUMMY                 { dummy() }
     | IDL                   { Var($1) }
-    | IDU                   { Const($1,0) }
+    | IDU                   { Const($1,None) }
     | LPAR pattern RPAR     { $2 }
 
-    | INT                   { int_to_term $1 (Const("Zero",0)) }
+    | INT                   { int_to_term $1 (Const("Zero",None)) }
 
 pattern:
     | atomic_pattern            { $1 }
