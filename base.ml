@@ -122,8 +122,11 @@ let get_function_clauses (env:environment) (f:var_name) =
 
 (* misc functions on types *)
 let rec get_result_type t = match t with
-      | TVar _ | Data _ -> t
-      | Arrow(_,t) -> get_result_type t
+    | TVar _ | Data _ -> t
+    | Arrow(_,t) -> get_result_type t
+let rec get_first_arg_type t = match t with
+    | Arrow(t,_) -> t
+    | t -> raise (Invalid_argument "get_first_arg_type")
 
 (* misc functions on terms *)
 let rec get_head v = match v with
