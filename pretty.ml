@@ -58,10 +58,12 @@ and
         match v with
             | Angel -> print_string "⊤"
             | Var(x) -> print_string x
-            | Const(c,p) -> print_string c; print_exp p
+            | Const(c,None) -> print_string c; print_string "⁽⁾"
+            | Const(c,Some p) -> print_string c; print_exp p
+            | Proj(d,Some p) -> print_string "." ; print_string d; print_exp p
+            | Proj(d,None) -> print_string "." ; print_string d; print_string "⁽⁾"
             | App(Proj _ as v1,v2) -> print_paren_term v2; print_term v1
             | App(v1,v2) -> print_term v1; print_string " "; print_paren_term v2
-            | Proj(d,p) -> print_string "." ; print_string d; print_exp p
         end
 
 let show_data_type env tname params priority consts =

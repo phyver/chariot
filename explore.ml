@@ -20,8 +20,10 @@ let print_term_depth (env:environment) (v:term) (depth:int) : unit
       print_non_codata_term u depth = match u with
         | Angel -> print_string "⊤"
         | Var(x) -> print_string x
-        | Const(c,p) -> print_string c; print_exp p
-        | Proj(d,p) -> print_string "." ; print_string d; print_exp p
+        | Const(c,Some p) -> print_string c; print_exp p
+        | Const(c,None) -> print_string c; print_string "⁽⁾"
+        | Proj(d,Some p) -> print_string "." ; print_string d; print_exp p
+        | Proj(d,None) -> print_string "." ; print_string d; print_string "⁽⁾"
         | App(v1,v2) -> print_term_depth_aux v1 depth; print_string " "; print_paren_term v2 depth
 
     and
@@ -42,7 +44,7 @@ let print_term_depth (env:environment) (v:term) (depth:int) : unit
                                 else
                                     let consts = get_type_constants env t in
                                     let fields = List.map (fun d ->
-                                        let t = App(Proj(d,p),v) in
+                                        let t = App(Proj(d,Some p),v) in
                                         (* print_string "reducing "; print_term t; print_string " = "; flush_all(); *)
                                         let nf = reduce_all env t in
                                         (* print_term nf; print_newline(); flush_all(); *)

@@ -23,9 +23,9 @@ let rec get_variables = function
 let rec put_priority env = function
         | Angel -> Angel
         | Var(x) -> Var(x)
-        | Proj(d,k)  when k<0 -> Proj(d,get_constant_priority env d)
+        | Proj(d,None) -> Proj(d, Some(get_constant_priority env d))
         | Proj _  -> error "priority is already present"
-        | Const(c,k)  when k<0 -> Const(c,get_constant_priority env c)
+        | Const(c,None) -> Const(c,Some(get_constant_priority env c))
         | Const _ -> error "priority is already present"
         | App(v1,v2) -> App(put_priority env v1,put_priority env v2)
 

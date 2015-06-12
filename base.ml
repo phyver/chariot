@@ -33,8 +33,8 @@ type priority = int     (* priority of types and constants: odd for data and eve
 type term =
     | Angel                                     (* generic meta variable, living in all types *)
     | Var of var_name
-    | Const of const_name * priority            (* constructor, with a priority *)
-    | Proj of const_name * priority             (* destructor, with a priority *)
+    | Const of const_name * priority option     (* constructor, with a priority *)
+    | Proj of const_name * priority option      (* destructor, with a priority *)
     | App of term * term
 
 
