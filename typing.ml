@@ -207,6 +207,7 @@ let infer_type (env:environment)
                   let tres = subst_type sigma tres in
                   tres,constraints,sigma
               end
+          | Special v -> v.bot
     in
     let t,constraints,sigma = infer_type_aux v constraints [] in
     message 3 (fun () ->

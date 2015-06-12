@@ -25,6 +25,7 @@ let term_to_patterns (v:term) : term list
         | Const(c,p) -> Const(c,p)
         | Proj _ | Angel | App(Proj _,_) -> assert false
         | App(v1,v2) -> App(p v1,p v2)
+        | Special v -> v.bot
     in
 
     let rec aux = function
@@ -32,6 +33,7 @@ let term_to_patterns (v:term) : term list
         | Proj _ | Angel -> assert false
         | App(Proj(d,p),v) -> (aux v) @ [(Proj(d,p))]
         | App(v1,v2) -> (aux v1) @ [p v2]
+        | Special v -> v.bot
     in
     aux v
 

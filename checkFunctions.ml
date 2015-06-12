@@ -15,19 +15,21 @@ let check_new_funs_different_from_old new_funs old_funs =
         | None -> ()
         | Some f -> error ("function " ^ f ^ " already exists")
 
-let rec get_variables = function
+let rec get_variables (v:term) = match v with
     | Angel | Const _ | Proj _ -> []
     | Var(x) -> [x]
     | App(v1,v2) -> (get_variables v1) @ (get_variables v2)
+    | Special v -> v.bot
 
-let rec put_priority env = function
-        | Angel -> Angel
-        | Var(x) -> Var(x)
-        | Proj(d,None) -> Proj(d, Some(get_constant_priority env d))
-        | Proj _  -> error "priority is already present"
-        | Const(c,None) -> Const(c,Some(get_constant_priority env c))
-        | Const _ -> error "priority is already present"
-        | App(v1,v2) -> App(put_priority env v1,put_priority env v2)
+let rec put_priority (env:environment) (v:term) = match v with
+    | Angel -> Angel
+    | Var(x) -> Var(x)
+    | Proj(d,None) -> Proj(d, Some(get_constant_priority env d))
+    | Proj _  -> error "priority is already present"
+    | Const(c,None) -> Const(c,Some(get_constant_priority env c))
+    | Const _ -> error "priority is already present"
+    | App(v1,v2) -> App(put_priority env v1,put_priority env v2)
+    | Special v -> v.bot
 
 let process_function_defs (env:environment)
                           (defs:(var_name * type_expression option * (term * term) list) list)

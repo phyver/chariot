@@ -3,10 +3,11 @@ open Pretty
 open Misc
 
 
-let rec subst_term sigma v = match v with
+let rec subst_term sigma (v:term) = match v with
     | Var(x) -> (try List.assoc x sigma with Not_found -> Var(x))
     | Angel | Const _ | Proj _ -> v
     | App(v1,v2) -> App(subst_term sigma v1, subst_term sigma v2)
+    | Special v -> v.bot
 
 
 let unify_pattern (pattern,def:term*term) (v:term) : term
@@ -23,6 +24,7 @@ let unify_pattern (pattern,def:term*term) (v:term) : term
                     let eqs = List.map (function u1,u2 -> (subst_term [x,v] u1, subst_term [x,v] u2)) eqs in
                     let acc = List.map (function _x,_u -> (_x, subst_term [x,v] _u)) acc in
                     unify_aux eqs ((x,v)::acc)
+            | (Special v,_)::_ | (_,Special v)::_ -> v.bot
             | _ -> unificationError "cannot unify"
 
     in
@@ -54,6 +56,7 @@ let reduce_all (env:environment) (v:term) : term
                 let v3,b3 = (try reduce_first_clause (App(v1,v2)) (get_function_clauses env (get_function_name v))
                              with Error _ | Not_found -> App(v1,v2),false) in
                 v3, b1||b2||b3
+          | Special v -> v.bot
     in
 
     let rec aux v =

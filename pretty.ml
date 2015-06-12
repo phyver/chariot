@@ -22,13 +22,14 @@ let rec print_type = function
             print_string " → ";
             print_type t2
 
-let rec is_atomic = function
+let rec is_atomic (v:term) = match v with
     | Var _ | Angel | Const _ | Proj _ -> true
     | App(Proj _, v) -> is_atomic v
     | App _ -> false
+    | Special v -> v.bot
 
 let rec
-  print_term_int u =
+  print_term_int (u:term) =
     let rec aux n v =
         match v with
         | Const("Zero",_) -> n,None
@@ -64,6 +65,7 @@ and
             | Proj(d,None) -> print_string "." ; print_string d; print_string "⁽⁾"
             | App(Proj _ as v1,v2) -> print_paren_term v2; print_term v1
             | App(v1,v2) -> print_term v1; print_string " "; print_paren_term v2
+            | Special v -> v.bot
         end
 
 let show_data_type env tname params priority consts =

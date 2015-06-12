@@ -25,6 +25,7 @@ let print_term_depth (env:environment) (v:term) (depth:int) : unit
         | Proj(d,Some p) -> print_string "." ; print_string d; print_exp p
         | Proj(d,None) -> print_string "." ; print_string d; print_string "⁽⁾"
         | App(v1,v2) -> print_term_depth_aux v1 depth; print_string " "; print_paren_term v2 depth
+        | Special v -> v.bot
 
     and
       print_term_depth_aux v depth =

@@ -30,13 +30,16 @@ type type_substitution = (type_name * type_expression) list
 type const_name = string
 type var_name = string
 type priority = int     (* priority of types and constants: odd for data and even for codata *)
-type term =
+type 'a special_term =
     | Angel                                     (* generic meta variable, living in all types *)
     | Var of var_name
     | Const of const_name * priority option     (* constructor, with a priority *)
     | Proj of const_name * priority option      (* destructor, with a priority *)
-    | App of term * term
+    | App of 'a special_term * 'a special_term
+    | Special of 'a
 
+type empty = { bot: 'a .'a }
+type term = empty special_term
 
 type bloc_nb = int      (* number of the block of mutual function definitions *)
 
@@ -54,6 +57,7 @@ type environment = {
     types:     (type_name * (type_name list) * priority * const_name list) list             ;
 
     (* each constant (type constructor/destructor) has a type and a priority *)
+    (* TODO: use separate lists ? *)
     constants: (const_name * priority * type_expression) list                               ;
 
     (* each function is defined inside a bloc of definitions and has a type and
@@ -119,11 +123,12 @@ let get_function_clauses (env:environment) (f:var_name) =
     get_function_clauses_aux env.functions
 
 (* get the function name from a pattern *)
-let rec get_head v = match v with
+let rec get_head (v:term) = match v with
     | Const _ | Angel | Var _ -> v
     | App(Proj _,v) -> get_head v
     | App(v,_) -> get_head v
     | Proj _ -> assert false
+    | Special v -> v.bot
 
 let get_head_const v =
     match get_head v with
