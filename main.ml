@@ -7,7 +7,7 @@ open Pretty
 open Misc
 open Commands
 
-let env = ref { current_type_bloc = 0; current_function_bloc = 0; types = []; constants = []; functions = [] }
+let env = ref { current_priority = 0; current_bloc = 0; types = []; constants = []; functions = [] }
 let prompt = ref ">>> "
 
 let process_statement = function

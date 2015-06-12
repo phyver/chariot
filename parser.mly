@@ -6,7 +6,7 @@ open Commands
 let rec int_to_term n u =
     if n=0
     then u
-    else int_to_term (n-1) (App(Const("Succ",0),u))
+    else int_to_term (n-1) (App(Const("Succ",-1),u))
 
 let dummy_nb = ref 0
 
@@ -111,9 +111,9 @@ consts_type:
 
 type_expression:
     | TVAR                                          { TVar($1) }
-    | IDL                                           { Data($1,[],0) }
-    | IDL LPAR RPAR                                 { Data($1,[],0) }
-    | IDL LPAR type_expression_args RPAR            { Data($1,$3,0) }
+    | IDL                                           { Data($1, []) }
+    | IDL LPAR RPAR                                 { Data($1, []) }
+    | IDL LPAR type_expression_args RPAR            { Data($1,$3) }
     | type_expression ARROW type_expression         { Arrow($1, $3) }
     | LPAR type_expression RPAR                     { $2 }
 
@@ -150,26 +150,26 @@ term:
 
 atomic_term:
     | LPAR term RPAR            { $2 }
-    | atomic_term DOT IDU       { App(Proj($3,0), $1) }
+    | atomic_term DOT IDU       { App(Proj($3,-1), $1) }
     | IDL                       { Var($1) }
-    | IDU                       { Const($1,0) }
+    | IDU                       { Const($1,-1) }
     | ANGEL                     { Angel }
 
-    | INT                       { int_to_term $1 (Const("Zero",0)) }
+    | INT                       { int_to_term $1 (Const("Zero",-1)) }
 
 lhs_term:
     | IDL                           { Var($1) }
     | LPAR lhs_term RPAR            { $2 }
-    | lhs_term DOT IDU              { App(Proj($3,0), $1) }
+    | lhs_term DOT IDU              { App(Proj($3,-1), $1) }
     | lhs_term atomic_pattern       { App($1,$2) }
 
 atomic_pattern:
     | DUMMY                 { dummy() }
     | IDL                   { Var($1) }
-    | IDU                   { Const($1,0) }
+    | IDU                   { Const($1,-1) }
     | LPAR pattern RPAR     { $2 }
 
-    | INT                   { int_to_term $1 (Const("Zero",0)) }
+    | INT                   { int_to_term $1 (Const("Zero",-1)) }
 
 pattern:
     | atomic_pattern            { $1 }

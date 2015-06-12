@@ -9,7 +9,7 @@ open Pretty
 let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expression = match t with
     | TVar (y) -> (try List.assoc y sigma with Not_found -> t)
     | Arrow(t1,t2) -> Arrow(subst_type sigma t1, subst_type sigma t2)
-    | Data(a, args,p) -> Data(a, List.map (subst_type sigma) args,p)
+    | Data(a, args) -> Data(a, List.map (subst_type sigma) args)
 
 (* generate fresh variables *)
 let fresh_variable_nb = ref 0
@@ -26,7 +26,7 @@ let fresh_variable () =
 let get_variables_from_type (t:type_expression) : type_name list =
     let rec get_variables_from_type_aux = function
         | TVar(x) -> [x]
-        | Data(_, params,_) -> List.concat (List.map get_variables_from_type_aux params)
+        | Data(_, params) -> List.concat (List.map get_variables_from_type_aux params)
         | Arrow(t1,t2) -> (get_variables_from_type_aux t1) @ (get_variables_from_type_aux t2)
     in
     uniq (get_variables_from_type_aux t)
@@ -41,7 +41,7 @@ let instantiate_type (t:type_expression) : type_expression =
 let rec occur_type (x:type_name) (t:type_expression) : bool = match t with
     | TVar(y) -> x=y
     | Arrow(t1,t2) -> occur_type x t1 || occur_type x t2
-    | Data(_,args,_) -> List.exists (occur_type x) args
+    | Data(_,args) -> List.exists (occur_type x) args
 
 (*
  * unification of types
@@ -49,7 +49,7 @@ let rec occur_type (x:type_name) (t:type_expression) : bool = match t with
 
 (* computes the most general unifier of t1 and t2
  * NOTE: priority is given to t1: if t2 is an instance t1, then the
- * substitution we compute doesn't affect t1 *)
+ * substitution we compute doesn't affect t2 *)
 let unify_type_mgu (t1:type_expression) (t2:type_expression) : type_substitution =
     message 4 (fun _ -> print_string "looking for mgu for ";
                         print_type t1; print_string " and ";
@@ -58,7 +58,7 @@ let unify_type_mgu (t1:type_expression) (t2:type_expression) : type_substitution
     let rec mgu_aux (eqs:(type_expression*type_expression) list ) acc = match eqs with
             | [] -> acc
             | (s,t)::eqs when s=t -> mgu_aux eqs acc
-            | (Data(t1, args1,p1),Data(t2, args2,p2))::eqs when t1=t2 ->
+            | (Data(t1, args1),Data(t2, args2))::eqs when t1=t2 ->
                 begin
                     try mgu_aux ((List.combine args1 args2)@eqs) acc
                     with Invalid_argument _ -> error ("datatype " ^ t1 ^ " appears with different arities")

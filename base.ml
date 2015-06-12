@@ -18,11 +18,10 @@ let verbose = ref 0     (* for information messages *)
 let message k m = if !verbose > k then (print_string (" " ^ (String.make k '-') ^ " "); m ())
 
 (* types for type expressions and substitutions *)
-type priority = int     (* priority of types and constants: odd for data and even for codata *)
 type type_name = string
 type type_expression =
     | TVar of type_name
-    | Data of type_name * (type_expression list) * priority
+    | Data of type_name * (type_expression list)
     | Arrow of type_expression * type_expression
 type type_substitution = (type_name * type_expression) list
 
@@ -30,6 +29,7 @@ type type_substitution = (type_name * type_expression) list
 (* type for expressions *)
 type const_name = string
 type var_name = string
+type priority = int     (* priority of types and constants: odd for data and even for codata *)
 type term =
     | Angel                                     (* generic meta variable, living in all types *)
     | Var of var_name
@@ -45,18 +45,15 @@ type function_clause = pattern * term     (* clause of a function definition *)
 
 (* type for the environment *)
 type environment = {
-    current_type_bloc: int                                                                  ;
-    current_function_bloc: int                                                              ;
+    current_priority: priority                                                              ;
+    current_bloc: int                                                                       ;
 
     (* we keep the names of type arguments of a definition in the environment,
-     * together with bloc number and the list of its constants
-     * (constructors/destrucors)
-     * The bloc number is even for codatatypes and odd for datatypes. *)
-    types:     (type_name * (type_name list) * bloc_nb * const_name list) list             ;
+     * together with its priority and the list of its constants
+     * (constructors/destrucors) *)
+    types:     (type_name * (type_name list) * priority * const_name list) list             ;
 
-    (* each constant (type constructor/destructor) has a type and a priority
-     * the priority is either 0 for destructors or 1 for constructors
-     * TODO: separate lists? *)
+    (* each constant (type constructor/destructor) has a type and a priority *)
     constants: (const_name * priority * type_expression) list                               ;
 
     (* each function is defined inside a bloc of definitions and has a type and
@@ -121,30 +118,18 @@ let get_function_clauses (env:environment) (f:var_name) =
     in
     get_function_clauses_aux env.functions
 
-(* misc functions on types *)
-let rec get_result_type t = match t with
-      | TVar _ | Data _ -> t
-      | Arrow(_,t) -> get_result_type t
-
-(* misc functions on terms *)
+(* get the function name from a pattern *)
 let rec get_head v = match v with
     | Const _ | Angel | Var _ -> v
     | App(Proj _,v) -> get_head v
     | App(v,_) -> get_head v
     | Proj _ -> assert false
 
-let get_args v =
-    let rec get_args_aux acc = function
-        | Var _ | Const _ | Angel | Proj _ -> acc
-        | App(v1,v2) -> get_args_aux (v2::acc) v
-    in get_args_aux [] v
-
 let get_head_const v =
     match get_head v with
         | Const(c,_) -> c
         | _ -> error "no head constructor"
 
-(* get the function name from a pattern *)
 let rec get_function_name v =
     match get_head v with
         | Var(f) -> f
