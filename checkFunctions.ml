@@ -45,7 +45,7 @@ let process_function_defs (env:environment)
         reset_fresh_variable_generator ();
 
         (* get function from LHS and check it is equal to f *)
-        let _f = get_function_name lhs_pattern in
+        let _f = get_function_from_pattern lhs_pattern in
         if not (_f = f) then error ("function names " ^ f ^ " and " ^ _f ^ " do not match");
 
         (* get variables *)
@@ -100,7 +100,7 @@ let process_function_defs (env:environment)
       : (var_name*type_expression) list
       =
         let constraints = List.fold_left
-                        (fun constraints clause -> merge_constraints constraints (type_single_clause f clause))
+                        (fun constraints clause -> merge_constraints (type_single_clause f clause) constraints)
                         []
                         clauses
         in
@@ -117,7 +117,7 @@ let process_function_defs (env:environment)
         let constraints = List.fold_left
                         (fun constraints def ->
                             let f, _, clauses = def in
-                            merge_constraints constraints (process_single_def f clauses))
+                            merge_constraints (process_single_def f clauses) constraints)
                         []
                         defs
         in
@@ -140,6 +140,6 @@ let process_function_defs (env:environment)
         (function f,t,clauses -> (f,env.current_function_bloc+1,choose_type f t, clauses)) defs
     in
 
-    let functions = put_priorities env functions in
+    let functions = infer_priorities env functions in
 
     { env with current_function_bloc = env.current_function_bloc+1; functions = functions @ env.functions }
