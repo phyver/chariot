@@ -11,7 +11,7 @@ let rec subst_term sigma v = match v with
 
 let unify_pattern (pattern,def:term*term) (v:term) : term
   = (* the function defined by the pattern: this variable cannot be instantiated! *)
-    let f = get_function_from_pattern pattern in
+    let f = get_function_name pattern in
 
     let rec unify_aux (eqs:(term*term) list) acc =
         match eqs with
@@ -51,7 +51,7 @@ let reduce_all (env:environment) (v:term) : term
           | App(v1,v2) -> 
                 let v1,b1 = reduce v1 in
                 let v2,b2 = reduce v2 in
-                let v3,b3 = (try reduce_first_clause (App(v1,v2)) (get_function_clauses env (get_function_from_pattern v))
+                let v3,b3 = (try reduce_first_clause (App(v1,v2)) (get_function_clauses env (get_function_name v))
                              with Error _ | Not_found -> App(v1,v2),false) in
                 v3, b1||b2||b3
     in

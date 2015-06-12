@@ -120,50 +120,35 @@ let get_function_clauses (env:environment) (f:var_name) =
     in
     get_function_clauses_aux env.functions
 
-(*
- * misc functions on types
- *)
-
-(* get the rightmost type in a type *)
+(* misc functions on types *)
 let rec get_result_type t = match t with
     | TVar _ | Data _ -> t
     | Arrow(_,t) -> get_result_type t
-
-(* get the "leftmost" type in a type *)
 let rec get_first_arg_type t = match t with
     | Arrow(t,_) -> t
     | t -> raise (Invalid_argument "get_first_arg_type")
 
-
-(*
- * misc functions on terms
- *)
-
-(* get the head of a term *)
+(* misc functions on terms *)
 let rec get_head v = match v with
-    | Const _ | Angel | Var _ | Proj _ -> v
+    | Const _ | Angel | Var _ -> v
+    | App(Proj _,v) -> get_head v
     | App(v,_) -> get_head v
+    | Proj _ -> assert false
 
-(* get all the arguments of a term *)
 let get_args v =
     let rec get_args_aux acc = function
         | Var _ | Const _ | Angel | Proj _ -> acc
-        | App(v1,v2) -> get_args_aux (v2::acc) v1
+        | App(v1,v2) -> get_args_aux (v2::acc) v
     in get_args_aux [] v
 
-(* get the head constructor of a term *)
 let get_head_const v =
     match get_head v with
         | Const(c,_) -> c
-        | _ -> raise (Invalid_argument "no head constructor")
+        | _ -> error "no head constructor"
 
 (* get the function name from a pattern *)
-let rec get_function_from_pattern v = match v with
-    | Var f -> f
-    | Const _ | Proj _ | Angel -> raise (Invalid_argument "no head function")
-    | App(Proj _,v) -> get_function_from_pattern v
-    | App(v,_) -> get_function_from_pattern v
+let rec get_function_name v =
+    match get_head v with
+        | Var(f) -> f
+        | _ -> error "no head function"
 
-(* apply a term to a list of arguments *)
-let app (v:term) (args:term list) : term
- = List.fold_left (fun v arg -> App(v,arg)) v args
