@@ -8,6 +8,19 @@ let print_term_depth (env:environment) (v:term) (depth:int) : unit
   =
   (* NOTE: not very elegant: I pasted the "print_term_depth_aux" function and added some things... *)
     let rec
+  print_term_int (u:term) =
+    let rec aux n v =
+        match v with
+        | Const("Zero",_) -> n,None
+        | App(Const("Succ",_),v) -> aux (n+1) v
+        | _ -> n,Some v
+    in
+        match aux 0 u with
+            | n,None -> print_int n
+            | 0,Some v -> raise (Invalid_argument "print_term_int")
+            | n,Some v -> print_term v; print_string "+"; print_int n
+
+and
       print_paren_term v depth =
         try
             print_term_int v

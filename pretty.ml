@@ -22,14 +22,15 @@ let rec print_type = function
             print_string " → ";
             print_type t2
 
-let rec is_atomic (v:term) = match v with
+
+let rec is_atomic (v:'a special_term) = match v with
     | Var _ | Angel | Const _ | Proj _ -> true
     | App(Proj _, v) -> is_atomic v
     | App _ -> false
-    | Special v -> v.bot
+    | Special v -> true
 
 let rec
-  print_term_int (u:term) =
+  print_term_int (sp:'a -> unit) (u:'a special_term) =
     let rec aux n v =
         match v with
         | Const("Zero",_) -> n,None
@@ -39,21 +40,21 @@ let rec
         match aux 0 u with
             | n,None -> print_int n
             | 0,Some v -> raise (Invalid_argument "print_term_int")
-            | n,Some v -> print_term v; print_string "+"; print_int n
+            | n,Some v -> print_special_term sp v; print_string "+"; print_int n
 
 and
-  print_paren_term v =
+  print_paren_term (sp:'a -> unit) (v:'a special_term) =
     try
-        print_term_int v
+        print_term_int sp v
     with Invalid_argument "print_term_int" ->
         if is_atomic v
-        then print_term v
-        else (print_string "("; print_term v; print_string ")")
+        then print_special_term sp v
+        else (print_string "("; print_special_term sp v; print_string ")")
 
 and
-  print_term v =
+  print_special_term (sp:'a -> unit) (v:'a special_term) =
     try
-        print_term_int v
+        print_term_int sp v
     with Invalid_argument "print_term_int" ->
         begin
         match v with
@@ -63,10 +64,13 @@ and
             | Const(c,Some p) -> print_string c; print_exp p
             | Proj(d,Some p) -> print_string "." ; print_string d; print_exp p
             | Proj(d,None) -> print_string "." ; print_string d; print_string "⁽⁾"
-            | App(Proj _ as v1,v2) -> print_paren_term v2; print_term v1
-            | App(v1,v2) -> print_term v1; print_string " "; print_paren_term v2
-            | Special v -> v.bot
+            | App(Proj _ as v1,v2) -> print_paren_term sp v2; print_special_term sp v1
+            | App(v1,v2) -> print_special_term sp v1; print_string " "; print_paren_term sp v2
+            | Special v -> sp v
         end
+
+let print_term = print_special_term (fun s -> s.bot)
+
 
 let show_data_type env tname params priority consts =
     print_string "  ";
