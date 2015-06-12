@@ -12,7 +12,7 @@ let rec print_type = function
     | TVar(x) -> print_string @$ "'" ^ x
     | Data(t,args,p) ->
             print_string t;
-            (match p with None -> print_string "⁽⁾" | Some n -> print_exp n);
+            (*if p > 0 then*) print_exp p;
             print_list "" "(" "," ")" print_type args
     | Arrow((TVar _ | Data _) as t1,t2) ->
             print_type t1;
@@ -59,36 +59,36 @@ and
         match v with
             | Angel -> print_string "⊤"
             | Var(x) -> print_string x
-            | Const(c,p) -> print_string c; (match p with None -> print_string "⁽⁾" | Some n -> print_exp n)
-            | Proj(d,p) -> print_string "." ; print_string d; (match p with None -> print_string "⁽⁾" | Some n -> print_exp n)
+            | Const(c,p) -> print_string c; print_exp p
             | App(Proj _ as v1,v2) -> print_paren_term v2; print_term v1
             | App(v1,v2) -> print_term v1; print_string " "; print_paren_term v2
+            | Proj(d,p) -> print_string "." ; print_string d; print_exp p
         end
 
-let show_data_type env tname params consts bdata =
+let show_data_type env tname params priority consts =
     print_string "  ";
     print_string tname;
     print_list "" "(" "," ")" print_string params;
     print_string " where";
     print_list "\n"
                "\n    | " "\n    | " "\n"
-               (function c -> print_string c; print_string " : "; print_type (if bdata then get_constructor_type env c else get_projection_type env c))
+               (function c -> print_string c; print_exp priority; print_string " : "; print_type (get_constant_type env c) ;)
                consts
 
 let show_types env =
 
     let rec showtypesaux = function
         | [] -> assert false
-        | [(tname,params,priority,consts)] -> show_data_type env tname params consts (priority mod 2 = 1);
+        | [(tname,params,priority,consts)] -> show_data_type env tname params priority consts;
         | (tname,params,priority,consts)::(((_,_,p,_)::_) as types) when priority=p ->
                 begin
-                    show_data_type env tname params consts (priority mod 2 = 1);
+                    show_data_type env tname params priority consts;
                     print_string "and\n";
                     showtypesaux types
                 end
         | (tname,params,priority,consts)::(((_,_,p,_)::_) as types) ->
                 begin
-                    show_data_type env tname params consts (priority mod 2 = 1);
+                    show_data_type env tname params priority consts;
                     print_newline();
                     if p mod 2 = 0
                     then print_string "codata\n"
