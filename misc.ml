@@ -66,7 +66,9 @@ let sub_of_int n =
             let d = n mod 10 in
             sub_of_int_aux (n/10) ((List.nth sub d)::acc)
     in
-    String.concat "" (sub_of_int_aux n [])
+    let sign = if n<0 then "₋" else "" in
+    let n = abs n in
+    String.concat "" (sign::(sub_of_int_aux n []))
 
 (* combine two lists into a list of pairs, and returns the suffix of the second one
  * raise Invalid_argument if the second list is shorter than the first one *)
