@@ -151,7 +151,7 @@ let cmd_exhaustive_function env f =
 let cmd_print_depth env t depth =
     print_string "=======================================================\n";
     let t = put_priority env t in
-    print_term_depth env t depth;
+    explore_term_depth env t depth;
     print_newline();
     print_string "=======================================================\n";
     print_newline()

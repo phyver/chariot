@@ -4,69 +4,49 @@ open Pretty
 open Compute
 open Typing
 
-let print_term_depth (env:environment) (v:term) (depth:int) : unit
-  =
-  (* NOTE: not very elegant: I pasted the "print_term_depth_aux" function and added some things... *)
-    let rec
-  print_term_int (u:term) =
-    let rec aux n v =
-        match v with
-        | Const("Zero",_) -> n,None
-        | App(Const("Succ",_),v) -> aux (n+1) v
-        | _ -> n,Some v
-    in
-        match aux 0 u with
-            | n,None -> print_int n
-            | 0,Some v -> raise (Invalid_argument "print_term_int")
-            | n,Some v -> print_term v; print_string "+"; print_int n
+type explore_struct = Folded of int * term * type_expression | Unfolded of (const_name * explore_term) list
+ and explore_term = explore_struct special_term
 
+let rec
+   print_explore_struct = function
+       | Folded(n,v,t) -> print_string "…"; print_int n; print_string "…:"; print_type t
+       | Unfolded fields -> print_list "{}" "{" "; " "}" (function d,v -> print_string (d ^ "="); print_explore_term v) fields
 and
-      print_paren_term v depth =
-        try
-            print_term_int v
-        with Invalid_argument "print_term_int" ->
-            if is_atomic v
-            then print_term_depth_aux v depth
-            else (print_string "("; print_term_depth_aux v depth; print_string ")")
+  print_explore_term v = print_special_term print_explore_struct v
 
-    and
-      print_non_codata_term u depth = match u with
-        | Angel -> print_string "⊤"
-        | Var(x) -> print_string x
-        | Const(c,Some p) -> print_string c; print_exp p
-        | Const(c,None) -> print_string c; print_string "⁽⁾"
-        | Proj(d,Some p) -> print_string "." ; print_string d; print_exp p
-        | Proj(d,None) -> print_string "." ; print_string d; print_string "⁽⁾"
-        | App(v1,v2) -> print_term_depth_aux v1 depth; print_string " "; print_paren_term v2 depth
-        | Special v -> v.bot
+let rec term_to_explore (v:term) : explore_term = match v with
+    | Angel -> Angel
+    | Var x -> Var x
+    | Proj(d,p) -> Proj(d,p)
+    | Const(c,p) -> Const(c,p)
+    | App(v1,v2) -> App(term_to_explore v1,term_to_explore v2)
+    | Special v -> v.bot
 
-    and
-      print_term_depth_aux v depth =
-        try
-            print_term_int v
-        with Invalid_argument "print_term_int" ->
-            begin
-                match infer_type env v [] [] with
-                    | Arrow _,_,_ | TVar _,_,_ -> print_non_codata_term v depth
-                    | Data(t,_),_,_ ->
-                        begin
-                            let p = get_type_priority env t in
-                            if p mod 2 = 1
-                            then print_non_codata_term v depth
-                            else
-                                if depth = 0 then print_string "..."
-                                else
-                                    let consts = get_type_constants env t in
-                                    let fields = List.map (fun d ->
-                                        let t = App(Proj(d,Some p),v) in
-                                        (* print_string "reducing "; print_term t; print_string " = "; flush_all(); *)
-                                        let nf = reduce_all env t in
-                                        (* print_term nf; print_newline(); flush_all(); *)
-                                        (d, nf)) consts
-                                    in
-                                    print_list "{}" "{" "; " "}" (function d,v -> print_string (d ^ "="); print_term_depth_aux v (depth-1); flush_all()) fields
-                        end
-            end
-    in
-    print_term_depth_aux v depth
+let unfold (env:environment) (v:term) (depth:int) : explore_term
+ =
+    let rec unfold_aux depth (v:term) : explore_term =
+        let hd, args = get_head v, get_args v in
+        match infer_type env v [] [] with
+            | Arrow _,_,_ | TVar _,_,_ -> app (term_to_explore hd) (List.map (unfold_aux depth) args)
+            | Data(tname,_) as t,_,_ ->
+                let p = get_type_priority env tname in
+                if p mod 2 = 1
+                then app (term_to_explore hd) (List.map (unfold_aux depth) args)
+                else
+                    if depth = 0
+                    then Special (Folded (0,app hd args,t))
+                    else
+                        let consts = get_type_constants env tname in
+                        let fields = List.map (fun d ->
+                            let t = App(Proj(d,Some p),v) in
+                            let nf = unfold_aux (depth-1) (reduce_all env t) in
+                            (d, nf)) consts
+                        in
+                        Special (Unfolded fields)
+
+    in unfold_aux depth (reduce_all env v)
+
+
+let explore_term_depth (env:environment) (v:term) (depth:int) : unit
+  = print_explore_term (unfold env v depth)
 
