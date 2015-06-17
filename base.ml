@@ -14,9 +14,6 @@ let unificationError s = raise (UnificationError s)
 exception TypeError of string
 let typeError s = raise (TypeError s)
 
-let verbose = ref 0     (* for information messages *)
-let message k m = if !verbose > k then (print_string (" " ^ (String.make k '-') ^ " "); m ())
-
 (* types for type expressions and substitutions *)
 type type_name = string
 type type_expression =

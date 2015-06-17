@@ -6,25 +6,24 @@ open Compute
 open Pretty
 open Misc
 open Commands
+open State
 
-let env = ref { current_priority = 0; current_bloc = 0; types = []; constants = []; functions = [] }
-let prompt = ref ">>> "
 
 let process_statement = function
-    | CmdTest(v,d) -> cmd_print_depth !env v d
+    | CmdTest(v,d) -> cmd_print_depth current_state.env v d
 
     | Eof -> raise Exit
     | CmdQuit -> raise Exit
     | Nothing -> ()
 
-    | CmdShow(s) -> cmd_show !env s
-    | CmdPrompt(s) -> prompt := s
-    | CmdVerbose(v) -> verbose := v
+    | CmdShow(s) -> cmd_show current_state.env s
+    | CmdPrompt(s) -> current_state.prompt <- s
+    | CmdVerbose(v) -> current_state.verbose <- v
 
-    | CmdReduce(t) -> cmd_reduce !env t
+    | CmdReduce(t) -> cmd_reduce current_state.env t
 
-    | TypeDef(priority,defs) -> env := process_type_defs !env priority defs
-    | FunDef(defs) -> env := process_function_defs !env defs
+    | TypeDef(priority,defs) -> current_state.env <- process_type_defs current_state.env priority defs
+    | FunDef(defs) -> current_state.env <- process_function_defs current_state.env defs
 
 
 let loadfile path =
@@ -42,7 +41,7 @@ let loadfile path =
 let mainloop () =
     while true
     do
-        print_string !prompt; flush_all();
+        print_string current_state.prompt; flush_all();
         let lexbuf = Lexing.from_channel stdin in
         flush_all ();
         try

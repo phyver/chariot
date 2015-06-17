@@ -3,6 +3,7 @@
  *)
 open Misc
 open Base
+open State
 open Pretty
 
 (* apply a substitution on a type *)

@@ -1,5 +1,6 @@
 open Base
 open Misc
+open State
 open Pretty
 open Typing
 open CheckCoverage
