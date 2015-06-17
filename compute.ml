@@ -2,7 +2,6 @@ open Base
 open Pretty
 open Misc
 
-
 let rec subst_term sigma (v:term) = match v with
     | Var(x) -> (try List.assoc x sigma with Not_found -> Var(x))
     | Angel | Const _ | Proj _ -> v
@@ -54,7 +53,7 @@ let reduce_all (env:environment) (v:term) : term
                 let v1,b1 = reduce v1 in
                 let v2,b2 = reduce v2 in
                 let v3,b3 = (try reduce_first_clause (App(v1,v2)) (get_function_clauses env (get_function_name v))
-                             with Error _ | Not_found -> App(v1,v2),false) in
+                             with Invalid_argument "no head function" | Not_found -> App(v1,v2),false) in
                 v3, b1||b2||b3
           | Special v -> v.bot
     in

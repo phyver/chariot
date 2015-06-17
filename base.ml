@@ -124,19 +124,29 @@ let get_function_clauses (env:environment) (f:var_name) =
 
 (* get the function name from a pattern *)
 let rec get_head (v:term) = match v with
-    | Const _ | Angel | Var _ -> v
-    | App(Proj _,v) -> get_head v
+    | Const _ | Angel | Var _ | Proj _ -> v
     | App(v,_) -> get_head v
-    | Proj _ -> assert false
     | Special v -> v.bot
 
-let get_head_const v =
-    match get_head v with
-        | Const(c,_) -> c
-        | _ -> error "no head constructor"
+let rec get_head_const v = match v with
+    | Const(c,p)  -> c
+    | Angel | Var _ | Proj _ ->  raise (Invalid_argument "no head constructor")
+    | App(v,_) -> get_head_const v
+    | Special v -> v.bot
 
-let rec get_function_name v =
-    match get_head v with
-        | Var(f) -> f
-        | _ -> error "no head function"
+let rec get_function_name v = match v with
+    | Var f -> f
+    | Angel | Const _ | Proj _ ->  raise (Invalid_argument "no head function")
+    | App(Proj _,v) -> get_function_name v
+    | App(v,_) -> get_function_name v
+    | Special v -> v.bot
 
+let get_args v =
+    let rec get_args_aux acc = function
+        | Const _ | Angel | Var _ | Proj _ -> []
+        | App(v1,v2) -> get_args_aux (v2::acc) v1
+        | Special v -> v.bot
+    in
+    get_args_aux [] v
+
+let app f args = List.fold_left (fun t arg -> App(t,arg)) f args
