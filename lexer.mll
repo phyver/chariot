@@ -22,9 +22,12 @@ rule token = parse
     | ":quit"           { CMDQUIT }
     | ":prompt"         { CMDPROMPT }
     | ":show"           { CMDSHOW }
-    | ":reduce"         { CMDREDUCE }
-    | ":test"           { CMDTEST }
     | ":verbose"        { CMDVERBOSE }
+    | ":setdebug"       { CMDSETDEBUG }
+    | ":unsetdebug"     { CMDUNSETDEBUG }
+    | ":explore"        { CMDEXPLORE }
+    | ":help"           { CMDHELP }
+    | ":test"           { CMDTEST }
     | '='               { EQUAL }
     | ':'               { COLON }
     | ';'               { SEMICOLON }
@@ -34,6 +37,7 @@ rule token = parse
     | '|'               { PIPE }
     | '.'               { DOT }
     | '+'               { PLUS }
+    | '-'               { MINUS }
     | "\n\n"            { BLANKLINE }
     | "data"            { DATA }
     | "codata"          { CODATA }

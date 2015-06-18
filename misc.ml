@@ -78,3 +78,9 @@ let rec combine_suffix short long =
         | _,[] -> raise (Invalid_argument "combine_suffix")
         | a::short,b::long -> let l,s = combine_suffix short long in ((a,b)::l,s)
 
+let range a b =
+    let rec range_aux acc b =
+        if b<a
+        then acc
+        else range_aux (b::acc) (b-1)
+    in range_aux [] b

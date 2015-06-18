@@ -1,5 +1,6 @@
 open Misc
 open Base
+open State
 open Pretty
 open Compute
 open Typing
@@ -9,7 +10,11 @@ type explore_struct = Folded of int * term * type_expression | Unfolded of (cons
 
 let rec
    print_explore_struct = function
-       | Folded(n,v,t) -> print_string "…"; print_int n; print_string "…:"
+       | Folded(n,v,t) ->
+            print_string "{…<"; print_int n; print_string ">";
+            ifDebug "show_term_struct" (fun _ -> print_string "="; print_term v);
+            ifDebug "show_type_struct" (fun _ -> print_string ":"; print_type t);
+            print_string "…}"
        | Unfolded fields -> print_list "{}" "{" "; " "}" (function d,v -> print_string (d ^ "="); print_explore_term v) fields
 and
   print_explore_term v = print_special_term print_explore_struct v
@@ -24,18 +29,18 @@ let rec head_to_explore (v:term) : explore_term = match v with
 
 let struct_nb = ref 0
 
-let rec term_to_explore (env:environment) (v:term) : explore_term
+let rec term_to_explore_aux (env:environment) (v:term) : explore_term
  =  let hd, args = get_head v, get_args v in
     match infer_type env v [] [] with
         | Data(tname,_) as t,_,_ ->
             if (is_inductive env tname)
             then
-                app (head_to_explore hd) (List.map (term_to_explore env) args)
+                app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
             else
                 (incr struct_nb; Special (Folded (!struct_nb,v,t)))
         | Arrow _,_,_ | TVar _,_,_ ->
-            app (head_to_explore hd) (List.map (term_to_explore env) args)
-let term_to_explore env v = struct_nb:=0; term_to_explore env v
+            app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
+let term_to_explore env n = struct_nb := 0; term_to_explore_aux env n
 
 
 let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
@@ -50,7 +55,7 @@ let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
                 let fields = List.map (fun d ->
                     let v = App(Proj(d,Some p),v) in
                     let v = reduce_all env v in
-                    (d, term_to_explore env v)) consts
+                    (d, term_to_explore_aux env v)) consts
                 in
                 Special (Unfolded fields)
         | Special _ -> assert false

@@ -8,19 +8,20 @@ open Explore
 
 (* commands *)
 type cmd =
+    | CmdTest of term*int
+
     | Eof
     | Nothing
-
     | CmdQuit
+    | CmdHelp
+
     | CmdPrompt of string
-    (* | CmdTest of type_expression*type_expression *)
-    | CmdTest of term*int
-    (* | CmdTest of term *)
-    (* | CmdTest of var_name *)
-    | CmdShow of string
     | CmdVerbose of int
+    | CmdDebug of string*bool
+    | CmdShow of string
 
     | CmdReduce of term
+    | CmdExplore of term
 
     | TypeDef of priority * (type_name * (type_expression list) * (const_name * type_expression) list) list
     (* The output of a type definition from the parser consists of
@@ -40,6 +41,11 @@ type cmd =
      *       - a LHS given by a term (possibly with "_" variables
      *       - a RHS given by a term
      *)
+
+type explore_cmd =
+    | ExpEnd
+    | ExpUnfold of int list
+    | ExpUnfoldAll
 
 let cmd_reduce env term =
     let term = put_priority env term in

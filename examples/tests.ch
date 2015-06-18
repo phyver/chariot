@@ -119,4 +119,5 @@ val k x y = x
 
 :verbose 0
 
+val nats = map (arith 0) (arith 0 1)
 

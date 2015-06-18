@@ -1,6 +1,7 @@
 %{
 open Misc
 open Base
+open State
 open Commands
 
 let rec int_to_term n u =
@@ -13,9 +14,9 @@ let dummy_nb = ref 0
 let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb))
 %}
 
-%token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS
+%token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS MINUS
 %token DATA CODATA WHERE AND VAL
-%token CMDQUIT CMDPROMPT CMDSHOW CMDREDUCE CMDTEST CMDVERBOSE
+%token CMDHELP CMDQUIT CMDPROMPT CMDSHOW CMDTEST CMDVERBOSE CMDSETDEBUG CMDUNSETDEBUG CMDEXPLORE
 %token EOF
 %token <string> IDU IDL STR TVAR
 %token <int> INT
@@ -26,9 +27,11 @@ let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb))
 
 %start single_statement
 %start statements
+%start explore_command
 
 %type <Commands.cmd list> statements
 %type <Commands.cmd> single_statement
+%type <Commands.explore_cmd> explore_command
 
 %type <priority * (type_name * (type_expression list) * (const_name * type_expression) list) list> new_types
 %type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
@@ -61,10 +64,14 @@ eos:
 
 command:
     | COLON term                                        { CmdReduce $2 }
+    | CMDEXPLORE term                                   { CmdExplore $2 }
     | CMDQUIT                                           { CmdQuit }
     | CMDPROMPT string                                  { CmdPrompt($2) }
     | CMDSHOW string                                    { CmdShow($2) }
     | CMDVERBOSE INT                                    { CmdVerbose($2) }
+    | CMDSETDEBUG string                                { CmdDebug($2,true) }
+    | CMDUNSETDEBUG string                              { CmdDebug($2,true) }
+    | CMDHELP                                           { CmdHelp }
 
     | CMDTEST term AND INT                              { CmdTest($2,$4) }
 
@@ -72,6 +79,17 @@ string:
     | IDL { $1 }
     | IDU { $1 }
     | STR { $1 }
+
+explore_command:
+    | int_range eos             { ExpUnfold $1 }
+    | MINUS                     { ExpUnfoldAll }
+    | CMDQUIT                   { ExpEnd }
+    | EOF                       { ExpEnd }
+
+int_range:
+    | /* nothing */             { [] }
+    | INT int_range             { $1::$2 }
+    | INT MINUS INT int_range   { (range $1 $3) @ $4 }
 
 new_types:
     |   DATA type_defs          { (-1,$2) }
