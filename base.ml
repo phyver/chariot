@@ -80,6 +80,14 @@ let get_type_priority (env:environment) (t:type_name) : int =
     in
     get_type_priority_aux env.types
 
+let is_inductive (env:environment) (t:type_name) : bool =
+    let rec is_inductive_aux = function
+        | [] -> raise Not_found
+        | (_t, _, _priority, _)::_ when _t=t -> _priority mod 2 = 1
+        | _::ts -> is_inductive_aux ts
+    in
+    is_inductive_aux env.types
+
 let get_type_constants (env:environment) (t:type_name) : const_name list =
     let rec get_type_constants_aux = function
         | [] -> raise Not_found
@@ -140,7 +148,7 @@ let rec get_function_name v = match v with
 
 let get_args v =
     let rec get_args_aux acc = function
-        | Const _ | Angel | Var _ | Proj _ -> []
+        | Const _ | Angel | Var _ | Proj _ -> acc
         | App(v1,v2) -> get_args_aux (v2::acc) v1
         | Special v -> v.bot
     in
