@@ -1,5 +1,6 @@
 open Misc
 open Base
+open State
 
 let print_exp n = print_string (exp_of_int n)
 
@@ -37,6 +38,7 @@ let rec
         | App(Const("Succ",_),v) -> aux (n+1) v
         | _ -> n,Some v
     in
+        ifDebug "dont_show_nats" (fun _ -> raise (Invalid_argument "print_term_int"));
         match aux 0 u with
             | n,None -> print_int n
             | 0,Some v -> raise (Invalid_argument "print_term_int")

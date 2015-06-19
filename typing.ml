@@ -152,63 +152,57 @@ let infer_type (env:environment)
             print_list "none" "" " , " "\n" (function x,t -> print_string ("'"^x^"="); print_type t) sigma;
             print_newline()
         );
-
         match v with
-          | Angel -> instantiate_type (TVar("angel")) , constraints, sigma
-          | Var(x) ->
-              begin
-                  try List.assoc x constraints, constraints, sigma
-                  with Not_found ->
-                      begin
-                          try
-                              let t = get_function_type env x in
-                              (instantiate_type t, constraints, sigma)
-                          with Not_found -> let t = TVar("type_"^x) in (t, add_constraint (x,t) constraints, sigma)
-                      end
-              end
-          | Const(c,_) ->
-              begin
-                  try
-                      let t = instantiate_type (get_constant_type env c) in
-                      let p = get_constant_priority env c in
-                      if p mod 2 = 0 then typeError (c ^ " is not a constructor");    (* FIXME: this should be done by a check_term function *)
-                      (t , constraints, [])
-                  with Not_found -> typeError ("cannot infer type of constant " ^ c)
-              end
-          | Proj(d,_) ->
-              begin
-                  try
-                      let t = instantiate_type (get_constant_type env d) in
-                      let p = get_constant_priority env d in
-                      if p mod 2 = 1 then typeError (d ^ " is not a destructor");     (* FIXME: this should be done by a check_term function *)
-                      (t , constraints, [])
-                  with Not_found -> typeError ("cannot infer type of constant " ^ d)
-              end
-          | App(v1,v2) ->
-              begin
-                  let tv1,constraints,sigma = infer_type_aux v1 constraints sigma in
-                  let tv2,constraints,sigma = infer_type_aux v2 constraints sigma in
-
-                  let tfunc = instantiate_type (Arrow(TVar("arg"),TVar("result"))) in
-                  let tau = unify_type_mgu tfunc tv1 in
-                  let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
-
-                  let tfunc = subst_type sigma tfunc in
-
-                  let targ,tres = match tfunc with
-                      | Arrow(t1,t2) -> t1,t2
-                      | _ -> assert false
-                  in
-
-                  (* NOTE: do not swap the arguments of unify_type_mgu below!!! TODO: understand... *)
-                  let tau = unify_type_mgu targ tv2 in
-                  let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
-
-                  let constraints = List.map (second (subst_type sigma)) constraints in
-                  let tres = subst_type sigma tres in
-                  tres,constraints,sigma
-              end
-          | Special v -> v.bot
+            | Angel -> instantiate_type (TVar("angel")) , constraints, sigma
+            | Var(x) ->
+                begin
+                    try List.assoc x constraints, constraints, sigma
+                    with Not_found ->
+                        begin
+                            try
+                                let t = get_function_type env x in
+                                (instantiate_type t, constraints, sigma)
+                            with Not_found -> let t = TVar("type_"^x) in (t, add_constraint (x,t) constraints, sigma)
+                        end
+                end
+            | Const(c,_) ->
+                begin
+                    try
+                        let t = instantiate_type (get_constant_type env c) in
+                        let p = get_constant_priority env c in
+                        if p mod 2 = 0 then typeError (c ^ " is not a constructor");    (* FIXME: this should be done by a check_term function *)
+                        (t , constraints, [])
+                    with Not_found -> typeError ("cannot infer type of constant " ^ c)
+                end
+            | Proj(d,_) ->
+                begin
+                    try
+                        let t = instantiate_type (get_constant_type env d) in
+                        let p = get_constant_priority env d in
+                        if p mod 2 = 1 then typeError (d ^ " is not a destructor");     (* FIXME: this should be done by a check_term function *)
+                        (t , constraints, [])
+                    with Not_found -> typeError ("cannot infer type of constant " ^ d)
+                end
+            | App(v1,v2) ->
+                begin
+                    let tv1,constraints,sigma = infer_type_aux v1 constraints sigma in
+                    let tv2,constraints,sigma = infer_type_aux v2 constraints sigma in
+                    let tfunc = instantiate_type (Arrow(TVar("arg"),TVar("result"))) in
+                    let tau = unify_type_mgu tfunc tv1 in
+                    let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
+                    let tfunc = subst_type sigma tfunc in
+                    let targ,tres = match tfunc with
+                        | Arrow(t1,t2) -> t1,t2
+                        | _ -> assert false
+                    in
+                    (* NOTE: do not swap the arguments of unify_type_mgu below!!! TODO: understand... *)
+                    let tau = unify_type_mgu targ tv2 in
+                    let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
+                    let constraints = List.map (second (subst_type sigma)) constraints in
+                    let tres = subst_type sigma tres in
+                    tres,constraints,sigma
+                end
+            | Special v -> v.bot
     in
     let t,constraints,sigma = infer_type_aux v constraints [] in
     message 3 (fun () ->

@@ -37,9 +37,9 @@ let process_function_defs (env:environment)
   : environment
   =
 
-      (* TODO: I shouldn't look at the types of functions anywhere but should
-       * keep accumulating constrainst about the functions type, and check that
-       * they coincide with the given types at the very end *)
+    (* TODO: I shouldn't look at the types of functions anywhere but should
+     * keep accumulating constrainst about the functions type, and check that
+     * they coincide with the given types at the very end *)
 
     (* check that the functions are all different *)
     let new_functions = List.rev_map (function f,_,_ -> f) defs in
@@ -52,7 +52,7 @@ let process_function_defs (env:environment)
     (* gather the constraints on the functions by looking at a single clause *)
     let type_single_clause (f:var_name) (lhs_pattern,rhs_term:term*term) 
       : (var_name*type_expression) list
-        =
+      =
         reset_fresh_variable_generator ();
 
         (* get function from LHS and check it is equal to f *)
@@ -108,7 +108,7 @@ let process_function_defs (env:environment)
 
     let process_single_def (f:var_name) (clauses:(term*term) list)
       : (var_name*type_expression) list
-      = 
+      =
         let constraints = List.fold_left
                         (fun constraints clause -> merge_constraints constraints (type_single_clause f clause))
                         []
