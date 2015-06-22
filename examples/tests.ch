@@ -121,3 +121,7 @@ val k x y = x
 
 val nats = map (arith 0) (arith 0 1)
 
+val last [] = ???
+  | last [a] = a
+  | last a::l = last l
+

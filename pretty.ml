@@ -45,19 +45,31 @@ let rec
             | n,Some v -> print_special_term sp v; print_string "+"; print_int n
 
 and
+  print_term_list (sp:'a -> unit) (u:'a special_term) =
+    let rec aux l v =
+        match v with
+        | Const("Nil",_) -> l,None
+        | App(App(Const("Cons",_),h),t) -> aux (h::l) t
+        | _ -> l,Some v
+    in
+        ifDebug "dont_show_lists" (fun _ -> raise (Invalid_argument "print_term_list"));
+        match aux [] u with
+            | l,None -> print_list "[]" "[" "; " "]" (print_special_term sp) (List.rev l)
+            | [],Some v -> raise (Invalid_argument "print_term_list")
+            | l,Some v -> print_list "OOPS" "" "::" "::" (print_special_term sp) (List.rev l); print_special_term sp v
+
+and
   print_paren_term (sp:'a -> unit) (v:'a special_term) =
-    try
-        print_term_int sp v
-    with Invalid_argument "print_term_int" ->
+    try print_term_int sp v with Invalid_argument "print_term_int" ->
+    try print_term_list sp v with Invalid_argument "print_term_list" ->
         if is_atomic v
         then print_special_term sp v
         else (print_string "("; print_special_term sp v; print_string ")")
 
 and
   print_special_term (sp:'a -> unit) (v:'a special_term) =
-    try
-        print_term_int sp v
-    with Invalid_argument "print_term_int" ->
+    try print_term_int sp v with Invalid_argument "print_term_int" ->
+    try print_term_list sp v with Invalid_argument "print_term_list" ->
         begin
         match v with
             | Angel -> print_string "⊤"

@@ -61,7 +61,7 @@ let cmd_reduce env term =
         | constraints ->
             begin
                 print_list ""
-                           " constraints: " "  ,  " "\n\n"
+                           " free variables: " "  ,  " "\n\n"
                            (function x,t -> print_string (x ^ " : "); print_type t) constraints
             end;
     match sigma with

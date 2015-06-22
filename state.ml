@@ -15,6 +15,7 @@ let current_state = {
         "show_type_struct", false;
         "show_term_struct", false;
         "dont_show_nats",   false;
+        "dont_show_lists",   false;
     ]                                                                                                   ;
     }
 

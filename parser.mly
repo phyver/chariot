@@ -9,19 +9,25 @@ let rec int_to_term n u =
     then u
     else int_to_term (n-1) (App(Const("Succ",None),u))
 
+let rec list_to_term l u =
+    match l with
+        | [] -> u
+        | v::l -> list_to_term l (App(App(Const("Cons",None),v),u))
+
 let dummy_nb = ref 0
 
 let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb))
 %}
 
 %token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS MINUS
+%token LSQBRAC RSQBRAC DOUBLECOLON
 %token DATA CODATA WHERE AND VAL
 %token CMDHELP CMDQUIT CMDPROMPT CMDSHOW CMDTEST CMDVERBOSE CMDSETDEBUG CMDUNSETDEBUG CMDEXPLORE
 %token EOF
 %token <string> IDU IDL STR TVAR
 %token <int> INT
 
-%right ARROW
+%right ARROW DOUBLECOLON
 %left DOT
 
 
@@ -174,6 +180,16 @@ atomic_term:
     | ANGEL                     { Angel }
 
     | INT                       { int_to_term $1 (Const("Zero",None)) }
+    | term_list                 { list_to_term (List.rev $1) (Const("Nil",None)) }
+    | atomic_term DOUBLECOLON atomic_term       { App(App(Const("Cons",None),$1),$3) }
+
+term_list:
+    | LSQBRAC term_list_inside RSQBRAC  { $2 } /* FIXME: check priorities... */
+    | LSQBRAC RSQBRAC                   { [] }
+
+term_list_inside:
+    | term                              { [$1] }
+    | term SEMICOLON term_list_inside   { $1::$3 }
 
 lhs_term:
     | IDL                           { Var($1) }
@@ -188,10 +204,20 @@ atomic_pattern:
     | LPAR pattern RPAR     { $2 }
 
     | INT                   { int_to_term $1 (Const("Zero",None)) }
+    | pattern_list          { list_to_term (List.rev $1) (Const("Nil",None)) }
+    | atomic_pattern DOUBLECOLON atomic_pattern       { App(App(Const("Cons",None),$1),$3) }
 
 pattern:
     | atomic_pattern            { $1 }
     | pattern atomic_pattern    { App($1,$2) }
 
     | pattern PLUS INT          { int_to_term $3 $1 }
+
+pattern_list:
+    | LSQBRAC pattern_list_inside RSQBRAC  { $2 } /* FIXME: check priorities... */
+    | LSQBRAC RSQBRAC                   { [] }
+
+pattern_list_inside:
+    | pattern                              { [$1] }
+    | pattern SEMICOLON pattern_list_inside   { $1::$3 }
 

@@ -29,10 +29,13 @@ rule token = parse
     | ":help"           { CMDHELP }
     | ":test"           { CMDTEST }
     | '='               { EQUAL }
+    | "::"              { DOUBLECOLON }
     | ':'               { COLON }
     | ';'               { SEMICOLON }
     | '('               { LPAR }
     | ')'               { RPAR }
+    | '['               { LSQBRAC }
+    | ']'               { RSQBRAC }
     | ','               { COMMA }
     | '|'               { PIPE }
     | '.'               { DOT }
