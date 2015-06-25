@@ -1,8 +1,3 @@
-show lists with [ ; ; ; ; ] and ::
-show Succ(Succ x) as x+2
-
-
-
 allow "{ proj1 = u1 ; ... ; projn = un }" in terms and patterns (=> lexer, parser, term, ...)
 unification now has
 { proj1 = u1 ; ... ; projn = un } ~ t   ==>   u1 ~ t.proj1, ..., un ~ t.projn
