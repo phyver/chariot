@@ -93,8 +93,10 @@ let unify_type (t1:type_expression) (t2:type_expression) : type_expression =
 (* check if t1 is an instance of t2
  * NOTE: it relies on the mgu giving priority to its first argument *)
 let is_instance t1 t2 =
-    let sigma = unify_type_mgu t1 t2 in
-    t1 = subst_type sigma t1
+    try
+        let sigma = unify_type_mgu t1 t2 in
+        t1 = subst_type sigma t1
+    with UnificationError _ -> false
 
 (* add one constraint into a sorted list of constraints *)
 let rec add_constraint (x,t) constraints = match constraints with

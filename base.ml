@@ -155,3 +155,15 @@ let get_args v =
     get_args_aux [] v
 
 let app f args = List.fold_left (fun t arg -> App(t,arg)) f args
+
+let rec get_result_type t = match t with
+    | Data _ | TVar _ -> t
+    | Arrow(_,t) -> get_result_type t
+
+let rec get_args_type t = match t with
+    | Data _ | TVar _ -> []
+    | Arrow (t1,t2) -> t1::(get_args_type t2)
+
+let get_first_arg_type t = match t with
+    | Data _ | TVar _ -> raise (Invalid_argument "get_first_arg_type")
+    | Arrow(t,_) -> t
