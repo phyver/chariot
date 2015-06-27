@@ -22,15 +22,15 @@ let rec get_variables (v:term) = match v with
     | App(v1,v2) -> (get_variables v1) @ (get_variables v2)
     | Special v -> v.bot
 
-let rec put_priority (env:environment) (v:term) = match v with
-    | Angel -> Angel
-    | Var(x) -> Var(x)
-    | Proj(d,None) -> Proj(d, Some(get_constant_priority env d))
-    | Proj _  -> error "priority is already present"
-    | Const(c,None) -> Const(c,Some(get_constant_priority env c))
-    | Const _ -> error "priority is already present"
-    | App(v1,v2) -> App(put_priority env v1,put_priority env v2)
-    | Special v -> v.bot
+(* let rec put_priority (env:environment) (v:term) = match v with *)
+(*     | Angel -> Angel *)
+(*     | Var(x) -> Var(x) *)
+(*     | Proj(d,None) -> Proj(d, Some(get_constant_priority env d)) *)
+(*     | Proj _  -> error "priority is already present" *)
+(*     | Const(c,None) -> Const(c,Some(get_constant_priority env c)) *)
+(*     | Const _ -> error "priority is already present" *)
+(*     | App(v1,v2) -> App(put_priority env v1,put_priority env v2) *)
+(*     | Special v -> v.bot *)
 
 let process_function_defs (env:environment)
                           (defs:(var_name * type_expression option * (term * term) list) list)
@@ -38,7 +38,7 @@ let process_function_defs (env:environment)
   =
 
     (* TODO: I shouldn't look at the types of functions anywhere but should
-     * keep accumulating constrainst about the functions type, and check that
+     * keep accumulating constraints about the functions type, and check that
      * they coincide with the given types at the very end *)
 
     (* check that the functions are all different *)
@@ -147,7 +147,8 @@ let process_function_defs (env:environment)
     in
 
     let functions = List.rev_map
-        (function f,t,clauses -> (f,env.current_bloc+1,choose_type f t,List.map (function p,v -> put_priority env p, put_priority env v) clauses)) defs
+        (* (function f,t,clauses -> (f,env.current_bloc+1,choose_type f t,List.map (function p,v -> put_priority env p, put_priority env v) clauses)) defs *)
+        (function f,t,clauses -> (f,env.current_bloc+1,choose_type f t, clauses)) defs
     in
 
     { env with current_bloc = env.current_bloc+1; functions = functions @ env.functions }

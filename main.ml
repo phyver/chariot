@@ -26,7 +26,7 @@ let explore_loop env t =
         "";
         "  ':quit' to quit the explore mode"
     ];
-    let t = put_priority env t in
+    (* let t = put_priority env t in *)
     let t = ref (term_to_explore env t) in
     try
         while true
