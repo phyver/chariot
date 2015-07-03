@@ -155,6 +155,7 @@ function_defs:
 function_def:
     | IDL COLON type_expression function_clauses    { ($1,Some($3),$4) }
     | function_clause function_clauses              { (get_function_name (fst $1),None,$1::$2) }
+    | function_clauses                              { (get_function_name (fst (List.hd $1)),None,$1) }
 
 function_clauses:
     | /*nothing*/                               { [] }
