@@ -4,6 +4,7 @@ open State
 open Pretty
 open Typing
 open CheckCoverage
+open InferPriorities
 
 (* check that all the functions are different *)
 let check_uniqueness_functions funs =
@@ -102,5 +103,7 @@ let process_function_defs (env:environment)
     let functions = List.rev_map
         (function f,t,clauses -> (f,env.current_function_bloc+1,choose_type f t, clauses)) defs
     in
+
+    let functions = infer_priorities env functions datatypes in
 
     { env with current_function_bloc = env.current_function_bloc+1; functions = functions @ env.functions }
