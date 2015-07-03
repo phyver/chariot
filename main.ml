@@ -98,9 +98,9 @@ let _ =
     try
         for i=1 to (Array.length Sys.argv)-1
         do
-            print_string ("=== loading file " ^ Sys.argv.(i)); flush_all ();
+            print_string ("=== loading file " ^ Sys.argv.(i) ^ " ..."); flush_all ();
             loadfile (Sys.argv.(i));
-            print_endline "  OK ";
+            print_endline "  OK\n";
         done;
         mainloop()
     with Exit -> print_endline "Bye..."
