@@ -50,11 +50,9 @@ let process_function_defs (env:environment)
     check_new_funs_different_from_old new_functions old_functions;
 
     (* gather the constraints on the functions by looking at a single clause *)
-    let type_single_clause (f:var_name) (lhs_pattern,rhs_term:term*term) 
-      : (var_name*type_expression) list
+    let type_single_clause (f:var_name) (lhs_pattern,rhs_term:pattern*term) 
+      : (var_name*type_expression) list * type_expression list
       =
-        reset_fresh_variable_generator ();
-
         (* get function from LHS and check it is equal to f *)
         let _f = get_function_name lhs_pattern in
         if not (_f = f) then error ("function names " ^ f ^ " and " ^ _f ^ " do not match");
@@ -65,78 +63,37 @@ let process_function_defs (env:environment)
             | None -> ()
             | Some(x) -> error ("pattern is not linear: variable " ^ x ^ " appears more than once"));
 
-        (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
-        let infered_type_lhs, constraints_lhs,sigma = infer_type env lhs_pattern [] [] in
+        (* infer type and gather datatypes *)
+        let constraints,datatypes = infer_type_clause env lhs_pattern rhs_term in
 
-        (* infer type of RHS *)
-        let infered_type_rhs, constraints,sigma = infer_type env rhs_term constraints_lhs sigma in
+        (* remove constraints on pattern variables *)
+        let constraints = List.filter (function x,_ -> (x = f) || (not (List.mem x lhs_vars))) constraints in
 
         (* check that all the variables appearing on the RHS were also on the LHS *)
         List.iter (function x,t ->
-                    if not (List.mem_assoc x constraints_lhs) && not (List.mem x new_functions)
+                    if not (List.mem x new_functions)
                     then error (x ^ " is free!")
                   ) constraints;
 
-        (* unify types of LHS and RHS *)
-        let tau = unify_type_mgu infered_type_rhs infered_type_lhs in
-        let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
-
-        message 4 (fun () ->
-            print_string "infered type of pattern: ";
-            print_type infered_type_lhs;
-            print_string " and infered type of definition: ";
-            print_type infered_type_rhs;
-            print_string "\n\t\tgiving "; print_type (subst_type sigma infered_type_rhs); print_newline();
-            print_string "types: ";
-            print_list "none\n" "" "," "\n" (function x,t -> print_string ("'"^x^ "="); print_type t) sigma;
-            print_string "\n\t\twith constraints ";
-            print_list "none" "" " , " "" (function x,t -> print_string (x^":"); print_type t) constraints;
-            );
-
-        (* the type of the RHS should be an instance of the type of the LHS *)
-        (* oups: val s.Tail = ??? doesn't work with this... *)
-        (* if not (infered_type_rhs = subst_type sigma infered_type_rhs) *)
-        (* then error ("rhs and lhs do not have the same type"); *)
-
-        let constraints = List.filter (function x,_ -> List.mem x new_functions) constraints in
-
-        let constraints = List.rev_map (second (subst_type sigma)) constraints in
-
-       constraints
+       constraints,datatypes
     in
 
+    let rec process_defs constraints datatypes = function
+        | [] -> constraints, datatypes
+        | (f,k,[])::defs -> process_defs constraints datatypes defs
+        | (f,k,clause::clauses)::defs ->
+            let rconstraints,rdatatypes = process_defs constraints datatypes ((f,k,clauses)::defs) in
+            let constraints,datatypes = type_single_clause f clause in
+            let constraints, sigma = merge_constraints rconstraints constraints in
+            let datatypes = uniq (List.map (subst_type sigma) datatypes @ rdatatypes) in
+            (constraints , datatypes)
 
-    let process_single_def (f:var_name) (clauses:(term*term) list)
-      : (var_name*type_expression) list
-      =
-        let constraints = List.fold_left
-                        (fun constraints clause -> merge_constraints constraints (type_single_clause f clause))
-                        []
-                        clauses
-        in
-
-        (* check coverage *)
-        if not (exhaustive env clauses)
-        then error ("function " ^ f ^ " is not exhaustive");
-
-        constraints
     in
 
-    let process_all_defs defs =
-        (* gather all the constraints on the functions *)
-        let constraints = List.fold_left
-                        (fun constraints def ->
-                            let f, _, clauses = def in
-                            merge_constraints constraints (process_single_def f clauses))
-                        []
-                        defs
-        in
-       constraints
-    in
-    let constraints : (var_name*type_expression) list = process_all_defs defs in
+    let constraints,datatypes = process_defs [] [] defs in
 
     let choose_type f t =
-        reset_fresh_variable_generator ();
+        reset_fresh_variable_generator [];
         let infered = instantiate_type (List.assoc f constraints) in
         match t with
         | None -> infered

@@ -49,7 +49,6 @@ type explore_cmd =
 
 let cmd_reduce env term =
     (* let term = put_priority env term in *)
-    reset_fresh_variable_generator [];
     let t,constraints = infer_type_term env term in
     print_string "\tresult: ";
     print_term (reduce_all env term);

@@ -14,14 +14,24 @@ let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expressi
 
 (* generate fresh variables *)
 let fresh_variable_nb = ref 0
-let reset_fresh_variable_generator () = fresh_variable_nb := 0
+let list_type_variables = ref []
+let reset_fresh_variable_generator ts =
+    fresh_variable_nb := 0;
+    list_type_variables := uniq (List.concat (List.map (function _,t -> extract_type_variables t) ts))
 let fresh_variable () =
     let alpha = ["a";"b";"c";"d";"e";"f";"g";"h";"i";"j";"k";"l";"m";"n";"o";"p";"q";"r";"s";"t";"u";"v";"w";"x";"y";"z"] in
-    let n = !fresh_variable_nb / 26 in
-    let var = !fresh_variable_nb mod 26 in
-    let x = (List.nth alpha var) ^ (if n = 0 then "" else (string_of_int n)) in
-    incr fresh_variable_nb;
-    TVar(x)
+    let stop = ref false in
+    let x = ref "" in
+    while (not !stop)
+    do
+        let n = !fresh_variable_nb / 26 in
+        let var = !fresh_variable_nb mod 26 in
+        x := (List.nth alpha var) ^ (if n = 0 then "" else (string_of_int n));
+        incr fresh_variable_nb;
+        stop := not (List.mem !x !list_type_variables)
+    done;
+    list_type_variables := !x::!list_type_variables;
+    TVar(!x)
 
 (* get all the variables from a type *)
 let get_variables_from_type (t:type_expression) : type_name list =
@@ -105,7 +115,7 @@ let rec add_constraint (x,t) constraints = match constraints with
     | (y,s)::constraints when x>y -> (y,s)::(add_constraint (x,t) constraints)
     | (y,s)::constraints (* when x=y *) -> (x,unify_type s t)::constraints
 
-(* merge two sorted lists of constraints *)
+(* merge two sorted lists of constraints and returns the global substitution used while merging *)
 let merge_constraints cs1 cs2 =
     let rec merge_constraints_aux cs1 cs2 sigma = match cs1,cs2 with
         | [],cs | cs,[] -> cs,sigma
@@ -121,7 +131,7 @@ let merge_constraints cs1 cs2 =
             (x1,subst_type tau t1)::cs , tau @ (List.map (second (subst_type tau)) sigma)
     in
     let cs,sigma = merge_constraints_aux cs1 cs2 [] in
-    List.map (second (subst_type sigma)) cs
+    List.map (second (subst_type sigma)) cs, sigma
 
 (* infers most general type of "u" in environment "env"
  *   - "constraints" contains the type of some free variables (the function
@@ -133,17 +143,21 @@ let merge_constraints cs1 cs2 =
  *     variables, or discover some new constraints on existing variables
  *   - the updated list of type substitutions: we can discover that type 'x is
  *     supposed to be nat.
+ *  - a list of datatypes that were used during inference (useful for putting
+ *    priorities of constants for the termination checker)
+ *  FIXME: gather all data types used during type inference
  *)
 let infer_type (env:environment)
                (v:term)
                (constraints:(var_name*type_expression) list)    (* constraints for the types of free variables *)
                (sigma:(type_name*type_expression) list)         (* all the type substitution that need to be applied *)
-  : type_expression * (var_name*type_expression) list * (type_name*type_expression) list
+               (datatypes:type_expression list)
+  : type_expression * (var_name*type_expression) list * (type_name*type_expression) list * type_expression list
   = message 2 (fun _ -> print_string "infering type for ";
                         print_term v; print_newline());
 
-    let rec infer_type_aux (v:term) constraints sigma
-      : type_expression * (var_name*type_expression) list * (type_name*type_expression) list
+    let rec infer_type_aux (v:term) constraints sigma datatypes
+      : type_expression * (var_name*type_expression) list * (type_name*type_expression) list * type_expression list
       =
         message 4 (fun () ->
             print_string "infering type of (recursive call) ";
@@ -155,16 +169,17 @@ let infer_type (env:environment)
             print_newline()
         );
         match v with
-            | Angel -> instantiate_type (TVar("angel")) , constraints, sigma
+            | Angel -> instantiate_type (TVar("angel")) , constraints, sigma, datatypes
             | Var(x) ->
                 begin
-                    try List.assoc x constraints, constraints, sigma
+                    try List.assoc x constraints, constraints, sigma, datatypes
                     with Not_found ->
                         begin
                             try
                                 let t = get_function_type env x in
-                                (instantiate_type t, constraints, sigma)
-                            with Not_found -> let t = TVar("type_"^x) in (t, add_constraint (x,t) constraints, sigma)
+                                let t = instantiate_type t in
+                                (t, constraints, sigma, datatypes)
+                            with Not_found -> let t = TVar("type_"^x) in (t, add_constraint (x,t) constraints, sigma, datatypes)
                         end
                 end
             | Const(c,_) ->
@@ -173,7 +188,7 @@ let infer_type (env:environment)
                         let t = instantiate_type (get_constant_type env c) in
                         let p = get_constant_priority env c in
                         if p mod 2 = 0 then typeError (c ^ " is not a constructor");    (* FIXME: this should be done by a check_term function *)
-                        (t , constraints, [])
+                        (t , constraints, [], (get_result_type t)::datatypes)
                     with Not_found -> typeError ("cannot infer type of constant " ^ c)
                 end
             | Proj(d,_) ->
@@ -182,13 +197,13 @@ let infer_type (env:environment)
                         let t = instantiate_type (get_constant_type env d) in
                         let p = get_constant_priority env d in
                         if p mod 2 = 1 then typeError (d ^ " is not a destructor");     (* FIXME: this should be done by a check_term function *)
-                        (t , constraints, [])
+                        (t , constraints, [], (get_first_arg_type t)::datatypes)
                     with Not_found -> typeError ("cannot infer type of constant " ^ d)
                 end
             | App(v1,v2) ->
                 begin
-                    let tv1,constraints,sigma = infer_type_aux v1 constraints sigma in
-                    let tv2,constraints,sigma = infer_type_aux v2 constraints sigma in
+                    let tv1,constraints,sigma,datatypes = infer_type_aux v1 constraints sigma datatypes in
+                    let tv2,constraints,sigma,datatypes = infer_type_aux v2 constraints sigma datatypes in
                     let tfunc = instantiate_type (Arrow(TVar("arg"),TVar("result"))) in
                     let tau = unify_type_mgu tfunc tv1 in
                     let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
@@ -202,21 +217,67 @@ let infer_type (env:environment)
                     let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
                     let constraints = List.map (second (subst_type sigma)) constraints in
                     let tres = subst_type sigma tres in
-                    tres,constraints,sigma
+                    let datatypes = List.map (subst_type sigma) datatypes in
+                    tres,constraints,sigma,datatypes
                 end
             | Special v -> v.bot
     in
-    let t,constraints,sigma = infer_type_aux v constraints [] in
+    let t,constraints,sigma,datatypes = infer_type_aux v constraints [] datatypes in
+    let datatypes = uniq datatypes in
     message 3 (fun () ->
         print_string "infered type of ";
         print_term v;
         print_string " : ";
         print_type t;
-        print_string "\n\t\twith constraints ";
-        print_list "none" "" " , " "" (function x,t -> print_string (x^":"); print_type t) constraints;
-        print_string "\n\t\tand types ";
-        print_list "none" "" " , " "\n" (function x,t -> print_string ("'"^x^"="); print_type t) sigma;
+        print_newline();
+        print_list "" "\t\twith free variables: " " , " "\n" (function x,t -> print_string (x^":"); print_type t) constraints;
+        print_list "" "\t\tand types: " " , " "\n" (function x,t -> print_string ("'"^x^"="); print_type t) sigma;
+        print_list "\t\tNO DATATYPES" "\n\t\tdatatypes: " " , " "\n" print_type datatypes;
         print_newline()
     );
-    t,constraints,sigma
+    t,constraints,sigma,datatypes
+
+let infer_type_term env v =
+    reset_fresh_variable_generator [];
+    let t,constraints,_,_ = infer_type env v [] [] [] in
+    t,constraints
+
+let infer_type_clause env (lhs_pattern:pattern) (rhs_def:term)
+  : (var_name*type_expression) list * type_expression list
+  =
+
+    (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
+    reset_fresh_variable_generator [];
+    let infered_type_lhs, constraints_lhs,sigma,datatypes = infer_type env lhs_pattern [] [] [] in
+
+    (* infer type of RHS *)
+    let infered_type_rhs, constraints,sigma,datatypes = infer_type env rhs_def constraints_lhs sigma datatypes in
+
+    (* unify types of LHS and RHS *)
+    let tau = unify_type_mgu infered_type_rhs infered_type_lhs in
+    let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
+
+    (* update constraints and datatypes *)
+    let constraints = List.rev_map (second (subst_type sigma)) constraints in
+    let datatypes = uniq (List.rev_map (subst_type sigma) datatypes) in
+
+    message 4 (fun () ->
+        print_string "infered type of pattern: ";
+        print_type infered_type_lhs;
+        print_string " and infered type of definition: ";
+        print_type infered_type_rhs;
+        print_string "\n\t\tgiving "; print_type (subst_type sigma infered_type_rhs); print_newline();
+        print_string "types: ";
+        print_list "none\n" "" "," "\n" (function x,t -> print_string ("'"^x^ "="); print_type t) sigma;
+        print_string "\n\t\twith constraints ";
+        print_list "none" "" " , " "" (function x,t -> print_string (x^":"); print_type t) constraints;
+        print_list "" "\n\t\twith datatypes: " " , " "\n" print_type datatypes;
+        );
+
+    (* the type of the RHS should be an instance of the type of the LHS *)
+    (* oups: val s.Tail = ??? doesn't work with this... *)
+    (* if not (infered_type_rhs = subst_type sigma infered_type_rhs) *)
+    (* then error ("rhs and lhs do not have the same type"); *)
+
+   constraints,datatypes
 

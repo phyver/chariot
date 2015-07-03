@@ -31,14 +31,14 @@ let struct_nb = ref 0
 
 let rec term_to_explore_aux (env:environment) (v:term) : explore_term
  =  let hd, args = get_head v, get_args v in
-    match infer_type env v [] [] with
-        | Data(tname,_) as t,_,_ ->
+     match infer_type_term env v with
+        | Data(tname,_) as t,_ ->
             if (is_inductive env tname)
             then
                 app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
             else
                 (incr struct_nb; Special (Folded (!struct_nb,v,t)))
-        | Arrow _,_,_ | TVar _,_,_ ->
+        | Arrow _,_ | TVar _,_ ->
             app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
 let term_to_explore env n = struct_nb := 0; term_to_explore_aux env n
 

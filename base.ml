@@ -167,3 +167,16 @@ let rec get_args_type t = match t with
 let get_first_arg_type t = match t with
     | Data _ | TVar _ -> raise (Invalid_argument "get_first_arg_type")
     | Arrow(t,_) -> t
+
+
+let extract_type_variables t =
+    let rec extract_type_variables_aux acc = function
+        | TVar(x) -> x::acc
+        | Data(_,params) -> List.fold_left (fun acc t -> extract_type_variables_aux acc t) acc params
+        | Arrow(t1,t2) -> let acc = extract_type_variables_aux acc t1 in extract_type_variables_aux acc t2
+    in extract_type_variables_aux [] t
+
+let rec extract_atomic_types t = match t with
+    | TVar _ -> [t]
+    | Data(_,params) -> t::(List.concat (List.map extract_atomic_types params))
+    | Arrow(t1,t2) -> (extract_atomic_types t1) @ (extract_atomic_types t2)
