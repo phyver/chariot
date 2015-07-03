@@ -1,3 +1,8 @@
+make test (taken from Agda)
+
+string_of_type, string_of_term
+
+
 allow "{ proj1 = u1 ; ... ; projn = un }" in terms and patterns (=> lexer, parser, term, ...)
 unification now has
 { proj1 = u1 ; ... ; projn = un } ~ t   ==>   u1 ~ t.proj1, ..., un ~ t.projn
