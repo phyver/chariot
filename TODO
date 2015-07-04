@@ -1,7 +1,8 @@
-make test (taken from Agda)
+pygmentize / highlight to get colors 
+
+vim syntax file
 
 string_of_type, string_of_term
-
 
 allow "{ proj1 = u1 ; ... ; projn = un }" in terms and patterns (=> lexer, parser, term, ...)
 unification now has
