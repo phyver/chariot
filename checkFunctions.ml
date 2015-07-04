@@ -87,10 +87,14 @@ let process_function_defs (env:environment)
             let constraints, sigma = merge_constraints rconstraints constraints in
             let datatypes = uniq (List.map (subst_type sigma) datatypes @ rdatatypes) in
             (constraints , datatypes)
-
     in
 
     let constraints,datatypes = process_defs [] [] defs in
+
+    List.iter (function f,_,clauses ->
+            if not (exhaustive env clauses)
+            then error ("function " ^ f ^ " is not complete"))
+        defs;
 
     let choose_type f t =
         reset_fresh_variable_generator [];
