@@ -9,21 +9,16 @@ let specialize_constant (env:environment)
                         (c:const_name)
   : type_expression
   =
-     print_string "specialize "; print_string c; print_string " for type "; print_type t; print_newline();
      match t with
       | Data(tname,_) ->
           begin
               reset_fresh_variable_generator [t];
               let tc = instantiate_type (get_constant_type env c) in
-              print_string "tc is "; print_type tc; print_newline();
               let _t = if is_inductive env tname
                        then get_result_type tc
                        else get_first_arg_type tc
               in
-              print_string "_t is "; print_type _t; print_newline();
-              print_string "ICI\n";
               let tau = unify_type_mgu t _t in
-              print_string "LA\n";
               let tc = subst_type tau tc in
               tc
           end
@@ -123,13 +118,13 @@ let infer_priorities (env:environment)
         | (Data(tname,_) as t)::ts ->
             if (is_inductive env tname) = (k mod 2 = 0)
             then add_priorities (k+1) ((t,k+1)::acc) ts
-            else add_priorities k ((t,k)::acc) ts
+            else add_priorities (k+2) ((t,k)::acc) ts
         | _ -> assert false
     in
 
 
     let local_types = get_subtypes_list env datatypes in
-    let local_types = order_types env local_types in
+    let local_types = List.rev (order_types env local_types) in
     let local_types = add_priorities 1 [] local_types in
     let functions_types = List.map (function f,_,t,_ -> f,t) defs in
 
@@ -144,7 +139,7 @@ let infer_priorities (env:environment)
     (* let get_priority t = print_string "looking for type "; print_type t; print_list "" "in [" "," "]\n" print_type (List.map fst local_types); get_priority t in *)
 
     (* print_list "" "\ntypes for " ", " "" print_string (List.map (function f,_,_,_ -> f) defs); *)
-    print_list "" "local types: " ", " "\n" (function t,k -> print_type t; print_exp k) local_types;
+    (* print_list "" "local types: " ", " "\n" (function t,k -> print_type t; print_exp k) local_types; *)
     (* print_list "" "functions types: " ", " "\n\n\n" (function f,t -> print_string f; print_string ":"; print_type t ) functions_types; *)
 
 

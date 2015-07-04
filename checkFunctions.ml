@@ -100,6 +100,8 @@ let process_function_defs (env:environment)
             else error ("function " ^ f ^ " doesn't have appropriate type")
     in
 
+    (* FIXME: I need to add the actual type of the function into the datatypes *)
+
     let functions = List.rev_map
         (function f,t,clauses -> (f,env.current_function_bloc+1,choose_type f t, clauses)) defs
     in
