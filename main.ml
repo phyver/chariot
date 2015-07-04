@@ -76,6 +76,7 @@ let loadfile path =
         | Parsing.Parse_error -> print_string "*** parse error\n"; flush_all ()
         | Error err -> print_endline ("*** " ^ err); flush_all ()
         | Sys_error err -> print_endline ("*** " ^ err); flush_all ()
+        | Exit -> ()
 
 
 let mainloop () =
@@ -92,15 +93,21 @@ let mainloop () =
     done
 
 let _ =
-    print_endline "          chariot";
-    print_endline "  :help for help";
-    print_newline();
-    try
-        for i=1 to (Array.length Sys.argv)-1
-        do
-            print_string ("=== loading file " ^ Sys.argv.(i) ^ " ..."); flush_all ();
-            loadfile (Sys.argv.(i));
-            print_endline "  OK\n";
-        done;
-        mainloop()
-    with Exit -> print_endline "Bye..."
+    let interactive = ref false in
+    let nb_files = ref 0 in
+
+      let args = [
+        ("-i", Arg.Unit (fun _ -> interactive := true), "enter interactive mode after reading file");
+      ] in
+    let help = "usage: " ^ Sys.argv.(0) ^ " [-i] [file]\n" in
+    Arg.parse args (fun f -> incr nb_files; loadfile f) help;
+
+    if !nb_files = 0 || !interactive
+    then begin
+        print_endline "          chariot";
+        print_endline "  :help for help";
+        print_newline();
+        try
+            mainloop()
+        with Exit -> print_endline "Bye..."
+    end
