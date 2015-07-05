@@ -5,6 +5,7 @@ open Pretty
 open Typing
 open CheckCoverage
 open InferPriorities
+open SizeChangeTermination
 
 (* check that a type is correct *)
 let rec check_type env = function
