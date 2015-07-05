@@ -75,10 +75,10 @@ and
         match v with
             | Angel -> "⊤"
             | Var(x) -> x
-            | Const(c,None) -> c ^ "⁽⁾"
-            | Const(c,Some p) -> c ^ (exp_of_int p)
-            | Proj(d,None) -> "." ^ d ^ "⁽⁾"
-            | Proj(d,Some p) -> "." ^ d  ^ (exp_of_int p)
+            | Const(c,None) -> c ^ (if (option "dont_show_priorities") then "" else "⁽⁾")
+            | Const(c,Some p) -> c ^ (if (option "dont_show_priorities") then "" else exp_of_int p)
+            | Proj(d,None) -> "." ^ d ^  (if (option "dont_show_priorities") then "" else "⁽⁾")
+            | Proj(d,Some p) -> "." ^ d  ^ (if (option "dont_show_priorities") then "" else exp_of_int p)
             | App(Proj _ as v1,v2) -> (string_of_term_paren sp v2) ^ (string_of_special_term sp v1)
             | App(App(Var("add"),v1),v2) when not (option "dont_show_nats") -> (string_of_special_term sp v1) ^ "+" ^ (string_of_term_paren sp v2)
             | App(v1,v2) -> (string_of_special_term sp v1) ^ " " ^ (string_of_term_paren sp v2)

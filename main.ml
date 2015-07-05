@@ -98,7 +98,14 @@ let _ =
     let nb_files = ref 0 in
 
       let args = [
-        ("-i", Arg.Unit (fun _ -> interactive := true), "enter interactive mode after reading file");
+        ("-i",                        Arg.Unit (fun _ -> interactive := true),                           "enter interactive mode after reading file");
+        ("--show_type_struct",        Arg.Unit (fun _ -> setOption "show_type_struct" true),             "show type of lazy structures in explore mode");
+        ("--show_term_struct",        Arg.Unit (fun _ -> setOption "show_term_struct" true),             "show lazy terms in explore mode");
+        ("--dont_show_nats",          Arg.Unit (fun _ -> setOption "dont_show_nats" true),               "do not use decimal notation for displaying natural numbers");
+        ("--dont_show_lists",         Arg.Unit (fun _ -> setOption "dont_show_lists" true),              "do not use standard notations for displaying lists");
+        ("--dont_check_completeness", Arg.Unit (fun _ -> setOption "dont_show_check_completeness" true), "do not check that definitions are complete");
+        ("--dont_use_priorities",     Arg.Unit (fun _ -> setOption "dont_show_use_priorities" true),     "do not use priorities for checking termination (unsound)");
+        ("--dont_show_priorities",    Arg.Unit (fun _ -> setOption "dont_show_priorities" true),         "do not display priorities when showing function definitions");
       ] in
     let help = "usage: " ^ Sys.argv.(0) ^ " [-i] [file]\n" in
     Arg.parse args (fun f -> incr nb_files; loadfile f) help;
