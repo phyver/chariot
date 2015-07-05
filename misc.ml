@@ -34,11 +34,12 @@ let find_common l1 l2 =
 
 (* find a value that appears in l1 but not in l2 *)
 let find_in_difference l1 l2 =
-    let rec find_in_difference_aux l1 l2 = match l1,l2 with
+    let rec find_in_difference_aux l1 l2 =
+        match l1,l2 with
         | [],_ -> None
         | x::_,[] -> Some x
         | x1::_,x2::_ when x1<x2 -> Some x1
-        | x1::l1,x2::_ when x1>x2 -> find_in_difference_aux l1 l2
+        | x1::_,x2::l2 when x1>x2 -> find_in_difference_aux l1 l2
         | x1::l1,x2::l2 (*when x1=x2*) -> find_in_difference_aux l1 l2
     in find_in_difference_aux (List.sort compare l1) (List.sort compare l2)
 
