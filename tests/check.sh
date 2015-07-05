@@ -17,7 +17,7 @@ $CHARIOT $INFILE > $TMPFILE 2>&1
 
 if [ -f $OUTFILE ]
 then
-    DIFF=$(diff $OUTFILE $TMPFILE)
+    DIFF=$(diff -y $OUTFILE $TMPFILE)
     if [ $? -eq 0 ]
     then
         echo "OK"
