@@ -1,3 +1,4 @@
+:set dont_show_priorities
 
 data
   list('x) where Nil : list('x)

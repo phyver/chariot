@@ -1,18 +1,18 @@
 (* ===  functions in environment  =================== *)
 val
    add : nat → nat → nat
-    | add n Zero⁽⁾ = n
-    | add n (Succ⁽⁾ m) = Succ⁽⁾ (add n m)
+    | add n Zero = n
+    | add n (Succ m) = Succ (add n m)
 
 val
    mult : nat → nat → nat
-    | mult n Zero⁽⁾ = Zero⁽⁾
-    | mult n (Succ⁽⁾ m) = add n (mult n m)
+    | mult n Zero = Zero
+    | mult n (Succ m) = add n (mult n m)
 
 val
    pow : nat → nat → nat
-    | pow n Zero⁽⁾ = Succ⁽⁾ Zero⁽⁾
-    | pow n (Succ⁽⁾ m) = mult n (pow n m)
+    | pow n Zero = Succ Zero
+    | pow n (Succ m) = mult n (pow n m)
 
 (* ================================================== *)
 
@@ -42,13 +42,13 @@ term: pow 2 (pow 2 2)
 	result: 16
 	of type: nat
 
-term: mult (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ Zero⁽⁾))))))))))) (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ Zero⁽⁾)))))))))))
-	result: Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ (Succ⁽⁾ Zero⁽⁾))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+term: mult (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ Zero))))))))))) (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ Zero)))))))))))
+	result: Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ (Succ Zero))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
 	of type: nat
 
 val
    ack : nat → nat → nat
-    | ack Zero⁽⁾ n = add n (Succ⁽⁾ Zero⁽⁾)
-    | ack (Succ⁽⁾ m) Zero⁽⁾ = ack m (Succ⁽⁾ Zero⁽⁾)
-    | ack (Succ⁽⁾ m) (Succ⁽⁾ n) = ack m (ack (add m (Succ⁽⁾ Zero⁽⁾)) n)
+    | ack Zero n = add n (Succ Zero)
+    | ack (Succ m) Zero = ack m (Succ Zero)
+    | ack (Succ m) (Succ n) = ack m (ack (add m (Succ Zero)) n)
 

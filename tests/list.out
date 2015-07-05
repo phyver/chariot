@@ -16,27 +16,27 @@ val
 
 val
    length : list('x) → nat
-    | length Nil⁽⁾ = 0
-    | length (Cons⁽⁾ x xs) = length xs+1
+    | length Nil = 0
+    | length (Cons x xs) = length xs+1
 
 val
    map : ('b → 'a) → list('b) → list('a)
-    | map f Nil⁽⁾ = Nil⁽⁾
-    | map f (Cons⁽⁾ x xs) = Cons⁽⁾ (f x) (map f xs)
+    | map f Nil = Nil
+    | map f (Cons x xs) = Cons (f x) (map f xs)
 
 val
    decr : nat → list(nat)
-    | decr 0 = Nil⁽⁾
-    | decr (n+1) = Cons⁽⁾ n (decr n)
+    | decr 0 = Nil
+    | decr (n+1) = Cons n (decr n)
 
 val
    rev_append : list('a) → list('a) → list('a)
-    | rev_append l Nil⁽⁾ = l
-    | rev_append l (Cons⁽⁾ x xs) = rev_append (Cons⁽⁾ x l) xs
+    | rev_append l Nil = l
+    | rev_append l (Cons x xs) = rev_append (Cons x l) xs
 
 val
    rev : list('a) → list('a)
-    | rev l = rev_append Nil⁽⁾ l
+    | rev l = rev_append Nil l
 
 (* ================================================== *)
 

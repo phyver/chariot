@@ -1,3 +1,5 @@
+:set dont_show_priorities
+
 data nat where Zero : nat | Succ : nat -> nat
 
 val add : nat -> nat -> nat

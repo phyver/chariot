@@ -1,16 +1,16 @@
 (* ===  functions in environment  =================== *)
 val
    f : list(list(list(list(nat)))) → nat
-    | f (Cons⁽⁾ (Cons⁽⁾ (Cons⁽⁾ (Cons⁽⁾ Zero⁽⁾ Nil⁽⁾) Nil⁽⁾) Nil⁽⁾) Nil⁽⁾) = Zero⁽⁾
-    | f x = Zero⁽⁾
+    | f (Cons⁹ (Cons⁷ (Cons⁵ (Cons³ Zero¹ Nil³) Nil⁵) Nil⁷) Nil⁹) = Zero¹
+    | f x = Zero¹
 
 val
    g1 : 'b → list('a)
-    | g1 x = Nil⁽⁾
+    | g1 x = Nil¹
 
 val
    g2 : nat → list(list(list(nat)))
-    | g2 x = Nil⁽⁾
+    | g2 x = Nil⁷
 
 (* ================================================== *)
 

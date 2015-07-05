@@ -1,3 +1,5 @@
+:set dont_show_priorities
+
 (* tests to check that types are parsed correctly *)
 
 data nat where Zero : nat | Succ : nat -> nat

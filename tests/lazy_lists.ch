@@ -1,3 +1,5 @@
+:set dont_show_priorities
+
 (* type of natural numbers *)
 data nat where Zero : nat | Succ : nat -> nat
 
