@@ -186,8 +186,7 @@ let infer_type (env:environment)
                 begin
                     try
                         let t = instantiate_type (get_constant_type env c) in
-                        let p = get_constant_priority env c in
-                        if p mod 2 = 0 then typeError (c ^ " is not a constructor");    (* FIXME: this should be done by a check_term function *)
+                        if is_projection env c then typeError (c ^ " is not a constructor");    (* FIXME: this should be done by a check_term function *)
                         (t , constraints, [], (get_result_type t)::datatypes)
                     with Not_found -> typeError ("cannot infer type of constant " ^ c)
                 end
@@ -195,8 +194,7 @@ let infer_type (env:environment)
                 begin
                     try
                         let t = instantiate_type (get_constant_type env d) in
-                        let p = get_constant_priority env d in
-                        if p mod 2 = 1 then typeError (d ^ " is not a destructor");     (* FIXME: this should be done by a check_term function *)
+                        if not (is_projection env d) then typeError (d ^ " is not a destructor");     (* FIXME: this should be done by a check_term function *)
                         (t , constraints, [], (get_first_arg_type t)::datatypes)
                     with Not_found -> typeError ("cannot infer type of constant " ^ d)
                 end

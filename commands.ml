@@ -6,6 +6,7 @@ open CheckCoverage
 open CheckFunctions
 open Explore
 
+(* TODO: put all of this in parser.mly *)
 (* commands *)
 type cmd =
     | CmdTest of term*int
@@ -23,9 +24,9 @@ type cmd =
     | CmdReduce of term
     | CmdExplore of term
 
-    | TypeDef of priority * (type_name * (type_expression list) * (const_name * type_expression) list) list
+    | TypeDef of int * (type_name * (type_expression list) * (const_name * type_expression) list) list
     (* The output of a type definition from the parser consists of
-     *   - a priority odd/even to distinguish data / codada types
+     *   - a bloc number odd/even to distinguish data / codada types
      *   - a list of (possibly) mutual type definitions:
      *        - a type name
      *        - a list of type parameters, all of the form TVar(true,x)
@@ -48,7 +49,6 @@ type explore_cmd =
     | ExpUnfoldAll
 
 let cmd_reduce env term =
-    (* let term = put_priority env term in *)
     let t,constraints = infer_type_term env term in
     print_string "\tresult: ";
     print_term (reduce_all env term);
@@ -64,12 +64,12 @@ let cmd_show env s =
     else
     let rec auxt = function
         | [] -> raise Exit
-        | (tname,params,priority,consts)::_ when s=tname ->
+        | (tname,params,n,consts)::_ when s=tname ->
             begin
-                if priority mod 2 = 0
+                if n mod 2 = 0
                 then print_string "codata\n"
                 else print_string "data\n";
-                show_data_type env tname params priority consts;
+                show_data_type env tname params consts;
                 print_newline()
             end
         | _::types -> auxt types
@@ -114,8 +114,6 @@ let cmd_unify_type env t1 t2 =
 
 let cmd_unify_term env pattern term =
     print_string "=======================================================\n";
-    (* let pattern = put_priority env pattern in *)
-    (* let term = put_priority env term in *)
     print_string "unifying pattern   ";
     print_term pattern;
     print_string "\n        and term   ";
@@ -140,7 +138,6 @@ let cmd_exhaustive_function env f =
 
 let cmd_print_depth env t depth =
     print_string "=======================================================\n";
-    (* let t = put_priority env t in *)
     explore_term_depth env t depth;
     print_newline();
     print_string "=======================================================\n";

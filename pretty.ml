@@ -86,30 +86,30 @@ and
 let print_term = print_special_term (fun s -> s.bot)
 
 
-let show_data_type env tname params priority consts =
+let show_data_type env tname params consts =
     print_string "  ";
     print_string tname;
     print_list "" "(" "," ")" print_string params;
     print_string " where";
     print_list "\n"
                "\n    | " "\n    | " "\n"
-               (function c -> print_string c; print_exp priority; print_string " : "; print_type (get_constant_type env c) ;)
+               (function c -> print_string c; print_string " : "; print_type (get_constant_type env c) ;)
                consts
 
 let show_types env =
 
     let rec showtypesaux = function
         | [] -> assert false
-        | [(tname,params,priority,consts)] -> show_data_type env tname params priority consts;
-        | (tname,params,priority,consts)::(((_,_,p,_)::_) as types) when priority=p ->
+        | [(tname,params,_,consts)] -> show_data_type env tname params consts;
+        | (tname,params,n,consts)::(((_,_,_n,_)::_) as types) when n=n ->
                 begin
-                    show_data_type env tname params priority consts;
+                    show_data_type env tname params consts;
                     print_string "and\n";
                     showtypesaux types
                 end
-        | (tname,params,priority,consts)::(((_,_,p,_)::_) as types) ->
+        | (tname,params,_,consts)::(((_,_,p,_)::_) as types) ->
                 begin
-                    show_data_type env tname params priority consts;
+                    show_data_type env tname params consts;
                     print_newline();
                     if p mod 2 = 0
                     then print_string "codata\n"
@@ -120,9 +120,9 @@ let show_types env =
 
     in match List.rev env.types with
         | [] -> print_string "(* ===  no type in environment  ======================= *)\n"
-        | ((_,_,priority,_)::_) as types ->
+        | ((_,_,n,_)::_) as types ->
                 print_string "\n(* ===  types in environment  ======================= *)\n";
-                if priority mod 2 = 0
+                if n mod 2 = 0
                 then print_string "codata\n"
                 else print_string "data\n";
                 showtypesaux types;

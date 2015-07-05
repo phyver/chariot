@@ -26,12 +26,12 @@ type type_substitution = (type_name * type_expression) list
 (* type for expressions *)
 type const_name = string
 type var_name = string
-type priority = int     (* priority of types and constants: odd for data and even for codata *)
+type priority = int option    (* priority of types and constants: odd for data and even for codata *)
 type 'a special_term =
     | Angel                                     (* generic meta variable, living in all types *)
     | Var of var_name
-    | Const of const_name * priority option     (* constructor, with a priority *)
-    | Proj of const_name * priority option      (* destructor, with a priority *)
+    | Const of const_name * priority    (* constructor, with a priority *)
+    | Proj of const_name * priority     (* destructor, with a priority *)
     | App of 'a special_term * 'a special_term
     | Special of 'a
 
@@ -45,21 +45,22 @@ type function_clause = pattern * term     (* clause of a function definition *)
 
 (* type for the environment *)
 type environment = {
-    current_priority: priority                                                              ;
-    current_bloc: int                                                                       ;
+    current_type_bloc: int          (* counter for blocs of type definitions: odd for data and even for codata *) ;
+    current_function_bloc: int                                                         ;
 
     (* we keep the names of type arguments of a definition in the environment,
-     * together with its priority and the list of its constants
+     * together with its bloc number and the list of its constants
      * (constructors/destrucors) *)
-    types:     (type_name * (type_name list) * priority * const_name list) list             ;
+    types:     (type_name * (type_name list) * int * const_name list) list             ;
 
-    (* each constant (type constructor/destructor) has a type and a priority *)
+    (* each constant (type constructor/destructor) has a type and a bloc number
+     * the bloc number is odd for constructors and even for destructors *)
     (* TODO: use separate lists ? *)
-    constants: (const_name * priority * type_expression) list                               ;
+    constants: (const_name * int * type_expression) list                               ;
 
     (* each function is defined inside a bloc of definitions and has a type and
      * a list of defining clauses *)
-    functions: (var_name * bloc_nb * type_expression * function_clause list) list           }
+    functions: (var_name * bloc_nb * type_expression * function_clause list) list      }
 
 (*
  * some utility functions
@@ -72,18 +73,10 @@ let get_type_arity (env:environment) (t:type_name) : int =
     in
     get_type_arity_aux env.types
 
-let get_type_priority (env:environment) (t:type_name) : int =
-    let rec get_type_priority_aux = function
-        | [] -> raise Not_found
-        | (_t, _, _priority, _)::_ when _t=t -> _priority
-        | _::ts -> get_type_priority_aux ts
-    in
-    get_type_priority_aux env.types
-
 let is_inductive (env:environment) (t:type_name) : bool =
     let rec is_inductive_aux = function
         | [] -> raise Not_found
-        | (_t, _, _priority, _)::_ when _t=t -> _priority mod 2 = 1
+        | (_t, _, _n, _)::_ when _t=t -> _n mod 2 = 1
         | _::ts -> is_inductive_aux ts
     in
     is_inductive_aux env.types
@@ -103,10 +96,10 @@ let get_constant_type (env:environment) (c:const_name) =
         | _::consts -> get_type_constants_aux consts
     in get_type_constants_aux env.constants
 
-let get_constant_priority (env:environment) (c:const_name) : int =
+let is_projection (env:environment) (c:const_name) : bool =
     let rec aux = function
         | [] -> raise Not_found
-        | (_c, _priority, _)::_ when _c=c -> _priority
+        | (_c, _n, _)::_ when _c=c -> _n mod 2 = 0
         | _::cs -> aux cs
     in
     aux env.constants

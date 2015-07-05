@@ -26,7 +26,6 @@ let explore_loop env t =
         "";
         "  ':quit' to quit the explore mode"
     ];
-    (* let t = put_priority env t in *)
     let t = ref (term_to_explore env t) in
     try
         while true
@@ -63,7 +62,7 @@ let process_statement = function
     | CmdReduce(t) -> cmd_reduce current_state.env t
     | CmdExplore(t) -> explore_loop current_state.env t
 
-    | TypeDef(priority,defs) -> current_state.env <- process_type_defs current_state.env priority defs
+    | TypeDef(n,defs) -> current_state.env <- process_type_defs current_state.env n defs
     | FunDef(defs) -> current_state.env <- process_function_defs current_state.env defs
 
 

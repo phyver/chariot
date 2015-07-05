@@ -10,7 +10,7 @@ type state = {
 
 let current_state = {
     prompt = "# "                                                                                     ;
-    env = { current_priority = 0; current_bloc = 0; types = []; constants = []; functions = [] }        ;
+    env = { current_type_bloc = 0; current_function_bloc = 0; types = []; constants = []; functions = [] }        ;
     verbose = 0                                                                                         ;
     options = [
         "show_type_struct", false;

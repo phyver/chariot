@@ -50,10 +50,9 @@ let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
         | Special(Unfolded fields) -> Special (Unfolded (List.map (second (unfold env p)) fields))
         | Special(Folded(n,v,t)) when not (p n) -> incr struct_nb; Special(Folded(!struct_nb,v,t))
         | Special(Folded(n,v,Data(tname,_))) when (p n) ->
-                let p = get_type_priority env tname in
                 let consts = get_type_constants env tname in
                 let fields = List.map (fun d ->
-                    let v = App(Proj(d,Some p),v) in
+                    let v = App(Proj(d,None),v) in
                     let v = reduce_all env v in
                     (d, term_to_explore_aux env v)) consts
                 in

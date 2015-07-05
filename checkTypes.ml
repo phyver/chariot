@@ -91,7 +91,7 @@ let rec check_constructor (t:type_name) (c:const_name*type_expression) = match c
     | (c,_) -> error ("constructor " ^ c ^ " doesn't appropriate type")
 
 let process_type_defs (env:environment)
-                      (priority:priority)
+                      (n:int)
                       (defs:(type_name * (type_expression list) * (const_name * type_expression) list) list)
   : environment
     =
@@ -99,10 +99,10 @@ let process_type_defs (env:environment)
     let new_types_with_params = List.rev_map (function (t,params,_) -> (t,params)) defs
     in
 
-    (* the real priority of this bunch of mutual type definitions *)
-    let priority = if (env.current_priority - priority) mod 2 = 0
-                   then env.current_priority+2
-                   else env.current_priority+1
+    (* the real bloc number of this bunch of mutual type definitions *)
+    let n = if (env.current_type_bloc - n) mod 2 = 0
+            then env.current_type_bloc+2
+            else env.current_type_bloc+1
     in
 
     (* we check that all the new types are different *)
@@ -127,7 +127,7 @@ let process_type_defs (env:environment)
     let process_single_type (tname:type_name)
                             (params:type_expression list)
                             (consts:(const_name*type_expression) list)
-      : (type_name * type_name list * priority * const_name list) * (const_name * priority * type_expression) list
+      : (type_name * type_name list * int * const_name list) * (const_name * int * type_expression) list
         =
         (* we check that all the parameters are different *)
         check_uniqueness_parameters params;
@@ -139,12 +139,12 @@ let process_type_defs (env:environment)
         List.iter (function _,t -> check_is_strictly_positive_arguments t tname) consts;
 
         (* we check the shapes of types of constructors / destructors *)
-        if priority mod 2 = 0
+        if n mod 2 = 0
         then List.iter (check_destructor tname) consts
         else List.iter (check_constructor tname) consts;
 
         let params = List.map (function TVar(x) -> x | _ -> assert false) params in
-        (tname, params, priority, List.map fst consts) , (List.map (function c,t -> c,priority, t) consts)
+        (tname, params, n, List.map fst consts) , (List.map (function c,t -> c,n, t) consts)
 
     in
 
@@ -159,6 +159,6 @@ let process_type_defs (env:environment)
                             defs
     in
 
-    { env with  current_priority = priority;
+    { env with  current_type_bloc = n;
                 types = types @ env.types;
                 constants = consts @ env.constants }

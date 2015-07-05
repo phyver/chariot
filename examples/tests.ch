@@ -85,7 +85,7 @@ val oops2 : 'a -> 'b
 :show functions
 
 (* test compute *)
-: pow 3 (pow 2 2)
+:reduce pow 3 (pow 2 2)
 
 
 (* streams *)
@@ -100,9 +100,9 @@ val get_nth : nat -> stream('a) -> 'a
 
 val double : nat -> nat | double n = mult n 2
 
-: get_nth (mult 3 3) (map double (arith 3 3))
+:reduce get_nth (mult 3 3) (map double (arith 3 3))
 
-: map double (arith 3 3)
+:reduce map double (arith 3 3)
 
 val compose : ('a -> 'a) -> ('a ->'a) -> 'a -> 'a
     | compose f g x = f (g x)
@@ -113,7 +113,7 @@ val twice : ('a -> 'a) -> ('a ->'a)
 val fourtimes : ('a -> 'a) -> ('a ->'a)
     | fourtimes = twice twice
 
-: fourtimes double 2
+:reduce fourtimes double 2
 
 val k x y = x
 

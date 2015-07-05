@@ -22,7 +22,7 @@ let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb))
 %token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS MINUS
 %token LSQBRAC RSQBRAC DOUBLECOLON
 %token DATA CODATA WHERE AND VAL
-%token CMDHELP CMDQUIT CMDPROMPT CMDSHOW CMDTEST CMDVERBOSE CMDSET CMDUNSET CMDEXPLORE
+%token CMDHELP CMDQUIT CMDPROMPT CMDSHOW CMDTEST CMDVERBOSE CMDSET CMDUNSET CMDEXPLORE CMDREDUCE
 %token EOF
 %token <string> IDU IDL STR TVAR
 %token <int> INT
@@ -39,7 +39,7 @@ let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb))
 %type <Commands.cmd> single_statement
 %type <Commands.explore_cmd> explore_command
 
-%type <priority * (type_name * (type_expression list) * (const_name * type_expression) list) list> new_types
+%type <int * (type_name * (type_expression list) * (const_name * type_expression) list) list> new_types
 %type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
 %type <type_name * (type_expression list) * (const_name * type_expression) list> type_def
 
@@ -60,7 +60,7 @@ single_statement:
     | term eos          { CmdReduce $1 }
 
 statement:
-    | new_types       { let priority,defs = $1 in TypeDef(priority, defs) }
+    | new_types       { let n,defs = $1 in TypeDef(n, defs) }
     | new_functions   { FunDef($1) }
     | command         { $1 }
 
@@ -70,6 +70,7 @@ eos:
 
 command:
     | CMDEXPLORE term                                   { CmdExplore $2 }
+    | CMDREDUCE term                                    { CmdReduce $2 }
     | CMDQUIT                                           { CmdQuit }
     | CMDPROMPT string                                  { CmdPrompt($2) }
     | CMDSHOW string                                    { CmdShow($2) }
