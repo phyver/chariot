@@ -36,11 +36,13 @@ let rec
         | App(Const("Succ",_),v) -> aux (n+1) v
         | _ -> n,Some v
     in
-        ifOption "dont_show_nats" (fun _ -> raise (Invalid_argument "string_of_term_int"));
-        match aux 0 u with
-            | n,None -> string_of_int n
-            | 0,Some v -> raise (Invalid_argument "string_of_term_int")
-            | n,Some v -> (string_of_special_term sp v) ^ "+" ^ (string_of_int n)
+        if (option "dont_show_nats")
+        then raise (Invalid_argument "string_of_term_int")
+        else
+            match aux 0 u with
+                | n,None -> string_of_int n
+                | 0,Some v -> raise (Invalid_argument "string_of_term_int")
+                | n,Some v -> (string_of_special_term sp v) ^ "+" ^ (string_of_int n)
 
 and
   string_of_term_list (sp:'a -> string) (u:'a special_term) =
@@ -50,11 +52,13 @@ and
         | App(App(Const("Cons",_),h),t) -> aux (h::l) t
         | _ -> l,Some v
     in
-        ifOption "dont_show_lists" (fun _ -> raise (Invalid_argument "string_of_term_list"));
-        match aux [] u with
-            | l,None -> "[" ^ (String.concat "; " (List.map (string_of_special_term sp) (List.rev l))) ^ "]"
-            | [],Some v -> raise (Invalid_argument "string_of_term_list")
-            | l,Some v -> String.concat "::" (List.map (string_of_special_term sp) (List.rev l)) ^ string_of_special_term sp v
+        if (option "dont_show_lists")
+        then raise (Invalid_argument "string_of_term_list")
+        else
+            match aux [] u with
+                | l,None -> "[" ^ (String.concat "; " (List.map (string_of_special_term sp) (List.rev l))) ^ "]"
+                | [],Some v -> raise (Invalid_argument "string_of_term_list")
+                | l,Some v -> String.concat "::" (List.map (string_of_special_term sp) (List.rev l)) ^ string_of_special_term sp v
 
 and
   string_of_paren_term (sp:'a -> string) (v:'a special_term) =

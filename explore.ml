@@ -11,10 +11,9 @@ type explore_struct = Folded of int * term * type_expression | Unfolded of (cons
 let rec
    string_of_explore_struct = function
        | Folded(n,v,t) ->
-               "{…<" ^ (string_of_int n) ^ ">" ^
-            (* FIXME... *)
-            (* ifOption "show_term_struct" (fun _ -> print_string "="; print_term v); *)
-            (* ifOption "show_type_struct" (fun _ -> print_string ":"; print_type t); *)
+            "{…<" ^ (string_of_int n) ^ ">" ^
+            (if (option "show_term_struct") then ("=" ^ string_of_term v) else "") ^
+            (if (option "show_type_struct") then (":" ^ string_of_type t) else "") ^
             "…}"
        | Unfolded fields -> "{" ^ (String.concat "; " (List.map (function d,v -> d ^ "=" ^ (string_of_explore_term v)) fields)) ^ "}"
 and

@@ -32,18 +32,12 @@ let setOption s v
     current_state.options <- aux current_state.options s v []
 
 
-let showOptions os =
+let showOptions options =
     print_string "options:\n";
-    List.iter (function o,v -> print_string ("  " ^ o ^ ": "); print_bool v; print_newline()) os
+    List.iter (function o,v -> print_string ("  " ^ o ^ ": "); print_bool v; print_newline()) options
 
 
 let option s
-  = try
-      List.assoc s current_state.options
+  = try List.assoc s current_state.options
     with Not_found -> error ("option " ^ s ^ " doesn't exist")
-
-
-let ifOption (s:string) (c:unit->unit) : unit
-  = let b = option s in
-    if b then c()
 
