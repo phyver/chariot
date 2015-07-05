@@ -6,6 +6,12 @@ open Typing
 open CheckCoverage
 open InferPriorities
 
+(* check that a type is correct *)
+let rec check_type env = function
+    | TVar _ -> ()
+    | Arrow(t1,t2) -> check_type env t1 ; check_type env t2
+    | Data(tname,_) -> try ignore (is_inductive env tname) with Not_found -> error ("type " ^ tname ^ " doesn't exist")
+
 (* check that all the functions are different *)
 let check_uniqueness_functions funs =
     match find_dup funs with
@@ -95,6 +101,7 @@ let process_function_defs (env:environment)
         match t with
         | None -> infered
         | Some t ->
+            check_type env t;
             if (is_instance (instantiate_type t) infered)
             then t
             else error ("function " ^ f ^ " doesn't have appropriate type")
