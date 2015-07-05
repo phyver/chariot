@@ -9,20 +9,18 @@ let rec print_list empty b1 sep b2 p = function
     | [x] -> print_string b1; p x; print_string b2
     | x::xs -> print_string b1; p x; List.iter (fun x -> print_string sep; p x) xs; print_string b2
 
-let rec print_type = function
-    | TVar(x) -> print_string @$ "'" ^ x
-    | Data(t,args) ->
-            print_string t;
-            print_list "" "(" "," ")" print_type args
+let rec string_of_type = function
+    | TVar(x) -> "'"^x
+    | Data(t,[]) ->
+            t
+    | Data(t,params) ->
+            t ^ "(" ^ (String.concat "," (List.map string_of_type params)) ^ ")"
     | Arrow((TVar _ | Data _) as t1,t2) ->
-            print_type t1;
-            print_string " → ";
-            print_type t2
+            (string_of_type t1) ^ " → " ^ (string_of_type t2)
     | Arrow(t1,t2) ->
-            print_string "(" ; print_type t1; print_string ")";
-            print_string " → ";
-            print_type t2
+            "(" ^ (string_of_type t1) ^ ")" ^ " → " ^ (string_of_type t2)
 
+let rec print_type t = print_string (string_of_type t)
 
 let rec is_atomic (v:'a special_term) = match v with
     | Var _ | Angel | Const _ | Proj _ -> true
