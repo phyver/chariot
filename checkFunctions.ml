@@ -95,22 +95,40 @@ let process_function_defs (env:environment)
                 then error ("function " ^ f ^ " is not complete"))
             defs;
 
+    (* choose the substitution that will make the final type of the definition a good choice:
+     *   - either use the given type
+     *   - or rename the type variables
+     *)
     let choose_type f t =
-        reset_fresh_variable_generator [];
-        let infered = instantiate_type (List.assoc f constraints) in
+        let infered = List.assoc f constraints in
         match t with
-        | None -> infered
+        | None ->
+            reset_fresh_variable_generator [];
+            let infered_new = instantiate_type infered in
+            unify_type_mgu infered_new infered (* don't swap arguments... *)
         | Some t ->
             check_type env t;
-            if (is_instance (instantiate_type t) infered)
-            then t
+            let sigma = unify_type_mgu t infered in
+            if (t = subst_type sigma t)
+            then sigma
             else error ("function " ^ f ^ " doesn't have appropriate type")
     in
 
     (* FIXME: I need to add the actual type of the function into the datatypes *)
 
-    let functions = List.rev_map
-        (function f,t,clauses -> (f,env.current_function_bloc+1,choose_type f t, clauses)) defs
+    (* let functions = List.rev_map *)
+    (*     (function f,t,clauses -> (f,env.current_function_bloc+1,subst_type (choose_type f t) (List.assoc f constraints), clauses)) defs *)
+    (* in *)
+
+    let functions, datatypes =
+        List.fold_left (fun r f ->
+            let functions,datatypes = r in
+            let f,t,clauses = f in
+            let sigma = choose_type f t in
+            (f,env.current_function_bloc+1,subst_type sigma (List.assoc f constraints),clauses)::functions , List.map (subst_type sigma) datatypes
+        )
+        ([],datatypes)
+        defs
     in
 
     let functions = if not (option "dont_use_priorities")
