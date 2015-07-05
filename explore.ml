@@ -9,15 +9,18 @@ type explore_struct = Folded of int * term * type_expression | Unfolded of (cons
  and explore_term = explore_struct special_term
 
 let rec
-   print_explore_struct = function
+   string_of_explore_struct = function
        | Folded(n,v,t) ->
-            print_string "{…<"; print_int n; print_string ">";
-            ifOption "show_term_struct" (fun _ -> print_string "="; print_term v);
-            ifOption "show_type_struct" (fun _ -> print_string ":"; print_type t);
-            print_string "…}"
-       | Unfolded fields -> print_list "{}" "{" "; " "}" (function d,v -> print_string (d ^ "="); print_explore_term v) fields
+               "{…<" ^ (string_of_int n) ^ ">" ^
+            (* FIXME... *)
+            (* ifOption "show_term_struct" (fun _ -> print_string "="; print_term v); *)
+            (* ifOption "show_type_struct" (fun _ -> print_string ":"; print_type t); *)
+            "…}"
+       | Unfolded fields -> "{" ^ (String.concat "; " (List.map (function d,v -> d ^ "=" ^ (string_of_explore_term v)) fields)) ^ "}"
 and
-  print_explore_term v = print_special_term print_explore_struct v
+  string_of_explore_term v = string_of_special_term string_of_explore_struct v
+
+let print_explore_term v = print_string (string_of_explore_term v)
 
 let rec head_to_explore (v:term) : explore_term = match v with
     | Angel -> Angel

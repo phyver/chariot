@@ -29,59 +29,61 @@ let rec is_atomic (v:'a special_term) = match v with
     | Special v -> true
 
 let rec
-  print_term_int (sp:'a -> unit) (u:'a special_term) =
+  string_of_term_int (sp:'a -> string) (u:'a special_term) =
     let rec aux n v =
         match v with
         | Const("Zero",_) -> n,None
         | App(Const("Succ",_),v) -> aux (n+1) v
         | _ -> n,Some v
     in
-        ifOption "dont_show_nats" (fun _ -> raise (Invalid_argument "print_term_int"));
+        ifOption "dont_show_nats" (fun _ -> raise (Invalid_argument "string_of_term_int"));
         match aux 0 u with
-            | n,None -> print_int n
-            | 0,Some v -> raise (Invalid_argument "print_term_int")
-            | n,Some v -> print_special_term sp v; print_string "+"; print_int n
+            | n,None -> string_of_int n
+            | 0,Some v -> raise (Invalid_argument "string_of_term_int")
+            | n,Some v -> (string_of_special_term sp v) ^ "+" ^ (string_of_int n)
 
 and
-  print_term_list (sp:'a -> unit) (u:'a special_term) =
+  string_of_term_list (sp:'a -> string) (u:'a special_term) =
     let rec aux l v =
         match v with
         | Const("Nil",_) -> l,None
         | App(App(Const("Cons",_),h),t) -> aux (h::l) t
         | _ -> l,Some v
     in
-        ifOption "dont_show_lists" (fun _ -> raise (Invalid_argument "print_term_list"));
+        ifOption "dont_show_lists" (fun _ -> raise (Invalid_argument "string_of_term_list"));
         match aux [] u with
-            | l,None -> print_list "[]" "[" "; " "]" (print_special_term sp) (List.rev l)
-            | [],Some v -> raise (Invalid_argument "print_term_list")
-            | l,Some v -> print_list "OOPS" "" "::" "::" (print_special_term sp) (List.rev l); print_special_term sp v
+            | l,None -> "[" ^ (String.concat "; " (List.map (string_of_special_term sp) (List.rev l))) ^ "]"
+            | [],Some v -> raise (Invalid_argument "string_of_term_list")
+            | l,Some v -> String.concat "::" (List.map (string_of_special_term sp) (List.rev l)) ^ string_of_special_term sp v
 
 and
-  print_paren_term (sp:'a -> unit) (v:'a special_term) =
-    try print_term_int sp v with Invalid_argument "print_term_int" ->
-    try print_term_list sp v with Invalid_argument "print_term_list" ->
+  string_of_paren_term (sp:'a -> string) (v:'a special_term) =
+    try string_of_term_int sp v with Invalid_argument "string_of_term_int" ->
+    try string_of_term_list sp v with Invalid_argument "string_of_term_list" ->
         if is_atomic v
-        then print_special_term sp v
-        else (print_string "("; print_special_term sp v; print_string ")")
+        then string_of_special_term sp v
+        else ("(" ^ (string_of_special_term sp v) ^ ")")
 
 and
-  print_special_term (sp:'a -> unit) (v:'a special_term) =
-    try print_term_int sp v with Invalid_argument "print_term_int" ->
-    try print_term_list sp v with Invalid_argument "print_term_list" ->
+  string_of_special_term (sp:'a -> string) (v:'a special_term) =
+    try string_of_term_int sp v with Invalid_argument "string_of_term_int" ->
+    try string_of_term_list sp v with Invalid_argument "string_of_term_list" ->
         begin
         match v with
-            | Angel -> print_string "⊤"
-            | Var(x) -> print_string x
-            | Const(c,None) -> print_string c; print_string "⁽⁾"
-            | Const(c,Some p) -> print_string c; print_exp p
-            | Proj(d,Some p) -> print_string "." ; print_string d; print_exp p
-            | Proj(d,None) -> print_string "." ; print_string d; print_string "⁽⁾"
-            | App(Proj _ as v1,v2) -> print_paren_term sp v2; print_special_term sp v1
-            | App(v1,v2) -> print_special_term sp v1; print_string " "; print_paren_term sp v2
+            | Angel -> "⊤"
+            | Var(x) -> x
+            | Const(c,None) -> c ^ "⁽⁾"
+            | Const(c,Some p) -> c ^ (exp_of_int p)
+            | Proj(d,None) -> "." ^ d ^ "⁽⁾"
+            | Proj(d,Some p) -> "." ^ d  ^ (exp_of_int p)
+            | App(Proj _ as v1,v2) -> (string_of_paren_term sp v2) ^ (string_of_special_term sp v1)
+            | App(v1,v2) -> (string_of_special_term sp v1) ^ " " ^ (string_of_paren_term sp v2)
             | Special v -> sp v
         end
 
-let print_term = print_special_term (fun s -> s.bot)
+let string_of_term = string_of_special_term (fun s -> s.bot)
+
+let print_term t = print_string (string_of_term t)
 
 
 let show_data_type env tname params consts =
