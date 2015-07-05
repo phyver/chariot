@@ -211,12 +211,12 @@ atomic_pattern:
     | INT                   { int_to_term $1 (Const("Zero",None)) }
     | pattern_list          { list_to_term (List.rev $1) (Const("Nil",None)) }
     | atomic_pattern DOUBLECOLON atomic_pattern       { App(App(Const("Cons",None),$1),$3) }
+    | atomic_pattern PLUS INT      { int_to_term $3 $1 }
 
 pattern:
     | atomic_pattern            { $1 }
     | pattern atomic_pattern    { App($1,$2) }
 
-    | pattern PLUS INT          { int_to_term $3 $1 }
 
 pattern_list:
     | LSQBRAC pattern_list_inside RSQBRAC  { $2 } /* FIXME: check priorities... */
