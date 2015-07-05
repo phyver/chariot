@@ -29,7 +29,7 @@ let rec is_atomic (v:'a special_term) = match v with
     | Special v -> true
 
 let rec
-  string_of_term_int (sp:'a -> string) (u:'a special_term) =
+  string_of_term_int (sp:'a -> string) (p:bool) (u:'a special_term) =
     let rec aux n v =
         match v with
         | Const("Zero",_) -> n,None
@@ -42,10 +42,12 @@ let rec
             match aux 0 u with
                 | n,None -> string_of_int n
                 | 0,Some v -> raise (Invalid_argument "string_of_term_int")
-                | n,Some v -> (string_of_special_term sp v) ^ "+" ^ (string_of_int n)
+                | n,Some v -> if p
+                              then "(" ^ (string_of_special_term sp v) ^ "+" ^ (string_of_int n) ^ ")"
+                              else (string_of_special_term sp v) ^ "+" ^ (string_of_int n)
 
 and
-  string_of_term_list (sp:'a -> string) (u:'a special_term) =
+  string_of_term_list (sp:'a -> string) (p:bool) (u:'a special_term) =
     let rec aux l v =
         match v with
         | Const("Nil",_) -> l,None
@@ -58,20 +60,22 @@ and
             match aux [] u with
                 | l,None -> "[" ^ (String.concat "; " (List.map (string_of_special_term sp) (List.rev l))) ^ "]"
                 | [],Some v -> raise (Invalid_argument "string_of_term_list")
-                | l,Some v -> String.concat "::" (List.map (string_of_special_term sp) (List.rev l)) ^ string_of_special_term sp v
+                | l,Some v -> if p
+                              then "(" ^ (String.concat "::" (List.map (string_of_special_term sp) (List.rev l))) ^ "::" ^ (string_of_special_term sp v) ^ ")"
+                              else String.concat "::" (List.map (string_of_special_term sp) (List.rev l)) ^ "::" ^ (string_of_special_term sp v)
 
 and
-  string_of_paren_term (sp:'a -> string) (v:'a special_term) =
-    try string_of_term_int sp v with Invalid_argument "string_of_term_int" ->
-    try string_of_term_list sp v with Invalid_argument "string_of_term_list" ->
+  string_of_term_paren (sp:'a -> string) (v:'a special_term) =
+    try string_of_term_int sp true v with Invalid_argument "string_of_term_int" ->
+    try string_of_term_list sp true v with Invalid_argument "string_of_term_list" ->
         if is_atomic v
         then string_of_special_term sp v
         else ("(" ^ (string_of_special_term sp v) ^ ")")
 
 and
   string_of_special_term (sp:'a -> string) (v:'a special_term) =
-    try string_of_term_int sp v with Invalid_argument "string_of_term_int" ->
-    try string_of_term_list sp v with Invalid_argument "string_of_term_list" ->
+    try string_of_term_int sp false v with Invalid_argument "string_of_term_int" ->
+    try string_of_term_list sp false v with Invalid_argument "string_of_term_list" ->
         begin
         match v with
             | Angel -> "⊤"
@@ -80,8 +84,9 @@ and
             | Const(c,Some p) -> c ^ (exp_of_int p)
             | Proj(d,None) -> "." ^ d ^ "⁽⁾"
             | Proj(d,Some p) -> "." ^ d  ^ (exp_of_int p)
-            | App(Proj _ as v1,v2) -> (string_of_paren_term sp v2) ^ (string_of_special_term sp v1)
-            | App(v1,v2) -> (string_of_special_term sp v1) ^ " " ^ (string_of_paren_term sp v2)
+            | App(Proj _ as v1,v2) -> (string_of_term_paren sp v2) ^ (string_of_special_term sp v1)
+            | App(App(Var("add"),v1),v2) when not (option "dont_show_nats") -> (string_of_special_term sp v1) ^ "+" ^ (string_of_term_paren sp v2)
+            | App(v1,v2) -> (string_of_special_term sp v1) ^ " " ^ (string_of_term_paren sp v2)
             | Special v -> sp v
         end
 
