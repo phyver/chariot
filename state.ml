@@ -18,6 +18,7 @@ let current_state = {
         "dont_show_nats",   false;
         "dont_show_lists",   false;
         "dont_check_completeness", false;
+        "dont_use_priorities", false;
     ]                                                                                                   ;
     }
 

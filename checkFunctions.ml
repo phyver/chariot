@@ -106,6 +106,9 @@ let process_function_defs (env:environment)
         (function f,t,clauses -> (f,env.current_function_bloc+1,choose_type f t, clauses)) defs
     in
 
-    let functions = infer_priorities env functions datatypes in
+    let functions = if not (option "dont_use_priorities")
+                    then infer_priorities env functions datatypes
+                    else functions
+    in
 
     { env with current_function_bloc = env.current_function_bloc+1; functions = functions @ env.functions }
