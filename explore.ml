@@ -42,7 +42,7 @@ let rec term_to_explore_aux (env:environment) (v:term) : explore_term
                 (incr struct_nb; Special (Folded (!struct_nb,v,t)))
         | Arrow _,_ | TVar _,_ ->
             app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
-let term_to_explore env n = struct_nb := 0; term_to_explore_aux env n
+let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (reduce_all env v)
 
 
 let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term

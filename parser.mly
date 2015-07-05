@@ -90,12 +90,13 @@ string:
 
 explore_command:
     | int_range eos             { ExpUnfold $1 }
-    | MINUS                     { ExpUnfoldAll }
-    | CMDQUIT                   { ExpEnd }
+    | MINUS eos                 { ExpUnfoldAll }
+    | /*nothing*/ eos           { ExpUnfoldAll }
+    | CMDQUIT eos               { ExpEnd }
     | EOF                       { ExpEnd }
 
 int_range:
-    | /* nothing */             { [] }
+    | INT                       { [$1] }
     | INT int_range             { $1::$2 }
     | INT MINUS INT int_range   { (range $1 $3) @ $4 }
 

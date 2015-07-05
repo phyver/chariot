@@ -50,6 +50,7 @@ type explore_cmd =
 
 let cmd_reduce env term =
     let t,constraints = infer_type_term env term in
+    print_string "term: "; print_term term; print_newline();
     print_string "\tresult: ";
     print_term (reduce_all env term);
     print_newline();

@@ -105,7 +105,7 @@ let show_types env =
     let rec showtypesaux = function
         | [] -> assert false
         | [(tname,params,_,consts)] -> show_data_type env tname params consts;
-        | (tname,params,n,consts)::(((_,_,_n,_)::_) as types) when n=n ->
+        | (tname,params,n,consts)::(((_,_,_n,_)::_) as types) when _n=n ->
                 begin
                     show_data_type env tname params consts;
                     print_string "and\n";
