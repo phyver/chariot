@@ -1,8 +1,12 @@
-
 let ( @$ ) f x = f x
 
 let  first f (x,y) = (f x, y)
 let second f (x,y) = (x, f y)
+
+let rec print_list empty b1 sep b2 p = function
+    | [] -> print_string empty;
+    | [x] -> print_string b1; p x; print_string b2
+    | x::xs -> print_string b1; p x; List.iter (fun x -> print_string sep; p x) xs; print_string b2
 
 (* remove duplicates *)
 let uniq l =

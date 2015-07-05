@@ -4,11 +4,6 @@ open State
 
 let print_exp n = print_string (exp_of_int n)
 
-let rec print_list empty b1 sep b2 p = function
-    | [] -> print_string empty;
-    | [x] -> print_string b1; p x; print_string b2
-    | x::xs -> print_string b1; p x; List.iter (fun x -> print_string sep; p x) xs; print_string b2
-
 let rec string_of_type = function
     | TVar(x) -> "'"^x
     | Data(t,[]) ->

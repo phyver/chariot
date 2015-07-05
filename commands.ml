@@ -1,3 +1,4 @@
+open Misc
 open Base
 open Pretty
 open Typing
