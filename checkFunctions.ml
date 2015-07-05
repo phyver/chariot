@@ -81,10 +81,12 @@ let process_function_defs (env:environment)
 
     let constraints,datatypes = process_defs [] [] defs in
 
-    List.iter (function f,_,clauses ->
-            if not (exhaustive env clauses)
-            then error ("function " ^ f ^ " is not complete"))
-        defs;
+    if not (option "dont_check_completeness")
+    then
+        List.iter (function f,_,clauses ->
+                if not (exhaustive env clauses)
+                then error ("function " ^ f ^ " is not complete"))
+            defs;
 
     let choose_type f t =
         reset_fresh_variable_generator [];
@@ -94,7 +96,7 @@ let process_function_defs (env:environment)
         | Some t ->
             if (is_instance (instantiate_type t) infered)
             then t
-            else error ("function " ^ f ^ "doesn't have appropriate type")
+            else error ("function " ^ f ^ " doesn't have appropriate type")
     in
 
     let functions = List.rev_map

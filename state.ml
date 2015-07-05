@@ -17,6 +17,7 @@ let current_state = {
         "show_term_struct", false;
         "dont_show_nats",   false;
         "dont_show_lists",   false;
+        "dont_check_completeness", false;
     ]                                                                                                   ;
     }
 
