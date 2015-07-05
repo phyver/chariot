@@ -23,8 +23,8 @@ rule token = parse
     | ":prompt"         { CMDPROMPT }
     | ":show"           { CMDSHOW }
     | ":verbose"        { CMDVERBOSE }
-    | ":setdebug"       { CMDSETDEBUG }
-    | ":unsetdebug"     { CMDUNSETDEBUG }
+    | ":set"            { CMDSET }
+    | ":unset"          { CMDUNSET }
     | ":explore"        { CMDEXPLORE }
     | ":help"           { CMDHELP }
     | ":test"           { CMDTEST }

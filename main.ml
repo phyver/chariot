@@ -56,7 +56,8 @@ let process_statement = function
     | CmdShow(s) -> cmd_show current_state.env s
     | CmdPrompt(s) -> current_state.prompt <- s
     | CmdVerbose(v) -> current_state.verbose <- v
-    | CmdDebug(o,b) -> setDebugOption o b
+    | CmdOption("",b) -> showOptions current_state.options
+    | CmdOption(o,b) -> setOption o b
     | CmdHelp -> print_help()
 
     | CmdReduce(t) -> cmd_reduce current_state.env t

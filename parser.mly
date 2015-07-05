@@ -22,7 +22,7 @@ let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb))
 %token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS MINUS
 %token LSQBRAC RSQBRAC DOUBLECOLON
 %token DATA CODATA WHERE AND VAL
-%token CMDHELP CMDQUIT CMDPROMPT CMDSHOW CMDTEST CMDVERBOSE CMDSETDEBUG CMDUNSETDEBUG CMDEXPLORE
+%token CMDHELP CMDQUIT CMDPROMPT CMDSHOW CMDTEST CMDVERBOSE CMDSET CMDUNSET CMDEXPLORE
 %token EOF
 %token <string> IDU IDL STR TVAR
 %token <int> INT
@@ -69,14 +69,15 @@ eos:
     | BLANKLINE     {}
 
 command:
-    | COLON term                                        { CmdReduce $2 }
     | CMDEXPLORE term                                   { CmdExplore $2 }
     | CMDQUIT                                           { CmdQuit }
     | CMDPROMPT string                                  { CmdPrompt($2) }
     | CMDSHOW string                                    { CmdShow($2) }
     | CMDVERBOSE INT                                    { CmdVerbose($2) }
-    | CMDSETDEBUG string                                { CmdDebug($2,true) }
-    | CMDUNSETDEBUG string                              { CmdDebug($2,true) }
+    | CMDSET string                                     { CmdOption($2,true) }
+    | CMDUNSET string                                   { CmdOption($2,false) }
+    | CMDSET                                            { CmdOption("",true) }
+    | CMDUNSET                                          { CmdOption("",false) }
     | CMDHELP                                           { CmdHelp }
 
     | CMDTEST term AND INT                              { CmdTest($2,$4) }

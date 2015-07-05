@@ -12,8 +12,8 @@ let rec
    print_explore_struct = function
        | Folded(n,v,t) ->
             print_string "{…<"; print_int n; print_string ">";
-            ifDebug "show_term_struct" (fun _ -> print_string "="; print_term v);
-            ifDebug "show_type_struct" (fun _ -> print_string ":"; print_type t);
+            ifOption "show_term_struct" (fun _ -> print_string "="; print_term v);
+            ifOption "show_type_struct" (fun _ -> print_string ":"; print_type t);
             print_string "…}"
        | Unfolded fields -> print_list "{}" "{" "; " "}" (function d,v -> print_string (d ^ "="); print_explore_term v) fields
 and

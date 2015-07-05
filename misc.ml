@@ -84,3 +84,6 @@ let range a b =
         then acc
         else range_aux (b::acc) (b-1)
     in range_aux [] b
+
+let print_bool b =
+    if b then print_string "true" else print_string "false"

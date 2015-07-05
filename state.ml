@@ -1,17 +1,18 @@
+open Misc
 open Base
 
 type state = {
-    mutable verbose: int ;
     mutable prompt: string ;
     mutable env:environment;
-    mutable debug: (string*bool) list;
+    mutable verbose: int ;
+    mutable options: (string*bool) list;
 }
 
 let current_state = {
-    verbose = 0                                                                                         ;
     prompt = "# "                                                                                     ;
     env = { current_priority = 0; current_bloc = 0; types = []; constants = []; functions = [] }        ;
-    debug = [
+    verbose = 0                                                                                         ;
+    options = [
         "show_type_struct", false;
         "show_term_struct", false;
         "dont_show_nats",   false;
@@ -22,20 +23,27 @@ let current_state = {
 
 let message k m = if current_state.verbose > k then (print_string (" " ^ (String.make k '-') ^ " "); m ())
 
-let setDebugOption s v
+let setOption s v
   = let rec aux options s v acc = match options with
         | [] -> error ("option " ^ s ^ " doesn't exist")
         | (s',_)::options when s'=s -> (s',v)::List.rev_append options acc
         | x::options -> aux options s v (x::acc)
     in
-    current_state.debug <- aux current_state.debug s v []
-
-let debugOption s
-  = let b = try List.assoc s current_state.debug with Not_found -> assert false
-    in b
+    current_state.options <- aux current_state.options s v []
 
 
-let ifDebug (s:string) (c:unit->unit) : unit
-  = let b = debugOption s in
+let showOptions os =
+    print_string "options:\n";
+    List.iter (function o,v -> print_string ("  " ^ o ^ ": "); print_bool v; print_newline()) os
+
+
+let option s
+  = try
+      List.assoc s current_state.options
+    with Not_found -> error ("option " ^ s ^ " doesn't exist")
+
+
+let ifOption (s:string) (c:unit->unit) : unit
+  = let b = option s in
     if b then c()
 

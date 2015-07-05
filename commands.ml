@@ -17,7 +17,7 @@ type cmd =
 
     | CmdPrompt of string
     | CmdVerbose of int
-    | CmdDebug of string*bool
+    | CmdOption of string*bool
     | CmdShow of string
 
     | CmdReduce of term

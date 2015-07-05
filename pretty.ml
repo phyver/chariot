@@ -38,7 +38,7 @@ let rec
         | App(Const("Succ",_),v) -> aux (n+1) v
         | _ -> n,Some v
     in
-        ifDebug "dont_show_nats" (fun _ -> raise (Invalid_argument "print_term_int"));
+        ifOption "dont_show_nats" (fun _ -> raise (Invalid_argument "print_term_int"));
         match aux 0 u with
             | n,None -> print_int n
             | 0,Some v -> raise (Invalid_argument "print_term_int")
@@ -52,7 +52,7 @@ and
         | App(App(Const("Cons",_),h),t) -> aux (h::l) t
         | _ -> l,Some v
     in
-        ifDebug "dont_show_lists" (fun _ -> raise (Invalid_argument "print_term_list"));
+        ifOption "dont_show_lists" (fun _ -> raise (Invalid_argument "print_term_list"));
         match aux [] u with
             | l,None -> print_list "[]" "[" "; " "]" (print_special_term sp) (List.rev l)
             | [],Some v -> raise (Invalid_argument "print_term_list")
