@@ -1,0 +1,16 @@
+(* ===  functions in environment  =================== *)
+val
+   f : list(list(list(list(nat)))) → nat
+    | f (Cons⁽⁾ (Cons⁽⁾ (Cons⁽⁾ (Cons⁽⁾ Zero⁽⁾ Nil⁽⁾) Nil⁽⁾) Nil⁽⁾) Nil⁽⁾) = Zero⁽⁾
+    | f x = Zero⁽⁾
+
+val
+   g1 : 'b → list('a)
+    | g1 x = Nil⁽⁾
+
+val
+   g2 : nat → list(list(list(nat)))
+    | g2 x = Nil⁽⁾
+
+(* ================================================== *)
+

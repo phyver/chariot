@@ -1,0 +1,6 @@
+val
+   last : list('a) → 'a
+    | last [x] = x
+    | last (x::xs) = last xs
+
+*** function last2 is not complete

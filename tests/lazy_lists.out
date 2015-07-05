@@ -1,0 +1,28 @@
+term: incr 10
+	result: incr 10
+	of type: colist(nat)
+
+term: decr 10
+	result: decr 10
+	of type: colist(nat)
+
+term: incr 10
+	result (at depth 5): {Unfreeze=10::{Unfreeze=11::{Unfreeze=12::{Unfreeze=13::{Unfreeze=14::{…<1>…}}}}}}
+	of type: colist(nat)
+
+term: incr 10
+	result (at depth 12): {Unfreeze=10::{Unfreeze=11::{Unfreeze=12::{Unfreeze=13::{Unfreeze=14::{Unfreeze=15::{Unfreeze=16::{Unfreeze=17::{Unfreeze=18::{Unfreeze=19::{Unfreeze=20::{Unfreeze=21::{…<1>…}}}}}}}}}}}}}
+	of type: colist(nat)
+
+term: decr 10
+	result (at depth 5): {Unfreeze=9::{Unfreeze=8::{Unfreeze=7::{Unfreeze=6::{Unfreeze=5::{…<1>…}}}}}}
+	of type: colist(nat)
+
+term: decr 10
+	result (at depth 10): {Unfreeze=9::{Unfreeze=8::{Unfreeze=7::{Unfreeze=6::{Unfreeze=5::{Unfreeze=4::{Unfreeze=3::{Unfreeze=2::{Unfreeze=1::{Unfreeze=0::{…<1>…}}}}}}}}}}}
+	of type: colist(nat)
+
+term: decr 10
+	result (at depth 20): {Unfreeze=9::{Unfreeze=8::{Unfreeze=7::{Unfreeze=6::{Unfreeze=5::{Unfreeze=4::{Unfreeze=3::{Unfreeze=2::{Unfreeze=1::{Unfreeze=0::{Unfreeze=[]}}}}}}}}}}}
+	of type: colist(nat)
+

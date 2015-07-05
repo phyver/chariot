@@ -29,6 +29,7 @@ let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb))
 
 %right ARROW DOUBLECOLON
 %left DOT
+%left PLUS
 
 
 %start single_statement
