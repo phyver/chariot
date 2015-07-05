@@ -29,6 +29,7 @@ rule token = parse
     | ":help"           { CMDHELP }
     | ":test"           { CMDTEST }
     | ":reduce"         { CMDREDUCE }
+    | ":unfold"         { CMDUNFOLD }
     | '='               { EQUAL }
     | "::"              { DOUBLECOLON }
     | ':'               { COLON }

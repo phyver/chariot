@@ -22,6 +22,7 @@ type cmd =
     | CmdShow of string
 
     | CmdReduce of term
+    | CmdUnfold of term*int
     | CmdExplore of term
 
     | TypeDef of int * (type_name * (type_expression list) * (const_name * type_expression) list) list
@@ -58,6 +59,15 @@ let cmd_reduce env term =
     print_list "" "\twith free variables " "  ,  " "\n" (function x,t -> print_string (x ^ " : "); print_type t) constraints;
     print_newline()
 
+let cmd_unfold env term depth =
+    let t,constraints = infer_type_term env term in
+    print_string "term: "; print_term term; print_newline();
+    print_string "\tresult (at depth "; print_int depth; print_string "): ";
+    print_explore_term (unfold_to_depth env term depth);
+    print_newline();
+    print_string "\tof type: "; print_type t; print_newline();
+    print_list "" "\twith free variables " "  ,  " "\n" (function x,t -> print_string (x ^ " : "); print_type t) constraints;
+    print_newline()
 let cmd_show env s =
     if s = "types" then show_types env
     else

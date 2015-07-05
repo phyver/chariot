@@ -60,6 +60,7 @@ let process_statement = function
     | CmdHelp -> print_help()
 
     | CmdReduce(t) -> cmd_reduce current_state.env t
+    | CmdUnfold(t,d) -> cmd_unfold current_state.env t d
     | CmdExplore(t) -> explore_loop current_state.env t
 
     | TypeDef(n,defs) -> current_state.env <- process_type_defs current_state.env n defs
