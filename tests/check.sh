@@ -8,6 +8,9 @@ TMPFILE=$(tempfile -d . -s .out)
 
 CHARIOT=../main.native
 
+# DIFF_PRG="diff -y"
+# DIFF_PRG="git diff --color-words --no-index"
+DIFF_PRG="git diff --color --word-diff=plain --no-index"
 
 trap "rm -f $TMPFILE; exit $EXIT_STATUS" INT TERM EXIT
 
@@ -17,8 +20,8 @@ $CHARIOT $INFILE > $TMPFILE 2>&1
 
 if [ -f $OUTFILE ]
 then
-    DIFF=$(diff -y $OUTFILE $TMPFILE)
-    if [ $? -eq 0 ]
+    DIFF=$($DIFF_PRG $OUTFILE $TMPFILE)
+    if [ -z "$DIFF" ]
     then
         echo "OK"
     else
