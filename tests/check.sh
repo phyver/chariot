@@ -4,7 +4,7 @@ INFILE=$1
 EXT=.ch
 OUTFILE=${INFILE%$EXT}.out
 
-TMPFILE=$(tempfile -d . -s .out)
+TMPFILE=${INFILE%$EXT}.tmpout
 
 CHARIOT=../main.native
 
@@ -12,7 +12,7 @@ CHARIOT=../main.native
 # DIFF_PRG="git diff --color-words --no-index"
 DIFF_PRG="git diff --color --word-diff=plain --no-index"
 
-trap "rm -f $TMPFILE; exit $EXIT_STATUS" INT TERM EXIT
+# trap "rm -f $TMPFILE; exit $EXIT_STATUS" INT TERM EXIT
 
 
 echo -n "file $INFILE ... \t"

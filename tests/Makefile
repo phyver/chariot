@@ -13,5 +13,8 @@ all: $(TESTS)
 
 FORCE:
 
+clean: FORCE
+	rm -f *.tmpout
+
 very_clean: FORCE
-	rm -f *.out
+	rm -f *.tmpout *.out
