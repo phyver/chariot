@@ -122,16 +122,14 @@ let get_function_clauses (env:environment) (f:var_name) =
     get_function_clauses_aux env.functions
 
 (* get the function name from a pattern *)
-let rec get_head (v:term) = match v with
-    | Const _ | Angel | Var _ | Proj _ -> v
+let rec get_head (v:'a special_term) = match v with
+    | Const _ | Angel | Var _ | Proj _ | Special _ -> v
     | App(v,_) -> get_head v
-    | Special v -> v.bot
 
 let rec get_head_const v = match v with
     | Const(c,p)  -> c
-    | Angel | Var _ | Proj _ ->  raise (Invalid_argument "no head constructor")
+    | Angel | Var _ | Proj _ | Special _ ->  raise (Invalid_argument "no head constructor")
     | App(v,_) -> get_head_const v
-    | Special v -> v.bot
 
 let rec get_function_name v = match v with
     | Var f -> f
@@ -142,9 +140,8 @@ let rec get_function_name v = match v with
 
 let get_args v =
     let rec get_args_aux acc = function
-        | Const _ | Angel | Var _ | Proj _ -> acc
+        | Const _ | Angel | Var _ | Proj _ | Special _ -> acc
         | App(v1,v2) -> get_args_aux (v2::acc) v1
-        | Special v -> v.bot
     in
     get_args_aux [] v
 
