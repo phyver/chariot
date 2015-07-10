@@ -108,10 +108,12 @@ let process_function_defs (env:environment)
             unify_type_mgu infered_new infered (* don't swap arguments... *)
         | Some t ->
             check_type env t;
-            let sigma = unify_type_mgu t infered in
+            reset_fresh_variable_generator [t];
+            let infered_new = instantiate_type infered in
+            let sigma = unify_type_mgu t infered_new in
             if (t = subst_type sigma t)
             then sigma
-            else error ("function " ^ f ^ " doesn't have appropriate type")
+            else error ("function " ^ f ^ " is coerced to type " ^ (string_of_type t) ^ " which is not an instance of " ^ (string_of_type infered_new) ^ "...")
     in
 
     (* FIXME: I need to add the actual type of the function into the datatypes *)
