@@ -1,23 +1,20 @@
 open Misc
 open Base
 
-type z_infty = Num of int | Infty
+type weight = Num of int | Infty
 
-let add_infty w1 w2 = match w1,w2 with
+let add_weight w1 w2 = match w1,w2 with
     | Infty,_ | _,Infty -> Infty
     | Num a,Num b -> Num (a+b)
 
-let add_infty_int w n = add_infty w (Num n)
+let add_weight_int w n = add_weight w (Num n)
 
-type sct_pattern =
-    | SCTVar of var_name
-    | SCTAngel
+let collapse_weight bound w = match w with
+    | Infty -> Infty
+    | Num w when bound<=w -> Infty
+    | Num w when -bound<=w -> Num w
+    | Num w (* when w<-bound *) -> Num(-bound)
 
-    | SCTConst of const_name * priority * sct_pattern list
-    | SCTConstApprox of (priority * z_infty * var_name) list
-
-    | SCTProj of const_name * priority
-    | SCTProjApprox of priority * z_infty
 
 (* a call from f to g is represented by a rewriting rule
  *   param_1 param_2 ... param_m  =>  arg_1 arg_2 ... arg_n
@@ -25,38 +22,48 @@ type sct_pattern =
  *  - each param_i is either a constructor pattern or a destructor
  *  - each arg_i i either a constructor pattern (with possible approximations) or a destructor
  *)
-type sct_lhs = sct_pattern list
-type sct_rhs = sct_pattern list
+type sct_lhs = term list
+type approximation = ApproxProj of priority * weight | ApproxConst of (priority * weight * var_name) list
+type sct_rhs = approximation special_term list
 type sct_clause = sct_lhs * sct_rhs
 
 
 let is_clause (lhs,rhs : sct_clause) : bool =
-    let rec is_constructor_pattern a s = function
-        | SCTVar _ -> true
-        | SCTAngel -> a
-        | SCTConst(_,_,ps) -> List.for_all (is_constructor_pattern a s) ps
-        | SCTConstApprox _ -> s
-        | SCTProj _ -> false
-        | SCTProjApprox _ -> false
+
+    let rec is_constructor_pattern angel approx p =
+        match get_head p, get_args p with
+        | Var _,[] -> true
+        | Angel,[] -> angel
+        | Const(_,_),ps -> List.for_all (is_constructor_pattern angel approx) ps
+        | Special s,_ -> approx s
+        | _,_ ->  false
     in
-    let is_destructor = function
-        | SCTProj _ -> true
-        | SCTProjApprox _ -> true
+
+    let is_destructor approx p = match p with
+        | Proj _ -> true
+        | Special s -> approx s
         | _ -> false
     in
-    let check_lhs = List.for_all (fun p -> is_constructor_pattern false false p || is_destructor p)
+
+    let check_lhs = List.for_all
+                        (fun p -> is_constructor_pattern false (fun _ -> false) p
+                               || is_destructor (fun _ -> false) p)
+                        lhs
     in
-    let check_rhs = List.for_all (fun p -> is_constructor_pattern true true p || is_destructor p)
+    let check_rhs = List.for_all
+                        (fun p -> is_constructor_pattern true (function ApproxProj _ -> false | ApproxConst _ -> true) p
+                               || is_destructor (function ApproxProj _ -> true | ApproxConst _ -> false) p)
+                        rhs
     in
-    check_lhs lhs && check_rhs rhs
+    check_lhs && check_rhs
 
 
 let add_approx a1 a2 = match a1,a2 with
-    | (None,w1) , (None,w2) -> (None, add_infty w1 w2)
+    | (None,w1) , (None,w2) -> (None, add_weight w1 w2)
     | (None,w) , _ | _,(None,w) -> (None, w)
     | (Some p1, w1) , (Some p2, w2) when p1<p2 -> (Some p2, w2)
     | (Some p1, w1) , (Some p2, w2) when p1>p2 -> (Some p1, w1)
-    | (Some p1, w1) , (Some p2, w2) (*when p1=p2*) -> (Some p1, add_infty w1 w2)
+    | (Some p1, w1) , (Some p2, w2) (*when p1=p2*) -> (Some p1, add_weight w1 w2)
 
 let simplify_approx aps =
     let aps = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) aps in
@@ -87,38 +94,44 @@ let merge_approx as1 as2 =
 
 
 let collapse_rhs depth (rhs:sct_rhs) : sct_rhs =
-    let rec collapse0 p = match p with
-        | SCTVar x -> [ (Some 0, Num 0, x) ]
-        | SCTAngel -> assert false (* FIXME *)
-        | SCTConstApprox ap -> ap
-        | SCTProj _ | SCTProjApprox _ -> assert false
-        | SCTConst(_,prio,ps) ->
+
+    let rec collapse0 p = match get_head p,get_args p with
+        | Var x,[] -> [ (Some 0, Num 0, x) ]
+        | Angel,[] -> assert false (* FIXME *)
+        | Special (ApproxConst ap),[] -> ap
+        | Const(_,prio),ps ->
             begin
                 let approx_s = List.map collapse0 ps in
                 let approx = List.fold_left (fun as1 as2 -> merge_approx as1 (simplify_approx as2)) [] approx_s in  (* NOTE: not necessary to simplify as1: it is the recursive call and is simplified *)
                 List.map (function (p,w,x) -> let p,w = add_approx (prio,Num 1) (p,w) in (p,w,x)) approx
             end
+        | Proj _,_ | Special (ApproxProj _),[] -> assert false
+        | _,_ -> assert false
     in
+
     let rec collapse_const d p =
         if d=0
-        then SCTConstApprox (collapse0 p)
+        then Special (ApproxConst (collapse0 p))
         else
-            match p with
-        | SCTVar _ | SCTAngel | SCTConstApprox _ -> p
-        | SCTProj _ | SCTProjApprox _ -> assert false
-        | SCTConst(c,p,ps) -> SCTConst(c,p,List.map (collapse_const (d-1)) ps)
+            match get_head p,get_args p with
+                | Var _,[] | Angel,[] | Special (ApproxConst _),[] -> p
+                | Proj _,_ | Special (ApproxProj _),_ -> assert false
+                | Const(c,p),ps -> app (Const(c,p)) (List.map (collapse_const (d-1)) ps)
+                | _,_ -> assert false
     in
-    let rec collapse_rhs_aux depth ps = match ps with
+
+    let rec collapse_rhs_aux dp ps = match ps with
         | [] -> []
-        | SCTProj(p,d)::ps ->
-            if depth = 0
+        | Proj(p,d)::ps ->
+            if dp = 0
             then assert false (* TODO...*)
             else
-                SCTProj(p,d)::(collapse_rhs_aux (depth-1) ps)
-        | [SCTProjApprox _ ] -> ps
-        | (SCTProjApprox _)::_ -> assert false
-        | (SCTVar _ | SCTAngel | SCTConst _ | SCTConstApprox _) as p::ps -> (collapse_const depth p)::(collapse_rhs_aux depth ps)
+                Proj(p,d)::(collapse_rhs_aux (dp-1) ps)
+        | [Special (ApproxProj _) ] -> ps
+        | Special (ApproxProj _)::_ -> assert false
+        | (Var _ | Angel | Const _ | App _ | Special (ApproxConst _)) as p::ps -> (collapse_const depth p)::(collapse_rhs_aux dp ps)
     in
+
     collapse_rhs_aux depth rhs
 
 
@@ -139,7 +152,7 @@ let collapse_arg (v:term)
  (* : (var_name * approx_term) list *)
  =
     let add priority = function
-        | Special l -> Special (List.map (function w,p,x -> add_infty_int w 1, max p priority, x) l)
+        | Special l -> Special (List.map (function w,p,x -> add_weight_int w 1, max p priority, x) l)
         | _ -> assert false
     in
 
