@@ -62,9 +62,7 @@ let rec occur_type (x:type_name) (t:type_expression) : bool = match t with
  * NOTE: priority is given to t1: if t2 is an instance t1, then the
  * substitution we compute doesn't affect t2 *)
 let unify_type_mgu (t1:type_expression) (t2:type_expression) : type_substitution =
-    message 4 (fun _ -> print_string "looking for mgu for ";
-                        print_type t1; print_string " and ";
-                        print_type t2; print_newline ());
+    message 4 (fun _ -> debug "looking for mgu of %s and %s" (string_of_type t1) (string_of_type t2));
 
     let rec mgu_aux (eqs:(type_expression*type_expression) list ) acc = match eqs with
             | [] -> acc
@@ -153,19 +151,15 @@ let infer_type (env:environment)
                (sigma:(type_name*type_expression) list)         (* all the type substitution that need to be applied *)
                (datatypes:type_expression list)
   : type_expression * (var_name*type_expression) list * (type_name*type_expression) list * type_expression list
-  = message 2 (fun _ -> print_string "infering type for ";
-                        print_term v; print_newline());
+  = message 2 (fun _ -> debug "infering type for %s" (string_of_term v));
 
     let rec infer_type_aux (v:term) constraints sigma datatypes
       : type_expression * (var_name*type_expression) list * (type_name*type_expression) list * type_expression list
       =
         message 4 (fun () ->
-            print_string "infering type of (recursive call) ";
-            print_term v;
-            print_string "\n\t\twith constraints ";
-            print_list "none" "" " , " "" (function x,t -> print_string (x^":"); print_type t) constraints;
-            print_string "\n\t\tand types ";
-            print_list "none" "" " , " "\n" (function x,t -> print_string ("'"^x^"="); print_type t) sigma;
+            debug "infering type of (recursive call) %s" (string_of_term v);
+            debug "\twith constraints %s" (string_of_list" , " (function x,t -> x^":"^(string_of_type t)) constraints);
+            debug "\tand types %s" (string_of_list " , " (function x,t -> "'"^x^"="^(string_of_type t)) sigma);
             print_newline()
         );
         match v with
@@ -223,14 +217,10 @@ let infer_type (env:environment)
     let t,constraints,sigma,datatypes = infer_type_aux v constraints [] datatypes in
     let datatypes = uniq datatypes in
     message 3 (fun () ->
-        print_string "infered type of ";
-        print_term v;
-        print_string " : ";
-        print_type t;
-        print_newline();
-        print_list "" "\t\twith free variables: " " , " "\n" (function x,t -> print_string (x^":"); print_type t) constraints;
-        print_list "" "\t\tand types: " " , " "\n" (function x,t -> print_string ("'"^x^"="); print_type t) sigma;
-        print_list "\t\tNO DATATYPES" "\n\t\tdatatypes: " " , " "\n" print_type datatypes;
+        debug "infered type of %s : %s" (string_of_term v) (string_of_type t);
+        debug "\twith free variables: %s" (string_of_list " , " (function x,t -> x^":"^(string_of_type t)) constraints);
+        debug "\tand types: %s" (string_of_list " , " (function x,t -> "'"^x^"="^(string_of_type t)) sigma);
+        debug "\tencountered atomic types: %s" (string_of_list " , " string_of_type datatypes);
         print_newline()
     );
     t,constraints,sigma,datatypes
@@ -260,16 +250,12 @@ let infer_type_clause env (lhs_pattern:pattern) (rhs_def:term)
     let datatypes = uniq (List.rev_map (subst_type sigma) datatypes) in
 
     message 4 (fun () ->
-        print_string "infered type of pattern: ";
-        print_type infered_type_lhs;
-        print_string " and infered type of definition: ";
-        print_type infered_type_rhs;
-        print_string "\n\t\tgiving "; print_type (subst_type sigma infered_type_rhs); print_newline();
-        print_string "types: ";
-        print_list "none\n" "" "," "\n" (function x,t -> print_string ("'"^x^ "="); print_type t) sigma;
-        print_string "\n\t\twith constraints ";
-        print_list "none" "" " , " "" (function x,t -> print_string (x^":"); print_type t) constraints;
-        print_list "" "\n\t\twith datatypes: " " , " "\n" print_type datatypes;
+        debug "infered type of pattern: %s" (string_of_type infered_type_lhs);
+        debug" and infered type of definition: %s" (string_of_type infered_type_rhs);
+        debug "\tgiving %s" (string_of_type (subst_type sigma infered_type_rhs));
+        debug "\ttypes: %s" (string_of_list "," (function x,t -> "'"^x^"="^(string_of_type t)) sigma);
+        debug "\twith constraints: %s" (string_of_list "," (function x,t -> x^":"^(string_of_type t)) constraints);
+        debug  "\tencountered datatypes: %s" (string_of_list " , " string_of_type datatypes)
         );
 
     (* the type of the RHS should be an instance of the type of the LHS *)

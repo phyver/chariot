@@ -52,23 +52,24 @@ type explore_cmd =
 
 let cmd_reduce env term =
     let t,constraints = infer_type_term env term in
-    print_string "term: "; print_term term; print_newline();
-    print_string "\tresult: ";
-    print_term (reduce_all env term);
-    print_newline();
-    print_string "\tof type: "; print_type t; print_newline();
-    print_list "" "\twith free variables " "  ,  " "\n" (function x,t -> print_string (x ^ " : "); print_type t) constraints;
+    msg "term: %s" (string_of_term term);
+    let term = reduce_all env term in
+    msg "result: %s" (string_of_term term);
+    msg "of type: %s" (string_of_type t);
+    if not (constraints = [])
+    then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) constraints);
     print_newline()
 
 let cmd_unfold env term depth =
     let t,constraints = infer_type_term env term in
-    print_string "term: "; print_term term; print_newline();
-    print_string "\tresult (at depth "; print_int depth; print_string "): ";
-    print_explore_term (unfold_to_depth env term depth);
-    print_newline();
-    print_string "\tof type: "; print_type t; print_newline();
-    print_list "" "\twith free variables " "  ,  " "\n" (function x,t -> print_string (x ^ " : "); print_type t) constraints;
+    msg "term: %s" (string_of_term term);
+    let term = unfold_to_depth env term depth in
+    msg "result (at depth %i): %s" depth (string_of_explore_term term);
+    msg "of type: %s" (string_of_type t);
+    if not (constraints = [])
+    then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) constraints);
     print_newline()
+
 let cmd_show env s =
     if s = "types" then show_types env
     else
@@ -105,52 +106,24 @@ let cmd_show env s =
 
 
 let cmd_unify_type env t1 t2 =
-    print_string "=======================================================\n";
-    print_string "unifying type   ";
-    print_type t1;
-    print_string "\n          and   ";
-    print_type t2;
-    print_newline();
+    debug "=======================================================\n";
+    debug "unifying type   %s" (string_of_type t1);
+    debug "          and   %s" (string_of_type t2);
     let sigma = unify_type_mgu t1 t2 in
     let t1s = subst_type sigma t1 in
     let t2s = subst_type sigma t2 in
     assert (t1s = t2s);
-    print_string "       result   ";
-    print_type t1s;
-    print_newline();
-    print_string "          via   ";
-    print_list "''" "" "  ;  " "" (function x,t -> print_string ("'" ^ x ^ " := "); print_type t) sigma;
-    print_newline();
-    print_string "=======================================================\n";
+    debug "       result   %s" (string_of_type t1s);
+    debug "          via   %s" (string_of_list "  ;  " (function x,t -> "'"^x^" := "^(string_of_type t)) sigma);
+    debug "=======================================================\n";
     print_newline()
 
 let cmd_unify_term env pattern term =
-    print_string "=======================================================\n";
-    print_string "unifying pattern   ";
-    print_term pattern;
-    print_string "\n        and term   ";
-    print_term term;
-    print_newline();
+    debug "=======================================================\n";
+    debug "unifying pattern   %s" (string_of_term pattern);
+    debug "        and term   %s" (string_of_term term);
     let new_term = unify_pattern (pattern,pattern) term in
-    print_string "          result   ";
-    print_term new_term;
-    print_newline();
-    print_string "=======================================================\n";
+    debug "          result   %s" (string_of_term new_term);
+    debug "=======================================================\n";
     print_newline()
 
-let cmd_exhaustive_function env f =
-    print_string "=======================================================\n";
-    print_string ("checking if definition " ^ f ^ " is exhaustive\n");
-    if exhaustive env (get_function_clauses env f)
-    then print_string "OK"
-    else print_string "PROBLEM";
-    print_newline();
-    print_string "=======================================================\n";
-    print_newline()
-
-let cmd_print_depth env t depth =
-    print_string "=======================================================\n";
-    explore_term_depth env t depth;
-    print_newline();
-    print_string "=======================================================\n";
-    print_newline()

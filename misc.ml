@@ -8,6 +8,8 @@ let rec print_list empty b1 sep b2 p = function
     | [x] -> print_string b1; p x; print_string b2
     | x::xs -> print_string b1; p x; List.iter (fun x -> print_string sep; p x) xs; print_string b2
 
+let string_of_list sep s l = String.concat sep (List.map s l)
+
 (* remove duplicates *)
 let uniq l =
     let rec uniq_aux acc = function
@@ -92,3 +94,17 @@ let range a b =
 
 let print_bool b =
     if b then print_string "true" else print_string "false"
+
+let print_prefix prefix fmt = 
+    let print s =
+        let s = Str.global_replace (Str.regexp_string "\n") ("\n"^prefix) s in
+        print_endline (prefix ^ s)
+    in
+    Printf.ksprintf print fmt
+
+let debug fmt = print_prefix "=== " fmt
+let msg fmt = print_prefix "……… " fmt
+let warning fmt = print_prefix "!!! " fmt
+let errmsg fmt = print_prefix "*** " fmt
+
+

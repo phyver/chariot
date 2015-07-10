@@ -30,8 +30,8 @@ let explore_loop env t =
     try
         while true
         do
-            print_string "→ "; print_explore_term !t; print_newline();
-            print_string "unfold… ";
+            msg "result: %s" (string_of_explore_term !t);
+            print_string ("unfold… "^current_state.prompt);
             let lexbuf = Lexing.from_channel stdin in
             flush_all ();
             try
@@ -40,13 +40,13 @@ let explore_loop env t =
                     | ExpUnfold l -> t := unfold current_state.env (fun n -> List.mem n l) !t
                     | ExpUnfoldAll -> t := unfold current_state.env (fun _ -> true) !t
             with
-                | Parsing.Parse_error -> print_string "*** parse error\n"; flush_all ()
-                | Error err -> print_string ("*** " ^ err ^ "\n"); flush_all ()
+                | Parsing.Parse_error -> errmsg "parse error"
+                | Error err -> errmsg "%s" err
         done
-    with Exit -> print_string "end of explore mode\n"
+    with Exit -> msg "end of explore mode"
 
 let process_statement = function
-    | CmdTest(v,d) -> cmd_print_depth current_state.env v d
+    | CmdTest(v,d) -> ()
 
     | Eof -> raise Exit
     | CmdQuit -> raise Exit
@@ -74,9 +74,9 @@ let loadfile path =
         let cmds = Parser.statements Lexer.token lexbuf in
         List.iter process_statement cmds
     with
-        | Parsing.Parse_error -> print_string "*** parse error\n"; flush_all ()
-        | Error err -> print_endline ("*** " ^ err); flush_all ()
-        | Sys_error err -> print_endline ("*** " ^ err); flush_all ()
+        | Parsing.Parse_error -> errmsg "parse error"
+        | Error err -> errmsg "%s" err
+        | Sys_error err -> errmsg "%s" err
         | Exit -> ()
 
 
@@ -89,8 +89,8 @@ let mainloop () =
         try
             process_statement (Parser.single_statement Lexer.token lexbuf)
         with
-            | Parsing.Parse_error -> print_string "*** parse error\n"; flush_all ()
-            | Error err -> print_string ("*** " ^ err ^ "\n"); flush_all ()
+            | Parsing.Parse_error -> errmsg "parse error"
+            | Error err -> errmsg "%s" err
     done
 
 let _ =

@@ -14,14 +14,6 @@ let unificationError s = raise (UnificationError s)
 exception TypeError of string
 let typeError s = raise (TypeError s)
 
-let debug fmt =
-    let prefix = "=== " in
-    let print s =
-        let s = Str.global_replace (Str.regexp_string "\n") ("\n"^prefix) s in
-        print_endline (prefix ^ s)
-    in
-    Printf.ksprintf print fmt
-
 
 (* types for type expressions and substitutions *)
 type type_name = string
