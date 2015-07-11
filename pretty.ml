@@ -120,6 +120,16 @@ let string_of_term = string_of_special_term (fun s -> s.bot)
 let print_term t = print_string (string_of_term t)
 
 
+let string_of_weight w = match w with
+    | Infty -> "∞"
+    | Num n -> (string_of_int n)
+
+let string_of_approx_term
+  = string_of_special_term
+        (function | ApproxProj(p,w) -> ".<" ^ (string_of_weight w) ^ (string_of_priority p) ^ ">"
+                  | ApproxConst [] -> "<!>"
+                  | ApproxConst l -> (string_of_list " + " (function p,w,x ->  "<" ^ (string_of_weight w) ^ (string_of_priority p) ^ "," ^ x ^ ">") l))
+
 let show_data_type env tname params consts =
     print_string "  ";
     print_string tname;

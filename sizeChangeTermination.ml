@@ -1,31 +1,6 @@
 open Misc
 open Base
 
-type weight = Num of int | Infty
-
-let add_weight w1 w2 = match w1,w2 with
-    | Infty,_ | _,Infty -> Infty
-    | Num a,Num b -> Num (a+b)
-
-let add_weight_int w n = add_weight w (Num n)
-
-let collapse_weight bound w = match w with
-    | Infty -> Infty
-    | Num w when bound<=w -> Infty
-    | Num w when -bound<=w -> Num w
-    | Num w (* when w<-bound *) -> Num(-bound)
-
-
-(* a call from f to g is represented by a rewriting rule
- *   param_1 param_2 ... param_m  =>  arg_1 arg_2 ... arg_n
- * where m is the arity of f and n is the arity of g.
- *  - each param_i is either a constructor pattern or a destructor
- *  - each arg_i i either a constructor pattern (with possible approximations) or a destructor
- *)
-type sct_lhs = term list
-type approximation = ApproxProj of priority * weight | ApproxConst of (priority * weight * var_name) list
-type sct_rhs = approximation special_term list
-type sct_clause = sct_lhs * sct_rhs
 
 
 let is_clause (lhs,rhs : sct_clause) : bool =
@@ -110,22 +85,34 @@ let collapse_rhs depth (rhs:sct_rhs) : sct_rhs =
     in
 
     let rec collapse_const d p =
-        if d=0
-        then Special (ApproxConst (collapse0 p))
-        else
-            match get_head p,get_args p with
-                | Var _,[] | Angel,[] | Special (ApproxConst _),[] -> p
-                | Proj _,_ | Special (ApproxProj _),_ -> assert false
-                | Const(c,p),ps -> app (Const(c,p)) (List.map (collapse_const (d-1)) ps)
-                | _,_ -> assert false
+        match get_head p,get_args p with
+            | Var _,[] | Angel,[] | Special (ApproxConst _),[] -> p
+            | Proj _,_ | Special (ApproxProj _),_ -> assert false
+            | Const(c,prio),ps ->
+                if d=0
+                then Special (ApproxConst (collapse0 p))
+                else app (Const(c,prio)) (List.map (collapse_const (d-1)) ps)
+            | _,_ -> assert false
+
     in
 
     let rec collapse_rhs_aux dp ps = match ps with
         | [] -> []
-        | Proj(p,d)::ps ->
-            if dp = 0
-            then assert false (* TODO...*)
-            else
+        | Proj(_,prio) ::ps when dp=0->
+            let ds = List.filter (fun p -> match p with Proj _ | Special(ApproxProj _) -> true | _ -> false) ps in
+            let prio,w =
+                List.fold_left
+                    (fun r p ->
+                        match p with
+                            | Proj(_,p) -> add_approx r (p, Num 1)
+                            | Special(ApproxProj(p,w)) -> add_approx r (p,w)
+                            | _ -> assert false
+                    )
+                    (prio,Num 1)
+                    ds
+            in
+            [Special (ApproxProj(prio,w))]
+        | Proj(p,d)::ps (*when pd<>0*) ->
                 Proj(p,d)::(collapse_rhs_aux (dp-1) ps)
         | [Special (ApproxProj _) ] -> ps
         | Special (ApproxProj _)::_ -> assert false

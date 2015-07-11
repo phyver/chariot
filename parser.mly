@@ -93,7 +93,7 @@ command:
     | CMDHELP                                           { CmdHelp }
     | CMDECHO string                                    { CmdEcho($2) }
 
-    | CMDTEST term AND INT                              { CmdTest($2,$4) }
+    | CMDTEST lhs_term AND INT                           { CmdTest($2,$4) }
 
 string:
     | IDL { $1 }

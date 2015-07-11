@@ -174,3 +174,45 @@ let rec extract_datatypes t = match t with
     | TVar _ -> []
     | Data(_,params) -> t::(List.concat (List.map extract_datatypes params))
     | Arrow(t1,t2) -> (extract_datatypes t1) @ (extract_datatypes t2)
+
+(* SCT *)
+type weight = Num of int | Infty
+
+let add_weight w1 w2 = match w1,w2 with
+    | Infty,_ | _,Infty -> Infty
+    | Num a,Num b -> Num (a+b)
+
+let add_weight_int w n = add_weight w (Num n)
+
+let collapse_weight bound w = match w with
+    | Infty -> Infty
+    | Num w when bound<=w -> Infty
+    | Num w when -bound<=w -> Num w
+    | Num w (* when w<-bound *) -> Num(-bound)
+
+
+(* a call from f to g is represented by a rewriting rule
+ *   param_1 param_2 ... param_m  =>  arg_1 arg_2 ... arg_n
+ * where m is the arity of f and n is the arity of g.
+ *  - each param_i is either a constructor pattern or a destructor
+ *  - each arg_i i either a constructor pattern (with possible approximations) or a destructor
+ *)
+type sct_lhs = term list
+type approximation = ApproxProj of priority * weight | ApproxConst of (priority * weight * var_name) list
+type sct_rhs = approximation special_term list
+type sct_clause = sct_lhs * sct_rhs
+
+
+let rec pattern_to_sct_pattern (p:pattern) =
+    match get_head p,get_args p with
+        | Var f, args -> args
+        | Proj(d,p), (v::args) -> (pattern_to_sct_pattern v)@[Proj(d,p)]@args
+        | _ -> raise (Invalid_argument "pattern_to_sct_pattern")
+
+let rec sct_lhs_to_sct_rhs = function
+    | Var(x) -> Var(x)
+    | Angel -> Angel
+    | Const(c,p) -> Const(c,p)
+    | Proj(d,p) -> Proj(d,p)
+    | App(v1,v2) -> App(sct_lhs_to_sct_rhs v1, sct_lhs_to_sct_rhs v2)
+    | Special s -> s.bot
