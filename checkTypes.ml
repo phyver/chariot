@@ -114,7 +114,7 @@ let process_type_defs (env:environment)
     check_new_types_different_from_old new_types_without_params old_types;
 
     (* we check that all the new constants are different *)
-    let new_consts = List.concat @$ List.rev_map (function (_,_,consts) -> List.rev_map fst consts) defs in
+    let new_consts = List.concat (List.rev_map (function (_,_,consts) -> List.rev_map fst consts) defs) in
     check_new_consts_different new_consts;
 
     (* we check that all the new constants are different from the old ones *)

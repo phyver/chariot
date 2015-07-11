@@ -2,8 +2,6 @@ open Misc
 open Base
 open State
 
-let print_exp n = print_string (exp_of_int n)
-
 let rec string_of_type = function
     | TVar(x) -> "'"^x
     | Data(t,[]) ->

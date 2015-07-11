@@ -9,8 +9,8 @@ open Misc
 open Commands
 open State
 
-let print_help () =
-    print_list "" "| " "\n| " "\n\n" print_string [
+let print_help ()
+  = print_list "" "| " "\n| " "\n\n" print_string [
         "";
         "chariot: a language with arbitrary nested inductive and coinductive types";
         "";
@@ -18,8 +18,8 @@ let print_help () =
         "";
     ]
 
-let explore_loop env t =
-    print_list "" "| " "\n| " "\n\n" print_string [
+let explore_loop env t
+  = print_list "" "| " "\n| " "\n\n" print_string [
         "Explore mode:";
         "  you can unfold a (coinductive) datastructure interactively";
         "  by inputing the corresponding indices";
@@ -45,7 +45,7 @@ let explore_loop env t =
         done
     with Exit -> msg "end of explore mode"
 
-let process_statement = function
+let process_statement s = match s with
     | CmdTest(v,d) -> ()
 
     | Eof -> raise Exit
@@ -67,8 +67,8 @@ let process_statement = function
     | FunDef(defs) -> current_state.env <- process_function_defs current_state.env defs
 
 
-let loadfile path =
-    try
+let loadfile path
+  = try
         let f_in = open_in path in
         let lexbuf = Lexing.from_channel f_in in
         let cmds = Parser.statements Lexer.token lexbuf in
@@ -80,8 +80,8 @@ let loadfile path =
         | Exit -> ()
 
 
-let mainloop () =
-    while true
+let mainloop ()
+  = while true
     do
         print_string current_state.prompt; flush_all();
         let lexbuf = Lexing.from_channel stdin in
@@ -93,7 +93,8 @@ let mainloop () =
             | Error err -> errmsg "%s" err
     done
 
-let _ =
+let _
+  =
     let interactive = ref false in
     let nb_files = ref 0 in
 
