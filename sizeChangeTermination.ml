@@ -3,34 +3,34 @@ open Base
 
 
 
-let is_clause (lhs,rhs : sct_clause) : bool =
+(* let is_clause (lhs,rhs : sct_clause) : bool = *)
 
-    let rec is_constructor_pattern angel approx p =
-        match get_head p, get_args p with
-        | Var _,[] -> true
-        | Angel,[] -> angel
-        | Const(_,_),ps -> List.for_all (is_constructor_pattern angel approx) ps
-        | Special s,_ -> approx s
-        | _,_ ->  false
-    in
+(*     let rec is_constructor_pattern angel approx p = *)
+(*         match get_head p, get_args p with *)
+(*         | Var _,[] -> true *)
+(*         | Angel,[] -> angel *)
+(*         | Const(_,_),ps -> List.for_all (is_constructor_pattern angel approx) ps *)
+(*         | Special s,_ -> approx s *)
+(*         | _,_ ->  false *)
+(*     in *)
 
-    let is_destructor approx p = match p with
-        | Proj _ -> true
-        | Special s -> approx s
-        | _ -> false
-    in
+(*     let is_destructor approx p = match p with *)
+(*         | Proj _ -> true *)
+(*         | Special s -> approx s *)
+(*         | _ -> false *)
+(*     in *)
 
-    let check_lhs = List.for_all
-                        (fun p -> is_constructor_pattern false (fun _ -> false) p
-                               || is_destructor (fun _ -> false) p)
-                        lhs
-    in
-    let check_rhs = List.for_all
-                        (fun p -> is_constructor_pattern true (function ApproxProj _ -> false | ApproxConst _ -> true) p
-                               || is_destructor (function ApproxProj _ -> true | ApproxConst _ -> false) p)
-                        rhs
-    in
-    check_lhs && check_rhs
+(*     let check_lhs = List.for_all *)
+(*                         (fun p -> is_constructor_pattern false (fun _ -> false) p *)
+(*                                || is_destructor (fun _ -> false) p) *)
+(*                         lhs *)
+(*     in *)
+(*     let check_rhs = List.for_all *)
+(*                         (fun p -> is_constructor_pattern true (function ApproxProj _ -> false | ApproxConst _ -> true) p *)
+(*                                || is_destructor (function ApproxProj _ -> true | ApproxConst _ -> false) p) *)
+(*                         rhs *)
+(*     in *)
+(*     check_lhs && check_rhs *)
 
 
 let add_approx a1 a2 = match a1,a2 with
@@ -96,30 +96,33 @@ let collapse_rhs depth (rhs:sct_rhs) : sct_rhs =
 
     in
 
-    let rec collapse_rhs_aux dp ps = match ps with
-        | [] -> []
-        | Proj(_,prio) ::ps when dp=0->
-            let ds = List.filter (fun p -> match p with Proj _ | Special(ApproxProj _) -> true | _ -> false) ps in
-            let prio,w =
-                List.fold_left
-                    (fun r p ->
-                        match p with
-                            | Proj(_,p) -> add_approx r (p, Num 1)
-                            | Special(ApproxProj(p,w)) -> add_approx r (p,w)
-                            | _ -> assert false
-                    )
-                    (prio,Num 1)
-                    ds
-            in
-            [Special (ApproxProj(prio,w))]
-        | Proj(p,d)::ps (*when pd<>0*) ->
-                Proj(p,d)::(collapse_rhs_aux (dp-1) ps)
-        | [Special (ApproxProj _) ] -> ps
-        | Special (ApproxProj _)::_ -> assert false
-        | (Var _ | Angel | Const _ | App _ | Special (ApproxConst _)) as p::ps -> (collapse_const depth p)::(collapse_rhs_aux dp ps)
+    let rec count_proj p = match get_head p, get_args p with
+        | Var _,_ -> 0
+        | Proj _,p::_ -> 1 + (count_proj p)
+        | Special (ApproxProj _),p::_ -> 1 + (count_proj p)
+        | _,_ -> assert false
     in
 
-    collapse_rhs_aux depth rhs
+    let rec collapse_rhs_aux dp p = match get_head p, get_args p with
+        | Proj _,[] -> assert false
+        | Proj(_,prio), p::_ when dp>0->
+            begin
+                let p = collapse_rhs_aux (dp-1) p in
+                match get_head p, get_args p with
+                    | Special(ApproxProj(_prio,_w)),ps ->
+                        let prio,w = add_approx (_prio,_w) (prio,Num 1) in
+                        app (Special(ApproxProj(prio, w))) ps
+                    | h,ps -> App(Special(ApproxProj(prio,Num 1)), app h ps)
+            end
+        | Proj(d,prio),p::ps (*when pd=0*) ->
+                app (Proj(d,prio)) ((collapse_rhs_aux dp p)::List.map (collapse_const depth) ps)
+        | Special (ApproxProj _),[] -> p
+        | Special (ApproxProj _),_::_ -> assert false
+        | Var f,ps -> app (Var f) (List.map (collapse_const depth) ps)
+        | (Angel | Const _ | App _ | Special (ApproxConst _)),ps -> assert false
+    in
+
+    collapse_rhs_aux ((count_proj rhs)-depth) rhs
 
 
 (* composition:

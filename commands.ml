@@ -134,9 +134,8 @@ let cmd_test env pattern depth =
     debug "=======================================================";
     debug "collapsing pattern   %s" (string_of_term pattern);
     debug "          to depth   %d" depth;
-    let pattern = pattern_to_sct_pattern pattern in
-    let pattern = List.map sct_lhs_to_sct_rhs pattern in
+    let pattern = pattern_to_sct_rhs pattern in
     let pattern = collapse_rhs depth pattern in
-    debug "          result   %s" (string_of_list " ,  " string_of_approx_term pattern);
+    debug "          result   %s" (string_of_approx_term pattern);
     debug "=======================================================";
     print_newline()

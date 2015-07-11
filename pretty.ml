@@ -126,7 +126,7 @@ let string_of_weight w = match w with
 
 let string_of_approx_term
   = string_of_special_term
-        (function | ApproxProj(p,w) -> ".<" ^ (string_of_weight w) ^ (string_of_priority p) ^ ">"
+        (function | ApproxProj(p,w) -> "<" ^ (string_of_weight w) ^ (string_of_priority p) ^ "> ."
                   | ApproxConst [] -> "<!>"
                   | ApproxConst l -> (string_of_list " + " (function p,w,x ->  "<" ^ (string_of_weight w) ^ (string_of_priority p) ^ "," ^ x ^ ">") l))
 
