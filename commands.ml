@@ -106,7 +106,7 @@ let cmd_show env s =
 
 
 let cmd_unify_type env t1 t2 =
-    debug "=======================================================\n";
+    debug "=======================================================";
     debug "unifying type   %s" (string_of_type t1);
     debug "          and   %s" (string_of_type t2);
     let sigma = unify_type_mgu t1 t2 in
@@ -115,15 +115,15 @@ let cmd_unify_type env t1 t2 =
     assert (t1s = t2s);
     debug "       result   %s" (string_of_type t1s);
     debug "          via   %s" (string_of_list "  ;  " (function x,t -> "'"^x^" := "^(string_of_type t)) sigma);
-    debug "=======================================================\n";
+    debug "=======================================================";
     print_newline()
 
 let cmd_unify_term env pattern term =
-    debug "=======================================================\n";
+    debug "=======================================================";
     debug "unifying pattern   %s" (string_of_term pattern);
     debug "        and term   %s" (string_of_term term);
     let new_term = unify_pattern (pattern,pattern) term in
     debug "          result   %s" (string_of_term new_term);
-    debug "=======================================================\n";
+    debug "=======================================================";
     print_newline()
 

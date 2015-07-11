@@ -61,7 +61,7 @@ let exp_of_int n =
     in
     let sign = if n<0 then "⁻" else "" in
     let n = abs n in
-    String.concat "" (sign::(exp_of_int_aux n []))
+    if n=0 then "⁰" else String.concat "" (sign::(exp_of_int_aux n []))
 
 (* transforms a positive integer into a UTF-8 string of subscripts *)
 let sub_of_int n =
@@ -75,7 +75,7 @@ let sub_of_int n =
     in
     let sign = if n<0 then "₋" else "" in
     let n = abs n in
-    String.concat "" (sign::(sub_of_int_aux n []))
+    if n=0 then "₀" else String.concat "" (sign::(sub_of_int_aux n []))
 
 (* combine two lists into a list of pairs, and returns the suffix of the second one
  * raise Invalid_argument if the second list is shorter than the first one *)
