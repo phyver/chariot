@@ -10,15 +10,15 @@ let rec print_list empty b1 sep b2 p l
 let string_of_list sep s l = String.concat sep (List.map s l)
 
 (* remove duplicates *)
+(* not as efficient as the sorting version, but it keeps the order of the first occurences of the list *)
 let uniq l
   = let rec uniq_aux acc l
       = match l with
-            | [] -> acc
-            | [a] -> a::acc
-            | a::b::l when a=b -> uniq_aux acc (b::l)
-            | a::b::l -> uniq_aux (a::acc) (b::l)
-    in
-    uniq_aux [] (List.sort compare l)
+            | [] -> List.rev acc
+            | x::xs when List.mem x acc -> uniq_aux acc xs
+            | x::xs -> uniq_aux (x::acc) xs
+  in
+  uniq_aux [] l
 
 (* look for a value with at least two occurences *)
 let find_dup l
