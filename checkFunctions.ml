@@ -88,12 +88,54 @@ let process_function_defs (env:environment)
 
     let constraints,datatypes = process_defs [] [] defs in
 
+    (* check completeness of pattern matching *)
     if not (option "dont_check_completeness")
     then
         List.iter (function f,_,clauses ->
                 if not (exhaustive env clauses)
                 then error ("function " ^ f ^ " is not complete"))
             defs;
+
+    (* check that the types given by the user are compatible with the infered types *)
+    reset_fresh_variable_generator datatypes;
+    (* we try to unify the types given by the user and the infered types,
+     * uniformly for all the functions in the bloc *)
+    let subst_coercion f t constraints datatypes
+      = let infered = List.assoc f constraints in
+        match t with
+            | None -> constraints,datatypes
+            | Some t -> 
+                check_type env t;
+                let new_t = instantiate_type t in
+                try
+                    let sigma = unify_type_mgu new_t infered in
+                    (List.map (second (subst_type sigma)) constraints , List.map (subst_type sigma) datatypes)
+                with UnificationError _ -> error ("function "^f^" cannot be coerced to type "^(string_of_type t))
+    in
+    (* that's the corresponding substitution: it instantiate the infered types to the given types (with different variables though) *)
+    let constraints,datatypes = List.fold_left
+                        (fun cd f ->
+                            let constraints,datatypes = cd in
+                            let f,t,_ = f in
+                            subst_coercion f t constraints datatypes)
+                        (constraints,datatypes)
+                        defs
+    in
+
+    let functions =
+        List.fold_left (fun functions f ->
+            let f,_,clauses = f in
+            let t = List.assoc f constraints in
+            (f,t,clauses)::functions
+        )
+        []
+        defs
+    in
+    let functions = if not (option "dont_use_priorities")
+                    then infer_priorities env functions datatypes
+                    else functions
+    in
+
 
     (* choose the substitution that will make the final type of the definition a good choice:
      *   - either use the given type
@@ -104,38 +146,23 @@ let process_function_defs (env:environment)
         match t with
         | None ->
             reset_fresh_variable_generator [];
-            let infered_new = instantiate_type infered in
-            unify_type_mgu infered_new infered (* don't swap arguments... *)
+            instantiate_type infered
         | Some t ->
-            check_type env t;
             reset_fresh_variable_generator [t];
             let infered_new = instantiate_type infered in
-            let sigma = unify_type_mgu t infered_new in
-            if (t = subst_type sigma t)
-            then sigma
+            if (equal_type t infered_new)
+            then t
             else error ("function " ^ f ^ " is coerced to type " ^ (string_of_type t) ^ " which is not an instance of " ^ (string_of_type infered_new) ^ "...")
     in
 
-    (* FIXME: I need to add the actual type of the function into the datatypes *)
-
-    (* let functions = List.rev_map *)
-    (*     (function f,t,clauses -> (f,env.current_function_bloc+1,subst_type (choose_type f t) (List.assoc f constraints), clauses)) defs *)
-    (* in *)
-
-    let functions, datatypes =
-        List.fold_left (fun r f ->
-            let functions,datatypes = r in
-            let f,t,clauses = f in
-            let sigma = choose_type f t in
-            (f,env.current_function_bloc+1,subst_type sigma (List.assoc f constraints),clauses)::functions , List.map (subst_type sigma) datatypes
+    let functions =
+        List.fold_left (fun functions f ->
+            let f,_,clauses = f in
+            let t = List.assoc f (List.map (function f,t,_ -> f,t) defs) in
+            (f,env.current_function_bloc+1,choose_type f t,clauses)::functions
         )
-        ([],datatypes)
-        defs
-    in
-
-    let functions = if not (option "dont_use_priorities")
-                    then infer_priorities env functions datatypes
-                    else functions
+        []
+        functions
     in
 
     { env with current_function_bloc = env.current_function_bloc+1; functions = functions @ env.functions }

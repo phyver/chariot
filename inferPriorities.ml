@@ -109,9 +109,9 @@ let rec compare_occur (dt:type_expression)
 
 
 let infer_priorities (env:environment)
-                     (defs:(var_name * bloc_nb * type_expression * (term * term) list) list)
+                     (defs:(var_name * type_expression * (term * term) list) list)
                      (datatypes:type_expression list)
-  : (var_name * bloc_nb * type_expression * (term * term) list) list
+  : (var_name * type_expression * (term * term) list) list
   =
     let rec add_priorities k acc = function
         | [] -> acc
@@ -126,7 +126,7 @@ let infer_priorities (env:environment)
     let local_types = get_subtypes_list env datatypes in
     let local_types = List.rev (order_types env local_types) in
     let local_types = add_priorities 1 [] local_types in
-    let functions_types = List.map (function f,_,t,_ -> f,t) defs in
+    let functions_types = List.map (function f,t,_ -> f,t) defs in
 
     let get_priority t =
         let rec aux = function
@@ -146,7 +146,7 @@ let infer_priorities (env:environment)
     let get_function_type f =
         let rec aux = function
             | [] -> raise Not_found
-            | (_f,_,t,_)::_ when _f=f -> t
+            | (_f,t,_)::_ when _f=f -> t
             | _::fs -> aux fs
         in aux defs
     in
@@ -270,5 +270,5 @@ let infer_priorities (env:environment)
 
         pattern, def
 
-    in List.map (function f,k,t,clauses -> f,k,List.assoc f functions_types,List.map put_priorities_single_clause clauses) defs
+    in List.map (function f,t,clauses -> f,List.assoc f functions_types,List.map put_priorities_single_clause clauses) defs
 
