@@ -55,7 +55,7 @@ and
                 | [],Some v -> raise (Invalid_argument "string_of_term_list")
                 | l,Some v -> if p
                               then "(" ^ (String.concat "::" (List.map (string_of_special_term sp) (List.rev l))) ^ "::" ^ (string_of_special_term sp v) ^ ")"
-                              else String.concat "::" (List.map (string_of_special_term sp) (List.rev l)) ^ "::" ^ (string_of_special_term sp v)
+                              else String.concat "::" (List.map (string_of_term_paren sp) (List.rev l)) ^ "::" ^ (string_of_term_paren sp v)
 
 and
   string_of_term_paren (sp:'a -> string) (v:'a special_term) =
