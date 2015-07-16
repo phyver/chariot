@@ -246,7 +246,7 @@ let infer_type_clause env (lhs_pattern:pattern) (rhs_def:term)
     let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
 
     (* update constraints and datatypes *)
-    let constraints = List.rev_map (second (subst_type sigma)) constraints in
+    let constraints = List.map (second (subst_type sigma)) constraints in
     let datatypes = uniq (List.rev_map (subst_type sigma) datatypes) in
 
     message 4 (fun () ->
