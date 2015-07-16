@@ -5,7 +5,7 @@ val
     | f x = Zero¹
 
 val
-   g1 : 'b → list('a)
+   g1 : 'a → list('b)
     | g1 x = Nil¹
 
 val

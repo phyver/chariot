@@ -1,3 +1,4 @@
+*** function f is not complete
 val
    last : list('a) → 'a
     | last [x] = x

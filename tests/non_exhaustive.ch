@@ -1,4 +1,12 @@
+:set continue_on_error
 :set dont_show_priorities
+
+data nat where Zero : nat | Succ : nat -> nat
+
+(* INCOMPLETE *)
+val f 0 = ???
+  | f (n+2) = ???
+
 
 data list('x) where
     | Nil : list('x)

@@ -20,7 +20,7 @@ val
     | length (Cons x xs) = length xs+1
 
 val
-   map : ('b → 'a) → list('b) → list('a)
+   map : ('a → 'b) → list('a) → list('b)
     | map f Nil = Nil
     | map f (Cons x xs) = Cons (f x) (map f xs)
 
@@ -62,14 +62,14 @@ val
     | length (x::xs) = length xs+1
 
 val
-   map : ('b → 'a) → list('b) → list('a)
+   map : ('a → 'b) → list('a) → list('b)
     | map f [] = []
-    | map f (x::xs) = f x::map f xs
+    | map f (x::xs) = (f x)::(map f xs)
 
 val
    decr : nat → list(nat)
     | decr 0 = []
-    | decr (n+1) = n::decr n
+    | decr (n+1) = n::(decr n)
 
 val
    rev_append : list('a) → list('a) → list('a)
