@@ -21,6 +21,7 @@ type cmd =
     | CmdVerbose of int
     | CmdOption of string*bool
     | CmdShow of string
+    | CmdEcho of string
 
     | CmdReduce of term
     | CmdUnfold of term*int

@@ -58,6 +58,7 @@ let process_statement s = match s with
     | CmdOption("",b) -> showOptions current_state.options
     | CmdOption(o,b) -> setOption o b
     | CmdHelp -> print_help()
+    | CmdEcho(s) -> msg "%s" s
 
     | CmdReduce(t) -> cmd_reduce current_state.env t
     | CmdUnfold(t,d) -> cmd_unfold current_state.env t d

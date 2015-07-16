@@ -22,6 +22,7 @@ rule token = parse
     | ":quit"           { CMDQUIT }
     | ":prompt"         { CMDPROMPT }
     | ":show"           { CMDSHOW }
+    | ":echo"           { CMDECHO }
     | ":verbose"        { CMDVERBOSE }
     | ":set"            { CMDSET }
     | ":unset"          { CMDUNSET }
