@@ -72,7 +72,17 @@ let loadfile path
         let f_in = open_in path in
         let lexbuf = Lexing.from_channel f_in in
         let cmds = Parser.statements Lexer.token lexbuf in
-        List.iter process_statement cmds
+        List.iter
+            (fun st ->
+                try
+                    process_statement st
+                with
+                    | Error err ->
+                        if (option "continue_on_error")
+                        then errmsg "%s" err
+                        else error err
+            )
+            cmds
     with
         | Parsing.Parse_error -> errmsg "parse error"
         | Error err -> errmsg "%s" err
@@ -107,6 +117,7 @@ let _
         ("--dont_check_completeness", Arg.Unit (fun _ -> setOption "dont_show_check_completeness" true), "do not check that definitions are complete");
         ("--dont_use_priorities",     Arg.Unit (fun _ -> setOption "dont_show_use_priorities" true),     "do not use priorities for checking termination (unsound)");
         ("--dont_show_priorities",    Arg.Unit (fun _ -> setOption "dont_show_priorities" true),         "do not display priorities when showing function definitions");
+        ("--continue_on_error",       Arg.Unit (fun _ -> setOption "continue_on_error" true),            "do not exit on errors (only on non-interactive use)");
       ] in
     let help = "usage: " ^ Sys.argv.(0) ^ " [-i] [file]\n" in
     Arg.parse args (fun f -> incr nb_files; loadfile f) help;

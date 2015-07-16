@@ -28,6 +28,7 @@ let current_state =
             "dont_check_completeness", false    ;
             "dont_use_priorities",     false    ;
             "dont_show_priorities",    false    ;
+            "continue_on_error",       false    ;
         ]                                       ;
     }
 
