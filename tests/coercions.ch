@@ -1,4 +1,4 @@
-:set continue_on_error
+:set continue_on_error true
 
 data nat where Zero : nat | Succ : nat -> nat
 

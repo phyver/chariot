@@ -25,9 +25,9 @@ rule token = parse
     | ":echo"           { CMDECHO }
     | ":verbose"        { CMDVERBOSE }
     | ":set"            { CMDSET }
-    | ":unset"          { CMDUNSET }
     | ":explore"        { CMDEXPLORE }
     | ":help"           { CMDHELP }
+    | ":testcompose"    { CMDTESTCOMPOSE }
     | ":test"           { CMDTEST }
     | ":reduce"         { CMDREDUCE }
     | ":unfold"         { CMDUNFOLD }
@@ -50,6 +50,7 @@ rule token = parse
     | "where"           { WHERE }
     | "and"             { AND }
     | "->"              { ARROW }
+    | "=>"              { DOUBLEARROW }
     | "→"               { ARROW }
     | "val"             { VAL }
     | "???"             { ANGEL }

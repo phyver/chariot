@@ -1,4 +1,4 @@
-:set dont_show_priorities
+:set show_priorities false
 
 data
   list('x) where Nil : list('x)
@@ -33,10 +33,10 @@ val rev_append l [] = l
 
 val rev l = rev_append [] l
 
-:set dont_show_lists
+:set show_lists false
 :show functions
 
-:unset dont_show_lists
+:set show_lists true
 :show functions
 
 

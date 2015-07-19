@@ -1,4 +1,4 @@
-:set dont_show_priorities
+:set show_priorities false
 
 data nat where Zero : nat | Succ : nat -> nat
 

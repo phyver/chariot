@@ -1,4 +1,4 @@
-:set dont_show_priorities
+:set show_priorities false
 
 data nat where Zero : nat | Succ : nat -> nat
 
@@ -14,17 +14,17 @@ val pow : nat -> nat -> nat
     | pow n 0 = 1
     | pow n (m+1) = mult n (pow n m)
 
-:set dont_show_nats
+:set show_nats false
 :show functions
 
-:unset dont_show_nats
+:set show_nats true
 :show functions
 
 :reduce 1+2+3+4+5
 
 :reduce pow 2 (pow 2 2)
 
-:set dont_show_nats
+:set show_nats false
 
 :reduce mult 11 11
 

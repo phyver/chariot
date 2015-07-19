@@ -1,4 +1,5 @@
 open Misc
+open State
 open Base
 open Pretty
 open Typing
@@ -19,7 +20,7 @@ type cmd =
 
     | CmdPrompt of string
     | CmdVerbose of int
-    | CmdOption of string*bool
+    | CmdOption of string*string
     | CmdShow of string
     | CmdEcho of string
 

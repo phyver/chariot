@@ -89,7 +89,7 @@ let process_function_defs (env:environment)
     let constraints,datatypes = process_defs [] [] defs in
 
     (* check completeness of pattern matching *)
-    if not (option "dont_check_completeness")
+    if (option "check_completeness")
     then
         List.iter (function f,_,clauses ->
                 if not (exhaustive env clauses)
@@ -131,7 +131,7 @@ let process_function_defs (env:environment)
         []
         defs
     in
-    let functions = if not (option "dont_use_priorities")
+    let functions = if (option "use_priorities")
                     then infer_priorities env functions datatypes
                     else functions
     in
@@ -159,10 +159,12 @@ let process_function_defs (env:environment)
         List.fold_left (fun functions f ->
             let f,_,clauses = f in
             let t = List.assoc f (List.map (function f,t,_ -> f,t) defs) in
-            (f,env.current_function_bloc+1,choose_type f t,clauses)::functions
+            (f,current_state.current_function_bloc+1,choose_type f t,clauses)::functions
         )
         []
         functions
     in
 
-    { env with current_function_bloc = env.current_function_bloc+1; functions = functions @ env.functions }
+    current_state.current_function_bloc <- current_state.current_function_bloc + 1;
+
+    { env with functions = functions @ env.functions }

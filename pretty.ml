@@ -2,6 +2,12 @@ open Misc
 open Base
 open State
 
+let string_of_priority p = match p with
+    (* | None ->  "⁽⁾" *)
+    (* | None ->  "⁻" *)
+    | None ->  "⁼"
+    | Some p -> exp_of_int p
+
 let rec string_of_type = function
     | TVar(x) -> "'"^x
     | Data(t,[]) ->
@@ -29,7 +35,7 @@ let rec
         | App(Const("Succ",_),v) -> aux (n+1) v
         | _ -> n,Some v
     in
-        if (option "dont_show_nats")
+        if not (option "show_nats")
         then raise (Invalid_argument "string_of_term_int")
         else
             match aux 0 u with
@@ -47,7 +53,7 @@ and
         | App(App(Const("Cons",_),h),t) -> aux (h::l) t
         | _ -> l,Some v
     in
-        if (option "dont_show_lists")
+        if not (option "show_lists")
         then raise (Invalid_argument "string_of_term_list")
         else
             match aux [] u with
@@ -73,12 +79,10 @@ and
         match v with
             | Angel -> "⊤"
             | Var(x) -> x
-            | Const(c,None) -> c ^ (if (option "dont_show_priorities") then "" else "⁽⁾")
-            | Const(c,Some p) -> c ^ (if (option "dont_show_priorities") then "" else exp_of_int p)
-            | Proj(d,None) -> "." ^ d ^  (if (option "dont_show_priorities") then "" else "⁽⁾")
-            | Proj(d,Some p) -> "." ^ d  ^ (if (option "dont_show_priorities") then "" else exp_of_int p)
+            | Const(c,p) -> c ^ (if not (option "show_priorities") then "" else string_of_priority p)
+            | Proj(d,p) -> "." ^ d ^  (if not (option "show_priorities") then "" else string_of_priority p)
             | App(Proj _ as v1,v2) -> (string_of_term_paren sp v2) ^ (string_of_special_term sp v1)
-            | App(App(Var("add"),v1),v2) when not (option "dont_show_nats") -> (string_of_special_term sp v1) ^ "+" ^ (string_of_term_paren sp v2)
+            | App(App(Var("add"),v1),v2) when (option "show_nats") -> (string_of_special_term sp v1) ^ "+" ^ (string_of_term_paren sp v2)
             | App(v1,v2) -> (string_of_special_term sp v1) ^ " " ^ (string_of_term_paren sp v2)
             | Special v -> sp v
         end

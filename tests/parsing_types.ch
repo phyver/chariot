@@ -1,4 +1,4 @@
-:set dont_show_priorities
+:set show_priorities false
 
 (* tests to check that types are parsed correctly *)
 

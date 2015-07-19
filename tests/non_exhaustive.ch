@@ -1,5 +1,5 @@
-:set continue_on_error
-:set dont_show_priorities
+:set continue_on_error true
+:set show_priorities false
 
 data nat where Zero : nat | Succ : nat -> nat
 
@@ -12,14 +12,14 @@ data list('x) where
     | Nil : list('x)
     | Cons : 'x -> list('x) -> list('x)
 
-:set dont_check_completeness
+:set check_completeness false
 
 val last [x] = x
   | last (x::xs) = last xs
 
 :show last
 
-:unset dont_check_completeness
+:set check_completeness true
 
 val last2 [x] = x
   | last2 (x::xs) = last2 xs

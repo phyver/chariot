@@ -1,5 +1,6 @@
 open Base
 open Misc
+open State
 
 (* check that all the type parameters of a definition are different *)
 let check_uniqueness_parameters params =
@@ -100,9 +101,9 @@ let process_type_defs (env:environment)
     in
 
     (* the real bloc number of this bunch of mutual type definitions *)
-    let n = if (env.current_type_bloc - n) mod 2 = 0
-            then env.current_type_bloc+2
-            else env.current_type_bloc+1
+    let n = if (current_state.current_type_bloc - n) mod 2 = 0
+            then current_state.current_type_bloc+2
+            else current_state.current_type_bloc+1
     in
 
     (* we check that all the new types are different *)
@@ -159,6 +160,6 @@ let process_type_defs (env:environment)
                             defs
     in
 
-    { env with  current_type_bloc = n;
-                types = types @ env.types;
+    current_state.current_type_bloc <- n;
+    { env with  types = types @ env.types;
                 constants = consts @ env.constants }

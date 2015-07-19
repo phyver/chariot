@@ -14,7 +14,7 @@ val g2 : nat -> list(list(list(nat)))
   | g2 x = []
 
 
-:set dont_show_lists
-:set dont_show_nats
+:set show_lists false
+:set show_nats false
 
 :show functions

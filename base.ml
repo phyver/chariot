@@ -46,9 +46,6 @@ type function_clause = pattern * term     (* clause of a function definition *)
 
 (* type for the environment *)
 type environment = {
-    current_type_bloc: int          (* counter for blocs of type definitions: odd for data and even for codata *) ;
-    current_function_bloc: int                                                         ;
-
     (* we keep the names of type arguments of a definition in the environment,
      * together with its bloc number and the list of its constants
      * (constructors/destrucors) *)
