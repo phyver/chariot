@@ -146,6 +146,7 @@ let merge_constraints cs1 cs2 =
  *  FIXME: gather all data types used during type inference
  *)
 let infer_type (env:environment)
+               (only_free_vars:bool)                            (* are non-free variables allowed? *)
                (v:term)
                (constraints:(var_name*type_expression) list)    (* constraints for the types of free variables *)
                (sigma:(type_name*type_expression) list)         (* all the type substitution that need to be applied *)
@@ -170,9 +171,12 @@ let infer_type (env:environment)
                     with Not_found ->
                         begin
                             try
-                                let t = get_function_type env x in
-                                let t = instantiate_type t in
-                                (t, constraints, sigma, datatypes)
+                                if (only_free_vars)
+                                then raise Not_found
+                                else
+                                    let t = get_function_type env x in
+                                    let t = instantiate_type t in
+                                    (t, constraints, sigma, datatypes)
                             with Not_found -> let t = TVar("type_"^x) in (t, add_constraint (x,t) constraints, sigma, datatypes)
                         end
                 end
@@ -227,7 +231,7 @@ let infer_type (env:environment)
 
 let infer_type_term env v =
     reset_fresh_variable_generator [];
-    let t,constraints,_,_ = infer_type env v [] [] [] in
+    let t,constraints,_,_ = infer_type env false v [] [] [] in
     t,constraints
 
 let infer_type_clause env (lhs_pattern:pattern) (rhs_def:term)
@@ -236,10 +240,10 @@ let infer_type_clause env (lhs_pattern:pattern) (rhs_def:term)
 
     (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
     reset_fresh_variable_generator [];
-    let infered_type_lhs, constraints_lhs,sigma,datatypes = infer_type env lhs_pattern [] [] [] in
+    let infered_type_lhs, constraints_lhs,sigma,datatypes = infer_type env true lhs_pattern [] [] [] in
 
     (* infer type of RHS *)
-    let infered_type_rhs, constraints,sigma,datatypes = infer_type env rhs_def constraints_lhs sigma datatypes in
+    let infered_type_rhs, constraints,sigma,datatypes = infer_type env false rhs_def constraints_lhs sigma datatypes in
 
     (* unify types of LHS and RHS *)
     let tau = unify_type_mgu infered_type_rhs infered_type_lhs in
