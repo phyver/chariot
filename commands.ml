@@ -12,7 +12,7 @@ open SizeChangeTermination
 (* TODO: put all of this in parser.mly *)
 (* commands *)
 type cmd =
-    | CmdTest of term*term*term*term
+    | CmdCompose of term*term*term*term
 
     | Eof
     | Nothing
@@ -140,7 +140,7 @@ let cmd_unify_term env pattern term =
 (*     debug "======================================================="; *)
 (*     print_newline() *)
 
-let cmd_test env l1 r1 l2 r2 =
+let cmd_compose env l1 r1 l2 r2 =
     debug "=======================================================";
     debug "composing";
     debug "             %s => %s" (string_of_term l1) (string_of_term r1);
@@ -155,7 +155,7 @@ let cmd_test env l1 r1 l2 r2 =
     debug "result";
     debug "             %s => %s" (string_of_approx_term l) (string_of_approx_term r);
     debug "";
-    let l,r = collapsed_compose 2 2 (l1,r1) (l2,r2) in
+    let l,r = collapsed_compose current_state.bound current_state.depth (l1,r1) (l2,r2) in
     debug "";
     debug "collapsed";
     debug "             %s => %s" (string_of_approx_term l) (string_of_approx_term r);

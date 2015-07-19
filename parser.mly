@@ -93,7 +93,7 @@ command:
     | CMDHELP                                           { CmdHelp }
     | CMDECHO string                                    { CmdEcho($2) }
 
-    | CMDTEST term COMMA term AND term COMMA term       { CmdTest($2,$4,$6,$8) }
+    | CMDTESTCOMPOSE lhs_term DOUBLEARROW rhs_term AND lhs_term DOUBLEARROW rhs_term       { CmdCompose($2,$4,$6,$8) }
 
 string:
     | IDL { $1 }
