@@ -1,38 +1,16 @@
 open Misc
 open Base
+open Pretty
 
+(* collapsing the weights inside a term *)
+let rec collapse_weight_in_term b u
+  = match u with
+        | Var _ | Const _ | Proj _ | Angel -> u
+        | App(u1,u2) -> App(collapse_weight_in_term b u1, collapse_weight_in_term b u2)
+        | Special(ApproxProj(p,w)) -> Special(ApproxProj(p, collapse_weight b w))
+        | Special(ApproxConst apps) -> Special(ApproxConst(List.map (function p,w,x -> p, collapse_weight b w,x) apps))
 
-
-(* let is_clause (lhs,rhs : sct_clause) : bool = *)
-
-(*     let rec is_constructor_pattern angel approx p = *)
-(*         match get_head p, get_args p with *)
-(*         | Var _,[] -> true *)
-(*         | Angel,[] -> angel *)
-(*         | Const(_,_),ps -> List.for_all (is_constructor_pattern angel approx) ps *)
-(*         | Special s,_ -> approx s *)
-(*         | _,_ ->  false *)
-(*     in *)
-
-(*     let is_destructor approx p = match p with *)
-(*         | Proj _ -> true *)
-(*         | Special s -> approx s *)
-(*         | _ -> false *)
-(*     in *)
-
-(*     let check_lhs = List.for_all *)
-(*                         (fun p -> is_constructor_pattern false (fun _ -> false) p *)
-(*                                || is_destructor (fun _ -> false) p) *)
-(*                         lhs *)
-(*     in *)
-(*     let check_rhs = List.for_all *)
-(*                         (fun p -> is_constructor_pattern true (function ApproxProj _ -> false | ApproxConst _ -> true) p *)
-(*                                || is_destructor (function ApproxProj _ -> true | ApproxConst _ -> false) p) *)
-(*                         rhs *)
-(*     in *)
-(*     check_lhs && check_rhs *)
-
-
+(* misc operations on approximations *)
 let add_approx a1 a2 = match a1,a2 with
     | (None,w1) , (None,w2) -> (None, add_weight w1 w2)
     | (None,w) , _ | _,(None,w) -> (None, w)
@@ -53,7 +31,6 @@ let simplify_approx aps =
     in
     simplify_aux aps
 
-
 let merge_approx as1 as2 =
     let as1 = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) as1 in
     let as2 = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) as2 in
@@ -68,26 +45,34 @@ let merge_approx as1 as2 =
     merge_aux as1 as2
 
 
-let collapse_rhs depth (rhs:sct_rhs) : sct_rhs =
+(* collapse all the constructors from a contructorn pattern with approximations *)
+let rec collapse0 p = match get_head p,get_args p with
+    | Var x,[] -> [ (Some 0, Num 0, x) ]
+    | Angel,[] -> assert false (* FIXME *)
+    | Special (ApproxConst ap),[] -> ap
+    | Const(_,prio),ps ->
+        begin
+            let approx_s = List.map collapse0 ps in
+            let approx = List.fold_left (fun as1 as2 -> merge_approx as1 (simplify_approx as2)) [] approx_s in  (* NOTE: not necessary to simplify as1: it is the recursive call and is simplified *)
+            List.map (function (p,w,x) -> let p,w = add_approx (prio,Num 1) (p,w) in (p,w,x)) approx
+        end
+    | Proj _,_ | Special (ApproxProj _),[] -> assert false
+    | _,_ -> assert false
 
-    let rec collapse0 p = match get_head p,get_args p with
-        | Var x,[] -> [ (Some 0, Num 0, x) ]
-        | Angel,[] -> assert false (* FIXME *)
-        | Special (ApproxConst ap),[] -> ap
-        | Const(_,prio),ps ->
-            begin
-                let approx_s = List.map collapse0 ps in
-                let approx = List.fold_left (fun as1 as2 -> merge_approx as1 (simplify_approx as2)) [] approx_s in  (* NOTE: not necessary to simplify as1: it is the recursive call and is simplified *)
-                List.map (function (p,w,x) -> let p,w = add_approx (prio,Num 1) (p,w) in (p,w,x)) approx
-            end
-        | Proj _,_ | Special (ApproxProj _),[] -> assert false
+let collapse_pattern (depth:int) (pattern:approx_term) : approx_term
+  =
+    (* count the number of destructors in a definition pattern *)
+    let rec count_proj p = match get_head p, get_args p with
+        | Var _,_ -> 0
+        | Proj _,p::_ -> 1 + (count_proj p)
+        | Special (ApproxProj _),p::_ -> 1 + (count_proj p)
         | _,_ -> assert false
     in
 
+    (* collapse the constructors at given depth from a constructor pattern with approximations *)
     let rec collapse_const d p =
         match get_head p,get_args p with
             | Var _,[] | Angel,[] | Special (ApproxConst _),[] -> p
-            | Proj _,_ | Special (ApproxProj _),_ -> assert false
             | Const(c,prio),ps ->
                 if d=0
                 then Special (ApproxConst (collapse0 p))
@@ -96,18 +81,12 @@ let collapse_rhs depth (rhs:sct_rhs) : sct_rhs =
 
     in
 
-    let rec count_proj p = match get_head p, get_args p with
-        | Var _,_ -> 0
-        | Proj _,p::_ -> 1 + (count_proj p)
-        | Special (ApproxProj _),p::_ -> 1 + (count_proj p)
-        | _,_ -> assert false
-    in
-
-    let rec collapse_rhs_aux dp p = match get_head p, get_args p with
+    (* collapse the pattern of a definition at a given depth *)
+    let rec collapse dp p = match get_head p, get_args p with
         | Proj _,[] -> assert false
         | Proj(_,prio), p::_ when dp>0->
             begin
-                let p = collapse_rhs_aux (dp-1) p in
+                let p = collapse (dp-1) p in
                 match get_head p, get_args p with
                     | Special(ApproxProj(_prio,_w)),ps ->
                         let prio,w = add_approx (_prio,_w) (prio,Num 1) in
@@ -115,14 +94,15 @@ let collapse_rhs depth (rhs:sct_rhs) : sct_rhs =
                     | h,ps -> App(Special(ApproxProj(prio,Num 1)), app h ps)
             end
         | Proj(d,prio),p::ps (*when pd=0*) ->
-                app (Proj(d,prio)) ((collapse_rhs_aux dp p)::List.map (collapse_const depth) ps)
+                app (Proj(d,prio)) ((collapse dp p)::List.map (collapse_const depth) ps)
         | Special (ApproxProj _),[] -> p
         | Special (ApproxProj _),_::_ -> assert false
         | Var f,ps -> app (Var f) (List.map (collapse_const depth) ps)
         | (Angel | Const _ | App _ | Special (ApproxConst _)),ps -> assert false
     in
 
-    collapse_rhs_aux ((count_proj rhs)-depth) rhs
+    collapse ((count_proj pattern)-depth) pattern
+
 
 
 (* composition:
@@ -137,46 +117,217 @@ let collapse_rhs depth (rhs:sct_rhs) : sct_rhs =
  * p1 => <-1> x + <1> y  o  t => d2[t1:=<-1>t, t2:=<-1>t]   =   ...
  *)
 
+let rec subst_approx_term_aux sigma acc apps
+  = match apps with
+        | [] -> acc
+        | ((prio,weight,x) as a)::apps ->
+            try
+                let apps2 = collapse0 (List.assoc x sigma) in
+                let apps2 = List.map (function p,w,y -> let p,w = add_approx (p,w) (prio,weight) in (p,w,y)) apps2 in
+                merge_approx apps2 (apps@acc)
+            with Not_found -> subst_approx_term_aux sigma (a::acc) apps
 
-let collapse_arg (v:term)
- (* : (var_name * approx_term) list *)
- =
-    let add priority = function
-        | Special l -> Special (List.map (function w,p,x -> add_weight_int w 1, max p priority, x) l)
+let rec subst_approx_term sigma v
+  = match v with
+        | Var x -> (try List.assoc x sigma with Not_found -> Var x)
+        | (Angel|Const _|Proj _|Special(ApproxProj _)) as v -> v
+        | App(v1,v2) -> App(subst_approx_term sigma v1, subst_approx_term sigma v2)
+        | Special(ApproxConst apps) -> Special(ApproxConst (subst_approx_term_aux sigma [] apps))
+
+
+(* normalize a clause by moving all the approximations from the LHS to the RHS:
+ *    A  (<1>x+<2>y) z  =>  B  x y z
+ * is transformed into
+ *    A  a  b  =>  B  <-1>a  <-2> a b
+ *)
+
+let normalize_sct_clause (lhs,rhs : sct_clause)
+  : sct_clause
+  =
+      (* debug "normalizing %s => %s" (string_of_approx_term lhs) (string_of_approx_term rhs); *)
+    let n = ref 0
+    in
+
+    let new_var () = incr n; "x"^sub_of_int !n
+    in
+
+    let add_approx_res app res =
+        match app, res with
+            | Some(prio,w), App (Special(ApproxProj(_prio,_w)), res) ->
+                let prio,w = add_approx (_prio,_w) (prio,w) in
+                App (Special(ApproxProj(prio,w)),res)
+            | Some(prio,w), res ->
+                App (Special(ApproxProj(prio,w)),res)
+            | None, res -> res
+    in
+
+    let rec process_pattern p =
+        match get_head p, get_args p with
+            | Var x,[] -> let y = new_var() in (Var y, [x,Var y])
+            | Const(c,p), args ->
+                let tmp = List.map process_pattern args in
+                let sigma = List.concat (List.map snd tmp) in
+                let args = List.map fst tmp in
+                (app (Const(c,p)) args , sigma)
+            | Special(ApproxConst apps),[] ->
+                let x = new_var() in
+                (Var x, List.map (function (p,w,y) -> (y,Special(ApproxConst [p, op_weight w,x]))) apps)
+            | _ -> assert false
+    in
+
+    let rec process_lhs lhs =
+        match get_head lhs, get_args lhs with
+            | Var f,args ->
+                let tmp = List.map process_pattern args in
+                let sigma = List.concat (List.map snd tmp) in
+                let args = List.map fst tmp in
+                (None, app (Var f) args, sigma)
+            | Proj(d,p),lhs::args ->
+                begin
+                    match process_lhs lhs with
+                        | None, lhs, tau ->
+                            let tmp = List.map process_pattern args in
+                            let sigma = List.concat (List.map snd tmp) in
+                            let args = List.map fst tmp in
+                            (None, app (Proj(d,p)) (lhs::args), tau@sigma)
+                        | _ -> assert false
+                end
+            | Special(ApproxProj(p,w)),[lhs] ->
+                begin
+                    match process_lhs lhs with
+                        | None, lhs, sigma -> Some (p, op_weight w) , lhs, sigma
+                        | _ -> assert false
+
+                end
+            | _,_ -> assert false
+    in
+
+    let app_res, lhs, sigma = process_lhs lhs
+    in
+
+    let rhs = add_approx_res app_res (subst_approx_term sigma rhs)
+    in
+
+      (* debug "obtained %s => %s" (string_of_approx_term lhs) (string_of_approx_term rhs); *)
+    lhs,rhs
+
+
+let rec rename_var_aux x v
+    = match v with
+        | Var y -> Var (y^x)
+        | App(v1,v2) -> App(rename_var_aux x v1, rename_var_aux x v2)
+        | Const _ | Proj _ | Angel -> v
+        | Special(ApproxConst apps) -> Special(ApproxConst (List.map (function p,w,y -> p,w,x^y) apps))
         | _ -> assert false
+
+let rec rename_var x v
+  = match get_head v,get_args v with
+        | Var f,args -> app (Var f) (List.map (rename_var_aux x) args)
+        | Proj(d,p),v::args -> app (Proj(d,p)) ((rename_var x v)::(List.map (rename_var_aux x) args))
+        | Special(ApproxProj(p,w)),[v] -> App(Special(ApproxProj(p,w)), rename_var x v)
+        | _ -> assert false
+
+
+
+
+(* unify the rhs of a clause with the lhs of another *)
+let unify (rhs:approx_term) (lhs:approx_term)
+  :   (var_name * approx_term) list     (* the substitution concerning variables in rhs *)
+    * (var_name * approx_term) list     (* the substitution concerning variables in lhs *)
+    * approx_term list                  (* the arguments that were in lhs but not in rhs *)
+    * approx_term list                  (* the arguments that were in rhs but not in lhs *)  (* NOTE: at most one of those lists is non-empty *)
+  =
+
+    let rec explode_pattern pattern acc
+      = match pattern with
+            | (Var f) -> f,acc
+            | App((Special (ApproxProj _) | Proj _) as proj ,u) -> explode_pattern u (proj::acc)
+            | App(u1,u2) -> explode_pattern u1 (u2::acc)
+            | _ -> assert false
     in
 
-    let rec collapse_arg_aux v = match get_head v,get_args v with
-        | Const(c,Some p),args | Proj(c,Some p),args ->
-            let sigma = List.concat (List.map collapse_arg_aux args) in
-            List.map (second (add p)) sigma
-        | Const(c,None),_ | Proj(c,None),_ -> error "missing priority from constant"
-        | Var(x),[] -> [(x, Special [Num 0,0,x])]
-        | Var(x),_ -> error "applications of variables shouldn't appear in SCT patterns"
-        | Angel,_ -> error "⊤ shouldn't appear in pattern"
-        | Special v,_ -> v.bot
-        | App _,_ -> assert false
+    let f_r,patterns_r = explode_pattern rhs [] in
+    let f_l,patterns_l = explode_pattern lhs [] in
+    assert (f_r = f_l);
+
+    let rec unify_aux (ps_r:approx_term list) (ps_l:approx_term list)
+                      (sigma_r:(var_name*approx_term) list) (sigma_l:(var_name*approx_term) list)
+      : (var_name*approx_term) list *  (var_name*approx_term) list * approx_term list * approx_term list
+      = match ps_r,ps_l with
+            | [],[] -> sigma_r,sigma_l,[],[]
+
+            | u_r::ps_r,u_l::ps_l when u_r=u_l -> unify_aux ps_r ps_l sigma_r sigma_l
+
+            | App(u_r,v_r)::ps_r,App(u_l,v_l)::ps_l -> unify_aux (u_r::v_r::ps_r) (u_l::v_l::ps_l) sigma_r sigma_l
+
+            | u_r::ps_r,Var(x_l)::ps_l -> unify_aux ps_r (List.map (subst_approx_term [x_l,u_r]) ps_l) sigma_r ((x_l,u_r)::(List.map (second (subst_approx_term [x_l,u_r])) sigma_l))
+            | Var(x_r)::ps_r,u_l::ps_l -> unify_aux (List.map (subst_approx_term [x_r,u_l]) ps_r) ps_l ((x_r,u_l)::(List.map (second (subst_approx_term [x_r,u_l])) sigma_r)) sigma_l
+
+            | Special(ApproxConst apps_r)::ps_r,u_l::ps_l ->
+                let apps_l = collapse0 u_l in
+                let sigma = List.map (function p,w,x -> (x,Special(ApproxConst(List.map (function _p,_w,_x -> let p,w = add_approx (_p,_w) (p, op_weight w) in p,w,_x) apps_r))) ) apps_l in
+                unify_aux ps_r ps_l sigma_r (sigma @ (List.map (second (subst_approx_term sigma)) sigma_l))
+
+            | [Special(ApproxProj(p,w))],ps_l ->
+                let tmp = List.filter (function Proj _ | Special(ApproxProj _) -> true | _ -> false) ps_l in
+                let tmp = List.map (function Proj(_,p) -> (p,Num 1) | Special(ApproxProj(p,w)) -> (p,w) | _ -> assert false) tmp in
+                let p,w = List.fold_left (fun ap1 ap2 -> add_approx ap1 ap2) (p,op_weight w) tmp in
+                sigma_r,sigma_l,[],[Special(ApproxProj(p,w))]
+
+            | ps_r,[] -> sigma_r,sigma_l,ps_r,[]
+            | [],ps_l -> sigma_r,sigma_l,[],ps_l
+
+            | ps_r,[Special(ApproxProj(p,w))] -> assert false
+            | u_r::ps_r,Special(ApproxConst apps_l)::ps_l -> assert false
+
+            | Special(ApproxProj(p,w))::_,_
+            | _,Special(ApproxProj(p,w))::_ -> assert false
+
+            | _,_ -> raise (UnificationError ("cannot unify " ^ (string_of_list " " string_of_approx_term ps_r) ^ " and " ^ (string_of_list " " string_of_approx_term ps_l)))
+
     in
 
-    collapse_arg_aux v
+    unify_aux patterns_r patterns_l [] []
+
+let compose (l1,r1:sct_clause) (l2,r2:sct_clause)
+  : sct_clause
+  =
+    let rec app_all u args =
+        match args with
+            | [] -> u
+            | Proj(d,p)::args -> app_all (App( Proj(d,p) , u)) args
+            | [Special(ApproxProj(p,w))] -> App( Special(ApproxProj(p,w)) , u )
+            | Special(ApproxProj _)::_ -> assert false
+            | arg::args -> app_all (App(u,arg)) args
+    in
+
+    let l1,r1 = rename_var "₁" l1, rename_var "₁" r1 in
+    let l2,r2 = rename_var "₂" l2, rename_var "₂" r2 in
+
+    try
+        let sigma1,sigma2,context1,context2 = unify r1 l2 in
+debug "sigma1: %s" (string_of_list " , " (function x,t -> x ^ ":=" ^ (string_of_approx_term t)) sigma1);
+debug "sigma2: %s" (string_of_list " , " (function x,t -> x ^ ":=" ^ (string_of_approx_term t)) sigma2);
+        let l = subst_approx_term sigma1 l1 in
+        let r = subst_approx_term sigma2 r2 in
+(* debug "obtained %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
+        normalize_sct_clause (app_all l context2 , app_all r context1)
+    with
+        UnificationError err -> error ("impossible composition: " ^ err)
+
+let collapsed_compose b d c1 c2
+  = let l,r = compose c1 c2 in
+    let l = collapse_pattern d l in
+    let r = collapse_pattern d r in
+    let l,r = normalize_sct_clause (l,r) in
+    let l = collapse_weight_in_term b l in
+    let r = collapse_weight_in_term b r in
+    l,r
+    
 
 
-(* let unify (pattern:term) (def:approx_term) *)
-(*  : (var_name * approx_term) list * (var_name * term) list *)
-(*  = *)
-(*     let rec unify_aux (eqs:(term*approx_term) list) acc = *)
-(*         match eqs with *)
-(*             | [] -> acc *)
-(*             | (s,t)::eqs when s=t -> unify_aux eqs acc *)
-(*             | (App(u1,v1),App(u2,v2))::eqs -> unify_aux ((u1,u2)::(v1,v2)::eqs) acc *)
-(*             | (Var _f, _)::_ when _f = f -> unificationError "cannot unify the function name" *)
-(*             | (Var x, v)::eqs -> *)
-(*                     let eqs = List.map (function u1,u2 -> (subst_term [x,v] u1, subst_term [x,v] u2)) eqs in *)
-(*                     let acc = List.map (function _x,_u -> (_x, subst_term [x,v] _u)) acc in *)
-(*                     unify_aux eqs ((x,v)::acc) *)
-(*             | (Special v,_)::_ | (_,Special v)::_ -> v.bot *)
-(*             | _ -> unificationError "cannot unify" *)
 
-(*     in *)
-(*     let sigma = unify_aux [pattern,v] [] in *)
-(*     subst_term sigma def *)
+
+
+
+

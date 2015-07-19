@@ -184,6 +184,11 @@ let add_weight w1 w2 = match w1,w2 with
 
 let add_weight_int w n = add_weight w (Num n)
 
+let op_weight w =
+    match w with
+        | Infty -> raise (Invalid_argument "op_weight")
+        | Num n -> Num (-n)
+
 let collapse_weight bound w = match w with
     | Infty -> Infty
     | Num w when bound<=w -> Infty
@@ -198,14 +203,14 @@ let collapse_weight bound w = match w with
  *  - each arg_i i either a constructor pattern (with possible approximations) or a destructor
  *)
 type approximation = ApproxProj of priority * weight | ApproxConst of (priority * weight * var_name) list
-type sct_rhs = approximation special_term
-type sct_clause = pattern * sct_rhs
+type approx_term = approximation special_term
+type sct_clause = approx_term * approx_term
 
 
-let rec pattern_to_sct_rhs = function
+let rec pattern_to_approx_term = function
     | Var(x) -> Var(x)
     | Angel -> Angel
     | Const(c,p) -> Const(c,p)
     | Proj(d,p) -> Proj(d,p)
-    | App(v1,v2) -> App(pattern_to_sct_rhs v1, pattern_to_sct_rhs v2)
+    | App(v1,v2) -> App(pattern_to_approx_term v1, pattern_to_approx_term v2)
     | Special s -> s.bot

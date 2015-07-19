@@ -12,7 +12,7 @@ open SizeChangeTermination
 (* TODO: put all of this in parser.mly *)
 (* commands *)
 type cmd =
-    | CmdTest of term*int
+    | CmdTest of term*term*term*term
 
     | Eof
     | Nothing
@@ -130,12 +130,61 @@ let cmd_unify_term env pattern term =
     debug "=======================================================";
     print_newline()
 
-let cmd_test env pattern depth =
+(* let cmd_test env pattern depth = *)
+(*     debug "======================================================="; *)
+(*     debug "collapsing pattern   %s" (string_of_term pattern); *)
+(*     debug "          to depth   %d" depth; *)
+(*     let pattern = pattern_to_approx_term pattern in *)
+(*     let pattern = collapse_pattern depth pattern in *)
+(*     debug "          result   %s" (string_of_approx_term pattern); *)
+(*     debug "======================================================="; *)
+(*     print_newline() *)
+
+let cmd_test env l1 r1 l2 r2 =
     debug "=======================================================";
-    debug "collapsing pattern   %s" (string_of_term pattern);
-    debug "          to depth   %d" depth;
-    let pattern = pattern_to_sct_rhs pattern in
-    let pattern = collapse_rhs depth pattern in
-    debug "          result   %s" (string_of_approx_term pattern);
+    debug "composing";
+    debug "             %s => %s" (string_of_term l1) (string_of_term r1);
+    debug "and";
+    debug "             %s => %s" (string_of_term l2) (string_of_term r2);
+    let l1 = pattern_to_approx_term l1 in
+    let r1 = pattern_to_approx_term r1 in
+    let l2 = pattern_to_approx_term l2 in
+    let r2 = pattern_to_approx_term r2 in
+    let l,r = compose (l1,r1) (l2,r2) in
+    debug "";
+    debug "result";
+    debug "             %s => %s" (string_of_approx_term l) (string_of_approx_term r);
+    debug "";
+    let l,r = collapsed_compose 2 2 (l1,r1) (l2,r2) in
+    debug "";
+    debug "collapsed";
+    debug "             %s => %s" (string_of_approx_term l) (string_of_approx_term r);
+    debug "";
+    (* let l1 = collapse_pattern 0 l1 in *)
+    (* let l2 = collapse_pattern 0 l2 in *)
+    (* let r1 = collapse_pattern 0 r1 in *)
+    (* let r2 = collapse_pattern 0 r2 in *)
+    (* let l1,r1 = normalize_sct_clause (l1,r1) in *)
+    (* let l2,r2 = normalize_sct_clause (l2,r2) in *)
+    (* debug "======================================================="; *)
+    (* debug "composing"; *)
+    (* debug "             %s => %s" (string_of_approx_term l1) (string_of_approx_term r1); *)
+    (* debug "and"; *)
+    (* debug "             %s => %s" (string_of_approx_term l2) (string_of_approx_term r2); *)
+    (* let l,r = compose (l1,r1) (l2,r2) in *)
+    (* debug ""; *)
+    (* debug "result"; *)
+    (* debug "             %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
+    (* debug ""; *)
+
+
+    (* let l = collapse_pattern 0 l in *)
+    (* let r = collapse_pattern 0 r in *)
+    (* debug "after collapse at 0"; *)
+    (* debug "             %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
+    (* let l,r = normalize_sct_clause (l,r) in *)
+    (* debug "after normalizing:"; *)
+    (* debug "             %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
+
     debug "=======================================================";
     print_newline()

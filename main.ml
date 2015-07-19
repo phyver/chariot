@@ -68,7 +68,7 @@ let explore_loop env t
     with Exit -> msg "end of explore mode"
 
 let process_statement s = match s with
-    | CmdTest(v,d) -> ()
+    | CmdTest(u1,u2,u3,u4) -> cmd_test current_state.env u1 u2 u3 u4
 
     | Eof -> raise Exit
     | CmdQuit -> raise Exit
