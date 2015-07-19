@@ -2,6 +2,15 @@
 
 INFILE=$1
 EXT=.ch
+
+case $INFILE in
+    *$EXT ) ;;
+    *)
+    echo "ERROR... bad extension"
+    exit 1
+    ;;
+esac
+
 OUTFILE=${INFILE%$EXT}.out
 
 TMPFILE=${INFILE%$EXT}.tmpout
@@ -55,7 +64,7 @@ else
     cat $TMPFILE
     while true
     do
-        read -p "[Yn] " R
+        read -p "[Ync] " R
         case $R in
             y | Y | "")
                 mv $TMPFILE $OUTFILE
@@ -66,6 +75,12 @@ else
             n | N )
                 echo "no result saved"
                 EXIT_STATUS=1
+                break
+            ;;
+            c | C )
+                echo "no result saved"
+                echo "continue anyway"
+                EXIT_STATUS=0
                 break
             ;;
             *)
