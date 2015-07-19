@@ -1,0 +1,66 @@
+(* ===  functions in environment  =================== *)
+val
+   k : 'a → 'b → 'a
+    | k x y = x
+
+val
+   s : ('a → 'b → 'c) → ('a → 'b) → 'a → 'c
+    | s x y z = x z (y z)
+
+val
+   i : 'a → 'a
+    | i = s k k
+
+(* ================================================== *)
+
+(* ===  functions in environment  =================== *)
+val
+   k : 'a → 'b → 'a
+    | k x y = x
+
+val
+   s : ('a → 'b → 'c) → ('a → 'b) → 'a → 'c
+    | s x y z = x z (y z)
+
+val
+   i : 'a → 'a
+    | i = s k k
+
+val
+   a : ('a → 'b → 'c) → ('a → 'd → 'b) → 'a → 'd → 'c
+    | a i j f x = i f (j f x)
+
+val
+   m : ('a → 'b) → ('c → 'a) → 'c → 'b
+    | m i j f = i (j f)
+
+val
+   e : 'a → ('a → 'b) → 'b
+    | e i j = j i
+
+val
+   n : 'a → 'b → 'b
+    | n f x = x
+
+(* ================================================== *)
+
+……… term: one Succ⁼ 0
+……… result: 1
+……… of type: nat
+
+……… term: two Succ⁼ 0
+……… result: 2
+……… of type: nat
+
+……… term: three Succ⁼ 0
+……… result: 3
+……… of type: nat
+
+……… term: four Succ⁼ 0
+……… result: 4
+……… of type: nat
+
+……… term: nine Succ⁼ 0
+……… result: 9
+……… of type: nat
+
