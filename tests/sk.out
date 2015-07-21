@@ -44,23 +44,23 @@ val
 
 (* ================================================== *)
 
-……… term: one Succ⁼ 0
-……… result: 1
-……… of type: nat
+-- term: one Succ⁼ 0
+-- result: 1
+-- of type: nat
 
-……… term: two Succ⁼ 0
-……… result: 2
-……… of type: nat
+-- term: two Succ⁼ 0
+-- result: 2
+-- of type: nat
 
-……… term: three Succ⁼ 0
-……… result: 3
-……… of type: nat
+-- term: three Succ⁼ 0
+-- result: 3
+-- of type: nat
 
-……… term: four Succ⁼ 0
-……… result: 4
-……… of type: nat
+-- term: four Succ⁼ 0
+-- result: 4
+-- of type: nat
 
-……… term: nine Succ⁼ 0
-……… result: 9
-……… of type: nat
+-- term: nine Succ⁼ 0
+-- result: 9
+-- of type: nat
 

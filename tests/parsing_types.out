@@ -26,20 +26,20 @@ data
     | Succ5 : nat5 → nat5
 
 codata
-  stream(x) where
+  stream('x) where
     | Head : stream('x) → 'x
     | Tail : stream('x) → stream('x)
 
 codata
-  stream2(a) where
+  stream2('a) where
     | Head2 : stream2('a) → 'a
     | Tail2 : stream2('a) → stream('a)
 
 data
-  rtree(n) where
+  rtree('n) where
     | Node : 'n → sons('n) → rtree('n)
 and
-  sons(n) where
+  sons('n) where
     | Nil : sons('n)
     | Cons : rtree('n) → sons('n) → sons('n)
 

@@ -1,7 +1,7 @@
-*** function f is not complete
+-- ** function f is not complete
 val
    last : list('a) → 'a
     | last [x] = x
     | last (x::xs) = last xs
 
-*** function last2 is not complete
+-- ** function last2 is not complete

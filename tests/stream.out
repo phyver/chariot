@@ -1,12 +1,12 @@
-……… term: map double (arith 3 3)
-……… result: map double (arith 3 3)
-……… of type: stream(nat)
+-- term: map double (arith 3 3)
+-- result: map double (arith 3 3)
+-- of type: stream(nat)
 
-……… term: get_nth (mult 3 3) (map double (arith 3 3))
-……… result: 60
-……… of type: nat
+-- term: get_nth (mult 3 3) (map double (arith 3 3))
+-- result: 60
+-- of type: nat
 
-……… term: get_nth (4+7) (map double (fib 0 1))
-……… result: 178
-……… of type: nat
+-- term: get_nth (4+7) (map double (fib 0 1))
+-- result: 178
+-- of type: nat
 
