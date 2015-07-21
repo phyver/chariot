@@ -121,10 +121,13 @@ let print_prefix prefix fmt
     Printf.ksprintf print fmt
 
 let debug fmt
-  = print_prefix "=== " fmt
+  = print_prefix "-- == " fmt
+
 let msg fmt
-  = print_prefix "……… " fmt
+  = print_prefix "-- " fmt
+
 let warning fmt
-  = print_prefix "!!! " fmt
+  = print_prefix "-- !! " fmt
+
 let errmsg fmt
-  = print_prefix "*** " fmt
+  = print_prefix "-- ** " fmt

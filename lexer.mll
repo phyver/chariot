@@ -44,6 +44,7 @@ rule token = parse
     | '.'               { DOT }
     | '+'               { PLUS }
     | '-'               { MINUS }
+    | '*'               { STAR }
     | "\n\n"            { BLANKLINE }
     | "data"            { DATA }
     | "codata"          { CODATA }
@@ -65,6 +66,8 @@ rule token = parse
     | [' ' '\n' '\t']   { token lexbuf }
     | eof               { EOF }
     | "(*"              { comments 0 lexbuf }
+    | "--" [^ '\n']*    { token lexbuf }
+
 and comments level = parse
     | "(*"              { comments (level+1) lexbuf }
     | "*)"              { if level = 0 then token lexbuf else comments (level-1) lexbuf }

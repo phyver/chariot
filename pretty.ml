@@ -82,7 +82,7 @@ and
             | Const(c,p) -> c ^ (if not (option "show_priorities") then "" else string_of_priority p)
             | Proj(d,p) -> "." ^ d ^  (if not (option "show_priorities") then "" else string_of_priority p)
             | App(Proj _ as v1,v2) -> (string_of_term_paren sp v2) ^ (string_of_special_term sp v1)
-            | App(App(Var("add"),v1),v2) when (option "show_nats") -> (string_of_special_term sp v1) ^ "+" ^ (string_of_term_paren sp v2)
+            | App(App(Var("add"),v1),v2) when (option "show_nats") -> (string_of_special_term sp v1) ^ "+" ^ (string_of_term_paren sp v2)   (* TODO: don't show add as + in pattern *)
             | App(v1,v2) -> (string_of_special_term sp v1) ^ " " ^ (string_of_term_paren sp v2)
             | Special v -> sp v
         end
@@ -95,7 +95,7 @@ let print_term t = print_string (string_of_term t)
 let show_data_type env tname params consts =
     print_string "  ";
     print_string tname;
-    print_list "" "(" "," ")" print_string params;
+    print_list "" "(" "," ")" (fun x -> print_string ("'" ^ x)) params;
     print_string " where";
     print_list "\n"
                "\n    | " "\n    | " "\n"
