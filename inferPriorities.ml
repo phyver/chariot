@@ -223,10 +223,10 @@ let infer_priorities (env:environment)
 
         (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
         reset_fresh_variable_generator (List.map snd functions_types);
-        let infered_type_lhs, constraints_lhs,sigma,datatypes = infer_type env true pattern functions_types [] [] in
+        let infered_type_lhs, constraints_lhs,sigma,datatypes = infer_type { env with functions=[] } pattern functions_types [] [] in
 
         (* infer type of RHS *)
-        let infered_type_rhs, constraints,sigma,datatypes = infer_type env false def constraints_lhs sigma datatypes in
+        let infered_type_rhs, constraints,sigma,datatypes = infer_type env def constraints_lhs sigma datatypes in
 
         let tau = unify_type_mgu infered_type_rhs infered_type_lhs in
         let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
