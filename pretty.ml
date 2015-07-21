@@ -64,9 +64,20 @@ and
                               else String.concat "::" (List.map (string_of_term_paren sp) (List.rev l)) ^ "::" ^ (string_of_term_paren sp v)
 
 and
+  string_of_term_tuple (sp:'a -> string) (u:'a special_term) =
+    match get_head u, get_args u with
+        | Const(c,p), args when Str.string_match (Str.regexp "Prod_\\(0\\|[1-9][0-9]*\\)") c 0 ->
+                let n = int_of_string (String.sub c 5 ((String.length c) - 5)) in
+                if List.length args = n
+                then ("(" ^ (string_of_list ", " (string_of_special_term sp) args) ^ ")")
+                else raise (Invalid_argument "string_of_term_tuple")
+        | _ -> raise (Invalid_argument "string_of_term_tuple")
+
+and
   string_of_term_paren (sp:'a -> string) (v:'a special_term) =
     try string_of_term_int sp true v with Invalid_argument "string_of_term_int" ->
     try string_of_term_list sp true v with Invalid_argument "string_of_term_list" ->
+    try string_of_term_tuple sp v with Invalid_argument "string_of_term_tuple" ->
         if is_atomic v
         then string_of_special_term sp v
         else ("(" ^ (string_of_special_term sp v) ^ ")")
@@ -75,6 +86,7 @@ and
   string_of_special_term (sp:'a -> string) (v:'a special_term) =
     try string_of_term_int sp false v with Invalid_argument "string_of_term_int" ->
     try string_of_term_list sp false v with Invalid_argument "string_of_term_list" ->
+    try string_of_term_tuple sp v with Invalid_argument "string_of_term_tuple" ->
         begin
         match v with
             | Angel -> "⊤"

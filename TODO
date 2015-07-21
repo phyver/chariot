@@ -1,9 +1,3 @@
-allow * for product of types
-  t1 * t2 * t3 => prod_3(t1,t2,t3)
-and tuples in terms
-  () => Prod_0
-  (v1,v2,v3) => Prod_3 v1 v2 v3
-
 pygmentize / highlight to get colors 
 
 allow "{ proj1 = u1 ; ... ; projn = un }" in terms and patterns (=> lexer, parser, term, ...)

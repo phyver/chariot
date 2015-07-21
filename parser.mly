@@ -17,6 +17,15 @@ let rec list_to_term l u =
 let dummy_nb = ref 0
 
 let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb))
+
+let mk_product l =
+    let n = List.length l in
+    Data("prod_" ^ (string_of_int n), l)
+
+let mk_tuple l =
+    let n = List.length l in
+    app (Const("Prod_" ^ (string_of_int n),None)) l
+
 %}
 
 %token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS MINUS STAR
@@ -139,13 +148,25 @@ consts_type:
     | /* nothing */         { [] }
     | PIPE IDU consts_type  { $2::$3 }
 
-type_expression:
+
+atomic_type:
+    | LPAR type_expression RPAR                     { $2 }
     | TVAR                                          { TVar($1) }
     | IDL                                           { Data($1, []) }
     | IDL LPAR RPAR                                 { Data($1, []) }
     | IDL LPAR type_expression_args RPAR            { Data($1,$3) }
-    | type_expression ARROW type_expression         { Arrow($1, $3) }
-    | LPAR type_expression RPAR                     { $2 }
+
+type_expression:
+    | atomic_type ARROW type_expression             { Arrow($1, $3) }
+    | product_type ARROW type_expression            { Arrow($1, $3) }
+    | atomic_type                                   { $1 }
+    | product_type                                  { $1 }
+
+product_type:
+    | atomic_type product_type_aux                  { mk_product ($1::$2) }
+product_type_aux:
+    | STAR atomic_type                              { [$2] }
+    | STAR atomic_type product_type_aux             { $2::$3 }
 
 type_expression_args:
     | type_expression                               { [$1] }
@@ -189,6 +210,15 @@ atomic_term:
     | INT                       { int_to_term $1 (Const("Zero",None)) }
     | term_list                 { list_to_term (List.rev $1) (Const("Nil",None)) }
     | atomic_term DOUBLECOLON atomic_term       { App(App(Const("Cons",None),$1),$3) }
+    | tuple                     { $1 }
+
+tuple:
+    | LPAR RPAR                         { mk_tuple [] }
+    | LPAR term tuple_aux RPAR          { mk_tuple ($2::$3) }
+tuple_aux:
+    | COMMA term                        { [$2] }
+    | COMMA term tuple_aux              { $2::$3 }
+
 
 term_list:
     | LSQBRAC term_list_inside RSQBRAC  { $2 } /* FIXME: check priorities... */
@@ -214,6 +244,7 @@ atomic_pattern:
     | pattern_list          { list_to_term (List.rev $1) (Const("Nil",None)) }
     | atomic_pattern DOUBLECOLON atomic_pattern       { App(App(Const("Cons",None),$1),$3) }
     | atomic_pattern PLUS INT      { int_to_term $3 $1 }
+    | pattern_tuple         { $1 }
 
 pattern:
     | atomic_pattern            { $1 }
@@ -227,4 +258,11 @@ pattern_list:
 pattern_list_inside:
     | pattern                              { [$1] }
     | pattern SEMICOLON pattern_list_inside   { $1::$3 }
+
+pattern_tuple:
+    | LPAR RPAR                         { mk_tuple [] }
+    | LPAR pattern pattern_tuple_aux RPAR          { mk_tuple ($2::$3) }
+pattern_tuple_aux:
+    | COMMA pattern                        { [$2] }
+    | COMMA pattern pattern_tuple_aux              { $2::$3 }
 
