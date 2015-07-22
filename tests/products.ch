@@ -19,6 +19,8 @@ data list('x) where
 
 val onetwothree = Cons (1 , Cons (2 , Cons (3,Nil ())))
 
+val pairs = (1,(2,(3,4)))
+
 :show functions
 
 

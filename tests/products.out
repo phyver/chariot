@@ -1,10 +1,10 @@
 (* ===  functions in environment  =================== *)
 val
-   fst : 'a * 'b → 'a
+   fst : ('a * 'b) → 'a
     | fst (x, y) = x
 
 val
-   snd : 'a * 'b → 'b
+   snd : ('a * 'b) → 'b
     | snd (x, y) = y
 
 val
@@ -14,6 +14,10 @@ val
 val
    onetwothree : list(nat)
     | onetwothree = Cons⁷ (1, Cons⁷ (2, Cons⁷ (3, Nil⁷ ())))
+
+val
+   pairs : nat * (nat * (nat * nat))
+    | pairs = (1, (2, (3, 4)))
 
 (* ================================================== *)
 
@@ -38,6 +42,10 @@ val
 val
    onetwothree : list(nat)
     | onetwothree = Cons⁷ (Prod_2⁵ 1 (Cons⁷ (Prod_2⁵ 2 (Cons⁷ (Prod_2⁵ 3 (Nil⁷ Prod_0¹))))))
+
+val
+   pairs : prod_2(nat,prod_2(nat,prod_2(nat,nat)))
+    | pairs = Prod_2⁷ 1 (Prod_2⁵ 2 (Prod_2³ 3 4))
 
 val
    test : prod_3(nat,nat,nat)
