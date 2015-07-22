@@ -1,14 +1,14 @@
 (* ===  functions in environment  =================== *)
 val
-   fst : prod_2('a,'b) → 'a
+   fst : 'a * 'b → 'a
     | fst (x, y) = x
 
 val
-   snd : prod_2('a,'b) → 'b
+   snd : 'a * 'b → 'b
     | snd (x, y) = y
 
 val
-   pair : prod_2(nat,nat)
+   pair : nat * nat
     | pair = (0, 0)
 
 val
@@ -18,7 +18,30 @@ val
 (* ================================================== *)
 
 val
-   test : prod_3(nat,nat,nat)
+   test : nat * nat * nat
     | test = (1, 2, 3)
 
-Fatal error: exception Base.TypeError("cannot infer type of constant Prod_4")
+-- ** typing error: cannot infer type of constant Prod_4
+(* ===  functions in environment  =================== *)
+val
+   fst : prod_2('a,'b) → 'a
+    | fst (Prod_2¹ x y) = x
+
+val
+   snd : prod_2('a,'b) → 'b
+    | snd (Prod_2¹ x y) = y
+
+val
+   pair : prod_2(nat,nat)
+    | pair = Prod_2³ 0 0
+
+val
+   onetwothree : list(nat)
+    | onetwothree = Cons⁷ (Prod_2⁵ 1 (Cons⁷ (Prod_2⁵ 2 (Cons⁷ (Prod_2⁵ 3 (Nil⁷ Prod_0¹))))))
+
+val
+   test : prod_3(nat,nat,nat)
+    | test = Prod_3³ 1 2 3
+
+(* ================================================== *)
+

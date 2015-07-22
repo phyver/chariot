@@ -31,3 +31,8 @@ val test = (1,2,3)
 :set continue_on_error true
 
 val bad = (1,2,3,4)
+
+
+:set show_tuples false
+
+:show functions

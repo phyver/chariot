@@ -29,6 +29,7 @@ let current_state =
             "show_term_struct",        false    ;
             "show_nats",               true     ;
             "show_lists",              true     ;
+            "show_tuples",             true     ;
             "check_completeness",      true     ;
             "use_priorities",          true     ;
             "show_priorities",         true     ;

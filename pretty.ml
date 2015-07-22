@@ -8,10 +8,16 @@ let string_of_priority p = match p with
     | None ->  "⁼"
     | Some p -> exp_of_int p
 
+(* TODO: with product, we need to add parenthesis *)
 let rec string_of_type = function
     | TVar(x) -> "'"^x
     | Data(t,[]) ->
             t
+    | Data(t,params) when (option "show_tuples") && (Str.string_match (Str.regexp "prod_\\(0\\|[1-9][0-9]*\\)") t 0) ->
+            let n = int_of_string (String.sub t 5 ((String.length t) - 5)) in
+            if List.length params = n
+            then (string_of_list " * " (string_of_type) params)
+            else (t ^ "(" ^ (String.concat "," (List.map string_of_type params)) ^ ")")
     | Data(t,params) ->
             t ^ "(" ^ (String.concat "," (List.map string_of_type params)) ^ ")"
     | Arrow((TVar _ | Data _) as t1,t2) ->
@@ -65,13 +71,16 @@ and
 
 and
   string_of_term_tuple (sp:'a -> string) (u:'a special_term) =
-    match get_head u, get_args u with
-        | Const(c,p), args when Str.string_match (Str.regexp "Prod_\\(0\\|[1-9][0-9]*\\)") c 0 ->
-                let n = int_of_string (String.sub c 5 ((String.length c) - 5)) in
-                if List.length args = n
-                then ("(" ^ (string_of_list ", " (string_of_special_term sp) args) ^ ")")
-                else raise (Invalid_argument "string_of_term_tuple")
-        | _ -> raise (Invalid_argument "string_of_term_tuple")
+    if not (option "show_tuples")
+    then raise (Invalid_argument "string_of_term_tuple")
+    else
+        match get_head u, get_args u with
+            | Const(c,p), args when Str.string_match (Str.regexp "Prod_\\(0\\|[1-9][0-9]*\\)") c 0 ->
+                    let n = int_of_string (String.sub c 5 ((String.length c) - 5)) in
+                    if List.length args = n
+                    then ("(" ^ (string_of_list ", " (string_of_special_term sp) args) ^ ")")
+                    else raise (Invalid_argument "string_of_term_tuple")
+            | _ -> raise (Invalid_argument "string_of_term_tuple")
 
 and
   string_of_term_paren (sp:'a -> string) (v:'a special_term) =
