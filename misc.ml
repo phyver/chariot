@@ -131,3 +131,7 @@ let warning fmt
 
 let errmsg fmt
   = print_prefix "-- ** " fmt
+
+let fmt s = Printf.sprintf s
+
+let todo m = raise (Failure ("-- TODO -- " ^ m))
