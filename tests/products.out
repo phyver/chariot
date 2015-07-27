@@ -25,31 +25,31 @@ val
    test : nat * nat * nat
     | test = (1, 2, 3)
 
--- ** typing error: cannot infer type of constant Prod_4
+-- ** typing error: cannot infer type of constant Tuple_4
 (* ===  functions in environment  =================== *)
 val
    fst : prod_2('a,'b) → 'a
-    | fst (Prod_2¹ x y) = x
+    | fst (Tuple_2¹ x y) = x
 
 val
    snd : prod_2('a,'b) → 'b
-    | snd (Prod_2¹ x y) = y
+    | snd (Tuple_2¹ x y) = y
 
 val
    pair : prod_2(nat,nat)
-    | pair = Prod_2³ 0 0
+    | pair = Tuple_2³ 0 0
 
 val
    onetwothree : list(nat)
-    | onetwothree = Cons⁷ (Prod_2⁵ 1 (Cons⁷ (Prod_2⁵ 2 (Cons⁷ (Prod_2⁵ 3 (Nil⁷ Prod_0¹))))))
+    | onetwothree = Cons⁷ (Tuple_2⁵ 1 (Cons⁷ (Tuple_2⁵ 2 (Cons⁷ (Tuple_2⁵ 3 (Nil⁷ Tuple_0¹))))))
 
 val
    pairs : prod_2(nat,prod_2(nat,prod_2(nat,nat)))
-    | pairs = Prod_2⁷ 1 (Prod_2⁵ 2 (Prod_2³ 3 4))
+    | pairs = Tuple_2⁷ 1 (Tuple_2⁵ 2 (Tuple_2³ 3 4))
 
 val
    test : prod_3(nat,nat,nat)
-    | test = Prod_3³ 1 2 3
+    | test = Tuple_3³ 1 2 3
 
 (* ================================================== *)
 

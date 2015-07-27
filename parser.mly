@@ -24,7 +24,7 @@ let mk_product l =
 
 let mk_tuple l =
     let n = List.length l in
-    app (Const("Prod_" ^ (string_of_int n),None)) l
+    app (Const("Tuple_" ^ (string_of_int n),None)) l
 
 %}
 

@@ -1,8 +1,8 @@
 data nat where Zero : nat | Succ : nat -> nat
 
-data unit where Prod_0 : unit
+data unit where Tuple_0 : unit
 
-data prod_2('a,'b) where Prod_2 : 'a -> 'b -> prod_2('a,'b)
+data prod_2('a,'b) where Tuple_2 : 'a -> 'b -> prod_2('a,'b)
 
 val fst (x,y) = x
 
@@ -24,7 +24,7 @@ val pairs = (1,(2,(3,4)))
 :show functions
 
 
-data prod_3('a,'b,'c) where Prod_3 : 'a -> 'b -> 'c -> prod_3('a,'b,'c)
+data prod_3('a,'b,'c) where Tuple_3 : 'a -> 'b -> 'c -> prod_3('a,'b,'c)
 
 val test = (1,2,3)
 

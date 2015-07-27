@@ -82,8 +82,8 @@ and
     then raise (Invalid_argument "string_of_term_tuple")
     else
         match get_head u, get_args u with
-            | Const(c,p), args when Str.string_match (Str.regexp "Prod_\\(0\\|[1-9][0-9]*\\)") c 0 ->
-                    let n = int_of_string (String.sub c 5 ((String.length c) - 5)) in
+            | Const(c,p), args when Str.string_match (Str.regexp "Tuple_\\(0\\|[1-9][0-9]*\\)") c 0 ->
+                    let n = int_of_string (String.sub c 6 ((String.length c) - 6)) in
                     if List.length args = n
                     then ("(" ^ (string_of_list ", " (string_of_special_term sp) args) ^ ")")
                     else raise (Invalid_argument "string_of_term_tuple")
