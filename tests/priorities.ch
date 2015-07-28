@@ -18,3 +18,9 @@ val g2 : nat -> list(list(list(nat)))
 :set show_nats false
 
 :show functions
+
+:set squash_priorities true
+val f1 [[[[0]]]] = 0
+  | f1 x = 0
+
+:show f1

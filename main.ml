@@ -126,6 +126,7 @@ let _
         ("--dont_use_priorities",     Arg.Unit (fun _ -> setOption "show_use_priorities" "false"),         "do not use priorities for checking termination (unsound)");
         ("--dont_show_priorities",    Arg.Unit (fun _ -> setOption "show_priorities" "false"),             "do not display priorities when showing function definitions");
         ("--continue_on_error",       Arg.Unit (fun _ -> setOption "continue_on_error" "true"),            "do not exit on errors (only on non-interactive use)");
+        ("--squash_priorities",       Arg.Unit (fun _ -> setOption "squash_priorities" "true"),            "consecutive types of same polarity get the same priority");
       ] in
     let help = "usage: " ^ Sys.argv.(0) ^ " [-i] [file]\n" in
     Arg.parse args (fun f -> incr nb_files; loadfile f) help;

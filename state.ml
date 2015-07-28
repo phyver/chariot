@@ -34,6 +34,7 @@ let current_state =
             "use_priorities",          true     ;
             "show_priorities",         true     ;
             "continue_on_error",       false    ;
+            "squash_priorities",       false    ;
         ]                                       ;
         depth = 2                               ;
         bound = 2                               ;

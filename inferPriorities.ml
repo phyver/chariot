@@ -1,5 +1,6 @@
 open Misc
 open Base
+open State
 open Typing
 open Pretty
 
@@ -58,7 +59,7 @@ let equal_type t1 t2 = (is_instance t1 t2) && (is_instance t2 t1)
 let earlier_type env t1 t2 =
     match t1,t2 with
         | t1,t2 when t1=t2 -> false
-        | Data(tname1,_),Data(tname2,_) ->
+        | Data(tname1,_),Data(tname2,params2) ->
             let consts = get_type_constants env tname2 in
             let consts_types = List.map (fun c -> specialize_constant env t2 c) consts in
             let types = List.concat (List.map extract_atomic_types consts_types) in
@@ -84,9 +85,15 @@ let compute_edges env ts =
 let order_types env ts =
     let nodes = ts in
     let edges = compute_edges env nodes in
+    (* msg "edges: %s" (string_of_list ", " (function t1,t2 -> (string_of_type t1) ^ " < " ^ (string_of_type t2)) edges); *)
 
     let rec explore path seen n =
-        if List.mem n path then seen else (* then raise (Invalid_argument "order_types: loop") else *) (* deal correctly with loops *)
+        (* if List.mem n path then raise (Invalid_argument "order_types: loop") else *)
+        (* if we find a loop, it it because we have "mutually" recursive types
+         * of the same data/codata polarity (like rtree and list(rtree)). The
+         * order among those is arbitrary
+         * This shouldn't happen for types of different polarities! *)
+        if List.mem n path then seen else
         if List.mem n seen then seen else
         let path = n::path in
         let next = List.map snd (List.filter (function n1,_ -> n1=n) edges) in
@@ -94,8 +101,12 @@ let order_types env ts =
         n::seen
     in
 
+    (* randomize order of nodes for debugging purposes *)
+    (* let nodes = List.map snd (List.sort compare (List.map (fun x -> (Random.float 1.0,x)) nodes)) in *)
+
     List.rev (List.fold_left (fun seen n -> explore [] seen n) [] nodes)
 
+(* TODO better order_types that doesn't try to put a linear order on the types *)
 
 (* check if a datatype occurs inside another type and return +1 / -1 *)
 let rec compare_occur (dt:type_expression)
@@ -118,6 +129,8 @@ let infer_priorities (env:environment)
         | (Data(tname,_) as t)::ts ->
             if (is_inductive env tname) = (k mod 2 = 0)
             then add_priorities (k+1) ((t,k+1)::acc) ts
+            else if (option "squash_priorities")
+            then add_priorities (k) ((t,k)::acc) ts
             else add_priorities (k+2) ((t,k)::acc) ts
         | _ -> assert false
     in
@@ -125,7 +138,9 @@ let infer_priorities (env:environment)
 
     let local_types = get_subtypes_list env datatypes in
     let local_types = List.rev (order_types env local_types) in
+    (* msg "total order on types: %s" (string_of_list " < " string_of_type local_types); *)
     let local_types = add_priorities 1 [] local_types in
+    (* msg "priorities: %s" (string_of_list " , " (function t,p -> (string_of_type t) ^ ":" ^ (string_of_int p)) local_types); *)
     let functions_types = List.map (function f,t,_ -> f,t) defs in
 
     let get_priority t =
