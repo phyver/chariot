@@ -35,18 +35,18 @@ let get_subtypes (env:environment)
         | t when List.mem t acc -> acc
         | TVar _ -> acc
         | Data(tname,params) as t ->
-            let stparams = List.concat (List.map (get_subtypes_aux acc) params) in
+            let acc = List.fold_left (fun r t -> get_subtypes_aux r t) acc params in
             let consts = get_type_constants env tname in
-            let acc=t::stparams@acc in
-            let stconst = List.concat (List.map (fun c -> get_subtypes_aux acc (specialize_constant env t c)) consts) in
-            stconst@acc
-        | Arrow(t1,t2) -> (get_subtypes_aux acc t1)@(get_subtypes_aux acc t2)
+            let acc = insert t acc in
+            List.fold_left (fun r c -> get_subtypes_aux r (specialize_constant env t c)) acc consts
+        | Arrow(t1,t2) -> merge (get_subtypes_aux acc t1) (get_subtypes_aux acc t2)
     in
     get_subtypes_aux [] t
 
 (* gather all the subtypes of a list of types *)
 let get_subtypes_list env ts
-  = uniq (List.concat (List.map (get_subtypes env) ts))
+  = List.fold_left (fun r t ->
+      merge r (get_subtypes env t)) [] ts
 
 
 
@@ -137,6 +137,7 @@ let infer_priorities (env:environment)
 
 
     let local_types = get_subtypes_list env datatypes in
+    (* msg "local types: %s" (string_of_list " , " string_of_type local_types); *)
     let local_types = List.rev (order_types env local_types) in
     (* msg "total order on types: %s" (string_of_list " < " string_of_type local_types); *)
     let local_types = add_priorities 1 [] local_types in

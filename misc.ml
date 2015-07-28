@@ -20,6 +20,22 @@ let uniq l
   in
   uniq_aux [] l
 
+(* insert in a sorted uniq list *)
+let rec insert x l
+  = match l with
+        | [] -> [x]
+        | y::l when x<y -> x::y::l
+        | y::l when x>y -> y::(insert x l)
+        | y::l (* when x=y *) -> y::l
+
+(* merge two sorted uniq lists *)
+let rec merge l1 l2
+  = match l1,l2 with
+        | [],l | l,[] -> l
+        | x1::l1,x2::_ when x1<x2 -> x1::(merge l1 l2)
+        | x1::_,x2::l2 when x1>x2 -> x2::(merge l1 l2)
+        | x1::l1,x2::l2 (* when x1=x2 *) -> x1::(merge l1 l2)
+
 (* look for a value with at least two occurences *)
 let find_dup l
   = let rec find_dup_aux l = match l with

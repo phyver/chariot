@@ -9,21 +9,21 @@ val
 
 val
    pair : nat * nat
-    | pair = (0, 0)
+    | pair = (Zero¹, Zero¹)
 
 val
    onetwothree : list(nat)
-    | onetwothree = Cons⁷ (1, Cons⁷ (2, Cons⁷ (3, Nil⁷ ())))
+    | onetwothree = Cons⁵ (Succ³ Zero³, Cons⁵ (Succ³ (Succ³ Zero³), Cons⁵ (Succ³ (Succ³ (Succ³ Zero³)), Nil⁵ ())))
 
 val
    pairs : nat * (nat * (nat * nat))
-    | pairs = (1, (2, (3, 4)))
+    | pairs = (Succ¹ Zero¹, (Succ¹ (Succ¹ Zero¹), (Succ¹ (Succ¹ (Succ¹ Zero¹)), Succ¹ (Succ¹ (Succ¹ (Succ¹ Zero¹))))))
 
 (* ================================================== *)
 
 val
    test : nat * nat * nat
-    | test = (1, 2, 3)
+    | test = (Succ¹ Zero¹, Succ¹ (Succ¹ Zero¹), Succ¹ (Succ¹ (Succ¹ Zero¹)))
 
 -- ** typing error: cannot infer type of constant Tuple_4
 (* ===  functions in environment  =================== *)
@@ -37,19 +37,19 @@ val
 
 val
    pair : prod_2(nat,nat)
-    | pair = Tuple_2³ 0 0
+    | pair = Tuple_2³ Zero¹ Zero¹
 
 val
    onetwothree : list(nat)
-    | onetwothree = Cons⁷ (Tuple_2⁵ 1 (Cons⁷ (Tuple_2⁵ 2 (Cons⁷ (Tuple_2⁵ 3 (Nil⁷ Tuple_0¹))))))
+    | onetwothree = Cons⁵ (Tuple_2⁷ (Succ³ Zero³) (Cons⁵ (Tuple_2⁷ (Succ³ (Succ³ Zero³)) (Cons⁵ (Tuple_2⁷ (Succ³ (Succ³ (Succ³ Zero³))) (Nil⁵ Tuple_0¹))))))
 
 val
    pairs : prod_2(nat,prod_2(nat,prod_2(nat,nat)))
-    | pairs = Tuple_2⁷ 1 (Tuple_2⁵ 2 (Tuple_2³ 3 4))
+    | pairs = Tuple_2⁷ (Succ¹ Zero¹) (Tuple_2⁵ (Succ¹ (Succ¹ Zero¹)) (Tuple_2³ (Succ¹ (Succ¹ (Succ¹ Zero¹))) (Succ¹ (Succ¹ (Succ¹ (Succ¹ Zero¹))))))
 
 val
    test : prod_3(nat,nat,nat)
-    | test = Tuple_3³ 1 2 3
+    | test = Tuple_3³ (Succ¹ Zero¹) (Succ¹ (Succ¹ Zero¹)) (Succ¹ (Succ¹ (Succ¹ Zero¹)))
 
 (* ================================================== *)
 

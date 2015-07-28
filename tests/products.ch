@@ -1,3 +1,7 @@
+:set show_lists false
+:set show_nats false
+
+
 data nat where Zero : nat | Succ : nat -> nat
 
 data unit where Tuple_0 : unit
@@ -9,9 +13,6 @@ val fst (x,y) = x
 val snd (x,y) = y
 
 val pair = (0,0)
-
-
-:set show_lists false
 
 data list('x) where
     | Nil : unit -> list('x)
