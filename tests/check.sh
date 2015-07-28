@@ -25,7 +25,7 @@ DIFF_PRG="git diff --color --word-diff=plain --no-index"
 
 
 echo -n "file $INFILE ... \t"
-$CHARIOT $INFILE > $TMPFILE 2>&1
+$CHARIOT $INFILE > $TMPFILE
 
 if [ -f $OUTFILE ]
 then

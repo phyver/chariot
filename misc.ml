@@ -112,25 +112,25 @@ let print_bool b
     then print_string "true"
     else print_string "false"
 
-let print_prefix prefix fmt
+let print_prefix out_channel prefix fmt
   = let print s
       = let s = Str.global_replace (Str.regexp_string "\n") ("\n"^prefix) s
         in
-        print_endline (prefix ^ s)
+        Printf.fprintf out_channel "%s%s\n" prefix s
     in
     Printf.ksprintf print fmt
 
 let debug fmt
-  = print_prefix "-- == " fmt
+  = print_prefix stderr "== " fmt
 
 let msg fmt
-  = print_prefix "-- " fmt
+  = print_prefix stdout "-- " fmt
 
 let warning fmt
-  = print_prefix "-- !! " fmt
+  = print_prefix stdout "-- !! " fmt
 
 let errmsg fmt
-  = print_prefix "-- ** " fmt
+  = print_prefix stdout "-- ** " fmt
 
 let fmt s = Printf.sprintf s
 
