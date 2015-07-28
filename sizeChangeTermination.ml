@@ -352,15 +352,8 @@ let collapsed_compose b d c1 c2
 
 
 
-(* order and compatibility *)
+(* order *)
 let approximates p1 p2 =
-
-    (* let rec get_weight x apps *)
-    (*   = match apps with *)
-    (*         | [] -> raise Not_found *)
-    (*         | (_,w,y)::_ when x=y -> w *)
-    (*         | _::apps -> get_weight x apps *)
-    (* in *)
 
     let rec approximates_aux pats1 pats2 =
         (* debug "pats1 = %s" (string_of_list " , " string_of_approx_term pats1); *)
@@ -415,7 +408,65 @@ let approximates p1 p2 =
     with UnificationError _ -> false
 
 
+(* compatibility *)
+(* similar to approximates *)
+let compatible p1 p2 =
 
+    let rec compatible_aux pats1 pats2 =
+        (* debug "pats1 = %s" (string_of_list " , " string_of_approx_term pats1); *)
+        (* debug "pats2 = %s" (string_of_list " , " string_of_approx_term pats2); *)
+        match pats1,pats2 with
+            | [],[] -> true
+            | Proj(d1,_)::pats1,Proj(d2,_)::pats2 -> d1=d2 && compatible_aux pats1 pats2
+            | Var x1::pats1,Var x2::pats2 -> x1=x2 && compatible_aux pats1 pats2
+            | Const(c1,_)::pats1,Const(c2,_)::pats2 -> c1=c2 && compatible_aux pats1 pats2
+            | ((App _) as u1)::_pats1,((App _) as u2)::_pats2 ->
+                    compatible_aux ((get_head u1)::(get_args u1)@_pats1) ((get_head u2)::(get_args u2)@_pats2)
+            | Special(ApproxConst apps1)::pats1,Special(ApproxConst apps2)::pats2 ->
+                    List.exists (function _,_,x2 ->
+                    List.exists (function _,_,x1 ->
+                            x1=x2
+                        ) apps1
+                        ) apps2
+                    (* FIXME: or simply "true" because both are approximations of the empty approximation?
+                     * Note that the empty approximation doesn't have any decreasing argument... *)
+
+            (* FIXME: too lax:
+            *     f x => f x
+            * isn't compatible with
+            *     f x => f <-1>x
+            * note that this is sound: it may add some loops to check that aren't necessary... *)
+            | Special(ApproxConst _)::_,u2::_pats2 ->
+                    let aps2 = collapse0 u2 in
+                    compatible_aux pats1 (Special(ApproxConst aps2)::_pats2)
+            | u1::_pats1,Special(ApproxConst _)::_ ->
+                    let aps1 = collapse0 u1 in
+                    compatible_aux (Special(ApproxConst aps1)::_pats1) pats2
+
+            (* FIXME: is that right? *)
+            | [Special(ApproxProj _)],_
+            | _,[Special(ApproxProj _)] ->
+                    true
+
+            | _,_ -> false
+    in
+
+    try
+        let sigma1,sigma2,context1,context2 = unify (fst p1) (fst p2) in
+        let r1 = subst_approx_term sigma1 (snd p1) in
+        let r1 = app_all r1 context1 in
+        let r2 = subst_approx_term sigma2 (snd p2) in
+        let r2 = app_all r2 context2 in
+        msg "r1=%s  and  r2=%s" (string_of_approx_term r1) (string_of_approx_term r2);
+
+        let f1,pats1 = explode_pattern r1 in
+        let f2,pats2 = explode_pattern r2 in
+        f1 = f2 && compatible_aux pats1 pats2
+
+
+    with UnificationError _ -> false
+
+(* decreasing arguments *)
 
 
 (* graph *)
