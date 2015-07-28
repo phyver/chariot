@@ -32,7 +32,7 @@ let mk_tuple l =
 %token LSQBRAC RSQBRAC DOUBLECOLON DOUBLEARROW
 %token DATA CODATA WHERE AND VAL
 %token CMDHELP CMDQUIT CMDPROMPT CMDSHOW CMDTEST CMDVERBOSE CMDSET
-%token CMDEXPLORE CMDREDUCE CMDUNFOLD CMDECHO CMDTESTCOMPOSE
+%token CMDEXPLORE CMDREDUCE CMDUNFOLD CMDECHO CMDTESTCOMPOSE CMDTESTCOMPARE
 %token EOF
 %token <string> IDU IDL STR TVAR
 %token <int> INT
@@ -94,6 +94,7 @@ command:
     | CMDECHO string                                    { CmdEcho($2) }
 
     | CMDTESTCOMPOSE lhs_term DOUBLEARROW rhs_term AND lhs_term DOUBLEARROW rhs_term       { CmdCompose($2,$4,$6,$8) }
+    | CMDTESTCOMPARE lhs_term DOUBLEARROW rhs_term AND lhs_term DOUBLEARROW rhs_term       { CmdCompare($2,$4,$6,$8) }
 
 string:
     | IDL { $1 }

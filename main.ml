@@ -69,6 +69,7 @@ let explore_loop env t
 
 let process_statement s = match s with
     | CmdCompose(u1,u2,u3,u4) -> cmd_compose current_state.env u1 u2 u3 u4
+    | CmdCompare(u1,u2,u3,u4) -> cmd_compare current_state.env u1 u2 u3 u4
 
     | Eof -> raise Exit
     | CmdQuit -> raise Exit

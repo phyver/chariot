@@ -29,6 +29,7 @@ rule tokenize = parse
     | ":explore"        { CMDEXPLORE }
     | ":help"           { CMDHELP }
     | ":testcompose"    { CMDTESTCOMPOSE }
+    | ":testcompare"    { CMDTESTCOMPARE }
     | ":test"           { CMDTEST }
     | ":reduce"         { CMDREDUCE }
     | ":unfold"         { CMDUNFOLD }

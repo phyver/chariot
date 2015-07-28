@@ -13,6 +13,7 @@ open SizeChangeTermination
 (* commands *)
 type cmd =
     | CmdCompose of term*term*term*term
+    | CmdCompare of term*term*term*term
 
     | Eof
     | Nothing
@@ -109,82 +110,98 @@ let cmd_show env s =
 
 
 let cmd_unify_type env t1 t2 =
-    debug "=======================================================";
-    debug "unifying type   %s" (string_of_type t1);
-    debug "          and   %s" (string_of_type t2);
+    msg "=======================================================";
+    msg "unifying type   %s" (string_of_type t1);
+    msg "          and   %s" (string_of_type t2);
     let sigma = unify_type_mgu t1 t2 in
     let t1s = subst_type sigma t1 in
     let t2s = subst_type sigma t2 in
     assert (t1s = t2s);
-    debug "       result   %s" (string_of_type t1s);
-    debug "          via   %s" (string_of_list "  ;  " (function x,t -> "'"^x^" := "^(string_of_type t)) sigma);
-    debug "=======================================================";
+    msg "       result   %s" (string_of_type t1s);
+    msg "          via   %s" (string_of_list "  ;  " (function x,t -> "'"^x^" := "^(string_of_type t)) sigma);
+    msg "=======================================================";
     print_newline()
 
 let cmd_unify_term env pattern term =
-    debug "=======================================================";
-    debug "unifying pattern   %s" (string_of_term pattern);
-    debug "        and term   %s" (string_of_term term);
+    msg "=======================================================";
+    msg "unifying pattern   %s" (string_of_term pattern);
+    msg "        and term   %s" (string_of_term term);
     let new_term = unify_pattern (pattern,pattern) term in
-    debug "          result   %s" (string_of_term new_term);
-    debug "=======================================================";
+    msg "          result   %s" (string_of_term new_term);
+    msg "=======================================================";
     print_newline()
 
 (* let cmd_test env pattern depth = *)
-(*     debug "======================================================="; *)
-(*     debug "collapsing pattern   %s" (string_of_term pattern); *)
-(*     debug "          to depth   %d" depth; *)
+(*     msg "======================================================="; *)
+(*     msg "collapsing pattern   %s" (string_of_term pattern); *)
+(*     msg "          to depth   %d" depth; *)
 (*     let pattern = pattern_to_approx_term pattern in *)
 (*     let pattern = collapse_pattern depth pattern in *)
-(*     debug "          result   %s" (string_of_approx_term pattern); *)
-(*     debug "======================================================="; *)
+(*     msg "          result   %s" (string_of_approx_term pattern); *)
+(*     msg "======================================================="; *)
 (*     print_newline() *)
 
 let cmd_compose env l1 r1 l2 r2 =
-    debug "=======================================================";
-    debug "composing";
-    debug "             %s => %s" (string_of_term l1) (string_of_term r1);
-    debug "and";
-    debug "             %s => %s" (string_of_term l2) (string_of_term r2);
+    msg "=======================================================";
+    msg "composing";
+    msg "             %s => %s" (string_of_term l1) (string_of_term r1);
+    msg "and";
+    msg "             %s => %s" (string_of_term l2) (string_of_term r2);
     let l1 = pattern_to_approx_term l1 in
     let r1 = pattern_to_approx_term r1 in
     let l2 = pattern_to_approx_term l2 in
     let r2 = pattern_to_approx_term r2 in
     let l,r = compose (l1,r1) (l2,r2) in
-    debug "";
-    debug "result";
-    debug "             %s => %s" (string_of_approx_term l) (string_of_approx_term r);
-    debug "";
+    msg "";
+    msg "result";
+    msg "             %s => %s" (string_of_approx_term l) (string_of_approx_term r);
+    msg "";
     let l,r = collapsed_compose current_state.bound current_state.depth (l1,r1) (l2,r2) in
-    debug "";
-    debug "collapsed";
-    debug "             %s => %s" (string_of_approx_term l) (string_of_approx_term r);
-    debug "";
+    msg "";
+    msg "collapsed";
+    msg "             %s => %s" (string_of_approx_term l) (string_of_approx_term r);
+    msg "";
     (* let l1 = collapse_pattern 0 l1 in *)
     (* let l2 = collapse_pattern 0 l2 in *)
     (* let r1 = collapse_pattern 0 r1 in *)
     (* let r2 = collapse_pattern 0 r2 in *)
     (* let l1,r1 = normalize_sct_clause (l1,r1) in *)
     (* let l2,r2 = normalize_sct_clause (l2,r2) in *)
-    (* debug "======================================================="; *)
-    (* debug "composing"; *)
-    (* debug "             %s => %s" (string_of_approx_term l1) (string_of_approx_term r1); *)
-    (* debug "and"; *)
-    (* debug "             %s => %s" (string_of_approx_term l2) (string_of_approx_term r2); *)
+    (* msg "======================================================="; *)
+    (* msg "composing"; *)
+    (* msg "             %s => %s" (string_of_approx_term l1) (string_of_approx_term r1); *)
+    (* msg "and"; *)
+    (* msg "             %s => %s" (string_of_approx_term l2) (string_of_approx_term r2); *)
     (* let l,r = compose (l1,r1) (l2,r2) in *)
-    (* debug ""; *)
-    (* debug "result"; *)
-    (* debug "             %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
-    (* debug ""; *)
+    (* msg ""; *)
+    (* msg "result"; *)
+    (* msg "             %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
+    (* msg ""; *)
 
 
     (* let l = collapse_pattern 0 l in *)
     (* let r = collapse_pattern 0 r in *)
-    (* debug "after collapse at 0"; *)
-    (* debug "             %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
+    (* msg "after collapse at 0"; *)
+    (* msg "             %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
     (* let l,r = normalize_sct_clause (l,r) in *)
-    (* debug "after normalizing:"; *)
-    (* debug "             %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
+    (* msg "after normalizing:"; *)
+    (* msg "             %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
 
-    debug "=======================================================";
+    msg "=======================================================";
     print_newline()
+
+
+let cmd_compare env l1 r1 l2 r2 =
+    let l1 = pattern_to_approx_term l1 in
+    let r1 = pattern_to_approx_term r1 in
+    let l2 = pattern_to_approx_term l2 in
+    let r2 = pattern_to_approx_term r2 in
+    let l1,r1 = collapse_clause current_state.bound current_state.depth (l1,r1) in
+    let l2,r2 = collapse_clause current_state.bound current_state.depth (l2,r2) in
+
+    msg " %s => %s    approximates    %s => %s" (string_of_approx_term l1) (string_of_approx_term r1) (string_of_approx_term l2) (string_of_approx_term r2); 
+    if approximates (l1,r1) (l2,r2)
+    then msg "TRUE"
+    else msg "FALSE";
+    print_newline()
+
