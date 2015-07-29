@@ -1,4 +1,6 @@
 
+  - use colors to print priorities "\x1b[32m blabla \x1b[0m"
+
   - use type weight for priorities
 
   - move file commands.ml to parser.ml and remove type command
