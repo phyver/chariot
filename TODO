@@ -1,9 +1,18 @@
-pygmentize / highlight to get colors 
 
-allow "{ proj1 = u1 ; ... ; projn = un }" in terms and patterns (=> lexer, parser, term, ...)
-unification now has
-{ proj1 = u1 ; ... ; projn = un } ~ t   ==>   u1 ~ t.proj1, ..., un ~ t.projn
+  - use type weight for priorities
 
-In the end, the substitution should only contain "simple" patterns, and substitution should use "simple pattern matching"
+  - move file commands.ml to parser.ml and remove type command
+
+  - remove Proj variant and use Const everywhere (requires thinking about
+    priority None: there should be a data and codata version)
+
+  - pygmentize / highlight to get colors???
+
+  - allow "{ proj1 = u1 ; ... ; projn = un }" in terms and patterns (=> lexer,
+    parser, term, ...) unification now has
+        { proj1 = u1 ; ... ; projn = un } ~ t   ==>   u1 ~ t.proj1, ..., un ~ t.projn
+
+    In the end, the substitution should only contain "simple" patterns, and
+    substitution should use "simple pattern matching"
 
 
