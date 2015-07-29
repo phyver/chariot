@@ -1,4 +1,5 @@
 open Misc
+open State
 open Base
 open Pretty
 
@@ -32,12 +33,13 @@ let rec collapse_weight_in_term b u
         | Special(ApproxConst apps) -> Special(ApproxConst(List.map (function p,w,x -> p, collapse_weight b w,x) apps))
 
 (* misc operations on approximations *)
-let add_approx a1 a2 = match a1,a2 with
-    | (None,w1) , (None,w2) -> (None, add_weight w1 w2)
-    | (None,w) , _ | _,(None,w) -> (None, w)
-    | (Some p1, w1) , (Some p2, w2) when p1<p2 -> (Some p2, w2)
-    | (Some p1, w1) , (Some p2, w2) when p1>p2 -> (Some p1, w1)
-    | (Some p1, w1) , (Some p2, w2) (*when p1=p2*) -> (Some p1, add_weight w1 w2)
+let add_approx a1 a2
+  = match a1,a2 with
+        | (None,w1) , (None,w2) -> (None, add_weight w1 w2)
+        | (Some p1, w1) , (Some p2, w2) when p1<p2 -> (Some p2, w2)
+        | (Some p1, w1) , (Some p2, w2) when p1>p2 -> (Some p1, w1)
+        | (Some p1, w1) , (Some p2, w2) (*when p1=p2*) -> (Some p1, add_weight w1 w2)
+        | (None,w) , _ | _,(None,w) -> raise (Invalid_argument "cannot add priorities and non-priorities")
 
 let simplify_approx aps =
     let aps = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) aps in
@@ -467,12 +469,84 @@ let compatible p1 p2 =
     with UnificationError _ -> false
 
 (* decreasing arguments *)
+let decreasing (l,r)
+  =
+    let rec repeat x n =
+        if n = 0
+        then []
+        else x::(repeat x (n-1))
+    in
+
+    let rec decreasing_aux pats1 pats2 acc
+      = match pats1,pats2 with
+            | [],[] -> (match acc with (Some p, Num w) when (p mod 2)=0 && w<0 -> true | _ -> false)
+
+            | [],_ | _,[] -> raise (Invalid_argument "decreasing should only be called on idempotent rules")
+            | (app1,u1)::pats1, u2::pats2 ->
+                begin
+                    match get_head u1, get_args u1, get_head u2, get_args u2 with
+
+                        | Proj(d1,p1),[],Proj(d2,p2),[] ->
+                            assert (d1=d2);
+                            assert (p1=p2);
+                            decreasing_aux pats1 pats2 (add_approx (p1,Num 0) acc)
+
+                        | Proj _,_,Proj _,_ -> assert false
+
+                        | Var x1,[],Var x2,[] ->
+                            decreasing_aux pats1 pats2 acc
+
+                        | Var _,_,Var _,_ -> assert false
+
+                        | Const(c1,p1),args1,Const(c2,p2),args2 ->
+                            assert (c1=c2);
+                            assert (p1=p2);
+                            let app = add_approx app1 (p1,Num 0) in
+                            let args1 = List.map (fun x -> app,x) args1 in
+                            decreasing_aux (args1@pats1) (args2@pats2) acc
+
+                        | Var x,[],Special(ApproxConst apps),[] ->
+                            begin
+                                match apps with
+                                    | [(p,w,y)] when y=x ->
+                                        (match add_approx app1 (p,w) with
+                                            | Some p,Num w when (p mod 2 = 1) && w<0 -> true
+                                            | _, _ -> decreasing_aux pats1 pats2 acc)
+                                    | _ -> decreasing_aux pats1 pats2 acc
+                            end
+
+                        | Const(c1,p),args1,((Special(ApproxConst apps)) as u2),[] ->
+                            let app = add_approx app1 (p,Num 1) in
+                            let args1 = List.map (fun x -> app,x) args1 in
+                            let args2 = repeat u2 (List.length args1) in
+                            decreasing_aux (args1@pats1) (args2@pats2) acc
+
+                        | Proj(d,p),[],Special(ApproxConst _),_ ->
+                            begin
+                                assert (pats2 = []);
+                                let acc = add_approx acc (p,Num 1) in
+                                let pats1 = List.filter (function (_,Proj _) -> true | _ -> false) pats1 in
+                                let app = List.fold_left (fun r p -> match p with _,Proj(_,p) -> add_approx r (p,Num 1) | _ -> assert false) acc pats1 in
+                                match app with
+                                    | Some p, Num w when (p mod 2)=0 && w<0 -> true
+                                    | _ -> false
+                            end
+
+                        | _,_,Special(ApproxConst _),_ -> assert false
+
+                        | _,_,Angel,_ -> true
+
+                        | Angel,_,_,_ -> assert false
+                        | App _,_,_,_ | _,_,App _,_ -> assert false
+                        | Special _,_,_,_ -> assert false
+
+                        | _,_,_,_ -> assert false
+                end
+    in decreasing_aux [(Some 0,Num 0),l] [r]
 
 
 (* graph *)
-
-
-
-
-
+(* NOTE: hack, I will need to use Proj variants to register constructors
+ * applied to the result of a call, and Const variants to register destructor
+ * in argument position... *)
 
