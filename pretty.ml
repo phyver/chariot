@@ -126,9 +126,16 @@ let string_of_weight w = match w with
 
 let string_of_approx_term
   = string_of_special_term
-        (function | ApproxProj(p,w) -> "<" ^ (string_of_weight w) ^ (string_of_priority p) ^ "> ."
-                  | ApproxConst [] -> "<!>"
-                  | ApproxConst l -> (string_of_list " + " (function p,w,x ->  "<" ^ (string_of_weight w) ^ (string_of_priority p) ^ "," ^ x ^ ">") l))
+        (function | ApproxProj(p,w) ->
+                        let s = "<" ^ (string_of_weight w) ^ (string_of_priority p) ^ "> ."
+                        in if (option "use_ansi_codes") then ansi_code "underline" s else s
+                  | ApproxConst [] ->
+                        let s = "∅"
+                        in if (option "use_ansi_codes") then ansi_code "underline" s else s
+                  | ApproxConst l ->
+                        let s = (string_of_list " + " (function p,w,x ->  "<" ^ (string_of_weight w) ^ (string_of_priority p) ^ "," ^ x ^ ">") l)
+                        in if (option "use_ansi_codes") then ansi_code "underline" s else s)
+
 
 let show_data_type env tname params consts =
     print_string "  ";

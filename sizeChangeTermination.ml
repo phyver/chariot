@@ -39,7 +39,7 @@ let add_approx a1 a2
         | (Some p1, w1) , (Some p2, w2) when p1<p2 -> (Some p2, w2)
         | (Some p1, w1) , (Some p2, w2) when p1>p2 -> (Some p1, w1)
         | (Some p1, w1) , (Some p2, w2) (*when p1=p2*) -> (Some p1, add_weight w1 w2)
-        | (None,w) , _ | _,(None,w) -> raise (Invalid_argument "cannot add priorities and non-priorities")
+        | (None,w1) , (Some _,w2) | (Some _,w1),(None,w2) -> warning "cannot add priorities and non-priorities, ignoring them"; (None, add_weight w1 w2)
 
 let simplify_approx aps =
     let aps = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) aps in
