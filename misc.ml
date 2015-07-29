@@ -151,3 +151,22 @@ let errmsg fmt
 let fmt s = Printf.sprintf s
 
 let todo m = raise (Failure ("-- TODO -- " ^ m))
+
+let ansi_code color s =
+    let codes =
+        [
+            "red",       "\x1b[31m";
+            "green",     "\x1b[32m";
+            "yellow",    "\x1b[33m";
+            "blue",      "\x1b[34m";
+            "magenta",   "\x1b[35m";
+            "cyan",      "\x1b[36m";
+            "underline", "\x1b[4m" ;
+        ] in
+    let end_code = "\x1b[0m" in
+    try
+        let begin_code = List.assoc color codes in
+        let s = Str.global_replace (Str.regexp_string end_code) (end_code ^ begin_code) s in
+        Printf.sprintf "%s%s%s" begin_code s end_code
+    with Not_found -> raise (Invalid_argument ("ansi_code: color " ^ color ^ " doesn't exist"))
+

@@ -35,6 +35,7 @@ let current_state =
             "show_priorities",         true     ;
             "continue_on_error",       false    ;
             "squash_priorities",       false    ;
+            "use_ansi_codes",          false    ;
         ]                                       ;
         depth = 2                               ;
         bound = 2                               ;
