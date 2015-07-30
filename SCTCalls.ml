@@ -337,7 +337,7 @@ let compose (l1,r1:sct_clause) (l2,r2:sct_clause)
 (* debug "obtained %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
         normalize_sct_clause (app_all l context2 , app_all r context1)
     with
-        UnificationError err -> error ("impossible composition: " ^ err)
+        UnificationError err -> raise Impossible_case
 
 
 let collapse_clause b d (l,r)
@@ -469,7 +469,8 @@ let compatible p1 p2 =
     with UnificationError _ -> false
 
 (* decreasing arguments *)
-let decreasing (l,r)
+let decreasing (l,r : sct_clause)
+  : bool
   =
     let rec repeat x n =
         if n = 0
@@ -542,11 +543,6 @@ let decreasing (l,r)
 
                         | _,_,_,_ -> assert false
                 end
-    in decreasing_aux [(Some 0,Num 0),l] [r]
+    in decreasing_aux [(Some 0,Num 0),l] [r] (Some 0, Num 0)
 
-
-(* graph *)
-(* NOTE: hack, I will need to use Proj variants to register constructors
- * applied to the result of a call, and Const variants to register destructor
- * in argument position... *)
 

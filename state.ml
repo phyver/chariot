@@ -36,6 +36,7 @@ let current_state =
             "continue_on_error",       false    ;
             "squash_priorities",       false    ;
             "use_ansi_codes",          false    ;
+            "use_subsumption",         true     ;
         ]                                       ;
         depth = 2                               ;
         bound = 2                               ;

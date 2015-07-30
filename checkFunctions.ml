@@ -6,6 +6,7 @@ open Typing
 open CheckCoverage
 open InferPriorities
 open SCTCalls
+open SCTGraph
 
 (* check that a type is correct *)
 let rec check_type env = function

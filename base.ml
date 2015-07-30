@@ -206,6 +206,7 @@ type approximation = ApproxProj of priority * weight | ApproxConst of (priority 
 type approx_term = approximation special_term
 type sct_clause = approx_term * approx_term
 
+exception Impossible_case
 
 let rec pattern_to_approx_term = function
     | Var(x) -> Var(x)

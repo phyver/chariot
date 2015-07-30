@@ -156,6 +156,7 @@ let _
         ("--continue_on_error",       Arg.Unit (fun _ -> setOption "continue_on_error" "true"),            "do not exit on errors (only on non-interactive use)");
         ("--squash_priorities",       Arg.Unit (fun _ -> setOption "squash_priorities" "true"),            "consecutive types of same polarity get the same priority");
         ("--use_ansi_codes",          Arg.Unit (fun _ -> setOption "use_ansi_codes" "true"),               "use ANSI color codes to display various information");
+        ("--dont_use_subsumption",    Arg.Unit (fun _ -> setOption "use_subsumption" "false"),             "don't use subsumption to simplify sets of clauses");
       ] in
     let help = "usage: " ^ Sys.argv.(0) ^ " [-i] [file]\n" in
     Arg.parse args (fun f -> incr nb_files; loadfile f) help;
