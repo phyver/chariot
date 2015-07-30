@@ -25,6 +25,20 @@ let parse_error lexbuf
     let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol - (String.length tok) + 1 in
     errmsg "parse error line %d, column %d (token <%s>)" line cnum tok
 
+let show_error lexbuf
+  =
+    let open Lexing in
+    let s = lexbuf.lex_buffer in
+    let s = String.sub s 0 ((String.index s '\000') - 1) in (* necessarry because lex_buffer contains the whole buffer (1024 characters) *)
+    let tok = lexeme lexbuf in
+    let pos = lexbuf.lex_curr_p.pos_cnum - (String.length tok) in
+    let s_start = String.sub s 0 pos in
+    let s_end = String.sub s pos ((String.length s) - pos) in
+    let s_end =  Str.global_replace (Str.regexp_string "[ \t\n\r]*$") "" s_end in
+    (* let s_end = ansi_code "red" s_end in *)
+    let s_end = ansi_code "underline" s_end in
+    errmsg "%s" (s_start ^ s_end)
+
 let explore_loop env t
   = print_list "" "| " "\n| " "\n\n" print_string [
         "Explore mode:";
@@ -113,7 +127,7 @@ let mainloop ()
         try
             process_statement (Parser.single_statement Lexer.tokenize lexbuf)
         with
-            | Parsing.Parse_error -> parse_error lexbuf
+            | Parsing.Parse_error -> parse_error lexbuf; show_error lexbuf
             | Error err -> errmsg "%s" err
             | TypeError err -> errmsg "typing error: %s" err
     done
