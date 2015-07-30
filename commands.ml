@@ -7,7 +7,7 @@ open Compute
 open CheckCoverage
 open CheckFunctions
 open Explore
-open SizeChangeTermination
+open SCTCalls
 
 (* TODO: put all of this in parser.mly *)
 (* commands *)
