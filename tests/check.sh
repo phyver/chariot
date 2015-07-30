@@ -39,7 +39,7 @@ then
         while true
         do
             echo -n "accept new output? "
-            read -p "[yN] " R
+            read -p "[yNc] " R
             case $R in
                 y | Y )
                     mv $TMPFILE $OUTFILE
@@ -50,6 +50,12 @@ then
                 n | N | "" )
                     echo "ERROR... Unexpected output"
                     EXIT_STATUS=1
+                    break
+                ;;
+                c | C )
+                    echo "old result kept"
+                    echo "continue anyway"
+                    EXIT_STATUS=0
                     break
                 ;;
                 * )
