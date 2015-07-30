@@ -1,3 +1,3 @@
-set commentstring=(*%s*)
+set commentstring=--\ %s
 set comments=sr:(*,mb:*,ex:*),:--
 
