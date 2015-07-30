@@ -106,6 +106,9 @@ let is_instance t1 t2 =
         t1 = subst_type sigma t1
     with UnificationError _ -> false
 
+(* check if two types are equal, up to renaming of free variables *)
+let equal_type t1 t2 = (is_instance t1 t2) && (is_instance t2 t1)
+
 (* add one constraint into a sorted list of constraints *)
 let rec add_constraint (x,t) constraints = match constraints with
     | [] -> [(x,t)]

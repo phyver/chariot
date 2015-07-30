@@ -25,139 +25,97 @@ let specialize_constant (env:environment)
           end
       | _ -> raise (Invalid_argument "specialize_constant: not a (co)data type")
 
-(* gather all the subtype of a type, together with the subtypes of the types of
- * the corresponding constructors and destructors *)
-let get_subtypes (env:environment)
-                 (t:type_expression)
-  : type_expression list
+let find_types_priorities env ts
   =
-    let rec get_subtypes_aux acc = function
-        | t when List.mem t acc -> acc
-        | TVar _ -> acc
-        | Data(tname,params) as t ->
-            let acc = List.fold_left (fun r t -> get_subtypes_aux r t) acc params in
-            let consts = get_type_constants env tname in
-            let acc = insert t acc in
-            List.fold_left (fun r c -> get_subtypes_aux r (specialize_constant env t c)) acc consts
-        | Arrow(t1,t2) -> merge (get_subtypes_aux acc t1) (get_subtypes_aux acc t2)
-    in
-    get_subtypes_aux [] t
-
-(* gather all the subtypes of a list of types *)
-let get_subtypes_list env ts
-  = List.fold_left (fun r t ->
-      merge r (get_subtypes env t)) [] ts
-
-
-
-(* check if two types are equal, up renaming of free variables *)
-let equal_type t1 t2 = (is_instance t1 t2) && (is_instance t2 t1)
-
-
-(* check if type t1 should be defined earlier than type t2, ie if the priority
- * of t1 should be less than the priority of t2 *)
-let earlier_type env t1 t2 =
-    match t1,t2 with
-        | t1,t2 when t1=t2 -> false
-        | Data(tname1,_),Data(tname2,params2) ->
-            let consts = get_type_constants env tname2 in
-            let consts_types = List.map (fun c -> specialize_constant env t2 c) consts in
-            let types = List.concat (List.map extract_atomic_types consts_types) in
-            List.mem t1 types
-        | Data _, TVar x2 -> true
-        | TVar x1, Data _ -> false
-        | TVar x1, TVar x2 -> false
-        | _,_ -> assert false
-
-let compute_edges env ts =
-    let rec edges_aux ts1 ts2 =
-        match ts1,ts2 with
-            | _,[] -> []
-            | [],_::ts2 -> edges_aux ts ts2
-            | t1::ts1,t2::ts2 ->
-                    if earlier_type env t1 t2
-                    then (t1,t2)::(edges_aux ts1 (t2::ts2))
-                    else edges_aux ts1 (t2::ts2)
-    in
-    edges_aux ts ts
-
-(* see http://stackoverflow.com/questions/4653914/topological-sort-in-ocaml *)
-let order_types env ts =
     let nodes = ts in
-    let edges = compute_edges env nodes in
-    (* msg "edges: %s" (string_of_list ", " (function t1,t2 -> (string_of_type t1) ^ " < " ^ (string_of_type t2)) edges); *)
 
-    let rec explore path seen n =
-        (* if List.mem n path then raise (Invalid_argument "order_types: loop") else *)
-        (* if we find a loop, it it because we have "mutually" recursive types
-         * of the same data/codata polarity (like rtree and list(rtree)). The
-         * order among those is arbitrary
-         * This shouldn't happen for types of different polarities! *)
-        if List.mem n path then seen else
+    (* wether a type appears inside another *)
+    let rec subtype_of t1 t2
+      = match t1,t2 with
+            | t1,t2 when t1=t2 -> false
+            | t1,Data(tname2,params2) -> List.mem t1 params2 || List.exists (subtype_of t1) params2
+            | Data _, TVar _ | TVar _, TVar _ -> false
+            | _,_ -> assert false
+    in
+
+    let graph = List.map (fun x -> x,List.filter (subtype_of x) nodes) nodes in
+
+    (* see http://stackoverflow.com/questions/4653914/topological-sort-in-ocaml *)
+    let rec dfs path seen n =
+        if List.mem n path then raise (Invalid_argument "dfs: found loop") else
         if List.mem n seen then seen else
         let path = n::path in
-        let next = List.map snd (List.filter (function n1,_ -> n1=n) edges) in
-        let seen = List.fold_left (explore path) seen next in
+        let next = List.assoc n graph in
+        let seen = List.fold_left (dfs path) seen next in
         n::seen
     in
 
-    (* randomize order of nodes for debugging purposes *)
-    (* let nodes = List.map snd (List.sort compare (List.map (fun x -> (Random.float 1.0,x)) nodes)) in *)
+    (* order the nodes by dfs, to get subtypes later in the list *)
+    let nodes = List.fold_left (fun seen n -> dfs [] seen n) [] nodes
+    in
 
-    List.rev (List.fold_left (fun seen n -> explore [] seen n) [] nodes)
+    (* computes the priority for type t
+     *   - acc is the list of types with priorities already computed
+     *   - on_hold contains the types whose priority has been delayed, pending some priorities for some other types
+     *
+     * NOTE: we need to consider atomic types first and composite types later:
+     * this ensures that Rose trees (and similar mutual types) get appropriate priorities:
+     *   rtree needs list(rtree)
+     * but if we start by computing the priority of list(rtree), we will assign priority 1 to rtree and 3 to list(rtree)
+     *)
+    let rec order t acc on_hold
+      =
+        try List.assoc t acc, acc
+        with Not_found ->
+            match t with
+                | Data(tname,params) ->
+                    let consts = get_type_constants env tname in
+                    let type_consts = uniq (List.concat (List.map (fun c -> extract_datatypes (specialize_constant env t c)) consts)) in
+                    let n,acc = List.fold_left
+                                    (fun nacc _t ->
+                                        if _t = t || List.mem _t on_hold then nacc else
+                                        let n,acc = nacc in
+                                        let _n,_acc = order _t acc (t::on_hold) in
+                                        (max n _n), _acc
+                                    )
+                                    (0,acc)
+                                    type_consts
+                    in
+                    if (is_inductive env tname) = (n mod 2 = 1)
+                    then if (option "squash_priorities") then (n, (t,n)::acc) else (n+2, (t,n+2)::acc)
+                    else (n+1, (t,n+1)::acc)
+                | _ -> assert false
+    in
+    let datatypes = List.filter (function Data _ -> true | _ -> assert false) nodes in
 
-(* TODO better order_types that doesn't try to put a linear order on the types *)
-
-(* check if a datatype occurs inside another type and return +1 / -1 *)
-let rec compare_occur (dt:type_expression)
-                      (t:type_expression)
- : int
- = match t with
-    | t when equal_type dt t -> -1
-    | TVar _ -> +1
-    | Data(_,params) -> List.fold_left (fun r t -> min r (compare_occur dt t)) 1 params
-    | Arrow(t1,t2) -> assert false
-
+    List.fold_left (fun acc t -> let n,acc = order t acc [] in acc) [] datatypes
 
 let infer_priorities (env:environment)
                      (defs:(var_name * type_expression * (term * term) list) list)
                      (datatypes:type_expression list)
   : (var_name * type_expression * (term * term) list) list
   =
-    let rec add_priorities k acc = function
-        | [] -> acc
-        | (Data(tname,_) as t)::ts ->
-            if (is_inductive env tname) = (k mod 2 = 0)
-            then add_priorities (k+1) ((t,k+1)::acc) ts
-            else if (option "squash_priorities")
-            then add_priorities (k) ((t,k)::acc) ts
-            else add_priorities (k+2) ((t,k)::acc) ts
-        | _ -> assert false
-    in
 
-
-    let local_types = get_subtypes_list env datatypes in
+    let local_types = datatypes in
     (* msg "local types: %s" (string_of_list " , " string_of_type local_types); *)
-    let local_types = List.rev (order_types env local_types) in
-    (* msg "total order on types: %s" (string_of_list " < " string_of_type local_types); *)
-    let local_types = add_priorities 1 [] local_types in
+    (* let local_types = find_types_priorities env local_types in *)
+    (* let local_types = find_types_priorities_graph env local_types in *)
+    let local_types = find_types_priorities env local_types in
     (* msg "priorities: %s" (string_of_list " , " (function t,p -> (string_of_type t) ^ ":" ^ (string_of_int p)) local_types); *)
     let functions_types = List.map (function f,t,_ -> f,t) defs in
 
     let get_priority t =
         let rec aux = function
             | [] -> assert false
-            | (_t,_p)::_ when equal_type _t t -> _p  (* FIXME: we can probably use equality of types *)
+            | (_t,_p)::_ when equal_type _t t -> _p
             | _::l -> aux l
         in
         aux local_types
     in
-    (* let get_priority t = print_string "looking for type "; print_type t; print_list "" "in [" "," "]\n" print_type (List.map fst local_types); get_priority t in *)
 
     (* print_list "" "\ntypes for " ", " "" print_string (List.map (function f,_,_,_ -> f) defs); *)
     (* print_list "" "local types: " ", " "\n" (function t,k -> print_type t; print_exp k) local_types; *)
     (* print_list "" "functions types: " ", " "\n\n\n" (function f,t -> print_string f; print_string ":"; print_type t ) functions_types; *)
-
 
     let get_function_type f =
         let rec aux = function
@@ -232,10 +190,8 @@ let infer_priorities (env:environment)
             | _ -> print_term v; print_string "\nOOPS\n"; assert false
     in
 
-
     let put_priorities_single_clause clause =
         let pattern,def = clause in
-
 
         (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
         reset_fresh_variable_generator (List.map snd functions_types);
@@ -277,12 +233,6 @@ let infer_priorities (env:environment)
 
         let pattern = fst (check_type_and_put_priorities (functions_types @ constraints) pattern (Some t)) in
         let def = fst (check_type_and_put_priorities (functions_types @ constraints) def (Some t)) in
-
-        (* print_string "*************\n"; *)
-        (* print_term pattern; *)
-        (* print_string " = "; *)
-        (* print_term def; *)
-        (* print_string "\n*************\n"; *)
 
         pattern, def
 

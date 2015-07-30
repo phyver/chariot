@@ -168,3 +168,8 @@ let rec extract_atomic_types t = match t with
     | TVar _ -> [t]
     | Data(_,params) -> t::(List.concat (List.map extract_atomic_types params))
     | Arrow(t1,t2) -> (extract_atomic_types t1) @ (extract_atomic_types t2)
+
+let rec extract_datatypes t = match t with
+    | TVar _ -> []
+    | Data(_,params) -> t::(List.concat (List.map extract_datatypes params))
+    | Arrow(t1,t2) -> (extract_datatypes t1) @ (extract_datatypes t2)

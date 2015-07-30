@@ -13,7 +13,7 @@ val
 
 val
    onetwothree : list(nat)
-    | onetwothree = Cons⁵ (Succ³ Zero³, Cons⁵ (Succ³ (Succ³ Zero³), Cons⁵ (Succ³ (Succ³ (Succ³ Zero³)), Nil⁵ ())))
+    | onetwothree = Cons⁵ (Succ¹ Zero¹, Cons⁵ (Succ¹ (Succ¹ Zero¹), Cons⁵ (Succ¹ (Succ¹ (Succ¹ Zero¹)), Nil⁵ ())))
 
 val
    pairs : nat * (nat * (nat * nat))
@@ -41,7 +41,7 @@ val
 
 val
    onetwothree : list(nat)
-    | onetwothree = Cons⁵ (Tuple_2⁷ (Succ³ Zero³) (Cons⁵ (Tuple_2⁷ (Succ³ (Succ³ Zero³)) (Cons⁵ (Tuple_2⁷ (Succ³ (Succ³ (Succ³ Zero³))) (Nil⁵ Tuple_0¹))))))
+    | onetwothree = Cons⁵ (Tuple_2³ (Succ¹ Zero¹) (Cons⁵ (Tuple_2³ (Succ¹ (Succ¹ Zero¹)) (Cons⁵ (Tuple_2³ (Succ¹ (Succ¹ (Succ¹ Zero¹))) (Nil⁵ Tuple_0¹))))))
 
 val
    pairs : prod_2(nat,prod_2(nat,prod_2(nat,nat)))
