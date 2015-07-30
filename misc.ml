@@ -132,7 +132,8 @@ let print_prefix out_channel prefix fmt
   = let print s
       = let s = Str.global_replace (Str.regexp_string "\n") ("\n"^prefix) s
         in
-        Printf.fprintf out_channel "%s%s\n" prefix s
+        Printf.fprintf out_channel "%s%s\n" prefix s;
+        flush_all()
     in
     Printf.ksprintf print fmt
 

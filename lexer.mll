@@ -26,7 +26,7 @@ let int = [ '0'-'9' ][ '0'-'9' ]*
 let dummy = "_" sub
 
 
-rule token = parse
+rule tokenize = parse
     | ":quit"           { CMDQUIT }
     | ":prompt"         { CMDPROMPT }
     | ":show"           { CMDSHOW }
@@ -71,15 +71,15 @@ rule token = parse
     | str               { let s = Lexing.lexeme lexbuf in STR(String.sub s 1 ((String.length s)-2)) }
     | int               { INT(int_of_string (Lexing.lexeme lexbuf)) }
 
-    | [' ' '\t']        { token lexbuf }
-    | "\n"              { incr_linenum lexbuf 1; token lexbuf }
+    | [' ' '\t']        { tokenize lexbuf }
+    | "\n"              { incr_linenum lexbuf 1; tokenize lexbuf }
     | eof               { EOF }
     | "(*"              { comments 0 lexbuf }
-    | "--" [^ '\n']*    { token lexbuf }
+    | "--" [^ '\n']*    { tokenize lexbuf }
 
 and comments level = parse
     | "(*"              { comments (level+1) lexbuf }
-    | "*)"              { if level = 0 then token lexbuf else comments (level-1) lexbuf }
-    | "\n"              { incr_linenum lexbuf 1; token lexbuf }
-    | _                 { comments level lexbuf }
+    | "*)"              { if level = 0 then tokenize lexbuf else comments (level-1) lexbuf }
+    | "\n"              { incr_linenum lexbuf 1; comments level lexbuf }
+    | [^ '\n']          { comments level lexbuf }
     | eof               { EOF }

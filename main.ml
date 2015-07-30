@@ -18,6 +18,13 @@ let print_help ()
         "";
     ]
 
+let parse_error lexbuf
+  = let curr = lexbuf.Lexing.lex_curr_p in
+    let line = curr.Lexing.pos_lnum in
+    let tok = Lexing.lexeme lexbuf in
+    let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol - (String.length tok) + 1 in
+    errmsg "parse error line %d, column %d (token <%s>)" line cnum tok
+
 let explore_loop env t
   = print_list "" "| " "\n| " "\n\n" print_string [
         "Explore mode:";
@@ -35,17 +42,12 @@ let explore_loop env t
             let lexbuf = Lexing.from_channel stdin in
             flush_all ();
             try
-                match Parser.explore_command Lexer.token lexbuf with
+                match Parser.explore_command Lexer.tokenize lexbuf with
                     | ExpEnd -> raise Exit
                     | ExpUnfold l -> t := unfold current_state.env (fun n -> List.mem n l) !t
                     | ExpUnfoldAll -> t := unfold current_state.env (fun _ -> true) !t
             with
-                | Parsing.Parse_error ->
-                    let curr = lexbuf.Lexing.lex_curr_p in
-                    let line = curr.Lexing.pos_lnum in
-                    let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
-                    let tok = Lexing.lexeme lexbuf in
-                    errmsg "parse error line %d, column %d (token <%s>)" line cnum tok
+                | Parsing.Parse_error -> parse_error lexbuf
                 | Error err -> errmsg "%s" err
                 | TypeError err -> errmsg "typing error: %s" err
         done
@@ -78,7 +80,7 @@ let loadfile path
     let f_in = open_in path in
     let lexbuf = Lexing.from_channel f_in in
     try
-        let cmds = Parser.statements Lexer.token lexbuf in
+        let cmds = Parser.statements Lexer.tokenize lexbuf in
         List.iter
             (fun st ->
                 try
@@ -95,12 +97,7 @@ let loadfile path
             )
             cmds
     with
-        | Parsing.Parse_error ->
-            let curr = lexbuf.Lexing.lex_curr_p in
-            let line = curr.Lexing.pos_lnum in
-            let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
-            let tok = Lexing.lexeme lexbuf in
-            errmsg "parse error line %d, column %d (token <%s>)" line cnum tok
+        | Parsing.Parse_error -> parse_error lexbuf
         | Error err -> errmsg "%s" err
         | TypeError err -> errmsg "typing error: %s" err
         | Sys_error err -> errmsg "%s" err
@@ -114,14 +111,9 @@ let mainloop ()
         let lexbuf = Lexing.from_channel stdin in
         flush_all ();
         try
-            process_statement (Parser.single_statement Lexer.token lexbuf)
+            process_statement (Parser.single_statement Lexer.tokenize lexbuf)
         with
-            | Parsing.Parse_error ->
-                let curr = lexbuf.Lexing.lex_curr_p in
-                let line = curr.Lexing.pos_lnum in
-                let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
-                let tok = Lexing.lexeme lexbuf in
-                errmsg "parse error line %d, column %d (token <%s>)" line cnum tok
+            | Parsing.Parse_error -> parse_error lexbuf
             | Error err -> errmsg "%s" err
             | TypeError err -> errmsg "typing error: %s" err
     done
