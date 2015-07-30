@@ -1,4 +1,6 @@
-  - use lexing positions for parsing errors
+  - use lexing positions for parsing errors:
+      - update "file" field
+      - print buffer with error underlined ???
 
   - use type weight for priorities
 

@@ -5,6 +5,13 @@ let remove_exp s =
     let re = Str.regexp "\\(⁰\\|¹\\|²\\|³\\|⁴\\|⁵\\|⁶\\|⁷\\|⁸\\|⁹\\)*$" in
     Str.global_replace re "" s
 
+let incr_linenum lexbuf n =
+    let pos = lexbuf.Lexing.lex_curr_p in
+    lexbuf.Lexing.lex_curr_p <- { pos with
+      Lexing.pos_lnum = pos.Lexing.pos_lnum + n;
+      Lexing.pos_bol = pos.Lexing.pos_cnum;
+    }
+
 }
 let upper = [ 'A'-'Z' ]
 let lower = [ 'a'-'z' ]
@@ -17,6 +24,7 @@ let str = "\"" ([^ '"'] | "\\\"")* "\""
 let tvar = "'" lower(lower|upper|other)*exp
 let int = [ '0'-'9' ][ '0'-'9' ]*
 let dummy = "_" sub
+
 
 rule token = parse
     | ":quit"           { CMDQUIT }
@@ -45,7 +53,7 @@ rule token = parse
     | '+'               { PLUS }
     | '-'               { MINUS }
     | '*'               { STAR }
-    | "\n\n"            { BLANKLINE }
+    | "\n\n"            { incr_linenum lexbuf 2; BLANKLINE }
     | "data"            { DATA }
     | "codata"          { CODATA }
     | "where"           { WHERE }
@@ -63,7 +71,8 @@ rule token = parse
     | str               { let s = Lexing.lexeme lexbuf in STR(String.sub s 1 ((String.length s)-2)) }
     | int               { INT(int_of_string (Lexing.lexeme lexbuf)) }
 
-    | [' ' '\n' '\t']   { token lexbuf }
+    | [' ' '\t']        { token lexbuf }
+    | "\n"              { incr_linenum lexbuf 1; token lexbuf }
     | eof               { EOF }
     | "(*"              { comments 0 lexbuf }
     | "--" [^ '\n']*    { token lexbuf }
@@ -71,5 +80,6 @@ rule token = parse
 and comments level = parse
     | "(*"              { comments (level+1) lexbuf }
     | "*)"              { if level = 0 then token lexbuf else comments (level-1) lexbuf }
+    | "\n"              { incr_linenum lexbuf 1; token lexbuf }
     | _                 { comments level lexbuf }
     | eof               { EOF }

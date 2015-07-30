@@ -40,7 +40,12 @@ let explore_loop env t
                     | ExpUnfold l -> t := unfold current_state.env (fun n -> List.mem n l) !t
                     | ExpUnfoldAll -> t := unfold current_state.env (fun _ -> true) !t
             with
-                | Parsing.Parse_error -> errmsg "parse error"
+                | Parsing.Parse_error ->
+                    let curr = lexbuf.Lexing.lex_curr_p in
+                    let line = curr.Lexing.pos_lnum in
+                    let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
+                    let tok = Lexing.lexeme lexbuf in
+                    errmsg "parse error line %d, column %d (token <%s>)" line cnum tok
                 | Error err -> errmsg "%s" err
                 | TypeError err -> errmsg "typing error: %s" err
         done
@@ -69,9 +74,10 @@ let process_statement s = match s with
 
 
 let loadfile path
-  = try
-        let f_in = open_in path in
-        let lexbuf = Lexing.from_channel f_in in
+  =
+    let f_in = open_in path in
+    let lexbuf = Lexing.from_channel f_in in
+    try
         let cmds = Parser.statements Lexer.token lexbuf in
         List.iter
             (fun st ->
@@ -89,7 +95,12 @@ let loadfile path
             )
             cmds
     with
-        | Parsing.Parse_error -> errmsg "parse error"
+        | Parsing.Parse_error ->
+            let curr = lexbuf.Lexing.lex_curr_p in
+            let line = curr.Lexing.pos_lnum in
+            let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
+            let tok = Lexing.lexeme lexbuf in
+            errmsg "parse error line %d, column %d (token <%s>)" line cnum tok
         | Error err -> errmsg "%s" err
         | TypeError err -> errmsg "typing error: %s" err
         | Sys_error err -> errmsg "%s" err
@@ -105,7 +116,12 @@ let mainloop ()
         try
             process_statement (Parser.single_statement Lexer.token lexbuf)
         with
-            | Parsing.Parse_error -> errmsg "parse error"
+            | Parsing.Parse_error ->
+                let curr = lexbuf.Lexing.lex_curr_p in
+                let line = curr.Lexing.pos_lnum in
+                let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
+                let tok = Lexing.lexeme lexbuf in
+                errmsg "parse error line %d, column %d (token <%s>)" line cnum tok
             | Error err -> errmsg "%s" err
             | TypeError err -> errmsg "typing error: %s" err
     done
