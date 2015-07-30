@@ -14,7 +14,7 @@ syntax match chConst '[A-Z][a-zA-Z0-9_]*'
 syntax match chAngel "???"
 syntax match chTVar '\'[a-z][a-zA-Z0-9_]*'
 
-syn region chComment start="(\*" end="\*)"
+syn region chComment start="(\*" end="\*)" contains=chComment
 syn match chComment '--.*'
 syn match chComment '….*'
 
