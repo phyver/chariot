@@ -5,13 +5,6 @@ let remove_exp s =
     let re = Str.regexp "\\(⁰\\|¹\\|²\\|³\\|⁴\\|⁵\\|⁶\\|⁷\\|⁸\\|⁹\\)*$" in
     Str.global_replace re "" s
 
-let incr_linenum lexbuf n =
-    let pos = lexbuf.Lexing.lex_curr_p in
-    lexbuf.Lexing.lex_curr_p <- { pos with
-      Lexing.pos_lnum = pos.Lexing.pos_lnum + n;
-      Lexing.pos_bol = pos.Lexing.pos_cnum;
-    }
-
 }
 let upper = [ 'A'-'Z' ]
 let lower = [ 'a'-'z' ]
@@ -53,7 +46,7 @@ rule tokenize = parse
     | '+'               { PLUS }
     | '-'               { MINUS }
     | '*'               { STAR }
-    | "\n\n"            { incr_linenum lexbuf 2; BLANKLINE }
+    | "\n\n"            { Lexing.new_line lexbuf; Lexing.new_line lexbuf; BLANKLINE }
     | "data"            { DATA }
     | "codata"          { CODATA }
     | "where"           { WHERE }
@@ -72,7 +65,7 @@ rule tokenize = parse
     | int               { INT(int_of_string (Lexing.lexeme lexbuf)) }
 
     | [' ' '\t']        { tokenize lexbuf }
-    | "\n"              { incr_linenum lexbuf 1; tokenize lexbuf }
+    | "\n"              { Lexing.new_line lexbuf; tokenize lexbuf }
     | eof               { EOF }
     | "(*"              { comments 0 lexbuf }
     | "--" [^ '\n']*    { tokenize lexbuf }
@@ -80,6 +73,6 @@ rule tokenize = parse
 and comments level = parse
     | "(*"              { comments (level+1) lexbuf }
     | "*)"              { if level = 0 then tokenize lexbuf else comments (level-1) lexbuf }
-    | "\n"              { incr_linenum lexbuf 1; comments level lexbuf }
+    | "\n"              { Lexing.new_line lexbuf; comments level lexbuf }
     | [^ '\n']          { comments level lexbuf }
     | eof               { EOF }
