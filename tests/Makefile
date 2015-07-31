@@ -1,3 +1,4 @@
+INTERACTIVE="-i"
 
 FILES=$(sort $(wildcard *.ch))
 EXCLUDE=
@@ -9,7 +10,7 @@ TESTS=$(filter-out $(EXCLUDE), $(FILES))
 all: $(TESTS)
 
 %.ch: FORCE
-	@./check.sh $@
+	@./check.sh $(INTERACTIVE) $@
 
 FORCE:
 

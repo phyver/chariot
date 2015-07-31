@@ -1,7 +1,32 @@
 #!/bin/sh
 
-INFILE=$1
 EXT=.ch
+
+INTERACTIVE=1
+
+INDENT="  "
+
+USAGE=$(cat <<EOS
+usage:
+  $0 [-i] [-n] <file>
+    -i      run interactively (default)
+    -n      run non-interactively, with minimal output
+  file should have extension $EXT
+EOS
+)
+
+while getopts "ni" f
+do
+    case $f in
+        n)  INTERACTIVE=0           ;;
+        i)  INTERACTIVE=1           ;;
+        \?) echo "$USAGE"; exit 3     ;;
+    esac
+done
+shift `expr $OPTIND - 1`
+
+
+INFILE=$1
 
 case $INFILE in
     *$EXT ) ;;
@@ -23,8 +48,16 @@ DIFF_PRG="git diff --color --word-diff=plain --no-index"
 
 # trap "rm -f $TMPFILE; exit $EXIT_STATUS" INT TERM EXIT
 
+message() {
+    if [ "$INTERACTIVE" = "0" ]
+    then
+        :       #NOP
+    else
+        echo "$@"
+    fi
+}
 
-echo -n "file $INFILE ... \t"
+message -n "${INDENT}file $INFILE ... \t"
 $CHARIOT $INFILE > $TMPFILE
 
 if [ -f $OUTFILE ]
@@ -32,29 +65,36 @@ then
     DIFF=$($DIFF_PRG $OUTFILE $TMPFILE)
     if [ -z "$DIFF" ]
     then
-        echo "OK"
+        message "OK"
     else
-        echo "OOPS, the output is different from the recorded one:"
-        echo "$DIFF"
+        message "OOPS, the output is different from the recorded one:"
+        if [ "$INTERACTIVE" = "0" ]
+        then
+            echo "$INFILE: output different from the recorded one..."
+            rm -f $TMPFILE
+            EXIT_STATUS=1
+            exit $EXIT_STATUS
+        fi
+        message "$DIFF"
         while true
         do
-            echo -n "accept new output? "
+            message -n "accept new output? "
             read -p "[yNc] " R
             case $R in
                 y | Y )
                     mv $TMPFILE $OUTFILE
-                    echo "replaced old output by new..."
+                    message "replaced old output by new..."
                     EXIT_STATUS=0
                     break
                 ;;
                 n | N | "" )
-                    echo "ERROR... Unexpected output"
+                    message "ERROR... Unexpected output"
                     EXIT_STATUS=1
                     break
                 ;;
                 c | C )
-                    echo "old result kept"
-                    echo "continue anyway"
+                    message "old result kept"
+                    message "continue anyway"
                     EXIT_STATUS=0
                     break
                 ;;
@@ -64,9 +104,16 @@ then
         done
     fi
 else
-    echo
-    echo "no output file found"
-    echo "Is the following correct?"
+    message
+    message "no output file found"
+    if [ "$INTERACTIVE" = "0" ]
+    then
+        echo "$INFILE: no output file found"
+        rm -f $TMPFILE
+        EXIT_STATUS=1
+        exit $EXIT_STATUS
+    fi
+    message "Is the following correct?"
     cat $TMPFILE
     while true
     do
@@ -74,18 +121,18 @@ else
         case $R in
             y | Y | "")
                 mv $TMPFILE $OUTFILE
-                echo "result saved in $OUTFILE"
+                message "result saved in $OUTFILE"
                 EXIT_STATUS=0
                 break
             ;;
             n | N )
-                echo "no result saved"
+                message "no result saved"
                 EXIT_STATUS=1
                 break
             ;;
             c | C )
-                echo "no result saved"
-                echo "continue anyway"
+                message "no result saved"
+                message "continue anyway"
                 EXIT_STATUS=0
                 break
             ;;

@@ -1,3 +1,5 @@
+all: noninteractive-tests
+
 all: native
 
 tags:
@@ -12,8 +14,13 @@ native:
 byte:
 	ocamlbuild -libs str,unix main.byte
 
-tests: FORCE
-	make -C tests all
+tests: native
+	@echo "tests:"
+	@make -s -C tests all
+
+noninteractive-tests: native
+	@make -s -C tests all INTERACTIVE="-n"
+	@echo "ALL TESTS OK"
 
 clean:
 	ocamlbuild -clean
