@@ -10,9 +10,11 @@ debug:
 
 native:
 	ocamlbuild -libs str,unix main.native
+	@ln -sf ./main.native ./chariot
 
 byte:
 	ocamlbuild -libs str,unix main.byte
+	@ln -sf ./main.byte ./chariot
 
 tests: native
 	@echo "tests:"
@@ -24,8 +26,9 @@ noninteractive-tests: native
 
 clean:
 	ocamlbuild -clean
-	rm -f tags
 	rm -f main.native main.byte
+	rm -f chariot
+	rm -f tags
 	rm -f gmon.out a.out
 
 FORCE:

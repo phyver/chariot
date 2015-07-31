@@ -40,7 +40,7 @@ OUTFILE=${INFILE%$EXT}.out
 
 TMPFILE=${INFILE%$EXT}.tmpout
 
-CHARIOT=../main.native
+CHARIOT=../chariot
 
 # DIFF_PRG="diff -y"
 # DIFF_PRG="git diff --color-words --no-index"

@@ -1,13 +1,7 @@
-
-*.cmx
-*.cmi
-*.cmo
-*.o
+tags
 main.native
 main.byte
-parser.ml
-parser.mli
-lexer.ml
+chariot
 .vimrc
 _build
 tmp
