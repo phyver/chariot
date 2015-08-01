@@ -107,7 +107,13 @@ and
         match v with
             | Angel -> "⊤"
             | Var(x) -> x
+            | Const(d,Some p) when p mod 2 = 0 -> (* during SCT, projections in arguments are transformed into Const *)
+                let d = if (option "use_ansi_codes") then ansi_code "underline" ("."^d) else (".["^d^"]") in
+                d ^  (if not (option "show_priorities") then "" else string_of_priority (Some p))
             | Const(c,p) -> c ^ (if not (option "show_priorities") then "" else string_of_priority p)
+            | Proj(c,Some p) when p mod 2 = 1 -> (* during SCT, constructors on results are transformed into Proj *)
+                let c = if (option "use_ansi_codes") then ansi_code "underline" c else ("["^c^"]") in
+                c ^ (if not (option "show_priorities") then "" else string_of_priority (Some p))
             | Proj(d,p) -> "." ^ d ^  (if not (option "show_priorities") then "" else string_of_priority p)
             | App(Proj _ as v1,v2) -> (string_of_term_paren sp v2) ^ (string_of_special_term sp v1)
             | App(App(Var("add"),v1),v2) when (option "show_nats") -> (string_of_special_term sp v1) ^ "+" ^ (string_of_term_paren sp v2)   (* TODO: don't show add as + in pattern *)

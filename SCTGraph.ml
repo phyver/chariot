@@ -8,12 +8,12 @@ open SCTCalls
  *****************************)
 
 (* Sets of clauses *)
-module Calls_Set = Set.Make (struct type t=sct_clause let compare=compare end)
-type calls_set = Calls_Set.t
+module ClauseSet = Set.Make (struct type t=sct_clause let compare=compare end)
+type clauseSet = ClauseSet.t
 
 (* Call graphs: maps indexed by pairs of function names *)
-module Call_Graph = Map.Make (struct type t=string*string let compare=compare end)
-type call_graph = calls_set Call_Graph.t
+module CallGraph = Map.Make (struct type t=var_name*var_name let compare=compare end)
+type call_graph = clauseSet CallGraph.t
 
 
 
@@ -25,32 +25,117 @@ type call_graph = calls_set Call_Graph.t
  * appears (or an approximation appears). This requires to use a custom map
  * module...
  *)
-let add_call_set tau s =
+let add_call_set clause s =
   if (option "use_subsumption")
   then
-    if Calls_Set.exists (fun sigma -> approximates sigma tau) s
+    if ClauseSet.exists (fun cl -> approximates cl clause) s
     then s
-    else Calls_Set.add tau (Calls_Set.filter (fun sigma -> not (approximates tau sigma)) s)
+    else ClauseSet.add clause (ClauseSet.filter (fun cl -> not (approximates clause cl)) s)
   else
-    Calls_Set.add tau s
+    ClauseSet.add clause s
 
 (* Checks if a call brings new information. *)
-let new_call_set tau s =
+let new_call_set clause s =
     if (option "use_subsumption")
-    then not (Calls_Set.exists (fun sigma -> approximates sigma tau) s)
-    else not (Calls_Set.mem tau s)  (* FIXME something might be wrong here *)
+    then not (ClauseSet.exists (fun cl -> approximates cl clause) s)
+    else not (ClauseSet.mem clause s)  (* FIXME something might be wrong here *)
 
+(* collapse a whole graph *)
+let collapse_graph b d graph = todo "collapse_graph"
 
 (* computing the call graph *)
 (* NOTE: hack, I will need to use Proj variants to register constructors
  * applied to the result of a call, and Const variants to register destructor
  * in argument position... *)
-(* TODO *)
+let callgraph_from_definitions
+  (functions : (var_name * type_expression * function_clause list) list)
+  : call_graph
+  =
+    let function_names = List.map (function f,_,_ -> f) functions
+    in
 
+    let clauses = List.concat (List.map (function _,_,cls -> cls) functions)
+    in
+
+    let graph = CallGraph.empty
+    in
+
+    let top = todo "top" (* the greatest element, ie the least informative *)
+    in
+
+    let rec extract_params d
+      = match d with
+            | Var x -> [x]
+            | App(u1,u2) -> (extract_params u1) @ (extract_params u2)
+            | Const _ | Proj _ | Angel -> assert false
+            | Special s -> s.bot
+    in
+
+    let rec process_clause graph (lhs,rhs)
+      : call_graph
+      =
+        let lhs = pattern_to_approx_term lhs
+        in
+
+        let caller = get_function_name lhs
+        in
+
+        let params = extract_params lhs
+        in
+
+        let rec process_arg (p:term)
+          : approx_term
+          = match get_head p,get_args p with
+                | Var x,_ when List.mem x params -> Var x   (* TODO: check if some function appears in the arguments... *)
+                | Var x,_ -> top
+                | Angel,_ -> Angel
+                | Const(c,prio),args -> app (Const(c,prio)) (List.map process_arg args)
+                | Proj(d,prio), args -> app (Const(d,prio)) (List.map process_arg args) (* NOTE: we transform the Proj into a Const because it is applied to an argument *)
+                | Special s,_ -> s.bot
+                | App _,_ -> assert false
+        in
+
+        let rec process_rhs graph rhs calling_context
+          : call_graph
+          = match get_head rhs, get_args rhs with
+                | Var called, args when List.mem called function_names ->
+                    let _args = List.map process_arg args
+                    in
+                    let call = lhs, app (Var called) (_args@calling_context)
+                    in
+                    let graph = CallGraph.add (caller,called) (add_call_set call (CallGraph.find (caller,called) graph)) graph
+                    in
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty))]) graph args
+
+                | Var _, args | Angel, args ->
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty))]) graph args
+
+                | Const(c,p),args ->
+                    (* NOTE: we transform the Const into a Proj because it is applied to the result of a call *)
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs (Proj(c,p)::calling_context)) graph args
+
+                | Proj(d,p),u::args ->
+                    let _args = List.map process_arg args
+                    in
+                    let graph = process_rhs graph u (Proj(d,p)::_args@calling_context)
+                    in
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty))]) graph args
+
+                | Special s, _ -> s.bot
+
+                | App _, _ -> assert false
+                | Proj _,[] -> assert false
+        in
+        process_rhs graph rhs []
+    in
+
+    let graph = List.fold_left (fun graph clause -> process_clause graph clause) graph clauses
+    in
+    graph
 
 
 (* Counts the number of calls in a graph.  *)
-let count_edges g = Call_Graph.fold (fun _ s n -> n+(Calls_Set.cardinal s)) g 0
+let count_edges g = CallGraph.fold (fun _ s n -> n+(ClauseSet.cardinal s)) g 0
 
 (* Computing the transitive closure of a graph. *)
 let transitive_closure initial_graph d b =
@@ -67,37 +152,37 @@ let transitive_closure initial_graph d b =
      *)
     let result = ref g in
 
-    Call_Graph.iter (fun fg a ->
-      Call_Graph.iter (fun fg' a' ->
+    CallGraph.iter (fun fg a ->
+      CallGraph.iter (fun fg' a' ->
         let f,g = fg in
         let f',g' = fg' in
         if g=f'
         then begin
-          Calls_Set.iter (fun tau ->
-            Calls_Set.iter (fun tau' ->
-              let all_calls = try Call_Graph.find (f,g') !result
-                              with Not_found -> Calls_Set.empty
+          ClauseSet.iter (fun clause2 ->
+            ClauseSet.iter (fun clause2' ->
+              let all_calls = try CallGraph.find (f,g') !result
+                              with Not_found -> ClauseSet.empty
               in
               try
                 (* ifDebug "show_all_compositions" *)
                 (* begin fun _ -> *)
                 (*   print_string "** Composing: **\n"; *)
-                (*   print_call tau; *)
+                (*   print_call clause2; *)
                 (*   print_string "    with\n"; *)
-                (*   print_call tau'; *)
+                (*   print_call clause2'; *)
                 (*   print_string "    with B="; print_int b; print_string " and D="; print_int d; print_string "\n** to give\n"; *)
                 (* end; *)
-                let sigma : sct_clause = collapsed_compose d b tau tau' in
+                let clause1 : sct_clause = collapsed_compose d b clause2 clause2' in
                 (* ifDebug "show_all_compositions" *)
                 (* begin fun _ -> *)
-                (*   print_call sigma; *)
+                (*   print_call clause1; *)
                 (*   print_newline(); *)
                 (*   print_newline() *)
                 (* end; *)
-                if (new_call_set sigma all_calls)
+                if (new_call_set clause1 all_calls)
                 then begin
                   new_arcs := true;
-                  result := Call_Graph.add (f,g') (add_call_set sigma all_calls) !result;
+                  result := CallGraph.add (f,g') (add_call_set clause1 all_calls) !result;
                 end
               with Impossible_case ->
                 (* ifDebug "show_all_compositions" *)
@@ -144,10 +229,10 @@ let transitive_closure initial_graph d b =
   (* end; *)
   (* if (option "initial_collapse_of_graph") *)
   (* then begin fun _ -> *)
-  (* let initial_graph = Call_Graph.map (fun s -> *)
-  (*               Calls_Set.fold (fun tau s -> *)
-  (*                 add_call_set (collapse_call d b tau) s) *)
-  (*                 s Calls_Set.empty) *)
+  (* let initial_graph = CallGraph.map (fun s -> *)
+  (*               ClauseSet.fold (fun clause2 s -> *)
+  (*                 add_call_set (collapse_call d b clause2) s) *)
+  (*                 s ClauseSet.empty) *)
   (*                 initial_graph in *)
   (* if (option "show_initial_call_graph") *)
   (* begin fun _ -> *)
@@ -181,25 +266,25 @@ let transitive_closure initial_graph d b =
 let size_change_termination_bounds graph d b =
   assert (d>=0 && b>0) ;
   let tc_graph = transitive_closure graph d b in
-    Call_Graph.for_all
+    CallGraph.for_all
       (fun fg s ->
         let f,g = fg in
         f<>g ||
-        Calls_Set.for_all
-          (fun sigma ->
+        ClauseSet.for_all
+          (fun clause1 ->
             try
-              not (compatible sigma (collapsed_compose d b sigma sigma)) ||
+              not (compatible clause1 (collapsed_compose d b clause1 clause1)) ||
               begin
                 (* ifDebug "show_coherents" *)
                 (* begin fun _ -> *)
                 (*   print_string ("** Found coherent loop from \"" ^ f ^ "\" to itself: **\n"); *)
-                (*   print_call sigma *)
+                (*   print_call clause1 *)
                 (* end; *)
-                decreasing sigma ||
+                decreasing clause1 ||
                 (
                 (* ifDebug "show_nondecreasing_coherents" begin fun _ -> *)
                 (*   print_string ("** Found non-decreasing coherent loop from \"" ^ f ^ "\" to itself: **\n"); *)
-                (*   print_call sigma; *)
+                (*   print_call clause1; *)
                 (*   print_newline() *)
                 (* end; *)
                 false)

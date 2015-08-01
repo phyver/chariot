@@ -535,7 +535,7 @@ let decreasing (l,r : sct_clause)
 
                         | _,_,Special(ApproxConst _),_ -> assert false
 
-                        | _,_,Angel,_ -> true
+                        | _,_,Angel,_ -> true   (* FIXME: if the Angel isn't in a data, it should be "false" *)
 
                         | Angel,_,_,_ -> assert false
                         | App _,_,_,_ | _,_,App _,_ -> assert false
