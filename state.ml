@@ -37,6 +37,7 @@ let current_state =
             "squash_priorities",       false    ;
             "use_ansi_codes",          false    ;
             "use_subsumption",         true     ;
+            "collapse_graph",          true     ;
         ]                                       ;
         depth = 2                               ;
         bound = 2                               ;

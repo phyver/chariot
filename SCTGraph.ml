@@ -41,7 +41,12 @@ let new_call_set clause s =
     else not (ClauseSet.mem clause s)  (* FIXME something might be wrong here *)
 
 (* collapse a whole graph *)
-let collapse_graph b d graph = todo "collapse_graph"
+let collapse_graph b d graph
+  = CallGraph.map (fun s ->
+                ClauseSet.fold (fun clause2 s ->
+                  add_call_set (collapse_clause d b clause2) s)
+                  s ClauseSet.empty)
+                  graph
 
 (* computing the call graph *)
 (* NOTE: hack, I will need to use Proj variants to register constructors
@@ -229,11 +234,7 @@ let transitive_closure initial_graph d b =
   (* end; *)
   (* if (option "initial_collapse_of_graph") *)
   (* then begin fun _ -> *)
-  (* let initial_graph = CallGraph.map (fun s -> *)
-  (*               ClauseSet.fold (fun clause2 s -> *)
-  (*                 add_call_set (collapse_call d b clause2) s) *)
-  (*                 s ClauseSet.empty) *)
-  (*                 initial_graph in *)
+  let initial_graph = if option "collapse_graph" then collapse_graph b d initial_graph else initial_graph in
   (* if (option "show_initial_call_graph") *)
   (* begin fun _ -> *)
   (*   print_string "** Control-flow graph after collapse: **\n"; *)
