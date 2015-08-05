@@ -1,8 +1,9 @@
+:set use_priorities false
 
 :testcompose
    f x y => g x x y y
 and
-   g a b c d => h b c
+   g a b l d => h b l
 
 
 :testcompose

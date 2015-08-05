@@ -1,3 +1,5 @@
+:set use_priorities false
+
 :echo "expect TRUE"
 :testcompare f x => g x and  f x => g x
 

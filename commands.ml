@@ -142,52 +142,13 @@ let cmd_unify_term env pattern term =
 (*     print_newline() *)
 
 let cmd_compose env l1 r1 l2 r2 =
-    msg "=======================================================";
-    msg "composing";
-    msg "             %s => %s" (string_of_term l1) (string_of_term r1);
-    msg "and";
-    msg "             %s => %s" (string_of_term l2) (string_of_term r2);
+    msg "  %s => %s    o    %s => %s" (string_of_term l1) (string_of_term r1) (string_of_term l2) (string_of_term r2);
     let l1 = pattern_to_approx_term l1 in
     let r1 = pattern_to_approx_term r1 in
     let l2 = pattern_to_approx_term l2 in
     let r2 = pattern_to_approx_term r2 in
-    let l,r = compose (l1,r1) (l2,r2) in
-    msg "";
-    msg "result";
-    msg "             %s => %s" (string_of_approx_term l) (string_of_approx_term r);
-    msg "";
     let l,r = collapsed_compose current_state.bound current_state.depth (l1,r1) (l2,r2) in
-    msg "";
-    msg "collapsed";
-    msg "             %s => %s" (string_of_approx_term l) (string_of_approx_term r);
-    msg "";
-    (* let l1 = collapse_pattern 0 l1 in *)
-    (* let l2 = collapse_pattern 0 l2 in *)
-    (* let r1 = collapse_pattern 0 r1 in *)
-    (* let r2 = collapse_pattern 0 r2 in *)
-    (* let l1,r1 = normalize_sct_clause (l1,r1) in *)
-    (* let l2,r2 = normalize_sct_clause (l2,r2) in *)
-    (* msg "======================================================="; *)
-    (* msg "composing"; *)
-    (* msg "             %s => %s" (string_of_approx_term l1) (string_of_approx_term r1); *)
-    (* msg "and"; *)
-    (* msg "             %s => %s" (string_of_approx_term l2) (string_of_approx_term r2); *)
-    (* let l,r = compose (l1,r1) (l2,r2) in *)
-    (* msg ""; *)
-    (* msg "result"; *)
-    (* msg "             %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
-    (* msg ""; *)
-
-
-    (* let l = collapse_pattern 0 l in *)
-    (* let r = collapse_pattern 0 r in *)
-    (* msg "after collapse at 0"; *)
-    (* msg "             %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
-    (* let l,r = normalize_sct_clause (l,r) in *)
-    (* msg "after normalizing:"; *)
-    (* msg "             %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
-
-    msg "=======================================================";
+    msg "          =  %s => %s" (string_of_approx_term l) (string_of_approx_term r);
     print_newline()
 
 
@@ -199,9 +160,9 @@ let cmd_compare env l1 r1 l2 r2 =
     let l1,r1 = collapse_clause current_state.bound current_state.depth (l1,r1) in
     let l2,r2 = collapse_clause current_state.bound current_state.depth (l2,r2) in
 
-    msg " %s => %s    approximates    %s => %s" (string_of_approx_term l1) (string_of_approx_term r1) (string_of_approx_term l2) (string_of_approx_term r2); 
+    msg "  %s => %s    ≥    %s => %s" (string_of_approx_term l1) (string_of_approx_term r1) (string_of_approx_term l2) (string_of_approx_term r2); 
     if approximates (l1,r1) (l2,r2)
-    then msg "TRUE"
-    else msg "FALSE";
+    then msg "        TRUE"
+    else msg "        FALSE";
     print_newline()
 

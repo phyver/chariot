@@ -39,7 +39,7 @@ let add_approx a1 a2
         | (Some p1, w1) , (Some p2, w2) when p1<p2 -> (Some p2, w2)
         | (Some p1, w1) , (Some p2, w2) when p1>p2 -> (Some p1, w1)
         | (Some p1, w1) , (Some p2, w2) (*when p1=p2*) -> (Some p1, add_weight w1 w2)
-        | (None,w1) , (Some _,w2) | (Some _,w1),(None,w2) -> warning "cannot add priorities and non-priorities, ignoring them"; (None, add_weight w1 w2)
+        | (None,w1) , (Some _,w2) | (Some _,w1),(None,w2) -> if option "use_priorities" then warning "cannot add priorities and non-priorities, ignoring them"; (None, add_weight w1 w2)
 
 let simplify_approx aps =
     let aps = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) aps in
@@ -242,7 +242,7 @@ let rec rename_var_aux x v
         | Var y -> Var (y^x)
         | App(v1,v2) -> App(rename_var_aux x v1, rename_var_aux x v2)
         | Const _ | Proj _ | Angel -> v
-        | Special(ApproxConst apps) -> Special(ApproxConst (List.map (function p,w,y -> p,w,x^y) apps))
+        | Special(ApproxConst apps) -> Special(ApproxConst (List.map (function p,w,y -> p,w,y^x) apps))
         | _ -> assert false
 
 let rec rename_var x v
@@ -257,8 +257,7 @@ let rec rename_var x v
 
 (* unify the rhs of a clause with the lhs of another *)
 let unify ?(allow_right_approx=false) (rhs:approx_term) (lhs:approx_term)
-  :   (var_name * approx_term) list     (* the substitution concerning variables in rhs *)
-    * (var_name * approx_term) list     (* the substitution concerning variables in lhs *)
+  :   (var_name * approx_term) list     (* the substitution *)
     * approx_term list                  (* the arguments that were in lhs but not in rhs *)
     * approx_term list                  (* the arguments that were in rhs but not in lhs *)  (* NOTE: at most one of those lists is non-empty *)
   =
@@ -268,33 +267,33 @@ let unify ?(allow_right_approx=false) (rhs:approx_term) (lhs:approx_term)
     assert (f_r = f_l);
 
     let rec unify_aux (ps_r:approx_term list) (ps_l:approx_term list)
-                      (sigma_r:(var_name*approx_term) list) (sigma_l:(var_name*approx_term) list)
-      : (var_name*approx_term) list *  (var_name*approx_term) list * approx_term list * approx_term list
+                      (sigma:(var_name*approx_term) list)
+      : (var_name*approx_term) list * approx_term list * approx_term list
       = match ps_r,ps_l with
-            | [],[] -> sigma_r,sigma_l,[],[]
+            | [],[] -> sigma,[],[]
 
-            | u_r::ps_r,u_l::ps_l when u_r=u_l -> unify_aux ps_r ps_l sigma_r sigma_l
+            | u_r::ps_r,u_l::ps_l when u_r=u_l -> unify_aux ps_r ps_l sigma
 
-            | App(u_r,v_r)::ps_r,App(u_l,v_l)::ps_l -> unify_aux (u_r::v_r::ps_r) (u_l::v_l::ps_l) sigma_r sigma_l
+            | App(u_r,v_r)::ps_r,App(u_l,v_l)::ps_l -> unify_aux (u_r::v_r::ps_r) (u_l::v_l::ps_l) sigma
 
             | Special(ApproxConst apps_r)::ps_r,u_l::ps_l ->
                 let apps_l = collapse0 u_l in
-                let sigma = List.map (function p,w,x -> (x,Special(ApproxConst(List.map (function _p,_w,_x -> let p,w = add_approx (_p,_w) (p, op_weight w) in p,w,_x) apps_r))) ) apps_l in
-                unify_aux ps_r ps_l sigma_r (sigma @ (List.map (second (subst_approx_term sigma)) sigma_l))
+                let tau = List.map (function p,w,x -> (x,Special(ApproxConst(List.map (function _p,_w,_x -> let p,w = add_approx (_p,_w) (p, op_weight w) in p,w,_x) apps_r))) ) apps_l in
+                unify_aux ps_r ps_l (tau @ (List.map (second (subst_approx_term sigma)) sigma))
 
             | u_r::ps_r,Special(ApproxConst apps_l)::ps_l ->
                     if allow_right_approx
                     then
                         let apps_r = collapse0 u_r in
-                        let sigma = List.map (function p,w,x -> (x,Special(ApproxConst(List.map (function _p,_w,_x -> let p,w = add_approx (_p,_w) (p, op_weight w) in p,w,_x) apps_l))) ) apps_r in
-                        unify_aux ps_r ps_l (sigma @ (List.map (second (subst_approx_term sigma)) sigma_r)) sigma_l
+                        let tau = List.map (function p,w,x -> (x,Special(ApproxConst(List.map (function _p,_w,_x -> let p,w = add_approx (_p,_w) (p, op_weight w) in p,w,_x) apps_l))) ) apps_r in
+                        unify_aux ps_r ps_l (tau @ (List.map (second (subst_approx_term sigma)) sigma))
                     else raise (UnificationError "approximation on the right not allowed during unification")
 
             | [Special(ApproxProj(p,w))],ps_l ->
                 let tmp = List.filter (function Proj _ | Special(ApproxProj _) -> true | _ -> false) ps_l in
                 let tmp = List.map (function Proj(_,p) -> (p,Num 1) | Special(ApproxProj(p,w)) -> (p,w) | _ -> assert false) tmp in
                 let p,w = List.fold_left (fun ap1 ap2 -> add_approx ap1 ap2) (p,op_weight w) tmp in
-                sigma_r,sigma_l,[],[Special(ApproxProj(p,w))]
+                sigma,[],[Special(ApproxProj(p,w))]
 
             | ps_r,[Special(ApproxProj(p,w))] ->
                     if allow_right_approx
@@ -302,14 +301,14 @@ let unify ?(allow_right_approx=false) (rhs:approx_term) (lhs:approx_term)
                         let tmp = List.filter (function Proj _ | Special(ApproxProj _) -> true | _ -> false) ps_r in
                         let tmp = List.map (function Proj(_,p) -> (p,Num 1) | Special(ApproxProj(p,w)) -> (p,w) | _ -> assert false) tmp in
                         let p,w = List.fold_left (fun ap1 ap2 -> add_approx ap1 ap2) (p,op_weight w) tmp in
-                        sigma_r,sigma_l,[Special(ApproxProj(p,w))],[]
+                        sigma,[Special(ApproxProj(p,w))],[]
                     else raise (UnificationError "approximation on the right not allowed during unification")
 
-            | Var(x_r)::ps_r,u_l::ps_l -> unify_aux (List.map (subst_approx_term [x_r,u_l]) ps_r) ps_l ((x_r,u_l)::(List.map (second (subst_approx_term [x_r,u_l])) sigma_r)) sigma_l
-            | u_r::ps_r,Var(x_l)::ps_l -> unify_aux ps_r (List.map (subst_approx_term [x_l,u_r]) ps_l) sigma_r ((x_l,u_r)::(List.map (second (subst_approx_term [x_l,u_r])) sigma_l))
+            | Var(x_r)::ps_r,u_l::ps_l -> unify_aux (List.map (subst_approx_term [x_r,u_l]) ps_r) ps_l ((x_r,u_l)::(List.map (second (subst_approx_term [x_r,u_l])) sigma))
+            | u_r::ps_r,Var(x_l)::ps_l -> unify_aux ps_r (List.map (subst_approx_term [x_l,u_r]) ps_l) ((x_l,u_r)::(List.map (second (subst_approx_term [x_l,u_r])) sigma))
 
-            | ps_r,[] -> sigma_r,sigma_l,ps_r,[]
-            | [],ps_l -> sigma_r,sigma_l,[],ps_l
+            | ps_r,[] -> sigma,ps_r,[]
+            | [],ps_l -> sigma,[],ps_l
 
 
             | Special(ApproxProj(p,w))::_,_
@@ -319,7 +318,7 @@ let unify ?(allow_right_approx=false) (rhs:approx_term) (lhs:approx_term)
 
     in
 
-    unify_aux patterns_r patterns_l [] []
+    unify_aux patterns_r patterns_l []
 
 
 let compose (l1,r1:sct_clause) (l2,r2:sct_clause)
@@ -327,13 +326,13 @@ let compose (l1,r1:sct_clause) (l2,r2:sct_clause)
   =
     let l1,r1 = rename_var "₁" l1, rename_var "₁" r1 in
     let l2,r2 = rename_var "₂" l2, rename_var "₂" r2 in
+(* debug "  %s => %s    o    %s => %s" (string_of_approx_term l1) (string_of_approx_term r1) (string_of_approx_term l2) (string_of_approx_term r2); *)
 
     try
-        let sigma1,sigma2,context1,context2 = unify r1 l2 in
-(* debug "sigma1: %s" (string_of_list " , " (function x,t -> x ^ ":=" ^ (string_of_approx_term t)) sigma1); *)
-(* debug "sigma2: %s" (string_of_list " , " (function x,t -> x ^ ":=" ^ (string_of_approx_term t)) sigma2); *)
-        let l = subst_approx_term sigma1 l1 in
-        let r = subst_approx_term sigma2 r2 in
+        let sigma,context1,context2 = unify r1 l2 in
+(* debug "sigma: %s" (string_of_list " , " (function x,t -> x ^ ":=" ^ (string_of_approx_term t)) sigma); *)
+        let l = subst_approx_term sigma l1 in
+        let r = subst_approx_term sigma r2 in
 (* debug "obtained %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
         normalize_sct_clause (app_all l context2 , app_all r context1)
     with
@@ -395,12 +394,16 @@ let approximates p1 p2 =
     in
 
     try
-        let sigma1,sigma2,context1,context2 = unify (fst p1) (fst p2) in
-        let r1 = subst_approx_term sigma1 (snd p1) in
+        let l1,r1 = p1 in
+        let l2,r2 = p2 in
+        let l1,r1 = rename_var "₁" l1, rename_var "₁" r1 in
+        let l2,r2 = rename_var "₂" l2, rename_var "₂" r2 in
+        let sigma,context1,context2 = unify l1 l2 in
+        let r1 = subst_approx_term sigma r1 in
         let r1 = app_all r1 context1 in
-        let r2 = subst_approx_term sigma2 (snd p2) in
+        let r2 = subst_approx_term sigma r2 in
         let r2 = app_all r2 context2 in
-        msg "r1=%s  and  r2=%s" (string_of_approx_term r1) (string_of_approx_term r2);
+        (* msg "r1=%s  and  r2=%s" (string_of_approx_term r1) (string_of_approx_term r2); *)
 
         let f1,pats1 = explode_pattern r1 in
         let f2,pats2 = explode_pattern r2 in
@@ -454,10 +457,10 @@ let compatible p1 p2 =
     in
 
     try
-        let sigma1,sigma2,context1,context2 = unify (fst p1) (fst p2) in
-        let r1 = subst_approx_term sigma1 (snd p1) in
+        let sigma,context1,context2 = unify (fst p1) (fst p2) in
+        let r1 = subst_approx_term sigma (snd p1) in
         let r1 = app_all r1 context1 in
-        let r2 = subst_approx_term sigma2 (snd p2) in
+        let r2 = subst_approx_term sigma (snd p2) in
         let r2 = app_all r2 context2 in
         msg "r1=%s  and  r2=%s" (string_of_approx_term r1) (string_of_approx_term r2);
 
