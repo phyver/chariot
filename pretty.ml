@@ -107,11 +107,11 @@ and
         match v with
             | Angel -> "⊤"
             | Var(x) -> x
-            | Const(d,Some p) when p mod 2 = 0 -> (* during SCT, projections in arguments are transformed into Const *)
+            | Const(d,Some p) when even p -> (* during SCT, projections in arguments are transformed into Const *)
                 let d = if (option "use_ansi_codes") then ansi_code "underline" ("."^d) else (".["^d^"]") in
                 d ^  (if not (option "show_priorities") then "" else string_of_priority (Some p))
             | Const(c,p) -> c ^ (if not (option "show_priorities") then "" else string_of_priority p)
-            | Proj(c,Some p) when p mod 2 = 1 -> (* during SCT, constructors on results are transformed into Proj *)
+            | Proj(c,Some p) when odd p -> (* during SCT, constructors on results are transformed into Proj *)
                 let c = if (option "use_ansi_codes") then ansi_code "underline" c else ("["^c^"]") in
                 c ^ (if not (option "show_priorities") then "" else string_of_priority (Some p))
             | Proj(d,p) -> "." ^ d ^  (if not (option "show_priorities") then "" else string_of_priority p)

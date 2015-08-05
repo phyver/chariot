@@ -480,7 +480,7 @@ let decreasing (l,r : sct_clause)
 
     let rec decreasing_aux pats1 pats2 acc
       = match pats1,pats2 with
-            | [],[] -> (match acc with (Some p, Num w) when (p mod 2)=0 && w<0 -> true | _ -> false)
+            | [],[] -> (match acc with (Some p, Num w) when even p && w<0 -> true | _ -> false)
 
             | [],_ | _,[] -> raise (Invalid_argument "decreasing should only be called on idempotent rules")
             | (app1,u1)::pats1, u2::pats2 ->
@@ -511,7 +511,7 @@ let decreasing (l,r : sct_clause)
                                 match apps with
                                     | [(p,w,y)] when y=x ->
                                         (match add_approx app1 (p,w) with
-                                            | Some p,Num w when (p mod 2 = 1) && w<0 -> true
+                                            | Some p,Num w when odd p && w<0 -> true
                                             | _, _ -> decreasing_aux pats1 pats2 acc)
                                     | _ -> decreasing_aux pats1 pats2 acc
                             end
@@ -529,7 +529,7 @@ let decreasing (l,r : sct_clause)
                                 let pats1 = List.filter (function (_,Proj _) -> true | _ -> false) pats1 in
                                 let app = List.fold_left (fun r p -> match p with _,Proj(_,p) -> add_approx r (p,Num 1) | _ -> assert false) acc pats1 in
                                 match app with
-                                    | Some p, Num w when (p mod 2)=0 && w<0 -> true
+                                    | Some p, Num w when even p && w<0 -> true
                                     | _ -> false
                             end
 
