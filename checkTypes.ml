@@ -101,7 +101,7 @@ let process_type_defs (env:environment)
     in
 
     (* the real bloc number of this bunch of mutual type definitions *)
-    let n = if (current_state.current_type_bloc - n) mod 2 = 0
+    let n = if even current_state.current_type_bloc = even n
             then current_state.current_type_bloc+2
             else current_state.current_type_bloc+1
     in
@@ -140,7 +140,7 @@ let process_type_defs (env:environment)
         List.iter (function _,t -> check_is_strictly_positive_arguments t tname) consts;
 
         (* we check the shapes of types of constructors / destructors *)
-        if n mod 2 = 0
+        if even n
         then List.iter (check_destructor tname) consts
         else List.iter (check_constructor tname) consts;
 

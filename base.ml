@@ -4,6 +4,7 @@
  *   - terms
  *   - environments
  *)
+open Misc
 
 exception Error of string
 let error s = raise (Error s)
@@ -74,7 +75,7 @@ let get_type_arity (env:environment) (t:type_name) : int =
 let is_inductive (env:environment) (t:type_name) : bool =
     let rec is_inductive_aux = function
         | [] -> raise Not_found
-        | (_t, _, _n, _)::_ when _t=t -> _n mod 2 = 1
+        | (_t, _, _n, _)::_ when _t=t -> odd _n
         | _::ts -> is_inductive_aux ts
     in
     is_inductive_aux env.types
@@ -97,7 +98,7 @@ let get_constant_type (env:environment) (c:const_name) =
 let is_projection (env:environment) (c:const_name) : bool =
     let rec aux = function
         | [] -> raise Not_found
-        | (_c, _n, _)::_ when _c=c -> _n mod 2 = 0
+        | (_c, _n, _)::_ when _c=c -> even _n
         | _::cs -> aux cs
     in
     aux env.constants

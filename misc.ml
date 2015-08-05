@@ -1,6 +1,9 @@
 let first f (x,y) = (f x, y)
 let second f (x,y) = (x, f y)
 
+let even n = (n mod 2) = 0
+let odd n = not (even n)
+
 let rec print_list empty b1 sep b2 p l
   = match l with
         | [] -> print_string empty;

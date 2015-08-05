@@ -145,7 +145,7 @@ let show_types env =
                 begin
                     show_data_type env tname params consts;
                     print_newline();
-                    if p mod 2 = 0
+                    if even p
                     then print_string "codata\n"
                     else print_string "data\n";
                     showtypesaux types
@@ -156,7 +156,7 @@ let show_types env =
         | [] -> print_string "(* ===  no type in environment  ======================= *)\n"
         | ((_,_,n,_)::_) as types ->
                 print_string "\n(* ===  types in environment  ======================= *)\n";
-                if n mod 2 = 0
+                if even n
                 then print_string "codata\n"
                 else print_string "data\n";
                 showtypesaux types;

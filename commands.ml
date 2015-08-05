@@ -81,7 +81,7 @@ let cmd_show env s =
         | [] -> raise Exit
         | (tname,params,n,consts)::_ when s=tname ->
             begin
-                if n mod 2 = 0
+                if even n
                 then print_string "codata\n"
                 else print_string "data\n";
                 show_data_type env tname params consts;

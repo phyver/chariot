@@ -81,7 +81,7 @@ let find_types_priorities env ts
                                     (0,acc)
                                     type_consts
                     in
-                    if (is_inductive env tname) = (n mod 2 = 1)
+                    if is_inductive env tname = odd n
                     then if (option "squash_priorities") then (n, (t,n)::acc) else (n+2, (t,n+2)::acc)
                     else (n+1, (t,n+1)::acc)
                 | _ -> assert false
