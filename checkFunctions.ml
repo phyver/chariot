@@ -82,7 +82,7 @@ let process_function_defs (env:environment)
             let rconstraints,rdatatypes = process_defs constraints datatypes ((f,k,clauses)::defs) in
             let constraints,datatypes = type_single_clause f clause in
             let constraints, sigma = merge_constraints rconstraints constraints in
-            let datatypes = uniq (List.map (subst_type sigma) datatypes @ rdatatypes) in
+            let datatypes = uniq (List.map (subst_type sigma) (datatypes @ rdatatypes)) in
             (constraints , datatypes)
     in
 
