@@ -1,0 +1,5 @@
+val
+   bad : stream(tree)
+    | bad.Head² = Node³ bad
+    | bad.Tail² = bad
+
