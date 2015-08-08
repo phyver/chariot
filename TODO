@@ -1,3 +1,8 @@
+  - use DeCap?
+
+  - add types to all subterms: type ('a,'b) special_term instantiated with
+    'a:=empty and 'b:=unit or 'b:=type_expression, etc.
+
   - use lexing positions for parsing errors:
       - update "file" field
       - print buffer with error underlined ???
