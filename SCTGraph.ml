@@ -280,19 +280,20 @@ let size_change_termination_bounds graph d b =
         ClauseSet.for_all
           (fun clause1 ->
             try
-              not (compatible clause1 (collapsed_compose d b clause1 clause1)) ||
+              let clause11 = collapsed_compose d b clause1 clause1 in
+              not (compatible clause1 clause11) ||
               begin
                 if (option "show_coherent_loops")
                 then begin
                     msg "Found coherent loop from \"%s\" to itself:" f;
                     msg "  %s" (string_of_sct_clause clause1)
                 end;
-                decreasing clause1 ||
+                decreasing clause11 ||      (* FIXME: it should probably work with clause1 instead, but doesn't at the moment (assertion failure in decreasing when checking the length_list function) *)
                 (
                     if (option "show_bad_loops")
                     then begin
                         msg "Found non-decreasing coherent loop from \"%s\" to itself" f;
-                        msg "  %s" (string_of_sct_clause clause1)
+                        msg "  %s" (string_of_sct_clause clause11)
                 end;
                 false)
               end

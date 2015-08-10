@@ -39,7 +39,7 @@ let add_approx a1 a2
         | (Some p1, w1) , (Some p2, w2) when p1<p2 -> (Some p2, w2)
         | (Some p1, w1) , (Some p2, w2) when p1>p2 -> (Some p1, w1)
         | (Some p1, w1) , (Some p2, w2) (*when p1=p2*) -> (Some p1, add_weight w1 w2)
-        | (None,w1) , (Some _,w2) | (Some _,w1),(None,w2) -> if option "use_priorities" then warning "cannot add priorities and non-priorities, ignoring them"; (None, add_weight w1 w2)
+        | (None,w) , (Some _,_) | (Some _,_),(None,w) -> (None, w)
 
 let simplify_approx aps =
     let aps = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) aps in
@@ -147,7 +147,7 @@ let rec subst_approx_term_aux sigma acc apps
             try
                 let apps2 = collapse0 (List.assoc x sigma) in
                 let apps2 = List.map (function p,w,y -> let p,w = add_approx (p,w) (prio,weight) in (p,w,y)) apps2 in
-                merge_approx apps2 (apps@acc)
+                subst_approx_term_aux sigma (merge_approx apps2 acc) apps
             with Not_found -> subst_approx_term_aux sigma (a::acc) apps
 
 let rec subst_approx_term sigma v
@@ -156,6 +156,12 @@ let rec subst_approx_term sigma v
         | (Angel|Const _|Proj _|Special(ApproxProj _)) as v -> v
         | App(v1,v2) -> App(subst_approx_term sigma v1, subst_approx_term sigma v2)
         | Special(ApproxConst apps) -> Special(ApproxConst (subst_approx_term_aux sigma [] apps))
+(* let subst_approx_term sigma v = *)
+(*     debug "sigma = %s" (string_of_list " , " (function x,v -> fmt "%s:=%s" x (string_of_approx_term v)) sigma); *)
+(*     debug "before %s" (string_of_approx_term v); *)
+(*     let v = subst_approx_term sigma v in *)
+(*     debug "after %s" (string_of_approx_term v); *)
+(*     v *)
 
 
 (* normalize a clause by moving all the approximations from the LHS to the RHS:
@@ -504,7 +510,10 @@ let decreasing (l,r : sct_clause)
                         | Var x1,[],Var x2,[] ->
                             decreasing_aux pats1 pats2 acc
 
-                        | Var _,_,Var _,_ -> assert false
+                        | Var f1,args1,Var f2,args2 -> (* FIXME: hack when we reach th efunctions *)
+                            assert (f1=f2);
+                            let args1 = List.map (fun x -> app1,x) args1 in
+                            decreasing_aux (args1@pats1) (args2@pats2) acc
 
                         | Const(c1,p1),args1,Const(c2,p2),args2 ->
                             assert (c1=c2);
@@ -524,7 +533,7 @@ let decreasing (l,r : sct_clause)
                             end
 
                         | Const(c1,p),args1,((Special(ApproxConst apps)) as u2),[] ->
-                            let app = add_approx app1 (p,Num 1) in
+                            let app = add_approx app1 (p,Num (-1)) in
                             let args1 = List.map (fun x -> app,x) args1 in
                             let args2 = repeat u2 (List.length args1) in
                             decreasing_aux (args1@pats1) (args2@pats2) acc
@@ -548,8 +557,19 @@ let decreasing (l,r : sct_clause)
                         | App _,_,_,_ | _,_,App _,_ -> assert false
                         | Special _,_,_,_ -> assert false
 
-                        | _,_,_,_ -> assert false
+                        | _,_,_,_ -> debug "OOPS, u1=%s and u2=%s" (string_of_approx_term u1) (string_of_approx_term u2); assert false
                 end
-    in decreasing_aux [(Some 0,Num 0),l] [r] (Some 0, Num 0)
+    in
+    let rec remove_result_constants u =
+        match get_head u, get_args u with
+            | Special(ApproxProj _),[u]
+            | Const _, [u] -> remove_result_constants u
+            | _,_ -> u
+    in
+    match r with
+        | App(Special(ApproxProj(Some p,Num w)), _) when even p && w<0 -> true
+        | r ->
+                debug "check in %s and %s" (string_of_approx_term l) (string_of_approx_term (remove_result_constants r));
+                decreasing_aux [(Some 0,Num 0),l] [remove_result_constants r] (Some 0, Num 0)
 
 
