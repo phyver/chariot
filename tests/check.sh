@@ -3,24 +3,29 @@
 EXT=.ch
 
 INTERACTIVE=1
+GREP="cat"
 
 INDENT="  "
 
 USAGE=$(cat <<EOS
 usage:
   $0 [-i] [-n] <file>
-    -i      run interactively (default)
-    -n      run non-interactively, with minimal output
+    -i              run interactively (default)
+    -n              run non-interactively, with minimal output
+    -x <pattern>    exclude line matching <pattern>
+    -y <pattern>    only include lines matching <pattern>
   file should have extension $EXT
 EOS
 )
 
-while getopts "ni" f
+while getopts "nix:y:" f
 do
     case $f in
-        n)  INTERACTIVE=0           ;;
-        i)  INTERACTIVE=1           ;;
-        \?) echo "$USAGE"; exit 3     ;;
+        n)  INTERACTIVE=0               ;;
+        i)  INTERACTIVE=1               ;;
+        x)  GREP="grep -v '$OPTARG'"    ;;
+        y)  GREP="grep '$OPTARG'"       ;;
+        \?) echo "$USAGE"; exit 3       ;;
     esac
 done
 shift `expr $OPTIND - 1`
@@ -58,7 +63,7 @@ message() {
 }
 
 message -n "${INDENT}file $INFILE ... \t"
-$CHARIOT $INFILE > $TMPFILE
+$CHARIOT $INFILE | $GREP > $TMPFILE
 
 if [ -f $OUTFILE ]
 then
