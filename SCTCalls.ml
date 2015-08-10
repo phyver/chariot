@@ -118,8 +118,8 @@ let collapse_pattern (depth:int) (pattern:approx_term) : approx_term
             end
         | Proj(d,prio),p::ps (*when pd=0*) ->
                 app (Proj(d,prio)) ((collapse dp p)::List.map (collapse_const depth) ps)
-        | Special (ApproxProj _),[] -> p
-        | Special (ApproxProj _),_::_ -> assert false
+        | Special (ApproxProj(prio,w)),[p] -> App( Special(ApproxProj(prio,w)) , collapse dp p)
+        | Special (ApproxProj _),_ -> assert false
         | Var f,ps -> app (Var f) (List.map (collapse_const depth) ps)
         | (Angel | Const _ | App _ | Special (ApproxConst _)),ps -> assert false
     in
@@ -349,7 +349,11 @@ let collapse_clause b d (l,r)
 
 let collapsed_compose b d c1 c2
   = let l,r = compose c1 c2 in
-    collapse_clause b d (l,r)
+    let result = collapse_clause b d (l,r)
+    in
+    (* debug "composing:  %s => %s   and   %s => %s" (string_of_approx_term (fst c1)) (string_of_approx_term (snd c1)) (string_of_approx_term (fst c2)) (string_of_approx_term (snd c2)); *)
+    (* debug "   result:  %s => %s" (string_of_approx_term (fst result)) (string_of_approx_term (snd result)); *)
+    result
 
 
 
