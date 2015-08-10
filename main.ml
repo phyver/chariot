@@ -158,6 +158,7 @@ let _
         ("--use_ansi_codes",          Arg.Unit (fun _ -> setOption "use_ansi_codes" "true"),               "use ANSI color codes to display various information");
         ("--dont_use_subsumption",    Arg.Unit (fun _ -> setOption "use_subsumption" "false"),             "don't use subsumption to simplify sets of clauses");
         ("--dont_collapse_graph",     Arg.Unit (fun _ -> setOption "collapse_graph" "false"),              "don't collapse initial call-graph");
+        ("--check_adequacy",          Arg.Unit (fun _ -> setOption "check_adequacy" "true"),               "use the SCT to check adequacy of definitions");
       ] in
     let help = "usage: " ^ Sys.argv.(0) ^ " [-i] [file]\n" in
     Arg.parse args (fun f -> incr nb_files; loadfile f) help;

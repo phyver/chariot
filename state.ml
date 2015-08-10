@@ -38,6 +38,7 @@ let current_state =
             "use_ansi_codes",          false    ;
             "use_subsumption",         true     ;
             "collapse_graph",          true     ;
+            "check_adequacy",          false    ;
         ]                                       ;
         depth = 2                               ;
         bound = 2                               ;

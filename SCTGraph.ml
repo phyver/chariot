@@ -65,15 +65,21 @@ let callgraph_from_definitions
     let graph = CallGraph.empty
     in
 
-    let top = todo "top" (* the greatest element, ie the least informative *)
+    let rec extract_params_aux d
+      = match d with
+            | Var x -> [x]
+            | App(u1,u2) -> (extract_params_aux u1) @ (extract_params_aux u2)
+            | Const _ -> []
+            | Proj _ | Angel -> assert false
+            | Special s -> s.bot
     in
 
     let rec extract_params d
-      = match d with
-            | Var x -> [x]
-            | App(u1,u2) -> (extract_params u1) @ (extract_params u2)
-            | Const _ | Proj _ | Angel -> assert false
-            | Special s -> s.bot
+      = match get_head d,get_args d with
+            | Var f,args -> List.concat (List.map extract_params_aux args)
+            | Proj _,u::args -> (extract_params u) @ (List.concat (List.map extract_params_aux args))
+            | Proj _,[] | Const _,_ | Angel,_ | App _,_ -> assert false
+            | Special s,_ -> s.bot
     in
 
     let rec process_clause graph (lhs,rhs)
@@ -86,6 +92,11 @@ let callgraph_from_definitions
         in
 
         let params = extract_params lhs
+        in
+
+
+        (* let top = todo "top" (1* the greatest element, ie the least informative *1) *)
+        let top = Special(ApproxConst (List.map (fun x -> (None,Infty,x)) params))
         in
 
         let rec process_arg (p:term)
@@ -108,7 +119,7 @@ let callgraph_from_definitions
                     in
                     let call = lhs, app (Var called) (_args@calling_context)
                     in
-                    let graph = CallGraph.add (caller,called) (add_call_set call (CallGraph.find (caller,called) graph)) graph
+                    let graph = CallGraph.add (caller,called) (add_call_set call (try CallGraph.find (caller,called) graph with Not_found -> ClauseSet.empty)) graph
                     in
                     List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty))]) graph args
 

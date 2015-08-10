@@ -158,6 +158,20 @@ let process_function_defs (env:environment)
             else error ("function " ^ f ^ " is coerced to type " ^ (string_of_type t) ^ " which is not an instance of " ^ (string_of_type infered_new) ^ "...")
     in
 
+    (* SCT *)
+    if (option "check_adequacy")
+    then
+        begin
+            msg "computing callgraph";
+            let graph = callgraph_from_definitions functions
+            in
+            msg "OK";
+            if size_change_termination graph
+            then msg "the functions are correct"
+            else msg "the functions are NOT provably correct"
+        end;
+
+
     let functions =
         List.fold_left (fun functions f ->
             let f,_,clauses = f in
