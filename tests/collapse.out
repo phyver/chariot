@@ -1,0 +1,11 @@
+--   collapse of   ((f (C⁼ x (C⁼ y l))).T⁼).T⁼   is   ((f (C⁼ x (C⁼ y l))).T⁼).T⁼
+
+--!! cannot add priorities and non-priorities, ignoring them
+--!! cannot add priorities and non-priorities, ignoring them
+--   collapse of   (((f (C⁼ x (C⁼ y (C⁼ z l)))).T⁼).T⁼).T⁼   is   <1>⁼ . (((f (C⁼ x (C⁼ y <1>⁼ l + <1>⁼ z))).T⁼).T⁼)
+
+--!! cannot add priorities and non-priorities, ignoring them
+--!! cannot add priorities and non-priorities, ignoring them
+--!! cannot add priorities and non-priorities, ignoring them
+--   collapse of   ((((f (C⁼ x (C⁼ y (C⁼ z (C⁼ u l))))).T⁼).T⁼).T⁼).T⁼   is   <∞>⁼ . (((f (C⁼ x (C⁼ y <∞>⁼ l + <∞>⁼ u + <1>⁼ z))).T⁼).T⁼)
+
