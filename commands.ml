@@ -14,6 +14,7 @@ open SCTCalls
 type cmd =
     | CmdCompose of term*term*term*term
     | CmdCompare of term*term*term*term
+    | CmdCollapse of term
 
     | Eof
     | Nothing
@@ -164,5 +165,12 @@ let cmd_compare env l1 r1 l2 r2 =
     if approximates (l1,r1) (l2,r2)
     then msg "        TRUE"
     else msg "        FALSE";
+    print_newline()
+
+let cmd_collapse env p =
+    let p = pattern_to_approx_term p in
+    let q = collapse_pattern current_state.depth p in
+    let q = collapse_weight_in_term current_state.bound q in
+    msg "  collapse of   %s   is   %s" (string_of_approx_term p) (string_of_approx_term q);
     print_newline()
 
