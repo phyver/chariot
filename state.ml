@@ -39,6 +39,13 @@ let current_state =
             "use_subsumption",         true     ;
             "collapse_graph",          true     ;
             "check_adequacy",          false    ;
+
+(* various debuging options *)
+            "show_initial_graph",      false    ;
+            "show_final_graph",        false    ;
+            "show_all_steps",          false    ;
+            "show_coherent_loops",     false    ;
+            "show_bad_loops",          false    ;
         ]                                       ;
         depth = 2                               ;
         bound = 2                               ;

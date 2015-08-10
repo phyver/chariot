@@ -162,11 +162,9 @@ let process_function_defs (env:environment)
     if (option "check_adequacy")
     then
         begin
-            msg "computing callgraph";
             let graph = callgraph_from_definitions functions
             in
             let graph = if option "collapse_graph" then collapse_graph current_state.bound current_state.depth graph else graph in
-            msg "OK";
             if size_change_termination graph
             then msg "the functions are correct"
             else msg "the functions are NOT provably correct"

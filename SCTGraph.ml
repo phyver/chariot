@@ -19,10 +19,10 @@ type call_graph = clauseSet CallGraph.t
 
 let print_callgraph graph
   = CallGraph.iter (fun fg cs ->
-      print_string (fmt "calls from %s to %s:\n" (fst fg) (snd fg));
+      msg "calls from %s to %s:" (fst fg) (snd fg);
       ClauseSet.iter (function lhs,rhs ->
-        print_string (fmt "    %s  =>  %s\n" (string_of_approx_term lhs) (string_of_approx_term rhs))) cs) graph
-    ; flush_all()
+        msg  "    %s  =>  %s" (string_of_approx_term lhs) (string_of_approx_term rhs)) cs) graph
+    ; print_newline(); flush_all()
 
 (*
  * Adding a call to a set, keeping only maximal elements for the approximation
@@ -227,12 +227,11 @@ let transitive_closure initial_graph d b =
    *)
   let rec closure ig g =
     new_arcs := false;
-    (* if (option "show_all_steps") *)
-    (* begin fun _ -> *)
-    (*   print_string ("** Graph of paths at iteration "^(string_of_int (!nb_steps))^" **\n"); *)
-    (*   print_graph g; *)
-    (*   print_newline() *)
-    (* end; *)
+    if (option "show_all_steps")
+    then begin
+        msg "Graph of paths at iteration %d" !nb_steps;
+        print_callgraph g
+    end;
     let g = one_step_TC ig g in
     if not !new_arcs
     then g
@@ -242,29 +241,19 @@ let transitive_closure initial_graph d b =
     end
   in
 
-  (* collapse all substitutions *)
-  (* if (option "show_initial_call_graph") *)
-  (* begin fun _ -> *)
-  (*   print_string "** Control-flow graph given by the static analysis: **\n"; *)
-  (*   print_graph initial_graph *)
-  (* end; *)
-  msg "initial callgraph:";
-  print_callgraph initial_graph;
-  (* if (option "initial_collapse_of_graph") *)
-  (* then begin fun _ -> *)
-  (* if (option "show_initial_call_graph") *)
-  (* begin fun _ -> *)
-  (*   print_string "** Control-flow graph after collapse: **\n"; *)
-  (*   print_graph initial_graph *)
-  (* end *)
-  (* end; *)
+  if (option "show_initial_graph")
+  then begin
+      msg "initial callgraph:";
+      print_callgraph initial_graph
+   end;
+
   let graph_of_paths = closure initial_graph initial_graph in
 
-  (* ifDebug "show_final_call_graph" *)
-  (* begin fun _ -> *)
-  (*   print_string "** Graph of paths of the initial control-flow graph: **\n"; *)
-  (*   print_graph graph_of_paths *)
-  (* end; *)
+  if (option "show_final_graph")
+  then begin
+      msg "Graph of paths of the final control-flow graph:";
+      print_callgraph graph_of_paths
+  end;
   (* ifDebug "show_summary_TC" *)
   (* begin fun _ -> *)
   (*   print_string "* the initial control-flow graph contained "; print_int (count_edges initial_graph); print_string " edge(s) *\n"; *)
@@ -293,18 +282,18 @@ let size_change_termination_bounds graph d b =
             try
               not (compatible clause1 (collapsed_compose d b clause1 clause1)) ||
               begin
-                (* ifDebug "show_coherents" *)
-                (* begin fun _ -> *)
-                (*   print_string ("** Found coherent loop from \"" ^ f ^ "\" to itself: **\n"); *)
-                (*   print_call clause1 *)
-                (* end; *)
+                if (option "show_coherent_loops")
+                then begin
+                    msg "Found coherent loop from \"%s\" to itself:" f;
+                    msg "  %s => %s" (string_of_approx_term (fst clause1)) (string_of_approx_term (snd clause1))
+                end;
                 decreasing clause1 ||
                 (
-                (* ifDebug "show_nondecreasing_coherents" begin fun _ -> *)
-                (*   print_string ("** Found non-decreasing coherent loop from \"" ^ f ^ "\" to itself: **\n"); *)
-                (*   print_call clause1; *)
-                (*   print_newline() *)
-                (* end; *)
+                    if (option "show_bad_loops")
+                    then begin
+                        msg "Found non-decreasing coherent loop from \"%s\" to itself" f;
+                        msg "  %s => %s" (string_of_approx_term (fst clause1)) (string_of_approx_term (snd clause1))
+                end;
                 false)
               end
             with Impossible_case -> true
@@ -346,7 +335,8 @@ let size_change_termination graph =
         else
           test ds
   in
-  let t = test (ds 1 [0]) in
+  (* let t = test (ds 1 [0]) in *) (* FIXME: use this once it works *)
+  let t = test [current_state.depth] in
   if t
   then true
   else (
