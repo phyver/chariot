@@ -2,6 +2,7 @@ open Misc
 open Base
 open State
 open SCTCalls
+open Pretty
 
 (*****************************
  * Sets of calls and graphs. *
@@ -16,6 +17,12 @@ module CallGraph = Map.Make (struct type t=var_name*var_name let compare=compare
 type call_graph = clauseSet CallGraph.t
 
 
+let print_callgraph graph
+  = CallGraph.iter (fun fg cs ->
+      print_string (fmt "calls from %s to %s:\n" (fst fg) (snd fg));
+      ClauseSet.iter (function lhs,rhs ->
+        print_string (fmt "    %s  =>  %s\n" (string_of_approx_term lhs) (string_of_approx_term rhs))) cs) graph
+    ; flush_all()
 
 (*
  * Adding a call to a set, keeping only maximal elements for the approximation
@@ -94,7 +101,6 @@ let callgraph_from_definitions
         let params = extract_params lhs
         in
 
-
         (* let top = todo "top" (1* the greatest element, ie the least informative *1) *)
         let top = Special(ApproxConst (List.map (fun x -> (None,Infty,x)) params))
         in
@@ -106,7 +112,7 @@ let callgraph_from_definitions
                 | Var x,_ -> top
                 | Angel,_ -> Angel
                 | Const(c,prio),args -> app (Const(c,prio)) (List.map process_arg args)
-                | Proj(d,prio), args -> app (Const(d,prio)) (List.map process_arg args) (* NOTE: we transform the Proj into a Const because it is applied to an argument *)
+                | Proj(d,prio), args -> Special(ApproxConst (collapse0 (pattern_to_approx_term p)))
                 | Special s,_ -> s.bot
                 | App _,_ -> assert false
         in
@@ -117,7 +123,7 @@ let callgraph_from_definitions
                 | Var called, args when List.mem called function_names ->
                     let _args = List.map process_arg args
                     in
-                    let call = lhs, app (Var called) (_args@calling_context)
+                    let call = lhs, app_all (Var called) (_args@calling_context)
                     in
                     let graph = CallGraph.add (caller,called) (add_call_set call (try CallGraph.find (caller,called) graph with Not_found -> ClauseSet.empty)) graph
                     in
@@ -127,8 +133,7 @@ let callgraph_from_definitions
                     List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty))]) graph args
 
                 | Const(c,p),args ->
-                    (* NOTE: we transform the Const into a Proj because it is applied to the result of a call *)
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs (Proj(c,p)::calling_context)) graph args
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs ((Special(ApproxProj(p,Num 1)))::calling_context)) graph args
 
                 | Proj(d,p),u::args ->
                     let _args = List.map process_arg args
@@ -243,6 +248,8 @@ let transitive_closure initial_graph d b =
   (*   print_string "** Control-flow graph given by the static analysis: **\n"; *)
   (*   print_graph initial_graph *)
   (* end; *)
+  msg "initial callgraph:";
+  print_callgraph initial_graph;
   (* if (option "initial_collapse_of_graph") *)
   (* then begin fun _ -> *)
   (* if (option "show_initial_call_graph") *)
