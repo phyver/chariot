@@ -19,15 +19,15 @@
 --         FALSE
 
 -- expect TRUE
---   f x₁ => g <0⁼,x₁>    ≥    f x₁ => g <0⁼,x₁>
+--   f x₁ => g <0>⁼,x₁    ≥    f x₁ => g <0>⁼,x₁
 --         TRUE
 
 -- expect TRUE
---   f x₁ => g <1⁼,x₁>    ≥    f x₁ => g <0⁼,x₁>
+--   f x₁ => g <1>⁼,x₁    ≥    f x₁ => g <0>⁼,x₁
 --         TRUE
 
 -- expect FALSE
---   f x₁ => g <0⁼,x₁>    ≥    f x₁ => g <1⁼,x₁>
+--   f x₁ => g <0>⁼,x₁    ≥    f x₁ => g <1>⁼,x₁
 --         FALSE
 
 -- expect TRUE
@@ -35,10 +35,10 @@
 --         TRUE
 
 -- expect TRUE
---   f (S⁼ x₁) => g (S⁼ <1⁼,x₁>)    ≥    f (S⁼ x₁) => g (S⁼ x₁)
+--   f (S⁼ x₁) => g (S⁼ <1>⁼,x₁)    ≥    f (S⁼ x₁) => g (S⁼ x₁)
 --         TRUE
 
 -- expect FALSE
---   f (S⁼ x₁) => g (S⁼ x₁)    ≥    f (S⁼ x₁) => g (S⁼ <1⁼,x₁>)
+--   f (S⁼ x₁) => g (S⁼ x₁)    ≥    f (S⁼ x₁) => g (S⁼ <1>⁼,x₁)
 --         FALSE
 
