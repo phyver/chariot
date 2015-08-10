@@ -140,17 +140,18 @@ let print_prefix out_channel prefix fmt
     in
     Printf.ksprintf print fmt
 
-let debug fmt
-  = print_prefix stderr "== " fmt
-
 let msg fmt
   = print_prefix stdout "-- " fmt
 
 let warning fmt
-  = print_prefix stdout "-- !! " fmt
+  = print_prefix stdout "--!! " fmt
 
 let errmsg fmt
-  = print_prefix stdout "-- ** " fmt
+  = print_prefix stdout "--** " fmt
+
+let debug fmt
+  = print_prefix stdout "--== " fmt
+
 
 let fmt s = Printf.sprintf s
 

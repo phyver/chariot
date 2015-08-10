@@ -25,7 +25,7 @@ val
    test : nat * nat * nat
     | test = (Succ¹ Zero¹, Succ¹ (Succ¹ Zero¹), Succ¹ (Succ¹ (Succ¹ Zero¹)))
 
--- ** typing error: cannot infer type of constant Tuple_4
+--** typing error: cannot infer type of constant Tuple_4
 (* ===  functions in environment  =================== *)
 val
    fst : prod_2('a,'b) → 'a
