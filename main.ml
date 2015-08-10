@@ -139,6 +139,11 @@ let _
 
       let args = [
         ("-i",                        Arg.Unit (fun _ -> interactive := true),                             "enter interactive mode after reading file");
+        ("--interactive",             Arg.Unit (fun _ -> interactive := true),                             "enter interactive mode after reading file");
+
+        ("-v",                        Arg.Int (fun v -> setOption "verbose" (string_of_int v)),            "choose verbosity level");
+        ("--verbose",                 Arg.Int (fun v -> setOption "verbose" (string_of_int v)),            "choose verbosity level");
+
         ("--show_type_struct",        Arg.Unit (fun _ -> setOption "show_type_struct" "true"),             "show type of lazy structures in explore mode");
         ("--show_term_struct",        Arg.Unit (fun _ -> setOption "show_term_struct" "true"),             "show lazy terms in explore mode");
         ("--dont_show_nats",          Arg.Unit (fun _ -> setOption "show_nats" "false"),                   "do not use decimal notation for displaying natural numbers");
