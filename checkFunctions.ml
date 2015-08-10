@@ -86,6 +86,7 @@ let process_function_defs (env:environment)
             (constraints , datatypes)
     in
 
+    reset_fresh_variable_generator [];
     let constraints,datatypes = process_defs [] [] defs in
 
     (* check completeness of pattern matching *)

@@ -237,7 +237,11 @@ let infer_type_clause env (lhs_pattern:pattern) (rhs_def:term)
   =
 
     (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
-    reset_fresh_variable_generator [];
+    (* reset_fresh_variable_generator []; *)
+    (* I need to reset the generator only once for each bunch of recursive definitions. Otherwise, there can be some interference between clauses, like
+        val test1 x = []
+          | test1 [] = []
+    *)
     let infered_type_lhs, constraints_lhs,sigma,datatypes = infer_type { env with functions=[] } lhs_pattern [] [] [] in
 
     (* infer type of RHS *)

@@ -1,0 +1,5 @@
+val
+   test : list('a) → list('b)
+    | test x = []
+    | test [] = []
+
