@@ -245,7 +245,6 @@ let transitive_closure initial_graph d b =
   (* end; *)
   (* if (option "initial_collapse_of_graph") *)
   (* then begin fun _ -> *)
-  let initial_graph = if option "collapse_graph" then collapse_graph b d initial_graph else initial_graph in
   (* if (option "show_initial_call_graph") *)
   (* begin fun _ -> *)
   (*   print_string "** Control-flow graph after collapse: **\n"; *)
