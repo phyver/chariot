@@ -307,11 +307,6 @@ let size_change_termination_bounds graph d b =
 
 let size_change_termination graph =
 
-  let rec ds n acc =
-    if (current_state.depth <= n)
-    then List.rev (current_state.depth::acc)
-    else ds (2*n) (n::acc)
-  in
   let rec test = function
       [] -> false
     | d::ds ->
@@ -335,7 +330,13 @@ let size_change_termination graph =
         else
           test ds
   in
-  (* let t = test (ds 1 [0]) in *) (* FIXME: use this once it works *)
+  (* FIXME: use this once it works *)
+  (* let rec ds n acc = *)
+  (*   if (current_state.depth <= n) *)
+  (*   then List.rev (current_state.depth::acc) *)
+  (*   else ds (2*n) (n::acc) *)
+  (* in *)
+  (* let t = test (ds 1 [0]) in *)
   let t = test [current_state.depth] in
   if t
   then true
