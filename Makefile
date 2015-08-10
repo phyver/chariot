@@ -1,4 +1,4 @@
-all: noninteractive-tests
+# all: noninteractive-tests
 
 all: native
 
