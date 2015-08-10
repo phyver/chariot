@@ -186,7 +186,8 @@ let add_weight_int w n = add_weight w (Num n)
 
 let op_weight w =
     match w with
-        | Infty -> raise (Invalid_argument "op_weight")
+        (* | Infty -> raise (Invalid_argument "op_weight") *)
+        | Infty -> Num 0        (* TODO: CHECK... It is probably a better idea to give negative weights on the rhs of a definition *)
         | Num n -> Num (-n)
 
 let collapse_weight bound w = match w with
@@ -205,6 +206,7 @@ let collapse_weight bound w = match w with
 type approximation = ApproxProj of priority * weight | ApproxConst of (priority * weight * var_name) list
 type approx_term = approximation special_term
 type sct_clause = approx_term * approx_term
+(* TODO: use type sct_clause = (var_name * approx_term list) * (var_name * approx_term list) *)
 
 exception Impossible_case
 
