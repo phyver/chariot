@@ -169,7 +169,7 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
   =
     (* TODO: rename dangling variables on the RHS to "!x" *)
 
-    (* debug "normalizing %s => %s" (string_of_approx_term lhs) (string_of_approx_term rhs); *)
+    (* debug "normalizing %s" (string_of_sct_clause (lhs,rhs)); *)
     let n = ref 0
     in
 
@@ -233,7 +233,7 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
     let rhs = add_approx_res app_res (subst_approx_term sigma rhs)
     in
 
-      (* debug "obtained %s => %s" (string_of_approx_term lhs) (string_of_approx_term rhs); *)
+      (* debug "obtained %s" (string_of_sct_clause (lhs,rhs)) *)
     lhs,rhs
 
 
@@ -326,14 +326,14 @@ let compose (l1,r1:sct_clause) (l2,r2:sct_clause)
   =
     let l1,r1 = rename_var "₁" l1, rename_var "₁" r1 in
     let l2,r2 = rename_var "₂" l2, rename_var "₂" r2 in
-(* debug "  %s => %s    o    %s => %s" (string_of_approx_term l1) (string_of_approx_term r1) (string_of_approx_term l2) (string_of_approx_term r2); *)
+(* debug "  %s  o    %s" (string_of_sct_clause (l1,r1)) (string_of_sct_clause (l2,r2)) *)
 
     try
         let sigma,context1,context2 = unify r1 l2 in
 (* debug "sigma: %s" (string_of_list " , " (function x,t -> x ^ ":=" ^ (string_of_approx_term t)) sigma); *)
         let l = subst_approx_term sigma l1 in
         let r = subst_approx_term sigma r2 in
-(* debug "obtained %s => %s" (string_of_approx_term l) (string_of_approx_term r); *)
+        (* debug "obtained %s" (string_of_sct_clause (l,r)); *)
         normalize_sct_clause (app_all l context2 , app_all r context1)
     with
         UnificationError err -> raise Impossible_case
@@ -351,8 +351,8 @@ let collapsed_compose b d c1 c2
   = let l,r = compose c1 c2 in
     let result = collapse_clause b d (l,r)
     in
-    (* debug "composing:  %s => %s   and   %s => %s" (string_of_approx_term (fst c1)) (string_of_approx_term (snd c1)) (string_of_approx_term (fst c2)) (string_of_approx_term (snd c2)); *)
-    (* debug "   result:  %s => %s" (string_of_approx_term (fst result)) (string_of_approx_term (snd result)); *)
+    (* debug "composing:  %s   and   %s" (string_of_sct_clause c1) (string_of_sct_clause c2); *)
+    (* debug "   result:  %s " (string_of_sct_clause result); *)
     result
 
 
@@ -461,12 +461,12 @@ let compatible p1 p2 =
     in
 
     try
+        (* debug "check if %s is compatible with %s" (string_of_sct_clause p1) (string_of_sct_clause p2); *)
         let sigma,context1,context2 = unify (fst p1) (fst p2) in
         let r1 = subst_approx_term sigma (snd p1) in
         let r1 = app_all r1 context1 in
         let r2 = subst_approx_term sigma (snd p2) in
         let r2 = app_all r2 context2 in
-        msg "r1=%s  and  r2=%s" (string_of_approx_term r1) (string_of_approx_term r2);
 
         let f1,pats1 = explode_pattern r1 in
         let f2,pats2 = explode_pattern r2 in

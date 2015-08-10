@@ -153,6 +153,9 @@ let show_data_type env tname params consts =
                (function c -> print_string c; print_string " : "; print_type (get_constant_type env c) ;)
                consts
 
+let string_of_sct_clause (l,r) =
+    fmt "%s  =>  %s" (string_of_approx_term l) (string_of_approx_term r)
+
 let show_types env =
 
     let rec showtypesaux = function

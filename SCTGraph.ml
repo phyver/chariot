@@ -20,8 +20,8 @@ type call_graph = clauseSet CallGraph.t
 let print_callgraph graph
   = CallGraph.iter (fun fg cs ->
       msg "calls from %s to %s:" (fst fg) (snd fg);
-      ClauseSet.iter (function lhs,rhs ->
-        msg  "    %s  =>  %s" (string_of_approx_term lhs) (string_of_approx_term rhs)) cs) graph
+      ClauseSet.iter (function clause ->
+        msg  "    %s" (string_of_sct_clause clause)) cs) graph
     ; print_newline(); flush_all()
 
 (*
@@ -285,14 +285,14 @@ let size_change_termination_bounds graph d b =
                 if (option "show_coherent_loops")
                 then begin
                     msg "Found coherent loop from \"%s\" to itself:" f;
-                    msg "  %s => %s" (string_of_approx_term (fst clause1)) (string_of_approx_term (snd clause1))
+                    msg "  %s" (string_of_sct_clause clause1)
                 end;
                 decreasing clause1 ||
                 (
                     if (option "show_bad_loops")
                     then begin
                         msg "Found non-decreasing coherent loop from \"%s\" to itself" f;
-                        msg "  %s => %s" (string_of_approx_term (fst clause1)) (string_of_approx_term (snd clause1))
+                        msg "  %s" (string_of_sct_clause clause1)
                 end;
                 false)
               end
