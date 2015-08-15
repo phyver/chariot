@@ -1,3 +1,6 @@
+
+  - convert definitions to CaseStruct terms for exhaustivity checking (it is broken at the moment)
+
   - use DeCap?
 
   - add types to all subterms: type ('a,'b) special_term instantiated with
