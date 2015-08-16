@@ -476,6 +476,11 @@ let approximates p1 p2 =
     with UnificationError _ -> false
 
 
+let rec repeat x n =
+    if n = 0
+    then []
+    else x::(repeat x (n-1))
+
 (* compatibility *)
 (* similar to approximates *)
 let compatible p1 p2 =
@@ -486,7 +491,8 @@ let compatible p1 p2 =
         match pats1,pats2 with
             | [],[] -> true
             | Proj(d1,_)::pats1,Proj(d2,_)::pats2 -> d1=d2 && compatible_aux pats1 pats2
-            | Var x1::pats1,Var x2::pats2 -> x1=x2 && compatible_aux pats1 pats2
+            | Var x1::_,_ -> approximates p2 p1
+            | _,Var x2::_-> approximates p1 p2
             | Const(c1,_)::pats1,Const(c2,_)::pats2 -> c1=c2 && compatible_aux pats1 pats2
             | ((App _) as u1)::_pats1,((App _) as u2)::_pats2 ->
                     compatible_aux ((get_head u1)::(get_args u1)@_pats1) ((get_head u2)::(get_args u2)@_pats2)
@@ -506,9 +512,15 @@ let compatible p1 p2 =
             * isn't compatible with
             *     f x => f <-1>x
             * note that this is sound: it may add some loops to check that aren't necessary... *)
-            | Special(ApproxConst _)::_,u2::_pats2 ->
-                    let aps2 = collapse0 u2 in
-                    compatible_aux pats1 (Special(ApproxConst aps2)::_pats2)
+            | (Special(ApproxConst _) as a)::pats1,u2::pats2 ->
+                begin
+                    (* let aps2 = collapse0 u2 in *)
+                    (* compatible_aux pats1 (Special(ApproxConst aps2)::_pats2) *)
+                    match get_head u2,get_args u2 with
+                        | Const(_,p),args -> compatible_aux ((repeat a (List.length args))@pats1) (args@pats2)
+
+                        | _ -> assert false
+                end
             | u1::_pats1,Special(ApproxConst _)::_ ->
                     let aps1 = collapse0 u1 in
                     compatible_aux (Special(ApproxConst aps1)::_pats1) pats2
@@ -540,12 +552,6 @@ let compatible p1 p2 =
 let decreasing (l,r : sct_clause)
   : bool
   =
-    let rec repeat x n =
-        if n = 0
-        then []
-        else x::(repeat x (n-1))
-    in
-
     let rec decreasing_aux pats1 pats2 acc
       = match pats1,pats2 with
             | [],[] -> (match acc with (Some p, Num w) when even p && w<0 -> true | _ -> false)
