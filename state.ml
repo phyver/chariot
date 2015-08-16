@@ -41,14 +41,14 @@ open Base
 
 type state =
     {
-        mutable current_type_bloc: int      ;         (* counter for blocs of type definitions: odd for data and even for codata *)
-        mutable current_function_bloc: int  ;
-        mutable env:     environment        ;
-        mutable prompt:  string             ;
-        mutable verbose: int                ;
-        mutable options: (string*bool) list ;
-        mutable depth: int                  ;
-        mutable bound: int                  ;
+        mutable current_type_bloc: int              ;  (* counter for blocs of type definitions: odd for data and even for codata *)
+        mutable current_function_bloc: int          ;
+        mutable env: environment                    ;
+        mutable prompt: string                      ;
+        mutable verbose: int                        ;
+        mutable boolean_options: (string*bool) list ;
+        mutable depth: int                          ;
+        mutable bound: int                          ;
     }
 
 let current_state =
@@ -62,7 +62,7 @@ let current_state =
               }                                 ;
         prompt = "# "                           ;
         verbose = 0                             ;
-        options = [
+        boolean_options = [
             "show_type_struct",        false    ;
             "show_term_struct",        false    ;
             "show_nats",               true     ;
@@ -89,30 +89,50 @@ let current_state =
         bound = 2                               ;
     }
 
+(* get boolean option in current state *)
+let option (s:string) : bool
+  = try List.assoc s current_state.boolean_options
+    with Not_found -> error ("option " ^ s ^ " doesn't exist")
 
-let message k m
-  = if current_state.verbose > k
-    then (print_string (" " ^ (String.make k '-') ^ " "); m ())
+(* return true if current verbosity is greater than k *)
+let verbose (k:int) : bool
+  = current_state.verbose >= k
 
-let bool_of_string = function
-    | "true" | "True" | "TRUE" | "1" -> true
-    | "false" | "False" | "FALSE" | "0" -> false
-    | s -> raise (Invalid_argument ("bool_of_int: " ^ s))
+(* various helper function to print messages *)
+let msg ?(indent=0) fmt
+  = let prefix = "--" ^ (String.make indent ' ') ^ " " in
+    print_prefix stdout prefix fmt
 
-let showOptions ()
+let warning ?(indent=2) fmt
+  = let prefix = "--" ^ (String.make indent '!') ^ " " in
+    let prefix = if option "use_ansi_codes" then ansi_code "cyan" prefix else prefix in
+    print_prefix stdout prefix fmt
+
+let errmsg ?(indent=2) fmt
+  = let prefix = "--" ^ (String.make indent '*') ^ " " in
+    let prefix = if option "use_ansi_codes" then ansi_code "red" prefix else prefix in
+    print_prefix stdout prefix fmt
+
+let debug ?(indent=2) fmt
+  = let prefix = "--" ^ (String.make indent '=') ^ " " in
+    let prefix = if option "use_ansi_codes" then ansi_code "yellow" prefix else prefix in
+    print_prefix stdout prefix fmt
+
+
+let show_options ()
   = msg "options:";
     msg "\t- %s: %s" "prompt" current_state.prompt;
     msg "\t- %s: %d" "verbose" current_state.verbose;
     msg "\t- %s: %d" "depth" current_state.depth;
     msg "\t- %s: %d" "bound" current_state.bound;
-    List.iter (function o,v -> msg "\t- %s: %b" o v) current_state.options
+    List.iter (function o,v -> msg "\t- %s: %b" o v) current_state.boolean_options
 
-let setOption s v
-  = let rec setOption_aux options s v acc =
+let set_option s v
+  = let rec set_option_aux options s v acc =
         match options with
             | [] -> error ("option " ^ s ^ " doesn't exist")
             | (s',_)::options when s'=s -> (s',v)::List.rev_append options acc
-            | x::options -> setOption_aux options s v (x::acc)
+            | x::options -> set_option_aux options s v (x::acc)
     in
     match s with
         | "prompt" -> current_state.prompt <- v
@@ -135,12 +155,7 @@ let setOption s v
                     else current_state.bound <- b
                 with Failure _ -> error "%s is not an integer"
             end
-        | "" -> showOptions ()
-        | s -> current_state.options <- setOption_aux current_state.options s (bool_of_string v) []
+        | "" -> show_options ()
+        | s -> current_state.boolean_options <- set_option_aux current_state.boolean_options s (bool_of_string v) []
 
-
-
-let option s
-  = try List.assoc s current_state.options
-    with Not_found -> error ("option " ^ s ^ " doesn't exist")
 

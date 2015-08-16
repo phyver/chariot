@@ -43,8 +43,8 @@ open State
 let string_of_priority p = match p with
     (* | None ->  "⁽⁾" *)
     (* | None ->  "⁻" *)
-    | None ->  if (option "use_ansi_codes") then ansi_code "red" "⁼" else "⁼"
-    | Some p -> if (option "use_ansi_codes") then ansi_code "green" (exp_of_int p) else (exp_of_int p)
+    | None ->  if option "use_ansi_codes" then ansi_code "red" "⁼" else "⁼"
+    | Some p -> if option "use_ansi_codes" then ansi_code "green" (exp_of_int p) else (exp_of_int p)
 
 (* TODO: with product, we need to add parenthesis *)
 let is_atomic_type = function
@@ -166,13 +166,13 @@ let string_of_approx_term
   = string_of_special_term
         (function | ApproxProj(p,w) ->
                         "<" ^ (string_of_weight w) ^ ">" ^ (string_of_priority p) ^ " ."
-                        (* in if (option "use_ansi_codes") then ansi_code "underline" s else s *)
+                        (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
                   | ApproxConst [] ->
                         "∅"
-                        (* in if (option "use_ansi_codes") then ansi_code "underline" s else s *)
+                        (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
                   | ApproxConst l ->
                         (string_of_list " + " (function p,w,x ->  "<" ^ (string_of_weight w) ^ ">" ^ (string_of_priority p) ^ " " ^ x) l)
-                        (* in if (option "use_ansi_codes") then ansi_code "underline" s else s *)
+                        (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
         )
 
 

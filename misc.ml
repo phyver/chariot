@@ -184,6 +184,13 @@ let range (a:int) (b:int) : int list
     range_aux [] b
 
 
+let bool_of_string (s:string) : bool
+  = match s with
+    | "true" | "True" | "TRUE" | "1" -> true
+    | "false" | "False" | "FALSE" | "0" -> false
+    | s -> raise (Invalid_argument ("bool_of_int: " ^ s))
+
+
 (* format a string using printf notation *)
 let fmt s = Printf.sprintf s
 
@@ -219,20 +226,4 @@ let ansi_code (color:string) (s:string) :string
         let s = Str.global_replace (Str.regexp_string end_code) (end_code ^ begin_code) s in
         Printf.sprintf "%s%s%s" begin_code s end_code
     with Not_found -> raise (Invalid_argument ("ansi_code: color " ^ color ^ " doesn't exist"))
-
-(* various helper function to print messages *)
-let msg fmt
-  = print_prefix stdout "-- " fmt
-
-let warning fmt
-  = let prefix = ansi_code "cyan" "--!! " in
-    print_prefix stdout prefix fmt
-
-let errmsg fmt
-  = let prefix = ansi_code "red" "--** " in
-    print_prefix stdout prefix fmt
-
-let debug fmt
-  = let prefix = ansi_code "yellow" "--== " in
-    print_prefix stdout prefix fmt
 

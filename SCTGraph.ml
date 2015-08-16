@@ -71,7 +71,7 @@ let print_callgraph graph
  * module...
  *)
 let add_call_set clause s =
-  if (option "use_subsumption")
+  if option "use_subsumption"
   then
     if ClauseSet.exists (fun cl -> approximates cl clause) s
     then s
@@ -81,7 +81,7 @@ let add_call_set clause s =
 
 (* Checks if a call brings new information. *)
 let new_call_set clause s =
-    if (option "use_subsumption")
+    if option "use_subsumption"
     then not (ClauseSet.exists (fun cl -> approximates cl clause) s)
     else not (ClauseSet.mem clause s)  (* FIXME something might be wrong here *)
 
@@ -265,7 +265,7 @@ let transitive_closure initial_graph b d =
    *)
   let rec closure ig g =
     new_arcs := false;
-    if (option "show_all_steps")
+    if option "show_all_steps"
     then begin
         msg "Graph of paths at iteration %d" !nb_steps;
         print_callgraph g
@@ -279,7 +279,7 @@ let transitive_closure initial_graph b d =
     end
   in
 
-  if (option "show_initial_graph")
+  if option "show_initial_graph"
   then begin
       msg "initial callgraph:";
       print_callgraph initial_graph
@@ -287,7 +287,7 @@ let transitive_closure initial_graph b d =
 
   let graph_of_paths = closure initial_graph initial_graph in
 
-  if (option "show_final_graph")
+  if option "show_final_graph"
   then begin
       msg "Graph of paths of the final control-flow graph:";
       print_callgraph graph_of_paths
@@ -321,14 +321,14 @@ let size_change_termination_bounds graph b d =
               let clause11 = collapsed_compose b d clause1 clause1 in
               not (compatible clause1 clause11) ||
               begin
-                if (option "show_coherent_loops")
+                if option "show_coherent_loops"
                 then begin
                     msg "Found coherent loop from \"%s\" to itself:" f;
                     msg "  %s" (string_of_sct_clause clause1)
                 end;
                 decreasing clause1 ||
                 (
-                    if (option "show_bad_loops")
+                    if option "show_bad_loops"
                     then begin
                         msg "Found non-decreasing coherent loop from \"%s\" to itself" f;
                         msg "  %s" (string_of_sct_clause clause1)

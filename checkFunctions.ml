@@ -130,7 +130,7 @@ let process_function_defs (env:environment)
     let constraints,datatypes = process_defs [] [] defs in
 
     (* check completeness of pattern matching *)
-    if (option "check_completeness")
+    if option "check_completeness"
     then
         List.iter (function f,_,clauses ->
                 if not (exhaustive env clauses)
@@ -172,7 +172,7 @@ let process_function_defs (env:environment)
         []
         defs
     in
-    let functions = if (option "use_priorities")
+    let functions = if option "use_priorities"
                     then infer_priorities env functions datatypes
                     else functions
     in
@@ -197,7 +197,7 @@ let process_function_defs (env:environment)
     in
 
     (* SCT *)
-    if (option "check_adequacy")
+    if option "check_adequacy"
     then
         begin
             let graph = callgraph_from_definitions functions

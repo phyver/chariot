@@ -117,7 +117,7 @@ let process_statement s = match s with
     | CmdShow(s) -> cmd_show current_state.env s
     | CmdPrompt(s) -> current_state.prompt <- s
     | CmdVerbose(v) -> current_state.verbose <- v
-    | CmdOption(o,b) -> setOption o b
+    | CmdOption(o,b) -> set_option o b
     | CmdHelp -> print_help()
     | CmdEcho(s) -> msg "%s" s
 
@@ -141,11 +141,11 @@ let loadfile path
                     process_statement st
                 with
                     | Error err ->
-                        if (option "continue_on_error")
+                        if option "continue_on_error"
                         then errmsg "%s" err
                         else error err
                     | TypeError err ->
-                        if (option "continue_on_error")
+                        if option "continue_on_error"
                         then errmsg "typing error: %s" err
                         else error err
             )
@@ -181,23 +181,23 @@ let _
         ("-i",                        Arg.Unit (fun _ -> interactive := true),                             "enter interactive mode after reading file");
         ("--interactive",             Arg.Unit (fun _ -> interactive := true),                             "enter interactive mode after reading file");
 
-        ("-v",                        Arg.Int (fun v -> setOption "verbose" (string_of_int v)),            "choose verbosity level");
-        ("--verbose",                 Arg.Int (fun v -> setOption "verbose" (string_of_int v)),            "choose verbosity level");
+        ("-v",                        Arg.Int (fun v -> set_option "verbose" (string_of_int v)),            "choose verbosity level");
+        ("--verbose",                 Arg.Int (fun v -> set_option "verbose" (string_of_int v)),            "choose verbosity level");
 
-        ("--show_type_struct",        Arg.Unit (fun _ -> setOption "show_type_struct" "true"),             "show type of lazy structures in explore mode");
-        ("--show_term_struct",        Arg.Unit (fun _ -> setOption "show_term_struct" "true"),             "show lazy terms in explore mode");
-        ("--dont_show_nats",          Arg.Unit (fun _ -> setOption "show_nats" "false"),                   "do not use decimal notation for displaying natural numbers");
-        ("--dont_show_lists",         Arg.Unit (fun _ -> setOption "show_lists" "false"),                  "do not use standard notations for displaying lists");
-        ("--dont_show_tuples",        Arg.Unit (fun _ -> setOption "show_tuples" "false"),                 "do not use standard notations for displaying tuples");
-        ("--dont_check_completeness", Arg.Unit (fun _ -> setOption "show_check_completeness" "false"),     "do not check that definitions are complete");
-        ("--dont_use_priorities",     Arg.Unit (fun _ -> setOption "show_use_priorities" "false"),         "do not use priorities for checking termination (unsound)");
-        ("--dont_show_priorities",    Arg.Unit (fun _ -> setOption "show_priorities" "false"),             "do not display priorities when showing function definitions");
-        ("--continue_on_error",       Arg.Unit (fun _ -> setOption "continue_on_error" "true"),            "do not exit on errors (only on non-interactive use)");
-        ("--squash_priorities",       Arg.Unit (fun _ -> setOption "squash_priorities" "true"),            "consecutive types of same polarity get the same priority");
-        ("--use_ansi_codes",          Arg.Unit (fun _ -> setOption "use_ansi_codes" "true"),               "use ANSI color codes to display various information");
-        ("--dont_use_subsumption",    Arg.Unit (fun _ -> setOption "use_subsumption" "false"),             "don't use subsumption to simplify sets of clauses");
-        ("--dont_collapse_graph",     Arg.Unit (fun _ -> setOption "collapse_graph" "false"),              "don't collapse initial call-graph");
-        ("--check_adequacy",          Arg.Unit (fun _ -> setOption "check_adequacy" "true"),               "use the SCT to check adequacy of definitions");
+        ("--show_type_struct",        Arg.Unit (fun _ -> set_option "show_type_struct" "true"),             "show type of lazy structures in explore mode");
+        ("--show_term_struct",        Arg.Unit (fun _ -> set_option "show_term_struct" "true"),             "show lazy terms in explore mode");
+        ("--dont_show_nats",          Arg.Unit (fun _ -> set_option "show_nats" "false"),                   "do not use decimal notation for displaying natural numbers");
+        ("--dont_show_lists",         Arg.Unit (fun _ -> set_option "show_lists" "false"),                  "do not use standard notations for displaying lists");
+        ("--dont_show_tuples",        Arg.Unit (fun _ -> set_option "show_tuples" "false"),                 "do not use standard notations for displaying tuples");
+        ("--dont_check_completeness", Arg.Unit (fun _ -> set_option "show_check_completeness" "false"),     "do not check that definitions are complete");
+        ("--dont_use_priorities",     Arg.Unit (fun _ -> set_option "show_use_priorities" "false"),         "do not use priorities for checking termination (unsound)");
+        ("--dont_show_priorities",    Arg.Unit (fun _ -> set_option "show_priorities" "false"),             "do not display priorities when showing function definitions");
+        ("--continue_on_error",       Arg.Unit (fun _ -> set_option "continue_on_error" "true"),            "do not exit on errors (only on non-interactive use)");
+        ("--squash_priorities",       Arg.Unit (fun _ -> set_option "squash_priorities" "true"),            "consecutive types of same polarity get the same priority");
+        ("--use_ansi_codes",          Arg.Unit (fun _ -> set_option "use_ansi_codes" "true"),               "use ANSI color codes to display various information");
+        ("--dont_use_subsumption",    Arg.Unit (fun _ -> set_option "use_subsumption" "false"),             "don't use subsumption to simplify sets of clauses");
+        ("--dont_collapse_graph",     Arg.Unit (fun _ -> set_option "collapse_graph" "false"),              "don't collapse initial call-graph");
+        ("--check_adequacy",          Arg.Unit (fun _ -> set_option "check_adequacy" "true"),               "use the SCT to check adequacy of definitions");
       ] in
     let help = "usage: " ^ Sys.argv.(0) ^ " [-i] [file]\n" in
     Arg.parse args (fun f -> incr nb_files; loadfile f) help;
@@ -207,6 +207,7 @@ let _
         print_endline "          chariot";
         print_endline "  :help for help";
         print_newline();
+        msg ~indent:10 "test";
         try
             mainloop()
         with Exit -> print_endline "Bye..."
