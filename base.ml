@@ -186,8 +186,8 @@ let add_weight_int w n = add_weight w (Num n)
 
 let op_weight w =
     match w with
-        (* | Infty -> raise (Invalid_argument "op_weight") *)
-        | Infty -> Num 0        (* TODO: CHECK... It is probably a better idea to give negative weights on the rhs of a definition *)
+        | Infty -> raise (Invalid_argument "op_weight")
+        (* | Infty -> Num 0        (1* TODO: CHECK... It is probably a better idea to give negative weights on the rhs of a definition *1) *)
         | Num n -> Num (-n)
 
 let collapse_weight bound w = match w with

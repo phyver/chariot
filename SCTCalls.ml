@@ -15,14 +15,6 @@ let explode_pattern pattern
     in
     explode_aux pattern []
 
-let rec app_all u args =
-    match args with
-        | [] -> u
-        | Proj(d,p)::args -> app_all (App( Proj(d,p) , u)) args
-        | [Special(ApproxProj(p,w))] -> App( Special(ApproxProj(p,w)) , u )
-        | Special(ApproxProj _)::_ -> assert false
-        | arg::args -> app_all (App(u,arg)) args
-
 
 (* collapsing the weights inside a term *)
 let rec collapse_weight_in_term b u
@@ -40,6 +32,29 @@ let add_approx a1 a2
         | (Some p1, w1) , (Some p2, w2) when p1>p2 -> (Some p1, w1)
         | (Some p1, w1) , (Some p2, w2) (*when p1=p2*) -> (Some p1, add_weight w1 w2)
         | (None,w) , (Some _,_) | (Some _,_),(None,w) -> (None, w)
+
+let rec collapse_apps_proj args
+  = match args with
+        | Special(ApproxProj(p1,w1))::Special(ApproxProj(p2,w2))::args ->
+            let p,w = add_approx (p1,w1) (p2,w2) in
+            collapse_apps_proj (Special(ApproxProj(p,w))::args)
+        | _ -> List.rev args
+
+let rec app_all u args =
+    match args with
+        | [] -> u
+        | Proj(d,p)::args -> app_all (App( Proj(d,p) , u)) args
+        | [Special(ApproxProj(p,w))] -> App( Special(ApproxProj(p,w)) , u )
+        | Special(ApproxProj _)::_ -> assert false
+        | arg::args -> app_all (App(u,arg)) args
+let app_all u args =
+    (* FIXME: ugly hack to make sure the approximations on the result are collapsed together *)
+    let u,args1 = explode_pattern u in
+    let args = collapse_apps_proj (List.rev (args1 @ args)) in
+    let u = Var u in
+    (* debug "app_all %s with %s" (string_of_approx_term u) (string_of_list "," string_of_approx_term args); *)
+    app_all u args
+
 
 let simplify_approx aps =
     let aps = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) aps in
@@ -173,6 +188,8 @@ let rec subst_approx_term sigma v
 let normalize_sct_clause (lhs,rhs : sct_clause)
   : sct_clause
   =
+    (* debug "normalize with %s" (string_of_sct_clause (lhs,rhs)); *)
+
     (* TODO: rename dangling variables on the RHS to "!x" *)
 
     (* debug "normalizing %s" (string_of_sct_clause (lhs,rhs)); *)
@@ -228,9 +245,12 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
                     match process_lhs lhs with
                         | None, lhs, sigma -> Some (p, op_weight w) , lhs, sigma
                         | _ -> assert false
-
                 end
             | _,_ -> assert false
+    in
+    let process_lhs lhs =
+        (* debug "process_lhs with %s" (string_of_approx_term lhs); *)
+        process_lhs lhs
     in
 
     let app_res, lhs, sigma = process_lhs lhs
@@ -288,27 +308,30 @@ let unify ?(allow_right_approx=false) (rhs:approx_term) (lhs:approx_term)
                 unify_aux ps_r ps_l (tau @ (List.map (second (subst_approx_term sigma)) sigma))
 
             | u_r::ps_r,Special(ApproxConst apps_l)::ps_l ->
-                    if allow_right_approx
-                    then
-                        let apps_r = collapse0 u_r in
-                        let tau = List.map (function p,w,x -> (x,Special(ApproxConst(List.map (function _p,_w,_x -> let p,w = add_approx (_p,_w) (p, op_weight w) in p,w,_x) apps_l))) ) apps_r in
-                        unify_aux ps_r ps_l (tau @ (List.map (second (subst_approx_term sigma)) sigma))
-                    else raise (UnificationError "approximation on the right not allowed during unification")
+                    (* if allow_right_approx *)
+                    (* then *)
+                    (*     let apps_r = collapse0 u_r in *)
+                    (*     let tau = List.map (function p,w,x -> (x,Special(ApproxConst(List.map (function _p,_w,_x -> let p,w = add_approx (_p,_w) (p, op_weight w) in p,w,_x) apps_l))) ) apps_r in *)
+                    (*     unify_aux ps_r ps_l (tau @ (List.map (second (subst_approx_term sigma)) sigma)) *)
+                    (* else raise (UnificationError "approximation on the right not allowed during unification") *)
+                    raise (UnificationError "approximation on the right not allowed during unification")
 
             | [Special(ApproxProj(p,w))],ps_l ->
                 let tmp = List.filter (function Proj _ | Special(ApproxProj _) -> true | _ -> false) ps_l in
                 let tmp = List.map (function Proj(_,p) -> (p,Num 1) | Special(ApproxProj(p,w)) -> (p,w) | _ -> assert false) tmp in
-                let p,w = List.fold_left (fun ap1 ap2 -> add_approx ap1 ap2) (p,op_weight w) tmp in
-                sigma,[],[Special(ApproxProj(p,w))]
+                let p,w = List.fold_left (fun ap1 ap2 -> add_approx ap1 (fst ap2, op_weight (snd ap2))) (p,w) tmp in
+                (* sigma,[],[Special(ApproxProj(p,w))] *)
+                sigma,[Special(ApproxProj(p,w))],[]
 
             | ps_r,[Special(ApproxProj(p,w))] ->
-                    if allow_right_approx
-                    then
-                        let tmp = List.filter (function Proj _ | Special(ApproxProj _) -> true | _ -> false) ps_r in
-                        let tmp = List.map (function Proj(_,p) -> (p,Num 1) | Special(ApproxProj(p,w)) -> (p,w) | _ -> assert false) tmp in
-                        let p,w = List.fold_left (fun ap1 ap2 -> add_approx ap1 ap2) (p,op_weight w) tmp in
-                        sigma,[Special(ApproxProj(p,w))],[]
-                    else raise (UnificationError "approximation on the right not allowed during unification")
+                    (* if allow_right_approx *)
+                    (* then *)
+                    (*     let tmp = List.filter (function Proj _ | Special(ApproxProj _) -> true | _ -> false) ps_r in *)
+                    (*     let tmp = List.map (function Proj(_,p) -> (p,Num 1) | Special(ApproxProj(p,w)) -> (p,w) | _ -> assert false) tmp in *)
+                    (*     let p,w = List.fold_left (fun ap1 ap2 -> add_approx ap1 ap2) (p,op_weight w) tmp in *)
+                    (*     sigma,[Special(ApproxProj(p,w))],[] *)
+                    (* else raise (UnificationError "approximation on the right not allowed during unification") *)
+                    raise (UnificationError "approximation on the right not allowed during unification")
 
             | Var(x_r)::ps_r,u_l::ps_l -> unify_aux (List.map (subst_approx_term [x_r,u_l]) ps_r) ps_l ((x_r,u_l)::(List.map (second (subst_approx_term [x_r,u_l])) sigma))
             | u_r::ps_r,Var(x_l)::ps_l -> unify_aux ps_r (List.map (subst_approx_term [x_l,u_r]) ps_l) ((x_l,u_r)::(List.map (second (subst_approx_term [x_l,u_r])) sigma))
@@ -332,14 +355,16 @@ let compose (l1,r1:sct_clause) (l2,r2:sct_clause)
   =
     let l1,r1 = rename_var "₁" l1, rename_var "₁" r1 in
     let l2,r2 = rename_var "₂" l2, rename_var "₂" r2 in
-(* debug "  %s  o    %s" (string_of_sct_clause (l1,r1)) (string_of_sct_clause (l2,r2)) *)
+    (* debug "  %s  o    %s" (string_of_sct_clause (l1,r1)) (string_of_sct_clause (l2,r2)); *)
 
     try
         let sigma,context1,context2 = unify r1 l2 in
 (* debug "sigma: %s" (string_of_list " , " (function x,t -> x ^ ":=" ^ (string_of_approx_term t)) sigma); *)
+(* debug "context1: %s" (string_of_list " , " string_of_approx_term context1); *)
+(* debug "context2: %s" (string_of_list " , " string_of_approx_term context2); *)
         let l = subst_approx_term sigma l1 in
         let r = subst_approx_term sigma r2 in
-        (* debug "obtained %s" (string_of_sct_clause (l,r)); *)
+(* debug "obtained %s" (string_of_sct_clause (l,r)); *)
         normalize_sct_clause (app_all l context2 , app_all r context1)
     with
         UnificationError err -> raise Impossible_case
@@ -354,10 +379,13 @@ let collapse_clause b d (l,r)
 
 
 let collapsed_compose b d c1 c2
-  = let l,r = compose c1 c2 in
+  =
+    (* debug "composing:  %s   and   %s" (string_of_sct_clause c1) (string_of_sct_clause c2); *)
+    let l,r = compose c1 c2
+    in
+    (* debug "   l,r:  %s " (string_of_sct_clause (l,r)); *)
     let result = collapse_clause b d (l,r)
     in
-    (* debug "composing:  %s   and   %s" (string_of_sct_clause c1) (string_of_sct_clause c2); *)
     (* debug "   result:  %s " (string_of_sct_clause result); *)
     result
 
@@ -413,7 +441,7 @@ let approximates p1 p2 =
         let r1 = app_all r1 context1 in
         let r2 = subst_approx_term sigma r2 in
         let r2 = app_all r2 context2 in
-        (* msg "r1=%s  and  r2=%s" (string_of_approx_term r1) (string_of_approx_term r2); *)
+        (* debug "r1=%s  and  r2=%s" (string_of_approx_term r1) (string_of_approx_term r2); *)
 
         let f1,pats1 = explode_pattern r1 in
         let f2,pats2 = explode_pattern r2 in
