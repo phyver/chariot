@@ -402,6 +402,19 @@ let collapsed_compose b d c1 c2
 
 
 (* order *)
+let approx_approx (p1,w1) (p2,w2) =
+    match p1,p2 with
+        | None,_ -> true
+        | Some p1,Some p2 when p1 > p2 -> true
+        | _,None -> false
+        | Some p1,Some p2 when p1 < p2 -> false
+        | Some p1,Some p2 (*when p1=p2*) ->
+            begin
+                match w1,w2 with
+                    | Infty,_ -> true
+                    | _,Infty -> false
+                    | Num w1,Num w2 -> w1 >= w2
+            end
 let approximates p1 p2 =
 
     let rec approximates_aux pats1 pats2 =
@@ -430,15 +443,14 @@ let approximates p1 p2 =
             | [Special(ApproxProj(p,w))],pats2 ->
                     begin
                         let projs = List.filter (function Special(ApproxProj _) -> true | _ -> false) pats2 in
-                        let _,w = List.fold_left (fun r a2 ->
+                        let p2,w2 = List.fold_left (fun r a2 ->
                                         match a2 with Special(ApproxProj(_p,_w)) -> add_approx r (_p,_w)
                                                     | _ -> assert false
                                     )
-                                    (p,op_weight w)
+                                    (Some 0, Num 0)
                                     projs
                         in
-                        match w with Infty -> false
-                                   | Num w -> w <= 0
+                        approx_approx (p,w) (p2,w2)
                     end
             | _,_ -> false
     in
