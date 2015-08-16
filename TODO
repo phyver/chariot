@@ -1,3 +1,7 @@
+  - move file commands.ml to parser.ml and remove type command (IN PROGRESS)
+
+  - allow parser to read priorities in terms for testing...
+
   - README file
 
   - change type used for representing calls for SCT:
@@ -15,8 +19,6 @@
       - print buffer with error underlined ???
 
   - use type weight for priorities
-
-  - move file commands.ml to parser.ml and remove type command
 
   - remove Proj variant and use Const everywhere (requires thinking about
     priority None: there should be a data and codata version)

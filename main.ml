@@ -38,23 +38,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 open Parser
 open Base
-open CheckTypes
-open CheckFunctions
-open Compute
-open Explore
-open Pretty
 open Misc
 open Commands
 open State
-
-let print_help ()
-  = print_list "| " "\n| " "\n\n" print_string [
-        "";
-        "chariot: a language with arbitrary nested inductive and coinductive types";
-        "";
-        "TODO";
-        "";
-    ]
+open Explore
 
 let parse_error lexbuf
   = let curr = lexbuf.Lexing.lex_curr_p in
@@ -76,6 +63,35 @@ let show_error lexbuf
     (* let s_end = ansi_code "red" s_end in *)
     let s_end = ansi_code "underline" s_end in
     errmsg "%s" (s_start ^ s_end)
+
+let loadfile path
+  =
+    let f_in = open_in path in
+    let lexbuf = Lexing.from_channel f_in in
+    try
+        Parser.statements Lexer.tokenize lexbuf
+    with
+        | Parsing.Parse_error -> parse_error lexbuf
+        | Error err -> errmsg "%s" err
+        | TypeError err -> errmsg "typing error: %s" err
+        | Sys_error err -> errmsg "%s" err
+        | Exit -> ()
+
+
+let mainloop ()
+  = while true
+    do
+        print_string current_state.prompt; flush_all();
+        let lexbuf = Lexing.from_channel stdin in
+        flush_all ();
+        try
+            Parser.single_statement Lexer.tokenize lexbuf
+        with
+            | Parsing.Parse_error -> parse_error lexbuf; show_error lexbuf
+            | Error err -> errmsg "%s" err
+            | TypeError err -> errmsg "typing error: %s" err
+    done
+
 
 let explore_loop env t
   = print_list "| " "\n| " "\n\n" print_string [
@@ -104,73 +120,6 @@ let explore_loop env t
                 | TypeError err -> errmsg "typing error: %s" err
         done
     with Exit -> msg "end of explore mode"
-
-let process_statement s = match s with
-    | CmdCompose(u1,u2,u3,u4) -> cmd_compose current_state.env u1 u2 u3 u4
-    | CmdCompare(u1,u2,u3,u4) -> cmd_compare current_state.env u1 u2 u3 u4
-    | CmdCollapse(u) -> cmd_collapse current_state.env u
-
-    | Eof -> raise Exit
-    | CmdQuit -> raise Exit
-    | Nothing -> ()
-
-    | CmdShow(s) -> cmd_show current_state.env s
-    | CmdPrompt(s) -> current_state.prompt <- s
-    | CmdVerbose(v) -> current_state.verbose <- v
-    | CmdOption(o,b) -> set_option o b
-    | CmdHelp -> print_help()
-    | CmdEcho(s) -> msg "%s" s
-
-    | CmdReduce(t) -> cmd_reduce current_state.env t
-    | CmdUnfold(t,d) -> cmd_unfold current_state.env t d
-    | CmdExplore(t) -> explore_loop current_state.env t
-
-    | TypeDef(n,defs) -> current_state.env <- process_type_defs current_state.env n defs
-    | FunDef(defs) -> current_state.env <- process_function_defs current_state.env defs
-
-
-let loadfile path
-  =
-    let f_in = open_in path in
-    let lexbuf = Lexing.from_channel f_in in
-    try
-        let cmds = Parser.statements Lexer.tokenize lexbuf in
-        List.iter
-            (fun st ->
-                try
-                    process_statement st
-                with
-                    | Error err ->
-                        if option "continue_on_error"
-                        then errmsg "%s" err
-                        else error err
-                    | TypeError err ->
-                        if option "continue_on_error"
-                        then errmsg "typing error: %s" err
-                        else error err
-            )
-            cmds
-    with
-        | Parsing.Parse_error -> parse_error lexbuf
-        | Error err -> errmsg "%s" err
-        | TypeError err -> errmsg "typing error: %s" err
-        | Sys_error err -> errmsg "%s" err
-        | Exit -> ()
-
-
-let mainloop ()
-  = while true
-    do
-        print_string current_state.prompt; flush_all();
-        let lexbuf = Lexing.from_channel stdin in
-        flush_all ();
-        try
-            process_statement (Parser.single_statement Lexer.tokenize lexbuf)
-        with
-            | Parsing.Parse_error -> parse_error lexbuf; show_error lexbuf
-            | Error err -> errmsg "%s" err
-            | TypeError err -> errmsg "typing error: %s" err
-    done
 
 let _
   =

@@ -6,7 +6,7 @@
 -- result: 60
 -- of type: nat
 
--- term: get_nth (4+7) (map double (fib 0 1))
+-- term: get_nth 11 (map double (fib 0 1))
 -- result: 178
 -- of type: nat
 

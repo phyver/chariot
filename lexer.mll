@@ -58,45 +58,48 @@ let dummy = "_" sub
 
 
 rule tokenize = parse
-    | ":quit"           { CMDQUIT }
-    | ":prompt"         { CMDPROMPT }
-    | ":show"           { CMDSHOW }
-    | ":echo"           { CMDECHO }
-    | ":verbose"        { CMDVERBOSE }
-    | ":set"            { CMDSET }
-    | ":explore"        { CMDEXPLORE }
     | ":help"           { CMDHELP }
-    | ":testcompose"    { CMDTESTCOMPOSE }
-    | ":testcompare"    { CMDTESTCOMPARE }
-    | ":testcollapse"    { CMDTESTCOLLAPSE }
-    | ":test"           { CMDTEST }
+    | ":echo"           { CMDECHO }
+    | ":set"            { CMDSET }
+    | ":show"           { CMDSHOW }
     | ":reduce"         { CMDREDUCE }
     | ":unfold"         { CMDUNFOLD }
-    | '='               { EQUAL }
-    | "::"              { DOUBLECOLON }
-    | ':'               { COLON }
-    | ';'               { SEMICOLON }
-    | '('               { LPAR }
-    | ')'               { RPAR }
-    | '['               { LSQBRAC }
-    | ']'               { RSQBRAC }
-    | ','               { COMMA }
-    | '|'               { PIPE }
-    | '.'               { DOT }
-    | '+'               { PLUS }
-    | '-'               { MINUS }
-    | '*'               { STAR }
+    | ":explore"        { CMDEXPLORE }
+    | ":quit"           { CMDQUIT }
+
+    | ":test" [' ' '\t']+ "unifytypes" { TESTUNIFYTYPES }
+    | ":test" [' ' '\t']+ "unifyterms" { TESTUNIFYTERMS }
+    | ":test" [' ' '\t']+ "compose"    { TESTCOMPOSE }
+    | ":test" [' ' '\t']+ "compare"    { TESTCOMPARE }
+    | ":test" [' ' '\t']+ "collapse"   { TESTCOLLAPSE }
+
     | "\n\n"            { Lexing.new_line lexbuf; Lexing.new_line lexbuf; BLANKLINE }
+
+    | "="               { EQUAL }
+    | "::"              { DOUBLECOLON }
+    | ":"               { COLON }
+    | ";"               { SEMICOLON }
+    | "("               { LPAR }
+    | ")"               { RPAR }
+    | "["               { LSQBRAC }
+    | "]"               { RSQBRAC }
+    | ","               { COMMA }
+    | "|"               { PIPE }
+    | "."               { DOT }
+    | "+"               { PLUS }
+    | "-"               { MINUS }
+    | "*"               { STAR }
     | "data"            { DATA }
     | "codata"          { CODATA }
     | "where"           { WHERE }
     | "and"             { AND }
     | "->"              { ARROW }
-    | "=>"              { DOUBLEARROW }
     | "→"               { ARROW }
+    | "=>"              { DOUBLEARROW }
     | "val"             { VAL }
     | "???"             { ANGEL }
     | "⊤"               { ANGEL }
+
     | dummy             { DUMMY }
     | idU               { IDU(remove_exp (Lexing.lexeme lexbuf)) }
     | idL               { IDL(remove_exp (Lexing.lexeme lexbuf)) }

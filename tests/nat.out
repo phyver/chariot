@@ -34,7 +34,7 @@ val
 
 (* ================================================== *)
 
--- term: 1+2+3+4+5
+-- term: 15
 -- result: 15
 -- of type: nat
 
@@ -48,7 +48,7 @@ val
 
 val
    ack : nat → nat → nat
-    | ack Zero n = add n (Succ Zero)
+    | ack Zero n = Succ n
     | ack (Succ m) Zero = ack m (Succ Zero)
-    | ack (Succ m) (Succ n) = ack m (ack (add m (Succ Zero)) n)
+    | ack (Succ m) (Succ n) = ack m (ack (Succ m) n)
 

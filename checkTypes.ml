@@ -138,12 +138,6 @@ let process_type_defs (env:environment)
     let new_types_with_params = List.rev_map (function (t,params,_) -> (t,params)) defs
     in
 
-    (* the real bloc number of this bunch of mutual type definitions *)
-    let n = if even current_state.current_type_bloc = even n
-            then current_state.current_type_bloc+2
-            else current_state.current_type_bloc+1
-    in
-
     (* we check that all the new types are different *)
     let new_types_without_params = List.rev_map (function (t,_,_) -> t) defs in
     check_new_types_different new_types_without_params;
