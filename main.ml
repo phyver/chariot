@@ -178,8 +178,8 @@ let _
     let nb_files = ref 0 in
 
       let args = [
-        ("-i",                        Arg.Unit (fun _ -> interactive := true),                             "enter interactive mode after reading file");
-        ("--interactive",             Arg.Unit (fun _ -> interactive := true),                             "enter interactive mode after reading file");
+        ("-i",                        Arg.Unit (fun _ -> interactive := true),                              "enter interactive mode after reading file");
+        ("--interactive",             Arg.Unit (fun _ -> interactive := true),                              "enter interactive mode after reading file");
 
         ("-v",                        Arg.Int (fun v -> set_option "verbose" (string_of_int v)),            "choose verbosity level");
         ("--verbose",                 Arg.Int (fun v -> set_option "verbose" (string_of_int v)),            "choose verbosity level");
@@ -192,7 +192,7 @@ let _
         ("--dont_check_completeness", Arg.Unit (fun _ -> set_option "show_check_completeness" "false"),     "do not check that definitions are complete");
         ("--dont_use_priorities",     Arg.Unit (fun _ -> set_option "show_use_priorities" "false"),         "do not use priorities for checking termination (unsound)");
         ("--dont_show_priorities",    Arg.Unit (fun _ -> set_option "show_priorities" "false"),             "do not display priorities when showing function definitions");
-        ("--continue_on_error",       Arg.Unit (fun _ -> set_option "continue_on_error" "true"),            "do not exit on errors (only on non-interactive use)");
+        ("--continue_on_error",       Arg.Unit (fun _ -> set_option "continue_on_error" "true"),            "do not exit on errors (only for non-interactive use)");
         ("--squash_priorities",       Arg.Unit (fun _ -> set_option "squash_priorities" "true"),            "consecutive types of same polarity get the same priority");
         ("--use_ansi_codes",          Arg.Unit (fun _ -> set_option "use_ansi_codes" "true"),               "use ANSI color codes to display various information");
         ("--dont_use_subsumption",    Arg.Unit (fun _ -> set_option "use_subsumption" "false"),             "don't use subsumption to simplify sets of clauses");
@@ -207,7 +207,6 @@ let _
         print_endline "          chariot";
         print_endline "  :help for help";
         print_newline();
-        msg ~indent:10 "test";
         try
             mainloop()
         with Exit -> print_endline "Bye..."

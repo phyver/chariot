@@ -41,14 +41,14 @@ open Base
 
 type state =
     {
-        mutable current_type_bloc: int              ;  (* counter for blocs of type definitions: odd for data and even for codata *)
-        mutable current_function_bloc: int          ;
-        mutable env: environment                    ;
-        mutable prompt: string                      ;
-        mutable verbose: int                        ;
-        mutable boolean_options: (string*bool) list ;
-        mutable depth: int                          ;
-        mutable bound: int                          ;
+        mutable current_type_bloc: int                      ;  (* counter for blocs of type definitions: odd for data and even for codata *)
+        mutable current_function_bloc: int                  ;
+        mutable env: environment                            ;
+        mutable prompt: string                              ;
+        mutable verbose: int                                ;
+        mutable boolean_options: (string*bool*string) list  ;
+        mutable depth: int                                  ;
+        mutable bound: int                                  ;
     }
 
 let current_state =
@@ -63,27 +63,28 @@ let current_state =
         prompt = "# "                           ;
         verbose = 0                             ;
         boolean_options = [
-            "show_type_struct",        false    ;
-            "show_term_struct",        false    ;
-            "show_nats",               true     ;
-            "show_lists",              true     ;
-            "show_tuples",             true     ;
-            "check_completeness",      true     ;
-            "use_priorities",          true     ;
-            "show_priorities",         true     ;
-            "continue_on_error",       false    ;
-            "squash_priorities",       false    ;
-            "use_ansi_codes",          false    ;
-            "use_subsumption",         true     ;
-            "collapse_graph",          true     ;
-            "check_adequacy",          false    ;
+            "show_type_struct",        false    , "show type of lazy structures in explore mode" ;
+            "show_term_struct",        false    , "show lazy terms in explore mode" ;
+            "show_nats",               true     , "use decimal notation for displaying natural numbers" ;
+            "show_lists",              true     , "use standard notations for displaying lists" ;
+            "show_tuples",             true     , "use standard notations for displaying tuples" ;
+
+            "check_completeness",      true     , "check that definitions are complete" ;   (* FIXME -> allow_incomplete_definitions *)
+            "use_priorities",          true     , "use priorities for checking termination (unsound if false)" ;  (* FIXME -> only check termination *)
+            "show_priorities",         true     , "display priorities when showing function definitions" ;
+            "continue_on_error",       false    , "do not quit on errors (only for non-interactive use)" ;
+            "squash_priorities",       false    , "consecutive types of same polarity get the same priority" ;
+            "use_ansi_codes",          false    , "use ANSI color codes to display various information" ;
+            "use_subsumption",         true     , "use subsumption to simplify sets of clauses" ;
+            "collapse_graph",          true     , "collapse initial call-graph" ;
+            "check_adequacy",          false    , "use the SCT to check adequacy of definitions" ;      (* FIXME: allow_non_adequate_definitions *)
 
 (* various debuging options *)
-            "show_initial_graph",      false    ;
-            "show_final_graph",        false    ;
-            "show_all_steps",          false    ;
-            "show_coherent_loops",     false    ;
-            "show_bad_loops",          false    ;
+            "show_initial_graph",      false    , "show initial call graph when checking adequacy" ;
+            "show_final_graph",        false    , "show final call graph when checking adequacy" ;
+            "show_all_steps",          false    , "show all successive graphs when checking adequacy" ;
+            "show_coherent_loops",     false    , "show coherent loops found in the final graph when checking adequacy" ;
+            "show_bad_loops",          false    , "show the first non-decreasing coherent loop found when checking adequacy" ;
         ]                                       ;
         depth = 2                               ;
         bound = 2                               ;
@@ -91,7 +92,7 @@ let current_state =
 
 (* get boolean option in current state *)
 let option (s:string) : bool
-  = try List.assoc s current_state.boolean_options
+  = try List.assoc s (List.map (function o,v,h -> o,v) current_state.boolean_options)
     with Not_found -> error ("option " ^ s ^ " doesn't exist")
 
 (* return true if current verbosity is greater than k *)
@@ -121,18 +122,18 @@ let debug ?(indent=2) fmt
 
 let show_options ()
   = msg "options:";
-    msg "\t- %s: %s" "prompt" current_state.prompt;
-    msg "\t- %s: %d" "verbose" current_state.verbose;
-    msg "\t- %s: %d" "depth" current_state.depth;
-    msg "\t- %s: %d" "bound" current_state.bound;
-    List.iter (function o,v -> msg "\t- %s: %b" o v) current_state.boolean_options
+    msg "    %-20s: %-10s  %s" "prompt"     current_state.prompt    "prompt for interactive use";
+    msg "    %-20s: %-10d  %s" "verbose"    current_state.verbose   "verbosity level";
+    msg "    %-20s: %-10d  %s" "depth"      current_state.depth     "depth of terms when checking adequacy";
+    msg "    %-20s: %-10d  %s" "bound"      current_state.bound     "bound for the weights of terms when checking adequacy";
+    List.iter (function o,v,h -> msg "    %-20s: %-10s  %s" o (if v then "true" else "false") h) current_state.boolean_options
 
 let set_option s v
-  = let rec set_option_aux options s v acc =
+  = let rec set_option_aux options s v =
         match options with
             | [] -> error ("option " ^ s ^ " doesn't exist")
-            | (s',_)::options when s'=s -> (s',v)::List.rev_append options acc
-            | x::options -> set_option_aux options s v (x::acc)
+            | (s',_,h)::options when s'=s -> (s',v,h)::options
+            | x::options -> x::(set_option_aux options s v)
     in
     match s with
         | "prompt" -> current_state.prompt <- v
@@ -156,6 +157,6 @@ let set_option s v
                 with Failure _ -> error "%s is not an integer"
             end
         | "" -> show_options ()
-        | s -> current_state.boolean_options <- set_option_aux current_state.boolean_options s (bool_of_string v) []
+        | s -> current_state.boolean_options <- set_option_aux current_state.boolean_options s (bool_of_string v)
 
 

@@ -279,7 +279,7 @@ let transitive_closure initial_graph b d =
     end
   in
 
-  if option "show_initial_graph"
+  if option "show_initial_graph" && not (option "show_all_steps")
   then begin
       msg "initial callgraph:";
       print_callgraph initial_graph
@@ -287,7 +287,7 @@ let transitive_closure initial_graph b d =
 
   let graph_of_paths = closure initial_graph initial_graph in
 
-  if option "show_final_graph"
+  if option "show_final_graph" && not (option "show_all_steps")
   then begin
       msg "Graph of paths of the final control-flow graph:";
       print_callgraph graph_of_paths
