@@ -25,6 +25,7 @@ let rec collapse_weight_in_term b u
         | Special(ApproxConst []) -> assert false
         | Special(ApproxConst apps) -> Special(ApproxConst(List.map (function p,w,x -> p, collapse_weight b w,x) apps))
 
+
 (* misc operations on approximations *)
 let add_approx a1 a2
   = match a1,a2 with

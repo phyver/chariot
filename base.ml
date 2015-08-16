@@ -196,6 +196,7 @@ let collapse_weight bound w = match w with
     | Num w (* when w<-bound *) -> Num(-bound)
 
 
+
 (* a call from f to g is represented by a rewriting rule
  *   param_1 param_2 ... param_m  =>  arg_1 arg_2 ... arg_n
  * where m is the arity of f and n is the arity of g.

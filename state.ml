@@ -79,8 +79,24 @@ let setOption s v
     match s with
         | "prompt" -> current_state.prompt <- v
         | "verbose" -> (try current_state.verbose <- int_of_string v with Failure _ -> error "%s is not an integer")
-        | "depth" -> (try current_state.depth <- int_of_string v with Failure _ -> error "%s is not an integer")
-        | "bound" -> (try current_state.bound <- int_of_string v with Failure _ -> error "%s is not an integer")
+        | "depth" ->
+            begin
+                try
+                    let d = int_of_string v in
+                    if d < 0
+                    then error "depth cannot be strictly negative"
+                    else current_state.depth <- d
+                with Failure _ -> error "%s is not an integer"
+            end
+        | "bound" -> 
+            begin
+                try
+                    let b = int_of_string v in
+                    if b <= 0
+                    then error "bound must be strictly positive"
+                    else current_state.bound <- b
+                with Failure _ -> error "%s is not an integer"
+            end
         | "" -> showOptions ()
         | s -> current_state.options <- setOption_aux current_state.options s (bool_of_string v) []
 

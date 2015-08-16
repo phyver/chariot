@@ -51,7 +51,7 @@ let new_call_set clause s =
 let collapse_graph b d graph
   = CallGraph.map (fun s ->
                 ClauseSet.fold (fun clause2 s ->
-                  add_call_set (collapse_clause d b clause2) s)
+                  add_call_set (collapse_clause b d clause2) s)
                   s ClauseSet.empty)
                   graph
 
@@ -159,7 +159,7 @@ let callgraph_from_definitions
 let count_edges g = CallGraph.fold (fun _ s n -> n+(ClauseSet.cardinal s)) g 0
 
 (* Computing the transitive closure of a graph. *)
-let transitive_closure initial_graph d b =
+let transitive_closure initial_graph b d =
 
   (* references to keep some info about the graph *)
   let new_arcs = ref false in
@@ -193,7 +193,7 @@ let transitive_closure initial_graph d b =
                 (*   print_call clause2'; *)
                 (*   print_string "    with B="; print_int b; print_string " and D="; print_int d; print_string "\n** to give\n"; *)
                 (* end; *)
-                let clause1 : sct_clause = collapsed_compose d b clause2 clause2' in
+                let clause1 : sct_clause = collapsed_compose b d clause2 clause2' in
                 (* ifDebug "show_all_compositions" *)
                 (* begin fun _ -> *)
                 (*   print_call clause1; *)
@@ -270,9 +270,9 @@ let transitive_closure initial_graph d b =
  * Putting everything together: the size-change termination principle *
  **********************************************************************)
 
-let size_change_termination_bounds graph d b =
+let size_change_termination_bounds graph b d =
   assert (d>=0 && b>0) ;
-  let tc_graph = transitive_closure graph d b in
+  let tc_graph = transitive_closure graph b d in
     CallGraph.for_all
       (fun fg s ->
         let f,g = fg in
@@ -280,7 +280,7 @@ let size_change_termination_bounds graph d b =
         ClauseSet.for_all
           (fun clause1 ->
             try
-              let clause11 = collapsed_compose d b clause1 clause1 in
+              let clause11 = collapsed_compose b d clause1 clause1 in
               not (compatible clause1 clause11) ||
               begin
                 if (option "show_coherent_loops")
@@ -318,7 +318,7 @@ let size_change_termination graph =
         (*   print_string " **"; *)
         (*   print_newline() *)
         (* end; *)
-        let t = size_change_termination_bounds graph d current_state.bound in
+        let t = size_change_termination_bounds graph current_state.bound d in
         if t
         then (
           (* ifDebug "show_summary_TC" *)
