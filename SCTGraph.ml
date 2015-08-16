@@ -288,12 +288,12 @@ let size_change_termination_bounds graph b d =
                     msg "Found coherent loop from \"%s\" to itself:" f;
                     msg "  %s" (string_of_sct_clause clause1)
                 end;
-                decreasing clause11 ||      (* FIXME: it should probably work with clause1 instead, but doesn't at the moment (assertion failure in decreasing when checking the length_list function) *)
+                decreasing clause1 ||
                 (
                     if (option "show_bad_loops")
                     then begin
                         msg "Found non-decreasing coherent loop from \"%s\" to itself" f;
-                        msg "  %s" (string_of_sct_clause clause11)
+                        msg "  %s" (string_of_sct_clause clause1)
                 end;
                 false)
               end

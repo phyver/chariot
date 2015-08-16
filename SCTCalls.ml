@@ -557,6 +557,8 @@ let decreasing (l,r : sct_clause)
             | [],[] -> (match acc with (Some p, Num w) when even p && w<0 -> true | _ -> false)
 
             | [],_ | _,[] -> raise (Invalid_argument "decreasing should only be called on idempotent rules")
+                                (* FIXME: cannot it happen that we get f x => f x .D y *)
+
             | (app1,u1)::pats1, u2::pats2 ->
                 begin
                     match get_head u1, get_args u1, get_head u2, get_args u2 with
@@ -568,13 +570,22 @@ let decreasing (l,r : sct_clause)
 
                         | Proj _,_,Proj _,_ -> assert false
 
-                        | Var x1,[],Var x2,[] ->
-                            decreasing_aux pats1 pats2 acc
-
-                        | Var f1,args1,Var f2,args2 -> (* FIXME: hack when we reach th efunctions *)
-                            assert (f1=f2);
-                            let args1 = List.map (fun x -> app1,x) args1 in
-                            decreasing_aux (args1@pats1) (args2@pats2) acc
+                        | Var x1,[],_,_ ->
+                            begin
+                                match collapse0 u2 with
+                                    | [(p,w,x)] when x1=x ->
+                                            (match add_approx (p,w) acc with (Some p, Num w) when odd p && w<0 -> true
+                                                                            | _ -> decreasing_aux pats1 pats2 acc)
+                                    | _ -> decreasing_aux pats1 pats2 acc
+                            end
+                        | _,_,Var x2,[] ->
+                            begin
+                                match collapse0 u1 with
+                                    | [(p,w,x)] when x2=x ->
+                                            (match add_approx (p,w) acc with (Some p, Num w) when odd p && w>0 -> true
+                                                                            | _ -> decreasing_aux pats1 pats2 acc)
+                                    | _ -> decreasing_aux pats1 pats2 acc
+                            end
 
                         | Const(c1,p1),args1,Const(c2,p2),args2 ->
                             assert (c1=c2);
@@ -583,19 +594,9 @@ let decreasing (l,r : sct_clause)
                             let args1 = List.map (fun x -> app,x) args1 in
                             decreasing_aux (args1@pats1) (args2@pats2) acc
 
+
                         | _,_,Special(ApproxConst []),_ -> assert false
-
-                        | Var x,[],Special(ApproxConst apps),[] ->
-                            begin
-                                match apps with
-                                    | [(p,w,y)] when y=x ->
-                                        (match add_approx app1 (p,w) with
-                                            | Some p,Num w when odd p && w<0 -> true
-                                            | _, _ -> decreasing_aux pats1 pats2 acc)
-                                    | _ -> decreasing_aux pats1 pats2 acc
-                            end
-
-                        | Const(c1,p),args1,((Special(ApproxConst apps)) as u2),[] ->
+                        | Const(_,p),args1,((Special(ApproxConst apps)) as u2),[] ->
                             let app = add_approx app1 (p,Num (-1)) in
                             let args1 = List.map (fun x -> app,x) args1 in
                             let args2 = repeat u2 (List.length args1) in
@@ -632,7 +633,10 @@ let decreasing (l,r : sct_clause)
     match r with
         | App(Special(ApproxProj(Some p,Num w)), _) when even p && w<0 -> true
         | r ->
-                debug "check in %s and %s" (string_of_approx_term l) (string_of_approx_term (remove_result_constants r));
-                decreasing_aux [(Some 0,Num 0),l] [remove_result_constants r] (Some 0, Num 0)
+                (* debug "check in %s and %s" (string_of_approx_term l) (string_of_approx_term (remove_result_constants r)); *)
+                let f1,pats1 = explode_pattern l in
+                let f2,pats2 = explode_pattern (remove_result_constants r) in
+                assert (f1=f2);
+                decreasing_aux (List.map (fun p -> (Some 0,Num 0),p) pats1) pats2 (Some 0, Num 0)
 
 

@@ -175,3 +175,8 @@ let ansi_code color s =
         Printf.sprintf "%s%s%s" begin_code s end_code
     with Not_found -> raise (Invalid_argument ("ansi_code: color " ^ color ^ " doesn't exist"))
 
+let rec repeat x n =
+    if n = 0
+    then []
+    else x::(repeat x (n-1))
+
