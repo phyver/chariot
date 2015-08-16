@@ -22,6 +22,7 @@ let rec collapse_weight_in_term b u
         | Var _ | Const _ | Proj _ | Angel -> u
         | App(u1,u2) -> App(collapse_weight_in_term b u1, collapse_weight_in_term b u2)
         | Special(ApproxProj(p,w)) -> Special(ApproxProj(p, collapse_weight b w))
+        | Special(ApproxConst []) -> assert false
         | Special(ApproxConst apps) -> Special(ApproxConst(List.map (function p,w,x -> p, collapse_weight b w,x) apps))
 
 (* misc operations on approximations *)
@@ -87,7 +88,9 @@ let merge_approx as1 as2 =
 let rec collapse0 p = match get_head p,get_args p with
     | Var x,[] -> [ (Some 0, Num 0, x) ]
     | Angel,[] -> assert false (* FIXME *)
+    | Special (ApproxConst []),_ -> assert false
     | Special (ApproxConst ap),[] -> ap
+    | Const(_,prio),[] -> [ (prio, Num 1, "()") ]
     | Const(_,prio),ps ->
         begin
             let approx_s = List.map collapse0 ps in
@@ -110,6 +113,7 @@ let collapse_pattern (depth:int) (pattern:approx_term) : approx_term
     (* collapse the constructors at given depth from a constructor pattern with approximations *)
     let rec collapse_const d p =
         match get_head p,get_args p with
+            | Special (ApproxConst []),_ -> assert false
             | Var _,[] | Angel,[] | Special (ApproxConst _),[] -> p
             | Const(c,prio),ps ->
                 if d=0
@@ -170,6 +174,7 @@ let rec subst_approx_term sigma v
         | Var x -> (try List.assoc x sigma with Not_found -> Var x)
         | (Angel|Const _|Proj _|Special(ApproxProj _)) as v -> v
         | App(v1,v2) -> App(subst_approx_term sigma v1, subst_approx_term sigma v2)
+        | Special(ApproxConst []) -> assert false
         | Special(ApproxConst apps) -> Special(ApproxConst (subst_approx_term_aux sigma [] apps))
 (* let subst_approx_term sigma v = *)
 (*     debug "sigma = %s" (string_of_list " , " (function x,v -> fmt "%s:=%s" x (string_of_approx_term v)) sigma); *)
@@ -217,6 +222,7 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
                 let sigma = List.concat (List.map snd tmp) in
                 let args = List.map fst tmp in
                 (app (Const(c,p)) args , sigma)
+            | Special(ApproxConst []),_ -> assert false
             | Special(ApproxConst apps),[] ->
                 let x = new_var() in
                 (Var x, List.map (function (p,w,y) -> (y,Special(ApproxConst [p, op_weight w,x]))) apps)
@@ -265,10 +271,12 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
 
 let rec rename_var_aux x v
     = match v with
+        | Var "()" -> v
         | Var y -> Var (y^x)
         | App(v1,v2) -> App(rename_var_aux x v1, rename_var_aux x v2)
         | Const _ | Proj _ | Angel -> v
-        | Special(ApproxConst apps) -> Special(ApproxConst (List.map (function p,w,y -> p,w,y^x) apps))
+        | Special(ApproxConst []) -> assert false
+        | Special(ApproxConst apps) -> Special(ApproxConst (List.map (function p,w,y -> if y="()" then p,w,y else p,w,y^x) apps))
         | _ -> assert false
 
 let rec rename_var x v
@@ -301,6 +309,8 @@ let unify ?(allow_right_approx=false) (rhs:approx_term) (lhs:approx_term)
             | u_r::ps_r,u_l::ps_l when u_r=u_l -> unify_aux ps_r ps_l sigma
 
             | App(u_r,v_r)::ps_r,App(u_l,v_l)::ps_l -> unify_aux (u_r::v_r::ps_r) (u_l::v_l::ps_l) sigma
+
+            | Special(ApproxConst [])::_,_ -> assert false
 
             | Special(ApproxConst apps_r)::ps_r,u_l::ps_l ->
                 let apps_l = collapse0 u_l in
@@ -404,6 +414,8 @@ let approximates p1 p2 =
             | Const(c1,_)::pats1,Const(c2,_)::pats2 -> c1=c2 && approximates_aux pats1 pats2
             | ((App _) as u1)::_pats1,((App _) as u2)::_pats2 ->
                     approximates_aux ((get_head u1)::(get_args u1)@_pats1) ((get_head u2)::(get_args u2)@_pats2)
+            | Special(ApproxConst [])::_,_
+            | _,Special(ApproxConst [])::_ -> assert false
             | Special(ApproxConst apps1)::pats1,Special(ApproxConst apps2)::pats2 ->
                     List.for_all (function p2,w2,x2 ->
                     List.exists  (function p1,w1,x1 ->
@@ -465,6 +477,8 @@ let compatible p1 p2 =
             | Const(c1,_)::pats1,Const(c2,_)::pats2 -> c1=c2 && compatible_aux pats1 pats2
             | ((App _) as u1)::_pats1,((App _) as u2)::_pats2 ->
                     compatible_aux ((get_head u1)::(get_args u1)@_pats1) ((get_head u2)::(get_args u2)@_pats2)
+            | Special(ApproxConst [])::_,_
+            | _,Special(ApproxConst [])::_ -> assert false
             | Special(ApproxConst apps1)::pats1,Special(ApproxConst apps2)::pats2 ->
                     List.exists (function _,_,x2 ->
                     List.exists (function _,_,x1 ->
@@ -549,6 +563,8 @@ let decreasing (l,r : sct_clause)
                             let app = add_approx app1 (p1,Num 0) in
                             let args1 = List.map (fun x -> app,x) args1 in
                             decreasing_aux (args1@pats1) (args2@pats2) acc
+
+                        | _,_,Special(ApproxConst []),_ -> assert false
 
                         | Var x,[],Special(ApproxConst apps),[] ->
                             begin
