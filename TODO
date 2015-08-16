@@ -1,6 +1,7 @@
+  - README file
+
   - change type used for representing calls for SCT:
         type sct_clause = (var_name * approx_term list) * (var_name * approx_term list)
-
 
   - convert definitions to CaseStruct terms for exhaustivity checking (it is broken at the moment)
 
