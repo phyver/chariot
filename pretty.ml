@@ -179,10 +179,9 @@ let string_of_approx_term
 let show_data_type env tname params consts =
     print_string "  ";
     print_string tname;
-    print_list "" "(" "," ")" (fun x -> print_string ("'" ^ x)) params;
+    print_list "(" "," ")" (fun x -> print_string ("'" ^ x)) params;
     print_string " where";
-    print_list "\n"
-               "\n    | " "\n    | " "\n"
+    print_list "\n    | " "\n    | " "\n"
                (function c -> print_string c; print_string " : "; print_type (get_constant_type env c) ;)
                consts
 
@@ -227,8 +226,7 @@ let show_function f t clauses =
     print_string f;
     print_string " : ";
     print_type t;
-    print_list "\n"
-                "\n    | " "\n    | " "\n"
+    print_list "\n    | " "\n    | " "\n"
                 (function pattern,term -> print_term pattern; print_string " = "; print_term term)
                 clauses
 

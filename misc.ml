@@ -36,23 +36,35 @@ knowledge of the CeCILL-B license and that you accept its terms.
 ========================================================================*)
 
 
-let first f (x,y) = (f x, y)
-let second f (x,y) = (x, f y)
+(***
+ * several miscelaneaus small functions that don't really go anywhere
+ *)
 
-let even n = (n mod 2) = 0
-let odd n = not (even n)
+let first (f:'a -> 'x) (x,y:'a*'b) : 'x*'b
+  = (f x, y)
+let second (f:'b -> 'x) (x,y:'a*'b) : 'a*'x
+  = (x, f y)
 
-let rec print_list empty b1 sep b2 p l
+let even (n:int) : bool = (n mod 2) = 0
+let odd (n:int) : bool = not (even n)       (* works for negative numbers *)
+
+let string_of_list (sep:string) (s:'a->string) (l:'a list) : string
+  = String.concat sep (List.map s l)
+
+let rec print_list (b1:string) (sep:string) (b2:string) (p:'a -> unit) (l:'a list) : unit
   = match l with
-        | [] -> print_string empty;
+        | [] -> ()
         | [x] -> print_string b1; p x; print_string b2
         | x::xs -> print_string b1; p x; List.iter (fun x -> print_string sep; p x) xs; print_string b2
 
-let string_of_list sep s l = String.concat sep (List.map s l)
+let print_bool (b:bool) : unit
+  = if b
+    then print_string "true"
+    else print_string "false"
 
 (* remove duplicates *)
 (* not as efficient as the sorting version, but it keeps the order of the first occurences of the list *)
-let uniq l
+let uniq (l:'a list) : 'a list
   = let rec uniq_aux acc l
       = match l with
             | [] -> List.rev acc
@@ -62,7 +74,7 @@ let uniq l
   uniq_aux [] l
 
 (* insert in a sorted uniq list *)
-let rec insert x l
+let rec insert (x:'a) (l:'a list) : 'a list
   = match l with
         | [] -> [x]
         | y::l when x<y -> x::y::l
@@ -70,15 +82,15 @@ let rec insert x l
         | y::l (* when x=y *) -> y::l
 
 (* merge two sorted uniq lists *)
-let rec merge l1 l2
+let rec merge_uniq (l1:'a list) (l2:'a list) : 'a list
   = match l1,l2 with
         | [],l | l,[] -> l
-        | x1::l1,x2::_ when x1<x2 -> x1::(merge l1 l2)
-        | x1::_,x2::l2 when x1>x2 -> x2::(merge l1 l2)
-        | x1::l1,x2::l2 (* when x1=x2 *) -> x1::(merge l1 l2)
+        | x1::l1,x2::_ when x1<x2 -> x1::(merge_uniq l1 l2)
+        | x1::_,x2::l2 when x1>x2 -> x2::(merge_uniq l1 l2)
+        | x1::l1,x2::l2 (* when x1=x2 *) -> x1::(merge_uniq l1 l2)
 
 (* look for a value with at least two occurences *)
-let find_dup l
+let find_dup (l:'a list) : 'a option
   = let rec find_dup_aux l = match l with
             | [] -> None
             | [a] -> None
@@ -88,7 +100,7 @@ let find_dup l
     find_dup_aux (List.sort compare l)
 
 (* look for a value that appears in the two lists *)
-let find_common l1 l2
+let find_common (l1:'a list) (l2:'a list) : 'a option
   = let rec find_common_aux l1 l2
       = match l1,l2 with
             | [],_ | _,[] -> None
@@ -99,7 +111,7 @@ let find_common l1 l2
     find_common_aux (List.sort compare l1) (List.sort compare l2)
 
 (* find a value that appears in l1 but not in l2 *)
-let find_in_difference l1 l2
+let find_in_difference (l1:'a list) (l2:'a list) : 'a option
   = let rec find_in_difference_aux l1 l2
       = match l1,l2 with
             | [],_ -> None
@@ -111,7 +123,7 @@ let find_in_difference l1 l2
     find_in_difference_aux (List.sort compare l1) (List.sort compare l2)
 
 (* transforms a positive integer into a UTF-8 string of superscripts *)
-let exp_of_int n
+let exp_of_int (n:int) : string
   = let exp = ["⁰"; "¹"; "²"; "³"; "⁴"; "⁵"; "⁶"; "⁷"; "⁸"; "⁹"]
     in
     let rec exp_of_int_aux n acc
@@ -130,7 +142,7 @@ let exp_of_int n
     else String.concat "" (sign::(exp_of_int_aux n []))
 
 (* transforms a positive integer into a UTF-8 string of subscripts *)
-let sub_of_int n
+let sub_of_int (n:int) : string
   = let sub = ["₀"; "₁"; "₂"; "₃"; "₄"; "₅"; "₆"; "₇"; "₈"; "₉"]
     in
     let rec sub_of_int_aux n acc
@@ -150,13 +162,20 @@ let sub_of_int n
 
 (* combine two lists into a list of pairs, and returns the suffix of the second one
  * raise Invalid_argument if the second list is shorter than the first one *)
-let rec combine_suffix short long
+let rec combine_suffix (short:'a list) (long:'b list) : ('a*'b) list * 'b list
   = match short,long with
         | [],l -> [],l
         | _,[] -> raise (Invalid_argument "combine_suffix")
         | a::short,b::long -> let l,s = combine_suffix short long in ((a,b)::l,s)
 
-let range a b
+(* repeat a value into a list of given length *)
+let rec repeat (x:'a) (n:int) : 'a list =
+    if n = 0
+    then []
+    else x::(repeat x (n-1))
+
+(* return a list containing a range of values *)
+let range (a:int) (b:int) : int list
   = let rec range_aux acc b
       = if b<a
         then acc
@@ -164,12 +183,15 @@ let range a b
     in
     range_aux [] b
 
-let print_bool b
-  = if b
-    then print_string "true"
-    else print_string "false"
 
-let print_prefix out_channel prefix fmt
+(* format a string using printf notation *)
+let fmt s = Printf.sprintf s
+
+let todo s = raise (Failure ("-- TODO -- " ^ (fmt s)))
+
+
+(* print a string (in printf format) on a channel, adding a prefix on each line *)
+let print_prefix (out_channel:out_channel) (prefix:string) fmt
   = let print s
       = let s = Str.global_replace (Str.regexp_string "\n") ("\n"^prefix) s
         in
@@ -178,25 +200,10 @@ let print_prefix out_channel prefix fmt
     in
     Printf.ksprintf print fmt
 
-let msg fmt
-  = print_prefix stdout "-- " fmt
-
-let warning fmt
-  = print_prefix stdout "--!! " fmt
-
-let errmsg fmt
-  = print_prefix stdout "--** " fmt
-
-let debug fmt
-  = print_prefix stdout "--== " fmt
-
-
-let fmt s = Printf.sprintf s
-
-let todo m = raise (Failure ("-- TODO -- " ^ m))
-
-let ansi_code color s =
-    let codes =
+(* adds ansi codes around string to obtain the given color (or underline attribute) *)
+(* probably not very portable... *)
+let ansi_code (color:string) (s:string) :string
+  = let codes =
         [
             "red",       "\x1b[31m";
             "green",     "\x1b[32m";
@@ -213,8 +220,19 @@ let ansi_code color s =
         Printf.sprintf "%s%s%s" begin_code s end_code
     with Not_found -> raise (Invalid_argument ("ansi_code: color " ^ color ^ " doesn't exist"))
 
-let rec repeat x n =
-    if n = 0
-    then []
-    else x::(repeat x (n-1))
+(* various helper function to print messages *)
+let msg fmt
+  = print_prefix stdout "-- " fmt
+
+let warning fmt
+  = let prefix = ansi_code "cyan" "--!! " in
+    print_prefix stdout prefix fmt
+
+let errmsg fmt
+  = let prefix = ansi_code "red" "--** " in
+    print_prefix stdout prefix fmt
+
+let debug fmt
+  = let prefix = ansi_code "yellow" "--== " in
+    print_prefix stdout prefix fmt
 

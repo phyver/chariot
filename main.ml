@@ -48,7 +48,7 @@ open Commands
 open State
 
 let print_help ()
-  = print_list "" "| " "\n| " "\n\n" print_string [
+  = print_list "| " "\n| " "\n\n" print_string [
         "";
         "chariot: a language with arbitrary nested inductive and coinductive types";
         "";
@@ -78,7 +78,7 @@ let show_error lexbuf
     errmsg "%s" (s_start ^ s_end)
 
 let explore_loop env t
-  = print_list "" "| " "\n| " "\n\n" print_string [
+  = print_list "| " "\n| " "\n\n" print_string [
         "Explore mode:";
         "  you can unfold a (coinductive) datastructure interactively";
         "  by inputing the corresponding indices";
