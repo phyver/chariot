@@ -43,22 +43,6 @@ open Pretty
 open Compute
 open Typing
 
-type explore_struct = Folded of int * term * type_expression | Unfolded of (const_name * explore_term) list
- and explore_term = explore_struct special_term
-
-let rec
-   string_of_explore_struct = function
-       | Folded(n,v,t) ->
-            "{…<" ^ (string_of_int n) ^ ">" ^
-            (if option "show_term_struct" then ("=" ^ string_of_term v) else "") ^
-            (if option "show_type_struct" then (":" ^ string_of_type t) else "") ^
-            "…}"
-       | Unfolded fields -> "{" ^ (String.concat "; " (List.map (function d,v -> d ^ "=" ^ (string_of_explore_term v)) fields)) ^ "}"
-and
-  string_of_explore_term v = string_of_special_term string_of_explore_struct v
-
-let print_explore_term v = print_string (string_of_explore_term v)
-
 let rec head_to_explore (v:term) : explore_term = match v with
     | Angel -> Angel
     | Var x -> Var x

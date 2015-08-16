@@ -64,7 +64,6 @@ rule tokenize = parse
     | ":show"           { CMDSHOW }
     | ":reduce"         { CMDREDUCE }
     | ":unfold"         { CMDUNFOLD }
-    | ":explore"        { CMDEXPLORE }
     | ":quit"           { CMDQUIT }
 
     | ":test" [' ' '\t']+ "unifytypes" { TESTUNIFYTYPES }
@@ -99,6 +98,7 @@ rule tokenize = parse
     | "val"             { VAL }
     | "???"             { ANGEL }
     | "⊤"               { ANGEL }
+    | ">"               { GT }
 
     | dummy             { DUMMY }
     | idU               { IDU(remove_exp (Lexing.lexeme lexbuf)) }

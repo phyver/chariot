@@ -44,11 +44,15 @@ type state =
         mutable current_type_bloc: int                      ;  (* counter for blocs of type definitions: odd for data and even for codata *)
         mutable current_function_bloc: int                  ;
         mutable env: environment                            ;
+
         mutable prompt: string                              ;
         mutable verbose: int                                ;
         mutable boolean_options: (string*bool*string) list  ;
         mutable depth: int                                  ;
         mutable bound: int                                  ;
+
+        mutable last_term: term option                      ;
+        mutable last_explore: explore_term option           ;
     }
 
 let current_state =
@@ -88,6 +92,8 @@ let current_state =
         ]                                       ;
         depth = 2                               ;
         bound = 2                               ;
+        last_term = None                        ;
+        last_explore = None                     ;
     }
 
 (* get boolean option in current state *)

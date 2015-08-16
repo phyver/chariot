@@ -48,7 +48,6 @@ open SCTCalls
 open CheckCoverage
 open CheckFunctions
 open CheckTypes
-open Commands
 
 (* transform a list of types into the product *)
 let list_to_product (l:type_expression list) : type_expression
@@ -97,7 +96,9 @@ let cmd_process_type_defs n defs
                 then current_state.current_type_bloc+2
                 else current_state.current_type_bloc+1
         in
-        current_state.env <- process_type_defs current_state.env n defs
+        current_state.env <- process_type_defs current_state.env n defs;
+        current_state.last_term <- None;
+        current_state.last_explore <- None
     with
         | Error err ->
             if option "continue_on_error"
@@ -110,7 +111,9 @@ let cmd_process_type_defs n defs
 
 (* process some functions definitions and add them to the environment *)
 let cmd_process_function_defs defs
-  = try current_state.env <- process_function_defs current_state.env defs
+  = try current_state.env <- process_function_defs current_state.env defs;
+        current_state.last_term <- None;
+        current_state.last_explore <- None
     with
         | Error err ->
             if option "continue_on_error"
@@ -168,6 +171,8 @@ let cmd_reduce term =
     let t,constraints = infer_type_term current_state.env term in
     msg "term: %s" (string_of_term term);
     let term = reduce_all current_state.env term in
+    current_state.last_term <- Some term;
+    current_state.last_explore <- None;
     msg "result: %s" (string_of_term term);
     msg "of type: %s" (string_of_type t);
     if not (constraints = [])
@@ -185,18 +190,24 @@ let cmd_reduce term
             then errmsg "typing error: %s" err
             else error err
 
+let cmd_show_last ()
+  = match current_state.last_term with
+        | None -> ()
+        | Some t ->
+            msg "last result: %s" (string_of_term t)
+
 (* unfold a term by expanding lazy subterms up-to a given depth, and show the result *)
-let cmd_unfold term depth =
+let cmd_unfold_initial term depth =
     let t,constraints = infer_type_term current_state.env term in
-    msg "term: %s" (string_of_term term);
     let term = unfold_to_depth current_state.env term depth in
-    msg "result (at depth %i): %s" depth (string_of_explore_term term);
+    msg "... %s" (string_of_explore_term term);
     msg "of type: %s" (string_of_type t);
     if not (constraints = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) constraints);
+    current_state.last_explore <- Some term;
     print_newline()
-let cmd_unfold term depth
-  = try cmd_unfold term depth
+let cmd_unfold_initial term depth
+  = try cmd_unfold_initial term depth
     with
         | Error err ->
             if option "continue_on_error"
@@ -206,6 +217,29 @@ let cmd_unfold term depth
             if option "continue_on_error"
             then errmsg "typing error: %s" err
             else error err
+
+let cmd_unfold l
+  = try
+        let t = match current_state.last_explore with
+                    | Some t -> t
+                    | None ->
+                        begin
+                            match current_state.last_term with
+                                | Some t ->
+                                    let t =  unfold_to_depth current_state.env t 0 in
+                                    t
+                                | None -> raise Exit 
+                        end
+        in
+        let t = match l with
+                    | [] -> unfold current_state.env (fun _ -> true) t
+                    | _ ->  unfold current_state.env (fun n -> List.mem n l) t
+        in
+        current_state.last_explore <- Some t;
+        msg "... %s" (string_of_explore_term t)
+
+    with Exit -> errmsg "There is no term to unfold..."
+
 
 
 
@@ -262,11 +296,11 @@ let test_collapse p =
 
 %}
 
-%token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS MINUS STAR
+%token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS MINUS STAR GT
 %token LSQBRAC RSQBRAC DOUBLECOLON DOUBLEARROW
 %token DATA CODATA WHERE AND VAL
 %token CMDHELP CMDQUIT CMDSHOW CMDSET
-%token CMDEXPLORE CMDREDUCE CMDUNFOLD CMDECHO
+%token CMDUNFOLD CMDREDUCE CMDUNFOLD CMDECHO
 %token TESTUNIFYTYPES TESTUNIFYTERMS TESTCOMPOSE TESTCOMPARE TESTCOLLAPSE
 %token EOF
 %token <string> IDU IDL STR TVAR
@@ -279,11 +313,9 @@ let test_collapse p =
 
 %start single_statement
 %start statements
-%start explore_command
 
 %type <unit> statements
 %type <unit> single_statement
-%type <Commands.explore_cmd> explore_command
 
 %type <int * (type_name * (type_expression list) * (const_name * type_expression) list) list> new_types
 %type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
@@ -301,7 +333,7 @@ statements:
 
 single_statement:
     | statement eos     { $1 }
-    | eos               { () }
+    | eos               { cmd_show_last () }
     | EOF               { raise Exit }
     | term eos          { cmd_reduce $1 }
 
@@ -315,9 +347,7 @@ eos:
     | BLANKLINE     {}
 
 command:
-    | CMDEXPLORE term                                   { () } /*FIXME... explore_loop current_state.env $2 }*/
     | CMDREDUCE term                                    { cmd_reduce $2 }
-    | CMDUNFOLD term COMMA INT                          { cmd_unfold $2 $4 }
     | CMDQUIT                                           { raise Exit }
     | CMDSHOW string                                    { cmd_show $2 }
     | CMDSET string string                              { set_option $2 $3 }
@@ -325,6 +355,12 @@ command:
     | CMDSET                                            { show_options () }
     | CMDHELP                                           { cmd_show_help () }
     | CMDECHO string                                    { msg "%s" $2 }
+
+    | CMDUNFOLD term                                    { cmd_unfold_initial $2 0 }
+    | CMDUNFOLD term COMMA INT                          { cmd_unfold_initial $2 $4 }
+    | GT int_range                                      { cmd_unfold $2 }
+
+
 
     | TESTUNIFYTYPES type_expression AND type_expression                                 { test_unify_type $2 $4 }
     | TESTUNIFYTERMS pattern AND term                                                    { test_unify_term $2 $4 }
@@ -337,15 +373,8 @@ string:
     | IDU { $1 }
     | STR { $1 }
 
-explore_command:
-    | int_range eos             { ExpUnfold $1 }
-    | MINUS eos                 { ExpUnfoldAll }
-    | /*nothing*/ eos           { ExpUnfoldAll }
-    | CMDQUIT eos               { ExpEnd }
-    | EOF                       { ExpEnd }
-
 int_range:
-    | INT                       { [$1] }
+    | /* nothing */             { [] }
     | INT int_range             { $1::$2 }
     | INT MINUS INT int_range   { (range $1 $3) @ $4 }
 

@@ -39,7 +39,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
 open Parser
 open Base
 open Misc
-open Commands
 open State
 open Explore
 
@@ -92,34 +91,6 @@ let mainloop ()
             | TypeError err -> errmsg "typing error: %s" err
     done
 
-
-let explore_loop env t
-  = print_list "| " "\n| " "\n\n" print_string [
-        "Explore mode:";
-        "  you can unfold a (coinductive) datastructure interactively";
-        "  by inputing the corresponding indices";
-        "";
-        "  ':quit' to quit the explore mode"
-    ];
-    let t = ref (term_to_explore env t) in
-    try
-        while true
-        do
-            msg "result: %s" (string_of_explore_term !t);
-            print_string ("unfold… "^current_state.prompt);
-            let lexbuf = Lexing.from_channel stdin in
-            flush_all ();
-            try
-                match Parser.explore_command Lexer.tokenize lexbuf with
-                    | ExpEnd -> raise Exit
-                    | ExpUnfold l -> t := unfold current_state.env (fun n -> List.mem n l) !t
-                    | ExpUnfoldAll -> t := unfold current_state.env (fun _ -> true) !t
-            with
-                | Parsing.Parse_error -> parse_error lexbuf
-                | Error err -> errmsg "%s" err
-                | TypeError err -> errmsg "typing error: %s" err
-        done
-    with Exit -> msg "end of explore mode"
 
 let _
   =

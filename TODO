@@ -1,5 +1,3 @@
-  - move file commands.ml to parser.ml and remove type command (IN PROGRESS)
-
   - allow parser to read priorities in terms for testing...
 
   - README file

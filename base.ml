@@ -213,6 +213,10 @@ let rec extract_datatypes t = match t with
     | Data(_,params) -> t::(List.concat (List.map extract_datatypes params))
     | Arrow(t1,t2) -> (extract_datatypes t1) @ (extract_datatypes t2)
 
+(* term with possibly unfolded codata *)
+type explore_struct = Folded of int * term * type_expression | Unfolded of (const_name * explore_term) list
+ and explore_term = explore_struct special_term
+
 (* SCT *)
 type weight = Num of int | Infty
 

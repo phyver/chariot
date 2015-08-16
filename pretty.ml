@@ -185,6 +185,19 @@ let show_data_type env tname params consts =
                (function c -> print_string c; print_string " : "; print_type (get_constant_type env c) ;)
                consts
 
+let rec
+   string_of_explore_struct = function
+       | Folded(n,v,t) ->
+            "{…<" ^ (string_of_int n) ^ ">" ^
+            (if option "show_term_struct" then ("=" ^ string_of_term v) else "") ^
+            (if option "show_type_struct" then (":" ^ string_of_type t) else "") ^
+            "…}"
+       | Unfolded fields -> "{" ^ (String.concat "; " (List.map (function d,v -> d ^ "=" ^ (string_of_explore_term v)) fields)) ^ "}"
+and
+  string_of_explore_term v = string_of_special_term string_of_explore_struct v
+
+let print_explore_term v = print_string (string_of_explore_term v)
+
 let string_of_sct_clause (l,r) =
     fmt "%s  =>  %s" (string_of_approx_term l) (string_of_approx_term r)
 
