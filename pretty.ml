@@ -144,7 +144,7 @@ and
         begin
         match v with
             | Angel -> "⊤"
-            | Var(x) -> x
+            | Var(x) -> if (x.[0]='_' && not (verbose 1)) then "_" else x
             | Const(c,p) -> c ^ (if not (option "show_priorities") then "" else string_of_priority p)
             | Proj(d,p) -> "." ^ d ^  (if not (option "show_priorities") then "" else string_of_priority p)
             | App(Proj _ as v1,v2) -> (string_of_term_paren sp v2) ^ (string_of_special_term sp v1)

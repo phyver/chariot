@@ -85,7 +85,7 @@ let tuple_term (l:term list) : term =
 
 (* a reference to number dummy arguments in terms *) (*FIXME: necessary??? *)
 let dummy_nb = ref 0
-(* generate a fresh number for a dummy argument *)
+(* generate a fresh dummy variable *)
 let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb))
 
 (* process some types definitions and add them to the environment *)
@@ -342,10 +342,6 @@ statement:
     | new_functions   { cmd_process_function_defs $1 }
     | command         { $1 }
 
-eos:
-    | SEMICOLON     {}
-    | BLANKLINE     {}
-
 command:
     | CMDREDUCE term                                    { cmd_reduce $2 }
     | CMDQUIT                                           { raise Exit }
@@ -360,33 +356,22 @@ command:
     | CMDUNFOLD term COMMA INT                          { cmd_unfold_initial $2 $4 }
     | GT int_range                                      { cmd_unfold $2 }
 
-
-
     | TESTUNIFYTYPES type_expression AND type_expression                                 { test_unify_type $2 $4 }
     | TESTUNIFYTERMS pattern AND term                                                    { test_unify_term $2 $4 }
     | TESTCOLLAPSE lhs_term                                                              { test_collapse $2 }
     | TESTCOMPOSE lhs_term DOUBLEARROW rhs_term AND lhs_term DOUBLEARROW rhs_term        { test_compose $2 $4 $6 $8 }
     | TESTCOMPARE lhs_term DOUBLEARROW rhs_term AND lhs_term DOUBLEARROW rhs_term        { test_compare $2 $4 $6 $8 }
 
-string:
-    | IDL { $1 }
-    | IDU { $1 }
-    | STR { $1 }
-
-int_range:
-    | /* nothing */             { [] }
-    | INT int_range             { $1::$2 }
-    | INT MINUS INT int_range   { (range $1 $3) @ $4 }
 
 new_types:
-    /* The output of a type definition from the parser consists of
+    /*(* The output of a type definition from the parser consists of
      *   - a bloc number odd/even to distinguish data / codada types
      *   - a list of (possibly) mutual type definitions:
      *        - a type name
      *        - a list of type parameters, all of the form TVar(true,x)
      *        - a list of constants (constructors for data, destructors for codata), with a type
      * No sanity checking is done by the parser, everything is done in the "process_type_defs" function in file "checkTypes.ml"...
-     */
+     *)*/
     |   DATA type_defs          { (-1,$2) }     /* the "-1" and "-2" are replaced by the appropriate bloc number in the function cmd_process_type_defs */
     | CODATA type_defs          { (-2,$2) }
 
@@ -422,7 +407,6 @@ consts_type:
     | /* nothing */         { [] }
     | PIPE IDU consts_type  { $2::$3 }
 
-
 atomic_type:
     | LPAR type_expression RPAR                     { $2 }
     | TVAR                                          { TVar($1) }
@@ -446,14 +430,15 @@ type_expression_args:
     | type_expression                               { [$1] }
     | type_expression COMMA type_expression_args    { $1::$3 }
 
+
 new_functions:
-    /* The output of a function definition from the parser consists of a list of
+    /*(* The output of a function definition from the parser consists of a list of
      *   - a function name
      *   - a function type
      *   - a list of clauses, each consisting of
      *       - a LHS given by a term (possibly with "_" variables
      *       - a RHS given by a term
-     */
+     *)*/
     | VAL function_defs         { $2 }
 
 function_defs:
@@ -470,7 +455,7 @@ function_clauses:
     | PIPE function_clause function_clauses     { $2::$3 }
 
 function_clause:
-    | lhs_term EQUAL rhs_term        { ($1,$3) }
+    | lhs_term EQUAL rhs_term        { dummy_nb := 0; ($1,$3) }
 
 rhs_term:
     | term { $1 }
@@ -482,16 +467,16 @@ term:
     | term PLUS atomic_term     { process_addition $1 $3 }
 
 atomic_term:
-    | LPAR term RPAR            { $2 }
-    | atomic_term DOT IDU       { App(Proj($3,None), $1) }
-    | IDL                       { Var($1) }
-    | IDU                       { Const($1,None) }
-    | ANGEL                     { Angel }
+    | LPAR term RPAR                        { $2 }
+    | atomic_term DOT IDU                   { App(Proj($3,None), $1) }
+    | IDL                                   { Var($1) }
+    | IDU                                   { Const($1,None) }
+    | ANGEL                                 { Angel }
 
-    | INT                       { int_to_term $1 (Const("Zero",None)) }
-    | term_list                 { list_to_term (List.rev $1) (Const("Nil",None)) }
-    | atomic_term DOUBLECOLON atomic_term       { App(App(Const("Cons",None),$1),$3) }
-    | tuple                     { $1 }
+    | INT                                   { int_to_term $1 (Const("Zero",None)) }
+    | term_list                             { list_to_term (List.rev $1) (Const("Nil",None)) }
+    | atomic_term DOUBLECOLON atomic_term   { App(App(Const("Cons",None),$1),$3) }
+    | tuple                                 { $1 }
 
 tuple:
     | LPAR RPAR                         { tuple_term [] }
@@ -516,34 +501,48 @@ lhs_term:
     | lhs_term atomic_pattern       { App($1,$2) }
 
 atomic_pattern:
-    | DUMMY                 { dummy() }
-    | IDL                   { Var($1) }
-    | IDU                   { Const($1,None) }
-    | LPAR pattern RPAR     { $2 }
+    | DUMMY                                         { dummy() }
+    | IDL                                           { Var($1) }
+    | IDU                                           { Const($1,None) }
+    | LPAR pattern RPAR                             { $2 }
 
-    | INT                   { int_to_term $1 (Const("Zero",None)) }
-    | pattern_list          { list_to_term (List.rev $1) (Const("Nil",None)) }
-    | atomic_pattern DOUBLECOLON atomic_pattern       { App(App(Const("Cons",None),$1),$3) }
-    | atomic_pattern PLUS INT      { int_to_term $3 $1 }
-    | pattern_tuple         { $1 }
+    | INT                                           { int_to_term $1 (Const("Zero",None)) }
+    | pattern_list                                  { list_to_term (List.rev $1) (Const("Nil",None)) }
+    | atomic_pattern DOUBLECOLON atomic_pattern     { App(App(Const("Cons",None),$1),$3) }
+    | atomic_pattern PLUS INT                       { int_to_term $3 $1 }
+    | pattern_tuple                                 { $1 }
 
 pattern:
     | atomic_pattern            { $1 }
     | pattern atomic_pattern    { App($1,$2) }
 
-
 pattern_list:
-    | LSQBRAC pattern_list_inside RSQBRAC  { $2 } /* FIXME: check priorities... */
-    | LSQBRAC RSQBRAC                   { [] }
+    | LSQBRAC pattern_list_inside RSQBRAC       { $2 } /* FIXME: check priorities... */
+    | LSQBRAC RSQBRAC                           { [] }
 
 pattern_list_inside:
-    | pattern                              { [$1] }
-    | pattern SEMICOLON pattern_list_inside   { $1::$3 }
+    | pattern                                   { [$1] }
+    | pattern SEMICOLON pattern_list_inside     { $1::$3 }
 
 pattern_tuple:
-    | LPAR RPAR                         { tuple_term [] }
-    | LPAR pattern pattern_tuple_aux RPAR          { tuple_term ($2::$3) }
+    | LPAR RPAR                                 { tuple_term [] }
+    | LPAR pattern pattern_tuple_aux RPAR       { tuple_term ($2::$3) }
 pattern_tuple_aux:
-    | COMMA pattern                        { [$2] }
-    | COMMA pattern pattern_tuple_aux              { $2::$3 }
+    | COMMA pattern                         { [$2] }
+    | COMMA pattern pattern_tuple_aux       { $2::$3 }
+
+
+eos:
+    | SEMICOLON     {}
+    | BLANKLINE     {}
+
+string:
+    | IDL { $1 }
+    | IDU { $1 }
+    | STR { $1 }
+
+int_range:
+    | /* nothing */             { [] }
+    | INT int_range             { $1::$2 }
+    | INT MINUS INT int_range   { (range $1 $3) @ $4 }
 

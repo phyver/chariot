@@ -54,7 +54,7 @@ let idL = lower(lower|upper|other)*exp
 let str = "\"" ([^ '"'] | "\\\"")* "\""
 let tvar = "'" lower(lower|upper|other)*exp
 let int = [ '0'-'9' ][ '0'-'9' ]*
-let dummy = "_" sub
+let dummy = "_" sub [' ' '\t']+
 
 
 rule tokenize = parse
