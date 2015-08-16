@@ -198,6 +198,20 @@ and
 
 let print_explore_term v = print_string (string_of_explore_term v)
 
+
+(* FIXME: add parameter to string_of_special_term that is passed to the function printing special terms
+ * then, I can used it to add indentation for printing case / structs *)
+let rec
+    string_of_case_struct = function
+        | CaseFail -> "FAIL"
+        | Case(x,l) ->
+            fmt "\n(case %s of\n\t%s)" x (string_of_list "\n\t" (function c,args,v -> fmt "| %s %s -> %s" c (string_of_list " " (fun x -> x) args) (string_of_case_struct_term v)) l)
+        | Struct l -> fmt "{ %s }" (string_of_list " ; " (function d,args,v -> fmt ".%s %s = %s" d (string_of_list " " (fun x -> x) args) (string_of_case_struct_term v)) l)
+and
+    string_of_case_struct_term v = string_of_special_term string_of_case_struct v
+
+
+
 let string_of_sct_clause (l,r) =
     fmt "%s  =>  %s" (string_of_approx_term l) (string_of_approx_term r)
 

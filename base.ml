@@ -157,6 +157,13 @@ let get_function_clauses (env:environment) (f:var_name) =
     in
     get_function_clauses_aux env.functions
 
+let get_other_constants env (c:const_name) : const_name list =
+    let rec get_aux = function
+        | [] -> error ("constant " ^ c ^ " doesn't exist")
+        | (_,_,_,consts)::_ when List.mem c consts -> consts
+        | _::types -> get_aux types
+    in get_aux env.types
+
 (* get the function name from a pattern *)
 let rec get_head (v:'a special_term) = match v with
     | Const _ | Angel | Var _ | Proj _ | Special _ -> v
@@ -195,7 +202,6 @@ let get_first_arg_type t = match t with
     | Data _ | TVar _ -> raise (Invalid_argument "get_first_arg_type")
     | Arrow(t,_) -> t
 
-
 let extract_type_variables t =
     let rec extract_type_variables_aux acc = function
         | TVar(x) -> x::acc
@@ -212,6 +218,10 @@ let rec extract_datatypes t = match t with
     | TVar _ -> []
     | Data(_,params) -> t::(List.concat (List.map extract_datatypes params))
     | Arrow(t1,t2) -> (extract_datatypes t1) @ (extract_datatypes t2)
+
+(* term with CASE and STRUCTS *)
+type case_struct_term = case_struct special_term
+ and case_struct = Case of var_name * (const_name * var_name list * case_struct_term) list | Struct of (const_name * (var_name list) * case_struct_term) list | CaseFail
 
 (* term with possibly unfolded codata *)
 type explore_struct = Folded of int * term * type_expression | Unfolded of (const_name * explore_term) list

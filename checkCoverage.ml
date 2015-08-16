@@ -48,29 +48,14 @@ let rec partition f l = match l with
             (match partition f l with l1::ls -> (x::l1)::ls | _ -> assert false)
     | x::l -> [x]::(partition f l)
 
-let get_constants env (c:const_name) : const_name list =
-    let rec get_aux = function
-        | [] -> error ("constant " ^ c ^ " doesn't exist")
-        | (_,_,_,consts)::_ when List.mem c consts -> consts
-        | _::types -> get_aux types
-    in get_aux env.types
-
 
 let term_to_patterns (v:term) : term list
   =
-    let rec p = function
-        | Var(x) -> Var(x)
-        | Const(c,p) -> Const(c,p)
-        | Proj _ | Angel | App(Proj _,_) -> assert false
-        | App(v1,v2) -> App(p v1,p v2)
-        | Special v -> v.bot
-    in
-
     let rec aux = function
         | Var _ | Const _ -> []
         | Proj _ | Angel -> assert false
         | App(Proj(d,p),v) -> (aux v) @ [(Proj(d,p))]
-        | App(v1,v2) -> (aux v1) @ [p v2]
+        | App(v1,v2) -> (aux v1) @ [v2]
         | Special v -> v.bot
     in
     aux v
@@ -109,7 +94,7 @@ and
   (* all the patterns in ps start with a projection: *)
   coverProj env (ps:term list list) (d:const_name) : unit =
 (* print_string "coverProj patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
-      let allprojs = get_constants env d in
+      let allprojs = get_other_constants env d in
       let projs = List.map (function Proj(d,_)::_ -> d | _ -> assert false) ps in
 (* print_list "" "projs: " "," "\n" print_string projs; *)
 (* print_list "" "allprojs: " "," "\n" print_string allprojs; *)
@@ -120,7 +105,7 @@ and
   (* all the patterns in ps start with a constructor: *)
   coverConst env (ps:term list list) c =
 (* print_string "coverConst patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
-      let allconsts = get_constants env c in
+      let allconsts = get_other_constants env c in
       let consts = List.map (function p::_ -> get_head_const p | _ -> assert false) ps in
 (* print_list "" "consts: " "," "\n" print_string consts; *)
 (* print_list "" "allconsts: " "," "\n" print_string allconsts; *)

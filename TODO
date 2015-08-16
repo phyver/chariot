@@ -1,13 +1,7 @@
-  - allow parser to read priorities in terms for testing...
-
-  - README file
+  - convert definitions to CaseStruct terms for exhaustivity checking (it is broken at the moment)
 
   - change type used for representing calls for SCT:
         type sct_clause = (var_name * approx_term list) * (var_name * approx_term list)
-
-  - convert definitions to CaseStruct terms for exhaustivity checking (it is broken at the moment)
-
-  - use DeCap?
 
   - add types to all subterms: type ('a,'b) special_term instantiated with
     'a:=empty and 'b:=unit or 'b:=type_expression, etc.
@@ -17,6 +11,12 @@
       - print buffer with error underlined ???
 
   - use type weight for priorities
+
+  - allow parser to read priorities in terms for testing...
+
+  - README file
+
+  - use DeCap?
 
   - remove Proj variant and use Const everywhere (requires thinking about
     priority None: there should be a data and codata version)
