@@ -6,18 +6,108 @@
 -- result: decr 10
 -- of type: colist(nat)
 
--- ... {Unfreeze=10::{Unfreeze=11::{Unfreeze=12::{Unfreeze=13::{Unfreeze=14::{…<1>…}}}}}}
+-- ... 
+--   {
+--   Unfreeze=Cons 10 
+--     {
+--     Unfreeze=Cons 11 
+--       {
+--       Unfreeze=Cons 12 
+--         {
+--         Unfreeze=Cons 13 
+--           {
+--           Unfreeze=Cons 14 
+--             {…<1>…}}}}}}
 -- of type: colist(nat)
 
--- ... {Unfreeze=10::{Unfreeze=11::{Unfreeze=12::{Unfreeze=13::{Unfreeze=14::{Unfreeze=15::{Unfreeze=16::{Unfreeze=17::{Unfreeze=18::{Unfreeze=19::{Unfreeze=20::{Unfreeze=21::{…<1>…}}}}}}}}}}}}}
+-- ... 
+--   {
+--   Unfreeze=Cons 10 
+--     {
+--     Unfreeze=Cons 11 
+--       {
+--       Unfreeze=Cons 12 
+--         {
+--         Unfreeze=Cons 13 
+--           {
+--           Unfreeze=Cons 14 
+--             {
+--             Unfreeze=Cons 15 
+--               {
+--               Unfreeze=Cons 16 
+--                 {
+--                 Unfreeze=Cons 17 
+--                   {
+--                   Unfreeze=Cons 18 
+--                     {
+--                     Unfreeze=Cons 19 
+--                       {
+--                       Unfreeze=Cons 20 
+--                         {
+--                         Unfreeze=Cons 21 
+--                           {…<1>…}}}}}}}}}}}}}
 -- of type: colist(nat)
 
--- ... {Unfreeze=9::{Unfreeze=8::{Unfreeze=7::{Unfreeze=6::{Unfreeze=5::{…<1>…}}}}}}
+-- ... 
+--   {
+--   Unfreeze=Cons 9 
+--     {
+--     Unfreeze=Cons 8 
+--       {
+--       Unfreeze=Cons 7 
+--         {
+--         Unfreeze=Cons 6 
+--           {
+--           Unfreeze=Cons 5 
+--             {…<1>…}}}}}}
 -- of type: colist(nat)
 
--- ... {Unfreeze=9::{Unfreeze=8::{Unfreeze=7::{Unfreeze=6::{Unfreeze=5::{Unfreeze=4::{Unfreeze=3::{Unfreeze=2::{Unfreeze=1::{Unfreeze=0::{…<1>…}}}}}}}}}}}
+-- ... 
+--   {
+--   Unfreeze=Cons 9 
+--     {
+--     Unfreeze=Cons 8 
+--       {
+--       Unfreeze=Cons 7 
+--         {
+--         Unfreeze=Cons 6 
+--           {
+--           Unfreeze=Cons 5 
+--             {
+--             Unfreeze=Cons 4 
+--               {
+--               Unfreeze=Cons 3 
+--                 {
+--                 Unfreeze=Cons 2 
+--                   {
+--                   Unfreeze=Cons 1 
+--                     {
+--                     Unfreeze=Cons 0 
+--                       {…<1>…}}}}}}}}}}}
 -- of type: colist(nat)
 
--- ... {Unfreeze=9::{Unfreeze=8::{Unfreeze=7::{Unfreeze=6::{Unfreeze=5::{Unfreeze=4::{Unfreeze=3::{Unfreeze=2::{Unfreeze=1::{Unfreeze=0::{Unfreeze=[]}}}}}}}}}}}
+-- ... 
+--   {
+--   Unfreeze=Cons 9 
+--     {
+--     Unfreeze=Cons 8 
+--       {
+--       Unfreeze=Cons 7 
+--         {
+--         Unfreeze=Cons 6 
+--           {
+--           Unfreeze=Cons 5 
+--             {
+--             Unfreeze=Cons 4 
+--               {
+--               Unfreeze=Cons 3 
+--                 {
+--                 Unfreeze=Cons 2 
+--                   {
+--                   Unfreeze=Cons 1 
+--                     {
+--                     Unfreeze=Cons 0 
+--                       {
+--                       Unfreeze=Nil}}}}}}}}}}}
 -- of type: colist(nat)
 

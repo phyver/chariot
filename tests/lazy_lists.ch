@@ -1,4 +1,5 @@
 :set show_priorities false
+:set show_lists false
 
 (* type of natural numbers *)
 data nat where Zero : nat | Succ : nat -> nat

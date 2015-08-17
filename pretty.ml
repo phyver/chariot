@@ -187,16 +187,22 @@ let show_data_type env tname params consts =
                consts
 
 let rec
-   string_of_explore_struct o = function
+   string_of_explore_struct indent u =
+       let prefix = if indent > 0 then "\n" ^ String.make indent ' ' else ""
+       in
+       let new_indent = if indent > 0 then indent + 2 else 0
+       in
+
+       match u with
        | Folded(n,v,t) ->
-            "{…<" ^ (string_of_int n) ^ ">" ^
+            prefix ^ "{…<" ^ (string_of_int n) ^ ">" ^
             (if option "show_term_struct" then ("=" ^ string_of_term v) else "") ^
             (if option "show_type_struct" then (":" ^ string_of_type t) else "") ^
             "…}"
-       | Unfolded fields -> "{" ^ (String.concat "; " (List.map (function d,v -> d ^ "=" ^ (string_of_explore_term o v)) fields)) ^ "}"
+       | Unfolded fields -> prefix ^ "{" ^ prefix ^ (String.concat ("; "^prefix) (List.map (function d,v -> d ^ "=" ^ (string_of_explore_term new_indent v)) fields)) ^ "}"
 and
   string_of_explore_term o v = string_of_special_term o string_of_explore_struct v
-let string_of_explore_term v = string_of_explore_term () v
+let string_of_explore_term v = string_of_explore_term 2 v
 
 let print_explore_term v = print_string (string_of_explore_term v)
 
