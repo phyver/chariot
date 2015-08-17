@@ -92,7 +92,7 @@ let process_function_defs (env:environment)
         if not (_f = f) then error ("function names " ^ f ^ " and " ^ _f ^ " do not match");
 
         (* get variables *)
-        let lhs_vars = extract_term_variables lhs_pattern in
+        let lhs_vars = extract_pattern_variables lhs_pattern in
         (match find_dup lhs_vars with
             | None -> ()
             | Some(x) -> error ("pattern is not linear: variable " ^ x ^ " appears more than once"));

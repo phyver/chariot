@@ -222,12 +222,11 @@ let rec extract_datatypes t = match t with
     | Data(_,params) -> t::(List.concat (List.map extract_datatypes params))
     | Arrow(t1,t2) -> (extract_datatypes t1) @ (extract_datatypes t2)
 
-(* FIXME: add uniqueness??? *)
-let rec extract_term_variables (v:term) : var_name list
+let rec extract_pattern_variables (v:term) : var_name list
   = match v with
     | Angel | Const _ | Proj _ -> []
     | Var(x) -> [x]
-    | App(v1,v2) -> (extract_term_variables v1) @ (extract_term_variables v2)
+    | App(v1,v2) -> (extract_pattern_variables v1) @ (extract_pattern_variables v2)
     | Special v -> v.bot
 
 (* term with CASE and STRUCTS *)
