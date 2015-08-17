@@ -138,7 +138,7 @@ let process_function_defs (env:environment)
             defs;
 
     (* check that the types given by the user are compatible with the infered types *)
-    reset_fresh_variable_generator datatypes;
+    reset_fresh_variable_generator (datatypes@(List.map snd constraints));
     (* we try to unify the types given by the user and the infered types,
      * uniformly for all the functions in the bloc *)
     let subst_coercion f t constraints datatypes
