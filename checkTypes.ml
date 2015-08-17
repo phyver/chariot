@@ -41,76 +41,77 @@ open Misc
 open State
 
 (* check that all the type parameters of a definition are different *)
-let check_uniqueness_parameters params =
-    match find_dup params with
+let check_uniqueness_parameters (params:type_expression list) : unit
+  = match find_dup params with
         | None -> ()
         | Some(TVar(x)) -> error ("parameter " ^ x ^ " appears more than once")
         | _ -> assert false
 
 (* check that all new types are different *)
-let check_new_types_different types =
-    match find_dup types with
+let check_new_types_different (types:type_name list) : unit
+  = match find_dup types with
         | None -> ()
-        | Some(t) -> error ("type " ^ t ^ " is defined more than once")
+        | Some(t) -> error (fmt "type %s is defined more than once" t)
 
 (* check that new types are different from old ones *)
-let check_new_types_different_from_old new_types old_types =
-    match find_common new_types old_types with
+let check_new_types_different_from_old (new_types:type_name list) (old_types:type_name list) : unit
+  = match find_common new_types old_types with
         | None -> ()
-        | Some t -> error ("type " ^ t ^ " already exists")
+        | Some t -> error (fmt "type %s already exists" t)
 
 
 (* check that all new constants are different *)
-let check_new_consts_different consts =
-    match find_dup consts with
+let check_new_consts_different (consts:const_name list) : unit
+  = match find_dup consts with
         | None -> ()
-        | Some(c) -> error ("constant " ^ c ^ " appears more than once")
+        | Some(c) -> error (fmt "constant %s appears more than once" c)
 
 (* check that new constants are different from old ones *)
-let check_new_consts_different_from_old new_consts old_consts =
-    match find_common new_consts old_consts with
+let check_new_consts_different_from_old (new_consts:const_name list) (old_consts:const_name list) : unit
+  = match find_common new_consts old_consts with
         | None -> ()
-        | Some t -> error ("constant " ^ t ^ " already exists")
+        | Some t -> error (fmt "constant %s already exists" t)
 
 (* check that all the types being defined only appear with exactly the same parameters
  * and the other types have the appropriate arity
  * check also that the types do not contain "static" parameters... *)
-let rec check_parameters (env:environment) (defs:(type_name*type_expression list) list) = function
+let rec check_parameters (env:environment) (defs:(type_name*type_expression list) list) (t:type_expression) : unit
+  = match t with
     | TVar(_) -> ()
     | Arrow(t1,t2) -> check_parameters env defs t1; check_parameters env defs t2
     | Data(t,params) ->
             begin
                 try
                     if not (params = List.assoc t defs)
-                    then error("type " ^ t ^ " should always use the same parameters in the definition")
+                    then error(fmt "type %s should always use the same parameters in the definition" t)
                 with Not_found ->
                     try
                         let a = get_type_arity env t in
                         if not (a = List.length params)
-                        then error ("type " ^ t ^ " should has arity" ^ (string_of_int a))
-                    with Not_found -> error ("type " ^ t ^ " doesn't exist")
+                        then error (fmt "type %s should has arity %d" t a)
+                    with Not_found -> error (fmt "type %s doesn't exist" t)
             end
 
 (* check that a type doesn't contain an instance of some other type *)
-let check_doesnt_contain (t:type_expression) (x:type_name) =
-    let rec check_doesnt_contain_aux = function
+let check_doesnt_contain (t:type_expression) (x:type_name) : unit
+  = let rec check_doesnt_contain_aux = function
         | TVar(_) -> ()
-        | Data(c,_) when x = c -> error ("type " ^ x ^ " appears in non strictly positive position")
+        | Data(c,_) when x = c -> error (fmt "type %s appears in non strictly positive position" x)
         | Data(c,_) -> ()
         | Arrow(t1,t2) -> check_doesnt_contain_aux t1 ; check_doesnt_contain_aux t2
     in check_doesnt_contain_aux t
 
 (* check that a type only appears strictly positively in another *)
-let rec check_is_strictly_positive (t:type_expression) (x:type_name) =
-    let rec check_is_strictly_positive_aux = function 
+let rec check_is_strictly_positive (t:type_expression) (x:type_name) : unit
+  = let rec check_is_strictly_positive_aux = function
         | TVar(_) -> ()
         | Data _ -> ()
         | Arrow(t1,t2) -> check_doesnt_contain t1 x; check_is_strictly_positive_aux t2
     in check_is_strictly_positive_aux t
 
 (* check that a type only appears strictly positively in all the arguments of a constant *)
-let rec check_is_strictly_positive_arguments (t:type_expression) (x:type_name) =
-    let rec check_is_strictly_positive_arguments_aux t = match t with
+let rec check_is_strictly_positive_arguments (t:type_expression) (x:type_name) : unit
+  = let rec check_is_strictly_positive_arguments_aux t = match t with
         | TVar(_) -> check_is_strictly_positive t x
         | Data _ -> check_is_strictly_positive t x
         | Arrow(t1,t2) -> check_is_strictly_positive t1 x; check_is_strictly_positive_arguments_aux t2
@@ -118,16 +119,18 @@ let rec check_is_strictly_positive_arguments (t:type_expression) (x:type_name) =
 
 (* check the type of a destructor: it should be of the form T(...) -> ...
  * where "T(...)" is the type being defined *)
-let check_destructor (t:type_name) (d:const_name*type_expression) = match d with
+let check_destructor (t:type_name) (d:const_name*type_expression) : unit
+  = match d with
     | (_,Arrow(Data(_t,_args), _)) when _t=t -> ()
-    | (d,_) -> error ("destructor " ^ d ^ " doesn't appropriate type")
+    | (d,_) -> error (fmt "destructor %s doesn't appropriate type" d)
 
 (* check the type of a constructor: it should be of the form ... -> T(...)
  * where "T(...)" is the type being defined *)
-let rec check_constructor (t:type_name) (c:const_name*type_expression) = match c with
+let rec check_constructor (t:type_name) (c:const_name*type_expression) : unit
+  = match c with
     | (_,Data(_t,_args)) when _t=t -> ()
     | (c,Arrow(_,_t)) -> check_constructor t (c,_t)
-    | (c,_) -> error ("constructor " ^ c ^ " doesn't appropriate type")
+    | (c,_) -> error (fmt "constructor %s doesn't appropriate type" c)
 
 let process_type_defs (env:environment)
                       (n:int)
@@ -178,7 +181,6 @@ let process_type_defs (env:environment)
 
         let params = List.map (function TVar(x) -> x | _ -> assert false) params in
         (tname, params, n, List.map fst consts) , (List.map (function c,t -> c,n, t) consts)
-
     in
 
     (* process all the definitions *)
