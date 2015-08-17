@@ -88,17 +88,9 @@ let dummy_nb = ref 0
 (* generate a fresh dummy variable *)
 let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb))
 
-(* process some types definitions and add them to the environment *)
-let cmd_process_type_defs n defs
-  = try
-        (* the real bloc number of this bunch of mutual type definitions *)
-        let n = if even current_state.current_type_bloc = even n
-                then current_state.current_type_bloc+2
-                else current_state.current_type_bloc+1
-        in
-        current_state.env <- process_type_defs current_state.env n defs;
-        current_state.last_term <- None;
-        current_state.last_explore <- None
+(* execute a statement and catch appropriate errors *)
+let exec_cmd (cmd:unit->unit) : unit
+  = try cmd ()
     with
         | Error err ->
             if option "continue_on_error"
@@ -109,20 +101,22 @@ let cmd_process_type_defs n defs
             then errmsg "typing error: %s" err
             else error err
 
+(* process some types definitions and add them to the environment *)
+let cmd_process_type_defs n defs
+  = (* the real bloc number of this bunch of mutual type definitions *)
+    let n = if even current_state.current_type_bloc = even n
+            then current_state.current_type_bloc+2
+            else current_state.current_type_bloc+1
+    in
+    current_state.env <- process_type_defs current_state.env n defs;
+    current_state.last_term <- None;
+    current_state.last_explore <- None
+
 (* process some functions definitions and add them to the environment *)
 let cmd_process_function_defs defs
-  = try current_state.env <- process_function_defs current_state.env defs;
-        current_state.last_term <- None;
-        current_state.last_explore <- None
-    with
-        | Error err ->
-            if option "continue_on_error"
-            then errmsg "%s" err
-            else error err
-        | TypeError err ->
-            if option "continue_on_error"
-            then errmsg "typing error: %s" err
-            else error err
+  = current_state.env <- process_function_defs current_state.env defs;
+    current_state.last_term <- None;
+    current_state.last_explore <- None
 
 (* show (some part of) the environment *)
 let cmd_show s =
@@ -178,17 +172,6 @@ let cmd_reduce term =
     if not (constraints = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) constraints);
     print_newline()
-let cmd_reduce term
-  = try cmd_reduce term
-    with
-        | Error err ->
-            if option "continue_on_error"
-            then errmsg "%s" err
-            else error err
-        | TypeError err ->
-            if option "continue_on_error"
-            then errmsg "typing error: %s" err
-            else error err
 
 let cmd_show_last ()
   = match current_state.last_term with
@@ -206,17 +189,6 @@ let cmd_unfold_initial term depth =
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) constraints);
     current_state.last_explore <- Some term;
     print_newline()
-let cmd_unfold_initial term depth
-  = try cmd_unfold_initial term depth
-    with
-        | Error err ->
-            if option "continue_on_error"
-            then errmsg "%s" err
-            else error err
-        | TypeError err ->
-            if option "continue_on_error"
-            then errmsg "typing error: %s" err
-            else error err
 
 let cmd_unfold l
   = try
@@ -327,40 +299,43 @@ let test_collapse p =
 %%
 
 statements:
-    | statement statements      { $1;$2 }
-    | eos statements            { $2 }
-    | EOF                       { () }
+    | done_statement statements      { $1;$2 }
+    | eos statements                 { $2 }
+    | EOF                            { () }
+
+done_statement:
+    | statement         { exec_cmd $1 }
 
 single_statement:
-    | statement eos     { $1 }
-    | eos               { cmd_show_last () }
+    | statement eos     { exec_cmd $1}
+    | eos               { exec_cmd cmd_show_last }
     | EOF               { raise Exit }
-    | term eos          { cmd_reduce $1 }
+    | term eos          { exec_cmd (fun () -> cmd_reduce $1) }
 
 statement:
-    | new_types       { let n,defs = $1 in cmd_process_type_defs n defs }
-    | new_functions   { cmd_process_function_defs $1 }
-    | command         { $1 }
+    | new_types       { fun () -> let n,defs = $1 in cmd_process_type_defs n defs }
+    | new_functions   { fun () -> cmd_process_function_defs $1 }
+    | command         {$1 }
 
 command:
-    | CMDREDUCE term                                    { cmd_reduce $2 }
-    | CMDQUIT                                           { raise Exit }
-    | CMDSHOW string                                    { cmd_show $2 }
-    | CMDSET string string                              { set_option $2 $3 }
-    | CMDSET string INT                                 { set_option $2 (string_of_int $3) }
-    | CMDSET                                            { show_options () }
-    | CMDHELP                                           { cmd_show_help () }
-    | CMDECHO string                                    { msg "%s" $2 }
+    | CMDREDUCE term                                    { fun () -> cmd_reduce $2 }
+    | CMDQUIT                                           { fun () -> raise Exit }
+    | CMDSHOW string                                    { fun () -> cmd_show $2 }
+    | CMDSET string string                              { fun () -> set_option $2 $3 }
+    | CMDSET string INT                                 { fun () -> set_option $2 (string_of_int $3) }
+    | CMDSET                                            { fun () -> show_options () }
+    | CMDHELP                                           { fun () -> cmd_show_help () }
+    | CMDECHO string                                    { fun () -> msg "%s" $2 }
 
-    | CMDUNFOLD term                                    { cmd_unfold_initial $2 0 }
-    | CMDUNFOLD term COMMA INT                          { cmd_unfold_initial $2 $4 }
-    | GT int_range                                      { cmd_unfold $2 }
+    | CMDUNFOLD term                                    { fun () -> cmd_unfold_initial $2 0 }
+    | CMDUNFOLD term COMMA INT                          { fun () -> cmd_unfold_initial $2 $4 }
+    | GT int_range                                      { fun () -> cmd_unfold $2 }
 
-    | TESTUNIFYTYPES type_expression AND type_expression                                 { test_unify_type $2 $4 }
-    | TESTUNIFYTERMS pattern AND term                                                    { test_unify_term $2 $4 }
-    | TESTCOLLAPSE lhs_term                                                              { test_collapse $2 }
-    | TESTCOMPOSE lhs_term DOUBLEARROW rhs_term AND lhs_term DOUBLEARROW rhs_term        { test_compose $2 $4 $6 $8 }
-    | TESTCOMPARE lhs_term DOUBLEARROW rhs_term AND lhs_term DOUBLEARROW rhs_term        { test_compare $2 $4 $6 $8 }
+    | TESTUNIFYTYPES type_expression AND type_expression                                 { fun () -> test_unify_type $2 $4 }
+    | TESTUNIFYTERMS pattern AND term                                                    { fun () -> test_unify_term $2 $4 }
+    | TESTCOLLAPSE lhs_term                                                              { fun () -> test_collapse $2 }
+    | TESTCOMPOSE lhs_term DOUBLEARROW rhs_term AND lhs_term DOUBLEARROW rhs_term        { fun () -> test_compose $2 $4 $6 $8 }
+    | TESTCOMPARE lhs_term DOUBLEARROW rhs_term AND lhs_term DOUBLEARROW rhs_term        { fun () -> test_compare $2 $4 $6 $8 }
 
 
 new_types:

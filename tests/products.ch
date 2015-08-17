@@ -39,3 +39,4 @@ val bad = (1,2,3,4)
 :set show_tuples false
 
 :show functions
+

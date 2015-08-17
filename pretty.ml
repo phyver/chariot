@@ -46,7 +46,6 @@ let string_of_priority p = match p with
     | None ->  if option "use_ansi_codes" then ansi_code "red" "⁼" else "⁼"
     | Some p -> if option "use_ansi_codes" then ansi_code "green" (exp_of_int p) else (exp_of_int p)
 
-(* TODO: with product, we need to add parenthesis *)
 let is_atomic_type = function
     | TVar _ -> true
     | Data(t,params) when (option "show_tuples") && (Str.string_match (Str.regexp "prod_\\(0\\|[1-9][0-9]*\\)") t 0) ->
@@ -238,14 +237,16 @@ let show_types env =
 
 
     in match List.rev env.types with
-        | [] -> print_string "(* ===  no type in environment  ======================= *)\n"
+        | [] -> print_string "(* ===  no type in environment  ======================= *)\n";
+                flush_all()
         | ((_,_,n,_)::_) as types ->
                 print_string "\n(* ===  types in environment  ======================= *)\n";
                 if even n
                 then print_string "codata\n"
                 else print_string "data\n";
                 showtypesaux types;
-                print_string "\n(* ================================================== *)\n\n"
+                print_string "\n(* ================================================== *)\n\n";
+                flush_all()
 
 
 let show_function f t clauses =
@@ -278,4 +279,5 @@ let show_functions env =
         print_string "(* ===  functions in environment  =================== *)\n";
         print_string "val\n";
         showfunctionsaux (List.rev env.functions);
-        print_string "\n(* ================================================== *)\n\n"
+        print_string "\n(* ================================================== *)\n\n";
+        flush_all()
