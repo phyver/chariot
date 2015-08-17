@@ -39,6 +39,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 open Base
 open Misc
 open State
+open Pretty
 
 (* check that all the type parameters of a definition are different *)
 let check_uniqueness_parameters (params:type_expression list) : unit
@@ -193,6 +194,13 @@ let process_type_defs (env:environment)
                             ([],[])
                             defs
     in
+
+    if (verbose 1)
+    then
+        begin
+            let s,was = if List.length defs > 1 then "s","were" else "","was" in
+            msg "%s type%s %s %s succesfully defined" (if even n then "coinductive" else "inductive") s (string_of_list  " and " (function (t,_,_) -> t) defs) was
+        end;
 
     current_state.current_type_bloc <- n;
     { env with  types = types @ env.types;
