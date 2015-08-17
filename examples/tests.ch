@@ -1,4 +1,4 @@
-:verbose 0
+:set verbose 0
 
 (* type of natural numbers *)
 data nat where Zero : nat | Succ : nat -> nat
@@ -117,7 +117,7 @@ val fourtimes : ('a -> 'a) -> ('a ->'a)
 
 val k x y = x
 
-:verbose 0
+:set verbose 0
 
 val nats = map (arith 0) (arith 0 1)
 
