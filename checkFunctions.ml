@@ -47,27 +47,23 @@ open SCTCalls
 open SCTGraph
 
 (* check that a type is correct *)
-let rec check_type env = function
+let rec check_type (env:environment) (t:type_expression) : unit
+  = match t with
     | TVar _ -> ()
     | Arrow(t1,t2) -> check_type env t1 ; check_type env t2
-    | Data(tname,_) -> try ignore (is_inductive env tname) with Not_found -> error ("type " ^ tname ^ " doesn't exist")
+    | Data(tname,_) -> try ignore (is_inductive env tname) with Not_found -> error (fmt "type %s doesn't exist" tname)
 
 (* check that all the functions are different *)
-let check_uniqueness_functions funs =
-    match find_dup funs with
+let check_uniqueness_functions (funs:var_name list) : unit
+  = match find_dup funs with
         | None -> ()
         | Some(f) -> error ("function " ^ f ^ " is defined more than once")
 
-let check_new_funs_different_from_old new_funs old_funs =
-    match find_common new_funs old_funs with
+let check_new_funs_different_from_old (new_funs:var_name list) (old_funs:var_name list) : unit
+  = match find_common new_funs old_funs with
         | None -> ()
         | Some f -> error ("function " ^ f ^ " already exists")
 
-let rec get_variables (v:term) = match v with
-    | Angel | Const _ | Proj _ -> []
-    | Var(x) -> [x]
-    | App(v1,v2) -> (get_variables v1) @ (get_variables v2)
-    | Special v -> v.bot
 
 let process_function_defs (env:environment)
                           (defs:(var_name * type_expression option * (term * term) list) list)
@@ -95,7 +91,7 @@ let process_function_defs (env:environment)
         if not (_f = f) then error ("function names " ^ f ^ " and " ^ _f ^ " do not match");
 
         (* get variables *)
-        let lhs_vars = get_variables lhs_pattern in
+        let lhs_vars = extract_term_variables lhs_pattern in
         (match find_dup lhs_vars with
             | None -> ()
             | Some(x) -> error ("pattern is not linear: variable " ^ x ^ " appears more than once"));
