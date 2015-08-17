@@ -53,10 +53,10 @@ let term_to_patterns (v:term) : term list
   =
     let rec aux = function
         | Var _ | Const _ -> []
-        | Proj _ | Angel -> assert false
-        | App(Proj(d,p),v) -> (aux v) @ [(Proj(d,p))]
-        | App(v1,v2) -> (aux v1) @ [v2]
-        | Special v -> v.bot
+        | Proj _ | Angel _ -> assert false
+        | App(Proj(d,p,t),v,_) -> (aux v) @ [(Proj(d,p,t))]
+        | App(v1,v2,_) -> (aux v1) @ [v2]
+        | Special(v,t) -> v.bot
     in
     aux v
 
@@ -83,7 +83,7 @@ and
     | [] -> assert false
     | []::ps -> assert false
     | ((Var _)::_)::_ -> coverVar env ps
-    | (Proj(d,p)::_)::_ -> coverProj env ps d
+    | (Proj(d,p,_)::_)::_ -> coverProj env ps d
     | (p::_)::_ -> coverConst env ps (get_head_const p)
 and
   (* all the patterns in ps start with a variable: we remove it and continue... *)
@@ -95,7 +95,7 @@ and
   coverProj env (ps:term list list) (d:const_name) : unit =
 (* print_string "coverProj patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
       let allprojs = get_other_constants env d in
-      let projs = List.map (function Proj(d,_)::_ -> d | _ -> assert false) ps in
+      let projs = List.map (function Proj(d,_,_)::_ -> d | _ -> assert false) ps in
 (* print_list "" "projs: " "," "\n" print_string projs; *)
 (* print_list "" "allprojs: " "," "\n" print_string allprojs; *)
       match find_in_difference allprojs projs with

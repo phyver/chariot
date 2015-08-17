@@ -71,18 +71,18 @@ let rec string_of_type = function
 
 let rec print_type t = print_string (string_of_type t)
 
-let rec is_atomic_term (v:'a special_term) = match v with
-    | Var _ | Angel | Const _ | Proj _ -> true
-    | App(Proj _, v) -> is_atomic_term v
+let rec is_atomic_term (v:('a,'t) special_term) = match v with
+    | Var _ | Angel _ | Const _ | Proj _ -> true
+    | App(Proj _, v,_) -> is_atomic_term v
     | App _ -> false
-    | Special v -> true
+    | Special _ -> true
 
 let rec
-  string_of_term_int (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:'a special_term) =
+  string_of_term_int (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,'t) special_term) =
     let rec aux n v =
         match v with
-        | Const("Zero",_) -> n,None
-        | App(Const("Succ",_),v) -> aux (n+1) v
+        | Const("Zero",_,_) -> n,None
+        | App(Const("Succ",_,_),v,_) -> aux (n+1) v
         | _ -> n,Some v
     in
         if not (option "show_nats")
@@ -96,11 +96,11 @@ let rec
                               else (string_of_special_term o sp v) ^ "+" ^ (string_of_int n)
 
 and
-  string_of_term_list (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:'a special_term) =
+  string_of_term_list (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,'t) special_term) =
     let rec aux l v =
         match v with
-        | Const("Nil",_) -> l,None
-        | App(App(Const("Cons",_),h),t) -> aux (h::l) t
+        | Const("Nil",_,_) -> l,None
+        | App(App(Const("Cons",_,_),h,_),t,_) -> aux (h::l) t
         | _ -> l,Some v
     in
         if not (option "show_lists")
@@ -114,12 +114,12 @@ and
                               else String.concat "::" (List.map (string_of_term_paren o sp) (List.rev l)) ^ "::" ^ (string_of_term_paren o sp v)
 
 and
-  string_of_term_tuple (o:'o) (sp:'o -> 'a -> string) (u:'a special_term) =
+  string_of_term_tuple (o:'o) (sp:'o -> 'a -> string) (u:('a,'t) special_term) =
     if not (option "show_tuples")
     then raise (Invalid_argument "string_of_term_tuple")
     else
         match get_head u, get_args u with
-            | Const(c,p), args when Str.string_match (Str.regexp "Tuple_\\(0\\|[1-9][0-9]*\\)") c 0 ->
+            | Const(c,p,_), args when Str.string_match (Str.regexp "Tuple_\\(0\\|[1-9][0-9]*\\)") c 0 ->
                     let n = int_of_string (String.sub c 6 ((String.length c) - 6)) in
                     if List.length args = n
                     then ("(" ^ (string_of_list ", " (string_of_special_term o sp) args) ^ ")")
@@ -127,7 +127,7 @@ and
             | _ -> raise (Invalid_argument "string_of_term_tuple")
 
 and
-  string_of_term_paren (o:'o) (sp:'o -> 'a -> string) (v:'a special_term) =
+  string_of_term_paren (o:'o) (sp:'o -> 'a -> string) (v:('a,'t) special_term) =
     try string_of_term_int o sp true v with Invalid_argument "string_of_term_int" ->
     try string_of_term_list o sp true v with Invalid_argument "string_of_term_list" ->
     try string_of_term_tuple o sp v with Invalid_argument "string_of_term_tuple" ->
@@ -136,20 +136,20 @@ and
         else ("(" ^ (string_of_special_term o sp v) ^ ")")
 
 and
-  string_of_special_term (o:'o) (sp:'o -> 'a -> string) (v:'a special_term) =
+  string_of_special_term (o:'o) (sp:'o -> 'a -> string) (v:('a,'t) special_term) =
     try string_of_term_int o sp false v with Invalid_argument "string_of_term_int" ->
     try string_of_term_list o sp false v with Invalid_argument "string_of_term_list" ->
     try string_of_term_tuple o sp v with Invalid_argument "string_of_term_tuple" ->
         begin
         match v with
-            | Angel -> "⊤"
-            | Var(x) -> if (x.[0]='_' && not (verbose 1)) then "_" else x
-            | Const(c,p) -> c ^ (if not (option "show_priorities") then "" else string_of_priority p)
-            | Proj(d,p) -> "." ^ d ^  (if not (option "show_priorities") then "" else string_of_priority p)
-            | App(Proj _ as v1,v2) -> (string_of_term_paren o sp v2) ^ (string_of_special_term o sp v1)
-            | App(App(Var("add"),v1),v2) when (option "show_nats") -> (string_of_special_term o sp v1) ^ "+" ^ (string_of_term_paren o sp v2)   (* TODO: don't show add as + in pattern *)
-            | App(v1,v2) -> (string_of_special_term o sp v1) ^ " " ^ (string_of_term_paren o sp v2)
-            | Special v -> sp o v
+            | Angel _ -> "⊤"
+            | Var(x,_) -> if (x.[0]='_' && not (verbose 1)) then "_" else x
+            | Const(c,p,_) -> c ^ (if not (option "show_priorities") then "" else string_of_priority p)
+            | Proj(d,p,_) -> "." ^ d ^  (if not (option "show_priorities") then "" else string_of_priority p)
+            | App(Proj _ as v1,v2,_) -> (string_of_term_paren o sp v2) ^ (string_of_special_term o sp v1)
+            | App(App(Var("add",_),v1,_),v2,_) when (option "show_nats") -> (string_of_special_term o sp v1) ^ "+" ^ (string_of_term_paren o sp v2)   (* TODO: don't show add as + in pattern *)
+            | App(v1,v2,_) -> (string_of_special_term o sp v1) ^ " " ^ (string_of_term_paren o sp v2)
+            | Special(v,_) -> sp o v
         end
 
 let string_of_term u = string_of_special_term () (fun o s -> s.bot) u
@@ -161,7 +161,7 @@ let string_of_weight w = match w with
     | Infty -> "∞"
     | Num n -> (string_of_int n)
 
-let string_of_approx_term
+let string_of_approx_term : approx_term -> string
   = string_of_special_term ()
         (fun o u ->
             match u with

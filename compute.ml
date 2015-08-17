@@ -40,18 +40,20 @@ open Base
 open Pretty
 open Misc
 
-let rec subst_term sigma (v:term) = match v with
-    | Var(x) -> (try List.assoc x sigma with Not_found -> Var(x))
-    | Angel | Const _ | Proj _ -> v
-    | App(v1,v2) -> App(subst_term sigma v1, subst_term sigma v2)
-    | Special v -> v.bot
+let rec subst_term sigma (v:term) : term
+  = match v with
+    | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
+    | Angel _ | Const _ | Proj _ -> v
+    | App(v1,v2,t) -> App(subst_term sigma v1, subst_term sigma v2,t)
+    | Special(v,t) -> v.bot
 
+(* FIXME: check 't parameter??? *)
 let rec equal_term v1 v2 = match v1,v2 with
-    | Var(x),Var(y) -> x=y
-    | Angel,Angel -> true
-    | App(v11,v12),App(v21,v22) -> (equal_term v11 v21) && (equal_term v12 v22)
-    | Proj(d1,_),Proj(d2,_) -> d1=d2
-    | Const(c1,_),Const(c2,_) -> c1=c2
+    | Var(x,_),Var(y,_) -> x=y
+    | Angel _,Angel _ -> true
+    | App(v11,v12,_),App(v21,v22,_) -> (equal_term v11 v21) && (equal_term v12 v22)
+    | Proj(d1,_,_),Proj(d2,_,_) -> d1=d2
+    | Const(c1,_,_),Const(c2,_,_) -> c1=c2
     | _,_ -> false
 
 let unify_pattern (pattern,def:term*term) (v:term) : term
@@ -62,13 +64,13 @@ let unify_pattern (pattern,def:term*term) (v:term) : term
         match eqs with
             | [] -> acc
             | (s,t)::eqs when equal_term s t -> unify_aux eqs acc
-            | (App(u1,v1),App(u2,v2))::eqs -> unify_aux ((u1,u2)::(v1,v2)::eqs) acc
-            | (Var _f, _)::_ when _f = f -> unificationError "cannot unify the function name"
-            | (Var x, v)::eqs ->
+            | (App(u1,v1,_),App(u2,v2,_))::eqs -> unify_aux ((u1,u2)::(v1,v2)::eqs) acc
+            | (Var(_f,_), _)::_ when _f = f -> unificationError "cannot unify the function name"
+            | (Var(x,_), v)::eqs ->
                     let eqs = List.map (function u1,u2 -> (subst_term [x,v] u1, subst_term [x,v] u2)) eqs in
                     let acc = List.map (function _x,_u -> (_x, subst_term [x,v] _u)) acc in
                     unify_aux eqs ((x,v)::acc)
-            | (Special v,_)::_ | (_,Special v)::_ -> v.bot
+            | (Special(v,_),_)::_ | (_,Special(v,_))::_ -> v.bot
             | _ -> unificationError "cannot unify"
 
     in
@@ -92,15 +94,15 @@ let reduce_all (env:environment) (v:term) : term
                 end
     and
       reduce v = match v with
-          | Var(f) -> (try reduce_first_clause v (get_function_clauses env f) with Not_found -> v,false)
-          | Const _ | Angel | Proj _ -> v,false
-          | App(v1,v2) -> 
+          | Var(f,_) -> (try reduce_first_clause v (get_function_clauses env f) with Not_found -> v,false)
+          | Const _ | Angel _ | Proj _ -> v,false
+          | App(v1,v2,t) -> 
                 let v1,b1 = reduce v1 in
                 let v2,b2 = reduce v2 in
-                let v3,b3 = (try reduce_first_clause (App(v1,v2)) (get_function_clauses env (get_function_name v))
-                             with Invalid_argument "no head function" | Not_found -> App(v1,v2),b1||b2) in
+                let v3,b3 = (try reduce_first_clause (App(v1,v2,t)) (get_function_clauses env (get_function_name v))
+                             with Invalid_argument "no head function" | Not_found -> App(v1,v2,t),b1||b2) in
                 v3, b1||b2||b3
-          | Special v -> v.bot
+          | Special(v,_) -> v.bot
     in
 
     let rec aux v =

@@ -167,8 +167,8 @@ let infer_priorities (env:environment)
       : term * type_expression option
       =
         match get_head v , get_args v with
-            | Angel,args -> v,t
-            | Var(f),args ->
+            | Angel _,args -> v,t
+            | Var(f,_),args ->
                 begin
                     (* we can infer the type, the argument "t" isn't used in this case *)
                     (* FIXME: check that if t is Some(t), this t is the same as the infered type? *)
@@ -178,11 +178,11 @@ let infer_priorities (env:environment)
                         let ttargs,trest = combine_suffix args targs in
                         let args = List.map (function v,t -> fst (check_type_and_put_priorities vars v (Some t))) ttargs in
                         let trest = List.fold_right (fun t r -> Arrow(t,r)) trest (get_result_type tf) in
-                        app (Var(f)) args, Some trest
+                        app (Var(f,())) args, Some trest
 
-                    with Not_found -> app (Var(f)) (List.map (fun arg -> fst (check_type_and_put_priorities vars  arg None)) args), None
+                    with Not_found -> app (Var(f,())) (List.map (fun arg -> fst (check_type_and_put_priorities vars  arg None)) args), None
                 end
-            | Const(c,None),args ->
+            | Const(c,None,_),args ->
                 begin
                     match t with
                         (* if we need to infer the type of a constructor, it
@@ -199,10 +199,10 @@ let infer_priorities (env:environment)
                                 let targs = get_args_type (specialize_constant env tc c) in
                                 let ttargs,_ = combine_suffix args targs in
                                 let args = List.map (function v,t -> fst (check_type_and_put_priorities vars  v (Some t))) ttargs in
-                                app (Const(c,Some p)) args, Some t
+                                app (Const(c,Some p,())) args, Some t
                             with Not_found -> assert false
                 end
-            | Proj(d,None),args ->
+            | Proj(d,None,_),args ->
                 begin
                     try
                         let arg = List.hd args in
@@ -220,7 +220,7 @@ let infer_priorities (env:environment)
                                     let ttargs,trest = combine_suffix (List.tl args) (List.tl targs) in
                                     let args = List.map (function v,t -> fst (check_type_and_put_priorities vars v (Some t))) ttargs in
                                     let trest = List.fold_right (fun t r -> Arrow(t,r)) trest (get_result_type td) in
-                                    app (Proj(d,Some p)) (arg::args), Some trest
+                                    app (Proj(d,Some p,())) (arg::args), Some trest
                                 with Not_found -> assert false
                     with Exit -> v,t
                 end

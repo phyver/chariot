@@ -112,19 +112,19 @@ let callgraph_from_definitions
 
     let rec extract_params_aux d
       = match d with
-            | Var x -> [x]
-            | App(u1,u2) -> (extract_params_aux u1) @ (extract_params_aux u2)
+            | Var(x,_) -> [x]
+            | App(u1,u2,_) -> (extract_params_aux u1) @ (extract_params_aux u2)
             | Const _ -> []
-            | Proj _ | Angel -> assert false
-            | Special s -> s.bot
+            | Proj _ | Angel _ -> assert false
+            | Special(s,_) -> s.bot
     in
 
     let rec extract_params d
       = match get_head d,get_args d with
-            | Var f,args -> List.concat (List.map extract_params_aux args)
+            | Var(f,_),args -> List.concat (List.map extract_params_aux args)
             | Proj _,u::args -> (extract_params u) @ (List.concat (List.map extract_params_aux args))
-            | Proj _,[] | Const _,_ | Angel,_ | App _,_ -> assert false
-            | Special s,_ -> s.bot
+            | Proj _,[] | Const _,_ | Angel _,_ | App _,_ -> assert false
+            | Special(s,_),_ -> s.bot
     in
 
     let rec process_clause graph (lhs,rhs)
@@ -140,47 +140,47 @@ let callgraph_from_definitions
         in
 
         (* let top = todo "top" (1* the greatest element, ie the least informative *1) *)
-        let top = Special(ApproxConst (List.map (fun x -> (None,Infty,x)) params))
+        let top = Special(ApproxConst (List.map (fun x -> (None,Infty,x)) params),())
         in
 
         let rec process_arg (p:term)
           : approx_term
           = match get_head p,get_args p with
-                | Var x,_ when List.mem x params -> Var x   (* TODO: check if some function appears in the arguments... *)
-                | Var x,_ -> top
-                | Angel,_ -> Angel
-                | Const(c,prio),args -> app (Const(c,prio)) (List.map process_arg args)
-                | Proj(d,prio), args -> Special(ApproxConst (collapse0 (pattern_to_approx_term p)))
-                | Special s,_ -> s.bot
+                | Var(x,t),_ when List.mem x params -> Var(x,t)   (* TODO: check if some function appears in the arguments... *)
+                | Var(x,_),_ -> top
+                | Angel t,_ -> Angel t
+                | Const(c,prio,t),args -> app (Const(c,prio,t)) (List.map process_arg args)
+                | Proj(d,prio,t), args -> Special(ApproxConst (collapse0 (pattern_to_approx_term p)),t)
+                | Special(s,_),_ -> s.bot
                 | App _,_ -> assert false
         in
 
         let rec process_rhs graph rhs calling_context
           : call_graph
           = match get_head rhs, get_args rhs with
-                | Var called, args when List.mem called function_names ->
+                | Var(called,t), args when List.mem called function_names ->
                     let _args = List.map process_arg args
                     in
-                    let call = lhs, app_all (Var called) (_args@calling_context)
+                    let call = lhs, app_all (Var(called,t)) (_args@calling_context)
                     in
                     let graph = CallGraph.add (caller,called) (add_call_set call (try CallGraph.find (caller,called) graph with Not_found -> ClauseSet.empty)) graph
                     in
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty))]) graph args
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty),())]) graph args
 
-                | Var _, args | Angel, args ->
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty))]) graph args
+                | Var _, args | Angel _, args ->
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty),())]) graph args
 
-                | Const(c,p),args ->
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs ((Special(ApproxProj(p,Num 1)))::calling_context)) graph args
+                | Const(c,p,t),args ->
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs ((Special(ApproxProj(p,Num 1),t))::calling_context)) graph args
 
-                | Proj(d,p),u::args ->
+                | Proj(d,p,t),u::args ->
                     let _args = List.map process_arg args
                     in
-                    let graph = process_rhs graph u (Proj(d,p)::_args@calling_context)
+                    let graph = process_rhs graph u (Proj(d,p,t)::_args@calling_context)
                     in
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty))]) graph args
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty),t)]) graph args
 
-                | Special s, _ -> s.bot
+                | Special(s,_), _ -> s.bot
 
                 | App _, _ -> assert false
                 | Proj _,[] -> assert false

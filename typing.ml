@@ -195,8 +195,8 @@ let infer_type (env:environment)
             print_newline()
         );
         match v with
-            | Angel -> instantiate_type (TVar("angel")) , constraints, sigma, datatypes
-            | Var(x) ->
+            | Angel _ -> instantiate_type (TVar("angel")) , constraints, sigma, datatypes
+            | Var(x,_) ->
                 begin
                     try List.assoc x constraints, constraints, sigma, datatypes
                     with Not_found ->
@@ -208,7 +208,7 @@ let infer_type (env:environment)
                             with Not_found -> let t = TVar("type_"^x) in (t, add_constraint (x,t) constraints, sigma, datatypes)
                         end
                 end
-            | Const(c,_) ->
+            | Const(c,_,_) ->
                 begin
                     try
                         let t = instantiate_type (get_constant_type env c) in
@@ -216,7 +216,7 @@ let infer_type (env:environment)
                         (t , constraints, [], (get_result_type t)::datatypes)
                     with Not_found -> typeError ("cannot infer type of constant " ^ c)
                 end
-            | Proj(d,_) ->
+            | Proj(d,_,_) ->
                 begin
                     try
                         let t = instantiate_type (get_constant_type env d) in
@@ -224,7 +224,7 @@ let infer_type (env:environment)
                         (t , constraints, [], (get_first_arg_type t)::datatypes)
                     with Not_found -> typeError ("cannot infer type of constant " ^ d)
                 end
-            | App(v1,v2) ->
+            | App(v1,v2,_) ->
                 begin
                     let tv1,constraints,sigma,datatypes = infer_type_aux v1 constraints sigma datatypes in
                     let tv2,constraints,sigma,datatypes = infer_type_aux v2 constraints sigma datatypes in
@@ -244,7 +244,7 @@ let infer_type (env:environment)
                     let datatypes = List.map (subst_type sigma) datatypes in
                     tres,constraints,sigma,datatypes
                 end
-            | Special v -> v.bot
+            | Special(v,_) -> v.bot
     in
     let t,constraints,sigma,datatypes = infer_type_aux v constraints [] datatypes in
     let datatypes = uniq datatypes in

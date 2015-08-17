@@ -44,12 +44,12 @@ open Compute
 open Typing
 
 let rec head_to_explore (v:term) : explore_term = match v with
-    | Angel -> Angel
-    | Var x -> Var x
-    | Proj(d,p) -> Proj(d,p)
-    | Const(c,p) -> Const(c,p)
-    | Special v -> v.bot
-    | App(v1,v2) -> assert false
+    | Angel () -> Angel ()
+    | Var(x,()) -> Var(x,())
+    | Proj(d,p,()) -> Proj(d,p,())
+    | Const(c,p,()) -> Const(c,p,())
+    | Special(v,()) -> v.bot
+    | App(v1,v2,()) -> assert false
 
 let struct_nb = ref 0
 
@@ -61,7 +61,7 @@ let rec term_to_explore_aux (env:environment) (v:term) : explore_term
             then
                 app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
             else
-                (incr struct_nb; Special (Folded (!struct_nb,v,t)))
+                (incr struct_nb; Special (Folded (!struct_nb,v,t),()))
         | Arrow _,_ | TVar _,_ ->
             app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
 let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (reduce_all env v)
@@ -69,18 +69,18 @@ let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (reduce_all 
 
 let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
  =  match v with
-        | Angel | Var _ | Proj _ | Const _ -> v
-        | App(v1,v2) -> App(unfold env p v1, unfold env p v2)
-        | Special(Unfolded fields) -> Special (Unfolded (List.map (second (unfold env p)) fields))
-        | Special(Folded(n,v,t)) when not (p n) -> incr struct_nb; Special(Folded(!struct_nb,v,t))
-        | Special(Folded(n,v,Data(tname,_))) when (p n) ->
+        | Angel _ | Var _ | Proj _ | Const _ -> v
+        | App(v1,v2,t) -> App(unfold env p v1, unfold env p v2,t)
+        | Special(Unfolded fields,t) -> Special (Unfolded (List.map (second (unfold env p)) fields),t)
+        | Special(Folded(n,v,t),t') when not (p n) -> incr struct_nb; Special(Folded(!struct_nb,v,t),t')
+        | Special(Folded(n,v,Data(tname,_)),t') when (p n) ->
                 let consts = get_type_constants env tname in
                 let fields = List.map (fun d ->
-                    let v = App(Proj(d,None),v) in
+                    let v = App(Proj(d,None,()),v,()) in
                     let v = reduce_all env v in
                     (d, term_to_explore_aux env v)) consts
                 in
-                Special (Unfolded fields)
+                Special (Unfolded fields,t')
         | Special _ -> assert false
 
 let unfold env p v = struct_nb:=0; unfold env p v

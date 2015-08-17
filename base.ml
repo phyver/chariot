@@ -67,16 +67,16 @@ type type_substitution = (type_name * type_expression) list
 type const_name = string
 type var_name = string
 type priority = int option    (* priority of types and constants: odd for data and even for codata *)
-type 'a special_term =
-    | Angel                                     (* generic meta variable, living in all types *)
-    | Var of var_name
-    | Const of const_name * priority    (* constructor, with a priority *)
-    | Proj of const_name * priority     (* destructor, with a priority *)
-    | App of 'a special_term * 'a special_term
-    | Special of 'a
+type ('a,'t) special_term =     (* 'a is used to add features to the type, and 't is used to put types on all subterms *)
+    | Angel of 't                               (* generic meta variable, living in all types *)
+    | Var of var_name*'t
+    | Const of const_name * priority *'t   (* constructor, with a priority *)
+    | Proj of const_name * priority *'t    (* destructor, with a priority *)
+    | App of ('a,'t) special_term * ('a,'t) special_term * 't
+    | Special of 'a*'t
 
 type empty = { bot: 'a .'a }
-type term = empty special_term
+type term = (empty,unit) special_term
 
 type bloc_nb = int      (* number of the block of mutual function definitions *)
 
@@ -165,30 +165,30 @@ let get_other_constants env (c:const_name) : const_name list =
     in get_aux env.types
 
 (* get the function name from a pattern *)
-let rec get_head (v:'a special_term) = match v with
-    | Const _ | Angel | Var _ | Proj _ | Special _ -> v
-    | App(v,_) -> get_head v
+let rec get_head (v:('a,'t) special_term) = match v with
+    | Const _ | Angel _ | Var _ | Proj _ | Special _ -> v
+    | App(v,_,_) -> get_head v
 
 let rec get_head_const v = match v with
-    | Const(c,p)  -> c
-    | Angel | Var _ | Proj _ | Special _ ->  raise (Invalid_argument "no head constructor")
-    | App(v,_) -> get_head_const v
+    | Const(c,p,_)  -> c
+    | Angel _ | Var _ | Proj _ | Special _ ->  raise (Invalid_argument "no head constructor")
+    | App(v,_,_) -> get_head_const v
 
 let rec get_function_name v = match v with
-    | Var f -> f
-    | Angel | Const _ | Proj _ ->  raise (Invalid_argument "no head function")
-    | App(Proj _,v) -> get_function_name v
-    | App(v,_) -> get_function_name v
-    | Special v -> v.bot
+    | Var(f,_) -> f
+    | Angel _ | Const _ | Proj _ ->  raise (Invalid_argument "no head function")
+    | App(Proj _,v,_) -> get_function_name v
+    | App(v,_,_) -> get_function_name v
+    | Special(v,_) -> v.bot
 
 let get_args v =
     let rec get_args_aux acc = function
-        | Const _ | Angel | Var _ | Proj _ | Special _ -> acc
-        | App(v1,v2) -> get_args_aux (v2::acc) v1
+        | Const _ | Angel _ | Var _ | Proj _ | Special _ -> acc
+        | App(v1,v2,_) -> get_args_aux (v2::acc) v1
     in
     get_args_aux [] v
 
-let app f args = List.fold_left (fun t arg -> App(t,arg)) f args
+let app f args = List.fold_left (fun t arg -> App(t,arg,())) f args
 
 let rec get_result_type t = match t with
     | Data _ | TVar _ -> t
@@ -224,18 +224,19 @@ let rec extract_datatypes t = match t with
 
 let rec extract_pattern_variables (v:term) : var_name list
   = match v with
-    | Angel | Const _ | Proj _ -> []
-    | Var(x) -> [x]
-    | App(v1,v2) -> (extract_pattern_variables v1) @ (extract_pattern_variables v2)
-    | Special v -> v.bot
+    | Angel _ | Const _ | Proj _ -> []
+    | Var(x,_) -> [x]
+    | App(v1,v2,_) -> (extract_pattern_variables v1) @ (extract_pattern_variables v2)
+    | Special(v,_) -> v.bot
 
 (* term with CASE and STRUCTS *)
-type case_struct_term = case_struct special_term
- and case_struct = Case of var_name * (const_name * var_name list * case_struct_term) list | Struct of (const_name * (var_name list) * case_struct_term) list | CaseFail
+type 't case_struct_term = ('t case_struct,'t) special_term
+ and 't case_struct = Case of var_name * (const_name * var_name list * 't case_struct_term) list | Struct of (const_name * (var_name list) * 't case_struct_term) list | CaseFail
 
 (* term with possibly unfolded codata *)
+(* FIXME: once I have type terms, I should remove the type expression from the explore_struct type *)
 type explore_struct = Folded of int * term * type_expression | Unfolded of (const_name * explore_term) list
- and explore_term = explore_struct special_term
+ and explore_term = (explore_struct,unit) special_term
 
 (* SCT *)
 type weight = Num of int | Infty
@@ -266,16 +267,16 @@ let collapse_weight bound w = match w with
  *  - each arg_i i either a constructor pattern (with possible approximations) or a destructor
  *)
 type approximation = ApproxProj of priority * weight | ApproxConst of (priority * weight * var_name) list
-type approx_term = approximation special_term
+type approx_term = (approximation,unit) special_term
 type sct_clause = approx_term * approx_term
 (* TODO: use type sct_clause = (var_name * approx_term list) * (var_name * approx_term list) *)
 
 exception Impossible_case
 
 let rec pattern_to_approx_term = function
-    | Var(x) -> Var(x)
-    | Angel -> Angel
-    | Const(c,p) -> Const(c,p)
-    | Proj(d,p) -> Proj(d,p)
-    | App(v1,v2) -> App(pattern_to_approx_term v1, pattern_to_approx_term v2)
-    | Special s -> s.bot
+    | Var(x,t) -> Var(x,t)
+    | Angel(t) -> Angel(t)
+    | Const(c,p,t) -> Const(c,p,t)
+    | Proj(d,p,t) -> Proj(d,p,t)
+    | App(v1,v2,t) -> App(pattern_to_approx_term v1, pattern_to_approx_term v2,t)
+    | Special(s,t) -> s.bot
