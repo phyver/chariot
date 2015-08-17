@@ -71,18 +71,9 @@ let fresh_variable () =
     list_type_variables := !x::!list_type_variables;
     TVar(!x)
 
-(* get all the variables from a type *)
-let get_variables_from_type (t:type_expression) : type_name list =
-    let rec get_variables_from_type_aux = function
-        | TVar(x) -> [x]
-        | Data(_, params) -> List.concat (List.map get_variables_from_type_aux params)
-        | Arrow(t1,t2) -> (get_variables_from_type_aux t1) @ (get_variables_from_type_aux t2)
-    in
-    uniq (get_variables_from_type_aux t)
-
 (* instantiate all the variables from a type with fresh variables *)
 let instantiate_type (t:type_expression) : type_expression =
-    let vars = get_variables_from_type t in
+    let vars = extract_type_variables t in
     let sigma = List.map (fun x -> (x,fresh_variable())) vars in
     subst_type sigma t
 

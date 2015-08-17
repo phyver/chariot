@@ -82,6 +82,7 @@ let process_function_defs (env:environment)
     let old_functions = List.rev_map (function f,_,_,_ -> f) env.functions in
     check_new_funs_different_from_old new_functions old_functions;
 
+    (* TODO: move into typing.ml *)
     (* gather the constraints on the functions by looking at a single clause *)
     let type_single_clause (f:var_name) (lhs_pattern,rhs_term:pattern*term) 
       : (var_name*type_expression) list * type_expression list
@@ -111,6 +112,7 @@ let process_function_defs (env:environment)
        constraints,datatypes
     in
 
+    (* TODO: move into typing.ml and rename to type_several_clauses *)
     let rec process_defs constraints datatypes = function
         | [] -> constraints, datatypes
         | (f,k,[])::defs -> process_defs constraints datatypes defs
@@ -122,17 +124,11 @@ let process_function_defs (env:environment)
             (constraints , datatypes)
     in
 
+    (* TODO: move into typing.ml *)
     reset_fresh_variable_generator [];
     let constraints,datatypes = process_defs [] [] defs in
 
-    (* check completeness of pattern matching *)
-    if option "check_completeness"
-    then
-        List.iter (function f,_,clauses ->
-                if not (exhaustive env clauses)
-                then error ("function " ^ f ^ " is not complete"))
-            defs;
-
+    (* TODO: move into typing.ml *)
     (* check that the types given by the user are compatible with the infered types *)
     reset_fresh_variable_generator (datatypes@(List.map snd constraints));
     (* we try to unify the types given by the user and the infered types,
@@ -159,6 +155,7 @@ let process_function_defs (env:environment)
                         defs
     in
 
+
     let functions =
         List.fold_left (fun functions f ->
             let f,_,clauses = f in
@@ -168,11 +165,6 @@ let process_function_defs (env:environment)
         []
         defs
     in
-    let functions = if option "use_priorities"
-                    then infer_priorities env functions datatypes
-                    else functions
-    in
-
 
     (* choose the substitution that will make the final type of the definition a good choice:
      *   - either use the given type
@@ -191,6 +183,21 @@ let process_function_defs (env:environment)
             then t
             else error ("function " ^ f ^ " is coerced to type " ^ (string_of_type t) ^ " which is not an instance of " ^ (string_of_type infered_new) ^ "...")
     in
+
+    (* check completeness of pattern matching *)
+    if option "check_completeness"
+    then
+        List.iter (function f,_,clauses ->
+                if not (exhaustive env clauses)
+                then error ("function " ^ f ^ " is not complete"))
+            defs;
+
+
+    let functions = if option "use_priorities"
+                    then infer_priorities env functions datatypes
+                    else functions
+    in
+
 
     (* SCT *)
     if option "check_adequacy"
