@@ -74,7 +74,7 @@ let loadfile path
         | Error err -> errmsg "%s" err
         | TypeError err -> errmsg "typing error: %s" err
         | Sys_error err -> errmsg "%s" err
-        | Exit -> ()
+        | Exit -> close_in f_in
 
 
 let mainloop ()
