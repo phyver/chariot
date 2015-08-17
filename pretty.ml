@@ -78,7 +78,7 @@ let rec is_atomic_term (v:'a special_term) = match v with
     | Special v -> true
 
 let rec
-  string_of_term_int (sp:'a -> string) (p:bool) (u:'a special_term) =
+  string_of_term_int (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:'a special_term) =
     let rec aux n v =
         match v with
         | Const("Zero",_) -> n,None
@@ -92,11 +92,11 @@ let rec
                 | n,None -> string_of_int n
                 | 0,Some v -> raise (Invalid_argument "string_of_term_int")
                 | n,Some v -> if p
-                              then "(" ^ (string_of_special_term sp v) ^ "+" ^ (string_of_int n) ^ ")"
-                              else (string_of_special_term sp v) ^ "+" ^ (string_of_int n)
+                              then "(" ^ (string_of_special_term o sp v) ^ "+" ^ (string_of_int n) ^ ")"
+                              else (string_of_special_term o sp v) ^ "+" ^ (string_of_int n)
 
 and
-  string_of_term_list (sp:'a -> string) (p:bool) (u:'a special_term) =
+  string_of_term_list (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:'a special_term) =
     let rec aux l v =
         match v with
         | Const("Nil",_) -> l,None
@@ -107,14 +107,14 @@ and
         then raise (Invalid_argument "string_of_term_list")
         else
             match aux [] u with
-                | l,None -> "[" ^ (String.concat "; " (List.map (string_of_special_term sp) (List.rev l))) ^ "]"
+                | l,None -> "[" ^ (String.concat "; " (List.map (string_of_special_term o sp) (List.rev l))) ^ "]"
                 | [],Some v -> raise (Invalid_argument "string_of_term_list")
                 | l,Some v -> if p
-                              then "(" ^ (String.concat "::" (List.map (string_of_special_term sp) (List.rev l))) ^ "::" ^ (string_of_special_term sp v) ^ ")"
-                              else String.concat "::" (List.map (string_of_term_paren sp) (List.rev l)) ^ "::" ^ (string_of_term_paren sp v)
+                              then "(" ^ (String.concat "::" (List.map (string_of_special_term o sp) (List.rev l))) ^ "::" ^ (string_of_special_term o sp v) ^ ")"
+                              else String.concat "::" (List.map (string_of_term_paren o sp) (List.rev l)) ^ "::" ^ (string_of_term_paren o sp v)
 
 and
-  string_of_term_tuple (sp:'a -> string) (u:'a special_term) =
+  string_of_term_tuple (o:'o) (sp:'o -> 'a -> string) (u:'a special_term) =
     if not (option "show_tuples")
     then raise (Invalid_argument "string_of_term_tuple")
     else
@@ -122,37 +122,37 @@ and
             | Const(c,p), args when Str.string_match (Str.regexp "Tuple_\\(0\\|[1-9][0-9]*\\)") c 0 ->
                     let n = int_of_string (String.sub c 6 ((String.length c) - 6)) in
                     if List.length args = n
-                    then ("(" ^ (string_of_list ", " (string_of_special_term sp) args) ^ ")")
+                    then ("(" ^ (string_of_list ", " (string_of_special_term o sp) args) ^ ")")
                     else raise (Invalid_argument "string_of_term_tuple")
             | _ -> raise (Invalid_argument "string_of_term_tuple")
 
 and
-  string_of_term_paren (sp:'a -> string) (v:'a special_term) =
-    try string_of_term_int sp true v with Invalid_argument "string_of_term_int" ->
-    try string_of_term_list sp true v with Invalid_argument "string_of_term_list" ->
-    try string_of_term_tuple sp v with Invalid_argument "string_of_term_tuple" ->
+  string_of_term_paren (o:'o) (sp:'o -> 'a -> string) (v:'a special_term) =
+    try string_of_term_int o sp true v with Invalid_argument "string_of_term_int" ->
+    try string_of_term_list o sp true v with Invalid_argument "string_of_term_list" ->
+    try string_of_term_tuple o sp v with Invalid_argument "string_of_term_tuple" ->
         if is_atomic_term v
-        then string_of_special_term sp v
-        else ("(" ^ (string_of_special_term sp v) ^ ")")
+        then string_of_special_term o sp v
+        else ("(" ^ (string_of_special_term o sp v) ^ ")")
 
 and
-  string_of_special_term (sp:'a -> string) (v:'a special_term) =
-    try string_of_term_int sp false v with Invalid_argument "string_of_term_int" ->
-    try string_of_term_list sp false v with Invalid_argument "string_of_term_list" ->
-    try string_of_term_tuple sp v with Invalid_argument "string_of_term_tuple" ->
+  string_of_special_term (o:'o) (sp:'o -> 'a -> string) (v:'a special_term) =
+    try string_of_term_int o sp false v with Invalid_argument "string_of_term_int" ->
+    try string_of_term_list o sp false v with Invalid_argument "string_of_term_list" ->
+    try string_of_term_tuple o sp v with Invalid_argument "string_of_term_tuple" ->
         begin
         match v with
             | Angel -> "⊤"
             | Var(x) -> if (x.[0]='_' && not (verbose 1)) then "_" else x
             | Const(c,p) -> c ^ (if not (option "show_priorities") then "" else string_of_priority p)
             | Proj(d,p) -> "." ^ d ^  (if not (option "show_priorities") then "" else string_of_priority p)
-            | App(Proj _ as v1,v2) -> (string_of_term_paren sp v2) ^ (string_of_special_term sp v1)
-            | App(App(Var("add"),v1),v2) when (option "show_nats") -> (string_of_special_term sp v1) ^ "+" ^ (string_of_term_paren sp v2)   (* TODO: don't show add as + in pattern *)
-            | App(v1,v2) -> (string_of_special_term sp v1) ^ " " ^ (string_of_term_paren sp v2)
-            | Special v -> sp v
+            | App(Proj _ as v1,v2) -> (string_of_term_paren o sp v2) ^ (string_of_special_term o sp v1)
+            | App(App(Var("add"),v1),v2) when (option "show_nats") -> (string_of_special_term o sp v1) ^ "+" ^ (string_of_term_paren o sp v2)   (* TODO: don't show add as + in pattern *)
+            | App(v1,v2) -> (string_of_special_term o sp v1) ^ " " ^ (string_of_term_paren o sp v2)
+            | Special v -> sp o v
         end
 
-let string_of_term = string_of_special_term (fun s -> s.bot)
+let string_of_term u = string_of_special_term () (fun o s -> s.bot) u
 
 let print_term t = print_string (string_of_term t)
 
@@ -162,16 +162,18 @@ let string_of_weight w = match w with
     | Num n -> (string_of_int n)
 
 let string_of_approx_term
-  = string_of_special_term
-        (function | ApproxProj(p,w) ->
-                        "<" ^ (string_of_weight w) ^ ">" ^ (string_of_priority p) ^ " ."
-                        (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
-                  | ApproxConst [] ->
-                        "∅"
-                        (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
-                  | ApproxConst l ->
-                        (string_of_list " + " (function p,w,x ->  "<" ^ (string_of_weight w) ^ ">" ^ (string_of_priority p) ^ " " ^ x) l)
-                        (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
+  = string_of_special_term ()
+        (fun o u ->
+            match u with
+                | ApproxProj(p,w) ->
+                    "<" ^ (string_of_weight w) ^ ">" ^ (string_of_priority p) ^ " ."
+                    (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
+                | ApproxConst [] ->
+                    "∅"
+                    (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
+                | ApproxConst l ->
+                    (string_of_list " + " (function p,w,x ->  "<" ^ (string_of_weight w) ^ ">" ^ (string_of_priority p) ^ " " ^ x) l)
+                    (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
         )
 
 
@@ -185,15 +187,16 @@ let show_data_type env tname params consts =
                consts
 
 let rec
-   string_of_explore_struct = function
+   string_of_explore_struct o = function
        | Folded(n,v,t) ->
             "{…<" ^ (string_of_int n) ^ ">" ^
             (if option "show_term_struct" then ("=" ^ string_of_term v) else "") ^
             (if option "show_type_struct" then (":" ^ string_of_type t) else "") ^
             "…}"
-       | Unfolded fields -> "{" ^ (String.concat "; " (List.map (function d,v -> d ^ "=" ^ (string_of_explore_term v)) fields)) ^ "}"
+       | Unfolded fields -> "{" ^ (String.concat "; " (List.map (function d,v -> d ^ "=" ^ (string_of_explore_term o v)) fields)) ^ "}"
 and
-  string_of_explore_term v = string_of_special_term string_of_explore_struct v
+  string_of_explore_term o v = string_of_special_term o string_of_explore_struct v
+let string_of_explore_term v = string_of_explore_term () v
 
 let print_explore_term v = print_string (string_of_explore_term v)
 
@@ -201,13 +204,13 @@ let print_explore_term v = print_string (string_of_explore_term v)
 (* FIXME: add parameter to string_of_special_term that is passed to the function printing special terms
  * then, I can used it to add indentation for printing case / structs *)
 let rec
-    string_of_case_struct = function
+    string_of_case_struct o = function
         | CaseFail -> "FAIL"
         | Case(x,l) ->
-            fmt "\n(case %s of\n\t%s)" x (string_of_list "\n\t" (function c,args,v -> fmt "| %s %s -> %s" c (string_of_list " " (fun x -> x) args) (string_of_case_struct_term v)) l)
-        | Struct l -> fmt "{ %s }" (string_of_list " ; " (function d,args,v -> fmt ".%s %s = %s" d (string_of_list " " (fun x -> x) args) (string_of_case_struct_term v)) l)
+            fmt "\n(case %s of\n\t%s)" x (string_of_list "\n\t" (function c,args,v -> fmt "| %s %s -> %s" c (string_of_list " " (fun x -> x) args) (string_of_case_struct_term o v)) l)
+        | Struct l -> fmt "{ %s }" (string_of_list " ; " (function d,args,v -> fmt ".%s %s = %s" d (string_of_list " " (fun x -> x) args) (string_of_case_struct_term o v)) l)
 and
-    string_of_case_struct_term v = string_of_special_term string_of_case_struct v
+    string_of_case_struct_term o v = string_of_special_term () string_of_case_struct v
 
 
 
