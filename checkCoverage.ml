@@ -113,8 +113,8 @@ and
         | None -> cover env (List.map (function p::ps -> (term_to_patterns p)@ps | _ -> assert false) ps)
         | Some p -> ()
 
-let exhaustive env clauses =
-    let ps = List.map (function lhs,_ -> term_to_patterns lhs) clauses in
+let check_exhaustivity (env:environment) (clauses:(pattern*term) list) : bool
+  = let ps = List.map (function lhs,_ -> term_to_patterns lhs) clauses in
     try
         cover env ps;
         false

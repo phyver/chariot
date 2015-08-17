@@ -188,7 +188,7 @@ let process_function_defs (env:environment)
     if option "check_completeness"
     then
         List.iter (function f,_,clauses ->
-                if not (exhaustive env clauses)
+                if not (check_exhaustivity env clauses)
                 then error ("function " ^ f ^ " is not complete"))
             defs;
 
