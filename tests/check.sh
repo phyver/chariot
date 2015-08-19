@@ -14,18 +14,19 @@ usage:
     -n              run non-interactively, with minimal output
     -x <pattern>    exclude line matching <pattern>
     -y <pattern>    only include lines matching <pattern>
+    -h              this message
   file should have extension $EXT
 EOS
 )
 
-while getopts "nix:y:" f
+while getopts "nix:y:h" f
 do
     case $f in
         n)  INTERACTIVE=0               ;;
         i)  INTERACTIVE=1               ;;
         x)  GREP="grep -v $OPTARG"      ;;      # TODO: deal with quoted arguments (spaces)
         y)  GREP="grep $OPTARG"         ;;
-        \?) echo "$USAGE"; exit 3       ;;
+        h | \?) echo "$USAGE"; exit 3       ;;
     esac
 done
 shift `expr $OPTIND - 1`
