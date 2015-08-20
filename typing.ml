@@ -45,10 +45,25 @@ open State
 open Pretty
 
 (* apply a substitution on a type *)
-let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expression = match t with
+let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expression
+  = match t with
     | TVar (y) -> (try List.assoc y sigma with Not_found -> t)
     | Arrow(t1,t2) -> Arrow(subst_type sigma t1, subst_type sigma t2)
-    | Data(a, args) -> Data(a, List.map (subst_type sigma) args)
+    | Data(tname, args) -> Data(tname, List.map (subst_type sigma) args)
+
+let rec subst_type_term  (sigma:type_substitution) (u:(empty,type_expression) special_term) : (empty,type_expression) special_term
+  = match u with
+        | Angel(t) -> Angel(subst_type sigma t)
+        | Var(x,t) -> Var(x,subst_type sigma t)
+        | Const(c,p,t) ->  Const(c,p,subst_type sigma t)
+        | Proj(d,p,t) ->  Proj(d,p,subst_type sigma t)
+        | App(u1,u2,t) ->
+            let u1 = subst_type_term sigma u1 in
+            let u2 = subst_type_term sigma u2 in
+            let t = subst_type sigma t in
+            App(u1,u2,t)
+        | Special(s,t) -> s.bot
+
 
 (* generate fresh variables *)
 let fresh_variable_nb = ref 0
@@ -145,8 +160,9 @@ let rec add_constraint (x,t) constraints = match constraints with
     | (y,s)::constraints when x>y -> (y,s)::(add_constraint (x,t) constraints)
     | (y,s)::constraints (* when x=y *) -> (x,unify_type s t)::constraints
 
-(* merge two sorted lists of constraints and returns the global substitution used while merging *)
-let merge_constraints cs1 cs2 =
+let merge_constraints (cs1:(var_name*type_expression) list) (cs2:(var_name*type_expression) list)
+    :(var_name*type_expression) list * (type_name*type_expression) list
+  =
     let rec merge_constraints_aux cs1 cs2 sigma = match cs1,cs2 with
         | [],cs | cs,[] -> cs,sigma
         | (x1,t1)::cs1, (x2,_)::_ when x1<x2 ->
