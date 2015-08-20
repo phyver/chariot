@@ -222,12 +222,39 @@ let rec extract_datatypes t = match t with
     | Data(_,params) -> t::(List.concat (List.map extract_datatypes params))
     | Arrow(t1,t2) -> (extract_datatypes t1) @ (extract_datatypes t2)
 
+let rec extract_datatypes_new (u:(empty,type_expression) special_term) : type_expression list
+  = match u with
+        | Angel _ | Var _ -> []
+        | App(u1,u2,_) -> merge_uniq (extract_datatypes_new u1) (extract_datatypes_new u2)
+        | Const(_,_,t) -> [get_result_type t]
+        | Proj(_,_,t) -> [get_first_arg_type t]
+        | Special(s,_) -> s.bot
+
+
 let rec extract_pattern_variables (v:term) : var_name list
   = match v with
     | Angel _ | Const _ | Proj _ -> []
     | Var(x,_) -> [x]
     | App(v1,v2,_) -> (extract_pattern_variables v1) @ (extract_pattern_variables v2)
     | Special(v,_) -> v.bot
+
+let type_of (u:(empty,type_expression) special_term) : type_expression
+  = match u with
+        | Angel t
+        | Var(_,t)
+        | Const(_,_,t)
+        | Proj(_,_,t)
+        | App(_,_,t) -> t
+        | Special(s,_) -> s.bot
+
+let rec map_type_term (f:'t1 -> 't2) (u:('a,'t1) special_term) : ('a,'t2) special_term
+  = match u with
+        | Angel t -> Angel (f t)
+        | Var(x,t) -> Var(x,f t)
+        | Const(c,p,t) -> Const(c,p,f t)
+        | Proj(d,p,t) -> Proj(d,p,f t)
+        | App(u1,u2,t) -> App(map_type_term f u1, map_type_term f u2, f t)
+        | Special(a,t) -> Special(a,f t)
 
 (* term with CASE and STRUCTS *)
 type 't case_struct_term = ('t case_struct,'t) special_term
