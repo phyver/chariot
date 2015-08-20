@@ -290,3 +290,39 @@ let show_functions env =
         showfunctionsaux (List.rev env.functions);
         print_string "\n(* ================================================== *)\n\n";
         flush_all()
+
+let print_typed_subterms (u:(empty,type_expression) special_term) : unit
+  = 
+    let i = ref 0 in
+    let new_i () = incr i ; !i in
+
+    let rec show_term u = match u with
+        | Angel(t) -> let n = new_i() in
+            print_string ("???"^(exp_of_int n)); [n,t]
+        | Const(c,_,t) -> let n = new_i() in
+            print_string (c^(exp_of_int n)); [n,t]
+        | Var(x,t) -> let n = new_i() in
+            print_string (x^(exp_of_int n)); [n,t]
+        | App(Proj(d,_,t1),u2,t) ->
+            let n = new_i() in
+            let m = new_i() in
+            print_string "(";
+            let types = show_term u2 in
+            print_string ("."^d^(exp_of_int n)^")"^(exp_of_int m));
+            (n,t1) ::  (m,t) :: types
+        | App(u1,u2,t) ->
+            let n = new_i() in
+            print_string "(";
+            let types1 = show_term u1 in
+            print_string " ";
+            let types2 = show_term u2 in
+            print_string (")"^(exp_of_int n));
+            (n,t)::types1@types2
+        | Proj(d,_,t) -> let n = new_i() in
+            print_string (d^(exp_of_int n)); [n,t]
+        | Special(s,_) -> s.bot
+    in
+
+    let types = show_term u in
+    let types = List.sort compare types in
+    msg "with types:\n%s" (string_of_list "\n" (function n,t -> fmt "  - %d: %s" n (string_of_type t)) types)
