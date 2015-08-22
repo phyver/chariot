@@ -227,3 +227,13 @@ let ansi_code (color:string) (s:string) :string
         Printf.sprintf "%s%s%s" begin_code s end_code
     with Not_found -> raise (Invalid_argument ("ansi_code: color " ^ color ^ " doesn't exist"))
 
+
+(* partition a list by grouping consecutive element with same result *)
+let rec partition (f:'a -> 'b) (l:'a list) : ('a list list)
+  = match l with
+        | [] -> []
+        | [x] -> [[x]]
+        | x::((y::_) as l) when f x = f y ->
+                (match partition f l with l1::ls -> (x::l1)::ls | _ -> assert false)
+        | x::l -> [x]::(partition f l)
+

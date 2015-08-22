@@ -231,12 +231,20 @@ let rec extract_datatypes_new (u:(empty,type_expression) special_term) : type_ex
         | Special(s,_) -> s.bot
 
 
-let rec extract_pattern_variables (v:term) : var_name list
-  = match v with
-    | Angel _ | Const _ | Proj _ -> []
-    | Var(x,_) -> [x]
-    | App(v1,v2,_) -> (extract_pattern_variables v1) @ (extract_pattern_variables v2)
-    | Special(v,_) -> v.bot
+let rec extract_term_variables (v:term) : var_name list
+  = let rec extract_term_variables_aux v =
+        match v with
+            | Angel _ | Const _ | Proj _ -> []
+            | Var(x,_) -> [x]
+            | App(v1,v2,_) -> (extract_term_variables_aux v1) @ (extract_term_variables_aux v2)
+            | Special(v,_) -> v.bot
+    in uniq (extract_term_variables_aux v)
+
+let rec extract_pattern_variables (v:pattern) : var_name list
+  = match get_head v,get_args v with
+        | Var(f,_),args -> List.concat (List.map extract_term_variables args)
+        | Proj _,v::args -> (extract_pattern_variables v) @ (List.concat (List.map extract_term_variables args))
+        | _,_ -> assert false
 
 let type_of (u:(empty,type_expression) special_term) : type_expression
   = match u with

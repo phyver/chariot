@@ -41,13 +41,6 @@ open Pretty
 open Misc
 
 
-let rec partition f l = match l with
-    | [] -> []
-    | [x] -> [[x]]
-    | x::((y::_) as l) when f x = f y ->
-            (match partition f l with l1::ls -> (x::l1)::ls | _ -> assert false)
-    | x::l -> [x]::(partition f l)
-
 
 let term_to_patterns (v:term) : term list
   =

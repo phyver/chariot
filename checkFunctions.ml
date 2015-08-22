@@ -57,12 +57,34 @@ let rec check_type (env:environment) (t:type_expression) : unit
 let check_uniqueness_functions (funs:var_name list) : unit
   = match find_dup funs with
         | None -> ()
-        | Some(f) -> error ("function " ^ f ^ " is defined more than once")
+        | Some(f) -> error (fmt "function %s is defined more than once" f)
 
+(* check that the function being defined are different from the functions in the environment *)
+(* FIXME: can I remove this constraint easily? *)
 let check_new_funs_different_from_old (new_funs:var_name list) (old_funs:var_name list) : unit
   = match find_common new_funs old_funs with
         | None -> ()
-        | Some f -> error ("function " ^ f ^ " already exists")
+        | Some f -> error (fmt "function %s already exists" f)
+
+
+let check_clause (funs: var_name list) (f:var_name) (lhs:pattern) (rhs:term) : unit
+  =
+    (* get function from LHS and check it is equal to f *)
+    let _f = get_function_name lhs in
+    if not (_f = f) then error (fmt "function names %s and %s do not match" f _f);
+
+    (* get variables *)
+    let variables = extract_pattern_variables lhs in
+    (match find_dup variables with
+        | None -> ()
+        | Some(x) -> error (fmt "pattern is not linear: variable %s appears more than once" x));
+
+
+    (* check that the variables appearing in a pattern are different from the function names being defined *)
+    (* FIXME: can I remove this constraint easily? *)
+    match find_common funs variables with
+        | None -> ()
+        | Some x -> error (fmt "you cannot have a variable with same name as one of the defined function (%s)" x)
 
 
 let process_function_defs (env:environment)
@@ -82,9 +104,15 @@ let process_function_defs (env:environment)
     let old_functions = List.rev_map (function f,_,_,_ -> f) env.functions in
     check_new_funs_different_from_old new_functions old_functions;
 
+    (* check clauses *)
+    List.iter (function f,_,clauses ->
+        List.iter (function (lhs,rhs) -> check_clause new_functions f lhs rhs)
+        clauses)
+    defs;
+
     (* TODO: move into typing.ml *)
     (* gather the constraints on the functions by looking at a single clause *)
-    let type_single_clause (f:var_name) (lhs_pattern,rhs_term:pattern*term) 
+    let type_single_clause (f:var_name) (lhs_pattern,rhs_term:pattern*term)
       : (var_name*type_expression) list * type_expression list
       =
         (* get function from LHS and check it is equal to f *)
@@ -137,7 +165,7 @@ let process_function_defs (env:environment)
       = let infered = List.assoc f constraints in
         match t with
             | None -> constraints,datatypes
-            | Some t -> 
+            | Some t ->
                 check_type env t;
                 let new_t = instantiate_type t in
                 try
