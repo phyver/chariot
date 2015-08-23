@@ -5,3 +5,4 @@ chariot
 .vimrc
 _build
 tmp
+*.tmpout
