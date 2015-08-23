@@ -42,74 +42,74 @@ open Misc
 
 
 
-let term_to_patterns (v:term) : term list
-  =
-    let rec aux = function
-        | Var _ | Const _ -> []
-        | Proj _ | Angel _ -> assert false
-        | App(Proj(d,p,t),v,_) -> (aux v) @ [(Proj(d,p,t))]
-        | App(v1,v2,_) -> (aux v1) @ [v2]
-        | Special(v,t) -> v.bot
-    in
-    aux v
+(* let term_to_patterns (v:term) : term list *)
+(*   = *)
+(*     let rec aux = function *)
+(*         | Var _ | Const _ -> [] *)
+(*         | Proj _ | Angel _ -> assert false *)
+(*         | App(Proj(d,p,t),v,_) -> (aux v) @ [(Proj(d,p,t))] *)
+(*         | App(v1,v2,_) -> (aux v1) @ [v2] *)
+(*         | Special(v,t) -> v.bot *)
+(*     in *)
+(*     aux v *)
 
-(* NOTE: I don't need to look at the RHS of definitions if I don't want to "compile" my terms to CASE-definitions *
- * I can only look at the LHS definition and don't need to use any substitution... *)
-let  isVar = function
-      | Var _::_ -> 0
-      | (Proj _)::_ -> 1
-      |  _::_ -> 2
-      | [] -> 3
-let rec
-  (* raise Exit if all patterns are matched, returns () otherwise *)
-  cover env (ps:term list list) : unit =
-(* print_string "cover patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
-      match List.filter (function [] -> false | _ -> true) ps with
-        | [] -> raise Exit
-        | ps -> List.iter (coverVarConstProj env) (partition isVar ps)
-and
-  (* all the patterns in ps start with the same kind (Var, Const, Proj) of pattern
-   * This function just calls the appropriate function on ps *)
-  coverVarConstProj env (ps:term list list) : unit =
-(* print_string "coverVarConstProj patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
-      match ps with
-    | [] -> assert false
-    | []::ps -> assert false
-    | ((Var _)::_)::_ -> coverVar env ps
-    | (Proj(d,p,_)::_)::_ -> coverProj env ps d
-    | (p::_)::_ -> coverConst env ps (get_head_const p)
-and
-  (* all the patterns in ps start with a variable: we remove it and continue... *)
-  coverVar env (ps:term list list) : unit =
-(* print_string "coverVar patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
-      cover env (List.map List.tl ps)
-and
-  (* all the patterns in ps start with a projection: *)
-  coverProj env (ps:term list list) (d:const_name) : unit =
-(* print_string "coverProj patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
-      let allprojs = get_other_constants env d in
-      let projs = List.map (function Proj(d,_,_)::_ -> d | _ -> assert false) ps in
-(* print_list "" "projs: " "," "\n" print_string projs; *)
-(* print_list "" "allprojs: " "," "\n" print_string allprojs; *)
-      match find_in_difference allprojs projs with
-        | None -> cover env (List.map List.tl ps)
-        | Some p -> ()
-and
-  (* all the patterns in ps start with a constructor: *)
-  coverConst env (ps:term list list) c =
-(* print_string "coverConst patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *)
-      let allconsts = get_other_constants env c in
-      let consts = List.map (function p::_ -> get_head_const p | _ -> assert false) ps in
-(* print_list "" "consts: " "," "\n" print_string consts; *)
-(* print_list "" "allconsts: " "," "\n" print_string allconsts; *)
-      match find_in_difference allconsts consts with
-        | None -> cover env (List.map (function p::ps -> (term_to_patterns p)@ps | _ -> assert false) ps)
-        | Some p -> ()
+(* (1* NOTE: I don't need to look at the RHS of definitions if I don't want to "compile" my terms to CASE-definitions * *)
+(*  * I can only look at the LHS definition and don't need to use any substitution... *1) *)
+(* let  isVar = function *)
+(*       | Var _::_ -> 0 *)
+(*       | (Proj _)::_ -> 1 *)
+(*       |  _::_ -> 2 *)
+(*       | [] -> 3 *)
+(* let rec *)
+(*   (1* raise Exit if all patterns are matched, returns () otherwise *1) *)
+(*   cover env (ps:term list list) : unit = *)
+(* (1* print_string "cover patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *1) *)
+(*       match List.filter (function [] -> false | _ -> true) ps with *)
+(*         | [] -> raise Exit *)
+(*         | ps -> List.iter (coverVarConstProj env) (partition isVar ps) *)
+(* and *)
+(*   (1* all the patterns in ps start with the same kind (Var, Const, Proj) of pattern *)
+(*    * This function just calls the appropriate function on ps *1) *)
+(*   coverVarConstProj env (ps:term list list) : unit = *)
+(* (1* print_string "coverVarConstProj patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *1) *)
+(*       match ps with *)
+(*     | [] -> assert false *)
+(*     | []::ps -> assert false *)
+(*     | ((Var _)::_)::_ -> coverVar env ps *)
+(*     | (Proj(d,p,_)::_)::_ -> coverProj env ps d *)
+(*     | (p::_)::_ -> coverConst env ps (get_head_const p) *)
+(* and *)
+(*   (1* all the patterns in ps start with a variable: we remove it and continue... *1) *)
+(*   coverVar env (ps:term list list) : unit = *)
+(* (1* print_string "coverVar patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *1) *)
+(*       cover env (List.map List.tl ps) *)
+(* and *)
+(*   (1* all the patterns in ps start with a projection: *1) *)
+(*   coverProj env (ps:term list list) (d:const_name) : unit = *)
+(* (1* print_string "coverProj patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *1) *)
+(*       let allprojs = get_other_constants env d in *)
+(*       let projs = List.map (function Proj(d,_,_)::_ -> d | _ -> assert false) ps in *)
+(* (1* print_list "" "projs: " "," "\n" print_string projs; *1) *)
+(* (1* print_list "" "allprojs: " "," "\n" print_string allprojs; *1) *)
+(*       match find_in_difference allprojs projs with *)
+(*         | None -> cover env (List.map List.tl ps) *)
+(*         | Some p -> () *)
+(* and *)
+(*   (1* all the patterns in ps start with a constructor: *1) *)
+(*   coverConst env (ps:term list list) c = *)
+(* (1* print_string "coverConst patterns:\n"; print_list "empty\n\n" "" "\n" "\n\n" (fun p -> print_list "  --" "  " " , " "" print_term p) ps; *1) *)
+(*       let allconsts = get_other_constants env c in *)
+(*       let consts = List.map (function p::_ -> get_head_const p | _ -> assert false) ps in *)
+(* (1* print_list "" "consts: " "," "\n" print_string consts; *1) *)
+(* (1* print_list "" "allconsts: " "," "\n" print_string allconsts; *1) *)
+(*       match find_in_difference allconsts consts with *)
+(*         | None -> cover env (List.map (function p::ps -> (term_to_patterns p)@ps | _ -> assert false) ps) *)
+(*         | Some p -> () *)
 
-let check_exhaustivity (env:environment) (clauses:(pattern*term) list) : bool
-  = let ps = List.map (function lhs,_ -> term_to_patterns lhs) clauses in
-    try
-        cover env ps;
-        false
-    with Exit -> true
+(* let check_exhaustivity (env:environment) (clauses:(pattern*term) list) : bool *)
+(*   = let ps = List.map (function lhs,_ -> term_to_patterns lhs) clauses in *)
+(*     try *)
+(*         cover env ps; *)
+(*         false *)
+(*     with Exit -> true *)
 

@@ -51,7 +51,7 @@ type state =
         mutable depth: int                                  ;
         mutable bound: int                                  ;
 
-        mutable last_term: term option                      ;
+        mutable last_term: type_expression term option      ;
         mutable last_explore: explore_term option           ;
     }
 

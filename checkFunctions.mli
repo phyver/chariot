@@ -40,5 +40,5 @@ open Base
 
 val process_function_defs :
     environment ->
-    (var_name * type_expression option * (term * term) list) list ->
+    (var_name * type_expression option * ('t pattern * 't term) list) list ->
         environment

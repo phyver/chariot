@@ -67,7 +67,7 @@ let check_new_funs_different_from_old (new_funs:var_name list) (old_funs:var_nam
         | Some f -> error (fmt "function %s already exists" f)
 
 
-let check_clause (funs: var_name list) (f:var_name) (lhs:pattern) (rhs:term) : unit
+let check_clause (funs: var_name list) (f:var_name) (lhs:'t pattern) (rhs:'t term) : unit
   =
     (* get function from LHS and check it is equal to f *)
     let _f = get_function_name lhs in
@@ -88,7 +88,7 @@ let check_clause (funs: var_name list) (f:var_name) (lhs:pattern) (rhs:term) : u
 
 
 let process_function_defs (env:environment)
-                          (defs:(var_name * type_expression option * (term * term) list) list)
+                          (defs:(var_name * type_expression option * ('t pattern * 't term) list) list)
   : environment
   =
 
@@ -165,5 +165,4 @@ let process_function_defs (env:environment)
     current_state.current_function_bloc <- current_state.current_function_bloc + 1;
 
     (* TODO: remove *)
-    let functions = List.map (function f,n,t,cls -> f,n,t,List.map (function lhs,rhs -> (map_type_term (fun _ -> ()) lhs, map_type_term (fun _ -> ()) rhs)) cls) defs in
-    { env with functions = functions @ env.functions }
+    { env with functions = defs @ env.functions }

@@ -98,7 +98,7 @@ let collapse_graph b d graph
  * applied to the result of a call, and Const variants to register destructor
  * in argument position... *)
 let callgraph_from_definitions
-  (functions : (var_name * type_expression * function_clause list) list)
+  (functions : (var_name * type_expression * 't function_clause list) list)
   : call_graph
   =
     let function_names = List.map (function f,_,_ -> f) functions
@@ -143,7 +143,7 @@ let callgraph_from_definitions
         let top = Special(ApproxConst (List.map (fun x -> (None,Infty,x)) params),())
         in
 
-        let rec process_arg (p:term)
+        let rec process_arg (p:'t term)
           : approx_term
           = match get_head p,get_args p with
                 | Var(x,t),_ when List.mem x params -> Var(x,t)   (* TODO: check if some function appears in the arguments... *)

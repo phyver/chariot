@@ -76,12 +76,12 @@ type ('a,'t) special_term =     (* 'a is used to add features to the type, and '
     | Special of 'a*'t
 
 type empty = { bot: 'a .'a }
-type term = (empty,unit) special_term
+type 't term = (empty,'t) special_term
 
 type bloc_nb = int      (* number of the block of mutual function definitions *)
 
-type pattern = term                                   (* a pattern (LHS of a clause in a definition) is just a special kind of term *)
-type function_clause = pattern * term     (* clause of a function definition *)
+type 't pattern = 't term                 (* a pattern (LHS of a clause in a definition) is just a special kind of term *)
+type 't function_clause = 't pattern * 't term     (* clause of a function definition *)
 
 (* type for the environment *)
 type environment = {
@@ -97,7 +97,7 @@ type environment = {
 
     (* each function is defined inside a bloc of definitions and has a type and
      * a list of defining clauses *)
-    functions: (var_name * bloc_nb * type_expression * function_clause list) list      }
+    functions: (var_name * bloc_nb * type_expression * type_expression function_clause list) list      }
 
 (*
  * some utility functions
@@ -247,14 +247,14 @@ let rec extract_pattern_variables (v:(empty,'t) special_term) : var_name list
         | Proj _,v::args -> (extract_pattern_variables v) @ (List.concat (List.map extract_term_variables args))
         | _,_ -> assert false
 
-let type_of (u:(empty,type_expression) special_term) : type_expression
+let type_of (u:('a,type_expression) special_term) : type_expression
   = match u with
         | Angel t
         | Var(_,t)
         | Const(_,_,t)
         | Proj(_,_,t)
         | App(_,_,t) -> t
-        | Special(s,_) -> s.bot
+        | Special(s,t) -> t
 
 let rec map_type_term (f:'t1 -> 't2) (u:('a,'t1) special_term) : ('a,'t2) special_term
   = match u with
@@ -270,9 +270,9 @@ type 't case_struct_term = ('t case_struct,'t) special_term
  and 't case_struct = Case of var_name * (const_name * var_name list * 't case_struct_term) list | Struct of (const_name * (var_name list) * 't case_struct_term) list | CaseFail
 
 (* term with possibly unfolded codata *)
-(* FIXME: once I have type terms, I should remove the type expression from the explore_struct type *)
-type explore_struct = Folded of int * term * type_expression | Unfolded of (const_name * explore_term) list
- and explore_term = (explore_struct,unit) special_term
+(* FIXME: once I have typed terms, I should remove the type expression from the explore_struct type *)
+type explore_struct = Folded of int * type_expression term | Unfolded of (const_name * explore_term) list
+ and explore_term = (explore_struct,type_expression) special_term
 
 (* SCT *)
 type weight = Num of int | Infty
@@ -316,3 +316,12 @@ let rec pattern_to_approx_term = function
     | Proj(d,p,t) -> Proj(d,p,t)
     | App(v1,v2,t) -> App(pattern_to_approx_term v1, pattern_to_approx_term v2,t)
     | Special(s,t) -> s.bot
+
+let typed_app f args
+  = List.fold_left (fun v arg ->
+        let t1 = type_of arg in
+        let tv = type_of v in
+        match tv with Arrow(_t1,t2) when _t1=t1 -> App(v,arg,t2) | _ -> raise (Invalid_argument "typed_app"))
+  f
+  args
+

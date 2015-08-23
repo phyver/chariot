@@ -194,10 +194,10 @@ let rec
        in
 
        match u with
-       | Folded(n,v,t) ->
+       | Folded(n,v) ->
             prefix ^ "{…<" ^ (string_of_int n) ^ ">" ^
             (if option "show_term_struct" then ("=" ^ string_of_term v) else "") ^
-            (if option "show_type_struct" then (":" ^ string_of_type t) else "") ^
+            (if option "show_type_struct" then let t = type_of v in (":" ^ string_of_type t) else "") ^
             "…}"
        | Unfolded fields -> prefix ^ "{" ^ prefix ^ (String.concat ("; "^prefix) (List.map (function d,v -> d ^ "=" ^ (string_of_explore_term new_indent v)) fields)) ^ "}"
 and

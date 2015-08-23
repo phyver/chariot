@@ -55,7 +55,7 @@ let list_to_product (l:type_expression list) : type_expression
     Data("prod_" ^ (string_of_int n), l)
 
 (* transforms an integer into a term by adding Succ constructors in front of u *)
-let rec int_to_term (n:int) (u:term) : term
+let rec int_to_term (n:int) (u:unit term) : unit term
   = if n=0
     then u
     else int_to_term (n-1) (App(Const("Succ",None,()),u,()))
@@ -64,21 +64,21 @@ let rec int_to_term (n:int) (u:term) : term
 let process_addition u v
   = let rec add_aux u v
       = match v with
-            | Const("Zero", _,_) -> u
-            | App(Const("Succ", p,_), v,_) -> add_aux (App(Const("Succ",p,()),u,())) v
+            | Const("Zero", _,()) -> u
+            | App(Const("Succ", p,()), v,()) -> add_aux (App(Const("Succ",p,()),u,())) v
             | _ -> raise Exit
     in
     try add_aux u v
     with Exit -> App(App(Var("add",()),u,()),v,())
 
 (* tranform a list of terms into the corresponding list by adding Cons constructors in front of u *)
-let rec list_to_term (l:term list) (u:term) :term
+let rec list_to_term (l:unit term list) (u:unit term) : unit term
   = match l with
         | [] -> u
         | v::l -> list_to_term l (App(App(Const("Cons",None,()),v,()),u,()))
 
 (* tranform a list of terms into the corresponding tuple *)
-let tuple_term (l:term list) : term =
+let tuple_term (l:unit term list) : unit term =
     let n = List.length l in
     app (Const("Tuple_" ^ (string_of_int n),None,())) l
 
@@ -161,8 +161,8 @@ let cmd_show_help ()
 
 
 (* reduce a term and show the result *)
-let cmd_reduce term =
-    let t,_,constraints = infer_type_term current_state.env term in
+let cmd_reduce (term:unit term) : unit
+  = let t,term,constraints = infer_type_term current_state.env term in
     msg "term: %s" (string_of_term term);
     let term = reduce_all current_state.env term in
     current_state.last_term <- Some term;
@@ -180,8 +180,8 @@ let cmd_show_last ()
             msg "last result: %s" (string_of_term t)
 
 (* unfold a term by expanding lazy subterms up-to a given depth, and show the result *)
-let cmd_unfold_initial term depth =
-    let t,_,constraints = infer_type_term current_state.env term in
+let cmd_unfold_initial (term:unit term) (depth:int) : unit
+  = let t,term,constraints = infer_type_term current_state.env term in
     let term = unfold_to_depth current_state.env term depth in
     msg "... %s" (string_of_explore_term term);
     msg "of type: %s" (string_of_type t);
@@ -190,7 +190,7 @@ let cmd_unfold_initial term depth =
     current_state.last_explore <- Some term;
     print_newline()
 
-let cmd_unfold l
+let cmd_unfold (l:int list) : unit
   = try
         let t = match current_state.last_explore with
                     | Some t -> t
@@ -293,8 +293,8 @@ let test_collapse p =
 %type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
 %type <type_name * (type_expression list) * (const_name * type_expression) list> type_def
 
-%type <var_name * type_expression option * (term * term) list> function_def
-%type <(var_name * type_expression option * (term * term) list ) list> function_defs
+%type <var_name * type_expression option * (unit pattern * unit term) list> function_def
+%type <(var_name * type_expression option * (unit pattern * unit term) list ) list> function_defs
 
 %%
 
