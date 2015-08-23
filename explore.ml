@@ -75,14 +75,14 @@ let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
         | App(v1,v2,t) -> App(unfold env p v1, unfold env p v2,t)
         | Special(Unfolded fields,t) -> Special (Unfolded (List.map (second (unfold env p)) fields),t)
         | Special(Folded(n,v),t) when not (p n) -> incr struct_nb; Special(Folded(!struct_nb,v),t)
-        | Special(Folded(n,v),Data(tname,_)) when (p n) ->
+        | Special(Folded(n,v),(Data(tname,_) as t)) when (p n) ->
                 let consts = get_type_constants env tname in
                 let fields = List.map (fun d ->
-                    let v = App(Proj(d,None,todo"???"),v,todo"???") in
+                    let v = App(Proj(d,None,TVar "dummy"),v,TVar "dummy") in    (* we can use dummy types because "reduce_all" infers types again *)
                     let v = reduce_all env v in
                     (d, term_to_explore_aux env v)) consts
                 in
-                Special(Unfolded fields,todo"???")
+                Special(Unfolded fields,t)
         | Special _ -> assert false
 
 let unfold env p v = struct_nb:=0; unfold env p v

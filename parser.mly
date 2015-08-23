@@ -230,6 +230,8 @@ let test_unify_type t1 t2 =
     print_newline()
 
 let test_unify_term pattern term =
+    let _,pattern,_ = infer_type_term current_state.env pattern in
+    let _,term,_ = infer_type_term current_state.env term in
     msg "unifying pattern   %s" (string_of_term pattern);
     msg "        and term   %s" (string_of_term term);
     let new_term = unify_pattern (pattern,pattern) term in

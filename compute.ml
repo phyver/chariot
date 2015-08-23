@@ -39,16 +39,20 @@ knowledge of the CeCILL-B license and that you accept its terms.
 open Base
 open Pretty
 open Misc
+open Typing
 
-let rec subst_term sigma (v:(empty,'t) special_term) : (empty,'t) special_term
+(* NOTE: the types in substerms don't mean much as they are unchanged by substitutions *)
+let rec subst_term sigma (v:type_expression term) : type_expression term
   = match v with
     | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
-    | Angel _ | Const _ | Proj _ -> v
+    | Angel t -> Angel t
+    | Const(c,p,t) -> Const(c,p,t)
+    | Proj(d,p,t) -> Proj(d,p,t)
     | App(v1,v2,t) -> App(subst_term sigma v1, subst_term sigma v2,t)
-    | Special(v,t) -> v.bot
+    | Special(v,t) -> Special(v,t)
 
-(* FIXME: check 't parameter??? *)
-let rec equal_term v1 v2 = match v1,v2 with
+let rec equal_term (v1:type_expression term) (v2:type_expression term) : bool
+  = match v1,v2 with
     | Var(x,_),Var(y,_) -> x=y
     | Angel _,Angel _ -> true
     | App(v11,v12,_),App(v21,v22,_) -> (equal_term v11 v21) && (equal_term v12 v22)
@@ -56,11 +60,13 @@ let rec equal_term v1 v2 = match v1,v2 with
     | Const(c1,_,_),Const(c2,_,_) -> c1=c2
     | _,_ -> false
 
-let unify_pattern (pattern,def:(empty,'t) special_term*(empty,'t) special_term) (v:(empty,'t) special_term) : (empty,'t) special_term
+(* NOTE: the types in substerms don't mean much as they are unchanged by substitutions *)
+let unify_pattern (pattern,def:type_expression term*type_expression term) (v:type_expression term) : type_expression term
   = (* the function defined by the pattern: this variable cannot be instantiated! *)
+    (* FIXME: ugly *)
     let f = get_function_name pattern in
 
-    let rec unify_aux (eqs:((empty,'t) special_term*(empty,'t) special_term) list) acc =
+    let rec unify_aux (eqs:(type_expression term*type_expression term) list) acc =
         match eqs with
             | [] -> acc
             | (s,t)::eqs when equal_term s t -> unify_aux eqs acc
@@ -78,11 +84,16 @@ let unify_pattern (pattern,def:(empty,'t) special_term*(empty,'t) special_term) 
     subst_term sigma def
 
 (* NOTE: very inefficient *)
-let reduce_all (env:environment) (v:(empty,'t) special_term) : (empty,'t) special_term
+let reduce_all (env:environment) (v:type_expression term) : type_expression term
   =
+    (* NOTE: types aren't used during computation, but the type is infered
+     * again once the normal form is reached.
+     * FIXME: note that "take 0 [1;2;3]" of type list(nat) reduces to "[]" of
+     * type list('a) *)
+
     (* look for the first clause that can be used to reduce u
      * the boolean in the result indicates if a reduction was made *)
-    let rec reduce_first_clause (v:(empty,'t) special_term) clauses : (empty,'t) special_term*bool =
+    let rec reduce_first_clause (v:type_expression term) clauses : type_expression term*bool =
         match clauses with
             | [] -> v,false
             | clause::clauses ->
@@ -93,8 +104,10 @@ let reduce_all (env:environment) (v:(empty,'t) special_term) : (empty,'t) specia
                     with UnificationError _ -> reduce_first_clause v clauses
                 end
     and
-      reduce v = match v with
-          | Var(f,_) -> (try reduce_first_clause v (get_function_clauses env f) with Not_found -> v,false)
+      reduce (v:type_expression term) : type_expression term * bool
+        = match v with
+          | Var(f,_) -> (try reduce_first_clause v (get_function_clauses env f)
+                         with Not_found -> v,false)
           | Const _ | Angel _ | Proj _ -> v,false
           | App(v1,v2,t) -> 
                 let v1,b1 = reduce v1 in
@@ -110,4 +123,6 @@ let reduce_all (env:environment) (v:(empty,'t) special_term) : (empty,'t) specia
       if b then aux v else v
     in
 
-    aux v
+    let v = aux v in
+    let _,v,_ = infer_type_term env v in
+    v
