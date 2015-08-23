@@ -40,7 +40,7 @@ open Base
 open Pretty
 open Misc
 
-let rec subst_term sigma (v:term) : term
+let rec subst_term sigma (v:(empty,'t) special_term) : (empty,'t) special_term
   = match v with
     | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
     | Angel _ | Const _ | Proj _ -> v
@@ -56,11 +56,11 @@ let rec equal_term v1 v2 = match v1,v2 with
     | Const(c1,_,_),Const(c2,_,_) -> c1=c2
     | _,_ -> false
 
-let unify_pattern (pattern,def:term*term) (v:term) : term
+let unify_pattern (pattern,def:(empty,'t) special_term*(empty,'t) special_term) (v:(empty,'t) special_term) : (empty,'t) special_term
   = (* the function defined by the pattern: this variable cannot be instantiated! *)
     let f = get_function_name pattern in
 
-    let rec unify_aux (eqs:(term*term) list) acc =
+    let rec unify_aux (eqs:((empty,'t) special_term*(empty,'t) special_term) list) acc =
         match eqs with
             | [] -> acc
             | (s,t)::eqs when equal_term s t -> unify_aux eqs acc
@@ -78,11 +78,11 @@ let unify_pattern (pattern,def:term*term) (v:term) : term
     subst_term sigma def
 
 (* NOTE: very inefficient *)
-let reduce_all (env:environment) (v:term) : term
+let reduce_all (env:environment) (v:(empty,'t) special_term) : (empty,'t) special_term
   =
     (* look for the first clause that can be used to reduce u
      * the boolean in the result indicates if a reduction was made *)
-    let rec reduce_first_clause (v:term) clauses : term*bool =
+    let rec reduce_first_clause (v:(empty,'t) special_term) clauses : (empty,'t) special_term*bool =
         match clauses with
             | [] -> v,false
             | clause::clauses ->
