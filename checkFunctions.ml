@@ -124,13 +124,13 @@ let process_function_defs (env:environment)
     (* ) defs; *)
 
 
-    (* (1* check completeness of pattern matching *1) *)
-    (* if option "check_completeness" *)
-    (* then *)
-    (*     List.iter (function f,_,clauses -> *)
-    (*             if not (check_exhaustivity env clauses) *)
-    (*             then error ("function " ^ f ^ " is not complete")) *)
-    (*         defs; *)
+    (* check completeness of pattern matching *)
+    if option "check_completeness"
+    then
+        List.iter (function f,_,clauses ->
+                if not (check_exhaustivity env clauses)
+                then error ("function " ^ f ^ " is not complete"))
+            defs;
 
 
     let defs = if option "use_priorities"
@@ -138,17 +138,17 @@ let process_function_defs (env:environment)
                else defs
     in
 
-(*     (1* (2* SCT *2) *1) *)
-(*     (1* if option "check_adequacy" *1) *)
-(*     (1* then *1) *)
-(*     (1*     begin *1) *)
-(*     (1*         let graph = callgraph_from_definitions defs *1) *)
-(*     (1*         in *1) *)
-(*     (1*         let graph = if option "collapse_graph" then collapse_graph current_state.bound current_state.depth graph else graph in *1) *)
-(*     (1*         if size_change_termination graph *1) *)
-(*     (1*         then msg "the functions are correct" *1) *)
-(*     (1*         else msg "the functions are NOT provably correct" *1) *)
-(*     (1*     end; *1) *)
+    (* (1* SCT *1) *)
+    (* if option "check_adequacy" *)
+    (* then *)
+    (*     begin *)
+    (*         let graph = callgraph_from_definitions defs *)
+    (*         in *)
+    (*         let graph = if option "collapse_graph" then collapse_graph current_state.bound current_state.depth graph else graph in *)
+    (*         if size_change_termination graph *)
+    (*         then msg "the functions are correct" *)
+    (*         else msg "the functions are NOT provably correct" *)
+    (*     end; *)
 
 
 

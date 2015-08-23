@@ -304,6 +304,7 @@ let collapse_weight bound w = match w with
  *)
 type approximation = ApproxProj of priority * weight | ApproxConst of (priority * weight * var_name) list
 type approx_term = (approximation,unit) special_term
+(* TODO: use type approx_term = (approximation,type_expression) special_term *)
 type sct_clause = approx_term * approx_term
 (* TODO: use type sct_clause = (var_name * approx_term list) * (var_name * approx_term list) *)
 
