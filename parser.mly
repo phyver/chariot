@@ -39,6 +39,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 %{
 open Misc
 open Base
+open Utils
 open State
 open Typing
 open Pretty

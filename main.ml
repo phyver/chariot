@@ -36,11 +36,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
 ========================================================================*)
 
 
-open Parser
 open Base
 open Misc
 open State
 open Explore
+open Parser
 
 let parse_error lexbuf
   = let curr = lexbuf.Lexing.lex_curr_p in

@@ -36,9 +36,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
 ========================================================================*)
 
 
-open Base
-open Pretty
 open Misc
+open Base
+open Utils
+open Pretty
 open Typing
 
 (* NOTE: the types in substerms don't mean much as they are unchanged by substitutions *)

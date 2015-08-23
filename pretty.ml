@@ -38,6 +38,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 open Misc
 open Base
+open Utils
 open State
 
 let string_of_priority p = match p with

@@ -38,9 +38,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 open Misc
 open Base
+open Utils
 open State
-open Typing
 open Pretty
+open Typing
 
 (* specialize the type of a constant so that the corresponding (co)data type is t*)
 let specialize_constant (env:environment)

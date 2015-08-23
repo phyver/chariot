@@ -38,9 +38,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 open Misc
 open Base
+open Utils
 open State
-open SCTCalls
 open Pretty
+open SCTCalls
 
 (*****************************
  * Sets of calls and graphs. *

@@ -38,10 +38,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 open Misc
 open Base
+open Utils
 open State
 open Pretty
-open Compute
 open Typing
+open Compute
 
 let rec head_to_explore (v:type_expression term) : explore_term = match v with
     | Angel t -> Angel t
