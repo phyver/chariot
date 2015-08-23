@@ -150,9 +150,9 @@ let infer_priorities (env:environment)
         defs
     in
 
-    (* msg "local types: %s" (string_of_list " , " string_of_type local_types); *)
+    (* debug "datatypes: %s" (string_of_list " , " string_of_type datatypes); *)
     let local_types = find_types_priorities env datatypes in
-    (* msg "priorities: %s" (string_of_list " , " (function t,p -> (string_of_type t) ^ ":" ^ (string_of_int p)) local_types); *)
+    (* debug "priorities: %s" (string_of_list " , " (function t,p -> (string_of_type t) ^ ":" ^ (string_of_int p)) local_types); *)
 
     let get_priority t =
         let rec aux = function

@@ -462,9 +462,10 @@ let infer_type_clause_new (env:environment)
     let tau = unify_type_mgu infered_type_rhs infered_type_lhs in
     let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
 
-    (* update constraints ant types of lhs *)
+    (* update constraints ant types of lhs/rhs *)
     let constraints = List.map (second (subst_type sigma)) constraints in
     let lhs_pattern = subst_type_term sigma lhs_pattern in
+    let rhs_def = subst_type_term sigma rhs_def in
     (* print_typed_subterms lhs_pattern; *)
 
     (* remove variables from constraints *)
