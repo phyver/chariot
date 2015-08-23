@@ -325,4 +325,8 @@ let print_typed_subterms (u:(empty,type_expression) special_term) : unit
 
     let types = show_term u in
     let types = List.sort compare types in
-    msg "with types:\n%s" (string_of_list "\n" (function n,t -> fmt "  - %d: %s" n (string_of_type t)) types)
+    print_string (fmt "\nwith types:\n%s" (string_of_list "\n" (function n,t -> fmt "  - %d: %s" n (string_of_type t)) types));
+    print_newline()
+
+let string_of_type_substitution sigma = string_of_list " , " (function x,t -> fmt "'%s=%s" x (string_of_type t)) sigma
+let string_of_context gamma = string_of_list " , " (function x,t -> fmt "%s:%s" x (string_of_type t)) gamma

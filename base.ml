@@ -222,16 +222,16 @@ let rec extract_datatypes t = match t with
     | Data(_,params) -> t::(List.concat (List.map extract_datatypes params))
     | Arrow(t1,t2) -> (extract_datatypes t1) @ (extract_datatypes t2)
 
-let rec extract_datatypes_new (u:(empty,type_expression) special_term) : type_expression list
+let rec extract_datatypes_from_typed_term (u:(empty,type_expression) special_term) : type_expression list
   = match u with
         | Angel _ | Var _ -> []
-        | App(u1,u2,_) -> merge_uniq (extract_datatypes_new u1) (extract_datatypes_new u2)
-        | Const(_,_,t) -> [get_result_type t]
-        | Proj(_,_,t) -> [get_first_arg_type t]
+        | App(u1,u2,_) -> merge_uniq (extract_datatypes_from_typed_term u1) (extract_datatypes_from_typed_term u2)
+        | Const(_,_,t) -> extract_datatypes (get_result_type t)
+        | Proj(_,_,t) -> extract_datatypes (get_first_arg_type t)
         | Special(s,_) -> s.bot
 
 
-let rec extract_term_variables (v:term) : var_name list
+let rec extract_term_variables (v:(empty,'t) special_term) : var_name list
   = let rec extract_term_variables_aux v =
         match v with
             | Angel _ | Const _ | Proj _ -> []
@@ -240,7 +240,8 @@ let rec extract_term_variables (v:term) : var_name list
             | Special(v,_) -> v.bot
     in uniq (extract_term_variables_aux v)
 
-let rec extract_pattern_variables (v:pattern) : var_name list
+(* let rec extract_pattern_variables (v:pattern) : var_name list *)
+let rec extract_pattern_variables (v:(empty,'t) special_term) : var_name list
   = match get_head v,get_args v with
         | Var(f,_),args -> List.concat (List.map extract_term_variables args)
         | Proj _,v::args -> (extract_pattern_variables v) @ (List.concat (List.map extract_term_variables args))

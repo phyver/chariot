@@ -110,146 +110,60 @@ let process_function_defs (env:environment)
         clauses)
     defs;
 
-    (* TODO: move into typing.ml *)
-    (* gather the constraints on the functions by looking at a single clause *)
-    let type_single_clause (f:var_name) (lhs_pattern,rhs_term:pattern*term)
-      : (var_name*type_expression) list * type_expression list
-      =
-        (* get function from LHS and check it is equal to f *)
-        let _f = get_function_name lhs_pattern in
-        if not (_f = f) then error ("function names " ^ f ^ " and " ^ _f ^ " do not match");
 
-        (* get variables *)
-        let lhs_vars = extract_pattern_variables lhs_pattern in
-        (match find_dup lhs_vars with
-            | None -> ()
-            | Some(x) -> error ("pattern is not linear: variable " ^ x ^ " appears more than once"));
+    let defs = infer_type_defs env defs in
 
-        (* infer type and gather datatypes *)
-        let constraints,datatypes = infer_type_clause env lhs_pattern rhs_term in
+    (* List.iter (function f,t,cls -> *)
+    (*     List.iter (function lhs,rhs -> *)
+    (*         print_typed_subterms lhs; *)
+    (*         print_string "\n     ==>\n\n"; *)
+    (*         print_typed_subterms rhs; *)
+    (*         print_newline() *)
+    (*     ) *)
+    (*     cls *)
+    (* ) defs; *)
 
-        (* remove constraints on pattern variables *)
-        let constraints = List.filter (function x,_ -> (x = f) || (not (List.mem x lhs_vars))) constraints in
 
-        (* check that all the variables appearing on the RHS were also on the LHS *)
-        List.iter (function x,t ->
-                    if not (List.mem x new_functions)
-                    then error (x ^ " is free!")
-                  ) constraints;
+    (* (1* check completeness of pattern matching *1) *)
+    (* if option "check_completeness" *)
+    (* then *)
+    (*     List.iter (function f,_,clauses -> *)
+    (*             if not (check_exhaustivity env clauses) *)
+    (*             then error ("function " ^ f ^ " is not complete")) *)
+    (*         defs; *)
 
-       constraints,datatypes
+
+    let defs = if option "use_priorities"
+               then infer_priorities env defs
+               else defs
     in
 
-    (* TODO: move into typing.ml and rename to type_several_clauses *)
-    let rec process_defs constraints datatypes = function
-        | [] -> constraints, datatypes
-        | (f,k,[])::defs -> process_defs constraints datatypes defs
-        | (f,k,clause::clauses)::defs ->
-            let rconstraints,rdatatypes = process_defs constraints datatypes ((f,k,clauses)::defs) in
-            let constraints,datatypes = type_single_clause f clause in
-            let constraints, sigma = merge_constraints rconstraints constraints in
-            let datatypes = uniq (List.map (subst_type sigma) (datatypes @ rdatatypes)) in
-            (constraints , datatypes)
-    in
-
-    (* TODO: move into typing.ml *)
-    reset_fresh_variable_generator [];
-    let constraints,datatypes = process_defs [] [] defs in
-
-    (* TODO: move into typing.ml *)
-    (* check that the types given by the user are compatible with the infered types *)
-    reset_fresh_variable_generator (datatypes@(List.map snd constraints));
-    (* we try to unify the types given by the user and the infered types,
-     * uniformly for all the functions in the bloc *)
-    let subst_coercion f t constraints datatypes
-      = let infered = List.assoc f constraints in
-        match t with
-            | None -> constraints,datatypes
-            | Some t ->
-                check_type env t;
-                let new_t = instantiate_type t in
-                try
-                    let sigma = unify_type_mgu new_t infered in
-                    (List.map (second (subst_type sigma)) constraints , List.map (subst_type sigma) datatypes)
-                with UnificationError _ -> error ("function "^f^" cannot be coerced to type "^(string_of_type t))
-    in
-    (* that's the corresponding substitution: it instantiate the infered types to the given types (with different variables though) *)
-    let constraints,datatypes = List.fold_left
-                        (fun cd f ->
-                            let constraints,datatypes = cd in
-                            let f,t,_ = f in
-                            subst_coercion f t constraints datatypes)
-                        (constraints,datatypes)
-                        defs
-    in
+(*     (1* (2* SCT *2) *1) *)
+(*     (1* if option "check_adequacy" *1) *)
+(*     (1* then *1) *)
+(*     (1*     begin *1) *)
+(*     (1*         let graph = callgraph_from_definitions defs *1) *)
+(*     (1*         in *1) *)
+(*     (1*         let graph = if option "collapse_graph" then collapse_graph current_state.bound current_state.depth graph else graph in *1) *)
+(*     (1*         if size_change_termination graph *1) *)
+(*     (1*         then msg "the functions are correct" *1) *)
+(*     (1*         else msg "the functions are NOT provably correct" *1) *)
+(*     (1*     end; *1) *)
 
 
-    let functions =
+
+    let defs =
         List.fold_left (fun functions f ->
             let f,_,clauses = f in
-            let t = List.assoc f constraints in
-            (f,t,clauses)::functions
+            let t = List.assoc f (List.map (function f,t,_ -> f,t) defs) in
+            (f,current_state.current_function_bloc+1,t,clauses)::functions
         )
         []
         defs
     in
 
-    (* choose the substitution that will make the final type of the definition a good choice:
-     *   - either use the given type
-     *   - or rename the type variables
-     *)
-    let choose_type f t =
-        let infered = List.assoc f constraints in
-        match t with
-        | None ->
-            reset_fresh_variable_generator [];
-            instantiate_type infered
-        | Some t ->
-            reset_fresh_variable_generator [t];
-            let infered_new = instantiate_type infered in
-            if (equal_type t infered_new)
-            then t
-            else error ("function " ^ f ^ " is coerced to type " ^ (string_of_type t) ^ " which is not an instance of " ^ (string_of_type infered_new) ^ "...")
-    in
-
-    (* check completeness of pattern matching *)
-    if option "check_completeness"
-    then
-        List.iter (function f,_,clauses ->
-                if not (check_exhaustivity env clauses)
-                then error ("function " ^ f ^ " is not complete"))
-            defs;
-
-
-    let functions = if option "use_priorities"
-                    then infer_priorities env functions datatypes
-                    else functions
-    in
-
-
-    (* SCT *)
-    if option "check_adequacy"
-    then
-        begin
-            let graph = callgraph_from_definitions functions
-            in
-            let graph = if option "collapse_graph" then collapse_graph current_state.bound current_state.depth graph else graph in
-            if size_change_termination graph
-            then msg "the functions are correct"
-            else msg "the functions are NOT provably correct"
-        end;
-
-
-    let functions =
-        List.fold_left (fun functions f ->
-            let f,_,clauses = f in
-            let t = List.assoc f (List.map (function f,t,_ -> f,t) defs) in
-            (f,current_state.current_function_bloc+1,choose_type f t,clauses)::functions
-        )
-        []
-        functions
-    in
-
     current_state.current_function_bloc <- current_state.current_function_bloc + 1;
 
+    (* TODO: remove *)
+    let functions = List.map (function f,n,t,cls -> f,n,t,List.map (function lhs,rhs -> (map_type_term (fun _ -> ()) lhs, map_type_term (fun _ -> ()) rhs)) cls) defs in
     { env with functions = functions @ env.functions }
