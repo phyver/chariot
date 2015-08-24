@@ -52,6 +52,7 @@ let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expressi
     | Arrow(t1,t2) -> Arrow(subst_type sigma t1, subst_type sigma t2)
     | Data(tname, args) -> Data(tname, List.map (subst_type sigma) args)
 
+(* apply a type substitution to all the type annotations inside a typed term *)
 let rec subst_type_term  (sigma:type_substitution) (u:(empty,type_expression) special_term) : (empty,type_expression) special_term
   = match u with
         | Angel(t) -> Angel(subst_type sigma t)
@@ -65,6 +66,9 @@ let rec subst_type_term  (sigma:type_substitution) (u:(empty,type_expression) sp
             App(u1,u2,t)
         | Special(s,t) -> s.bot
 
+(* compose two type substitutions *)
+let compose_type_substitution sigma1 sigma2
+  = sigma2 @ (List.map (second (subst_type sigma2)) sigma1)
 
 (* generate fresh variables *)
 let fresh_variable_nb = ref 0
@@ -99,10 +103,6 @@ let rec occur_type (x:type_name) (t:type_expression) : bool = match t with
     | Arrow(t1,t2) -> occur_type x t1 || occur_type x t2
     | Data(_,args) -> List.exists (occur_type x) args
 
-(*
- * unification of types
- *)
-
 (* computes the most general unifier of t1 and t2
  * NOTE: priority is given to t1: if t2 is an instance t1, then the
  * substitution we compute doesn't affect t2 *)
@@ -136,8 +136,8 @@ let unify_type_mgu (t1:type_expression) (t2:type_expression) : type_substitution
     mgu_aux [ (t1,t2) ] []
 
 (* unify the types t1 and t2 by applying the mgu to either one of them *)
-let unify_type (t1:type_expression) (t2:type_expression) : type_expression =
-    let sigma = unify_type_mgu t1 t2 in
+let unify_type (t1:type_expression) (t2:type_expression) : type_expression
+  = let sigma = unify_type_mgu t1 t2 in
     let _t1 = subst_type sigma t1 in
     let _t2 = subst_type sigma t2 in
     assert (_t1 = _t2);
@@ -145,8 +145,8 @@ let unify_type (t1:type_expression) (t2:type_expression) : type_expression =
 
 (* check if t1 is an instance of t2
  * NOTE: it relies on the mgu giving priority to its first argument *)
-let is_instance t1 t2 =
-    try
+let is_instance t1 t2
+  = try
         let sigma = unify_type_mgu t1 t2 in
         t1 = subst_type sigma t1
     with UnificationError _ -> false
@@ -154,41 +154,42 @@ let is_instance t1 t2 =
 (* check if two types are equal, up to renaming of free variables *)
 let equal_type t1 t2 = (is_instance t1 t2) && (is_instance t2 t1)
 
-(* add one constraint into a sorted list of constraints *)
-let rec add_constraint (x,t) constraints = match constraints with
-    | [] -> [(x,t)]
-    | (y,s)::_ when x<y -> (x,t)::constraints
-    | (y,s)::constraints when x>y -> (y,s)::(add_constraint (x,t) constraints)
-    | (y,s)::constraints (* when x=y *) -> (x,unify_type s t)::constraints
+(* add one variable into a sorted context *)
+let rec add_to_context (x,t) context
+  = match context with
+        | [] -> [(x,t)]
+        | (y,s)::_ when x<y -> (x,t)::context
+        | (y,s)::context when x>y -> (y,s)::(add_to_context (x,t) context)
+        | (y,s)::context (* when x=y *) -> (x,unify_type s t)::context
 
-(* merge 2 lists of constraints and return the corresponding substitution *)
-let merge_constraints (cs1:(var_name*type_expression) list) (cs2:(var_name*type_expression) list)
+(* merge 2 lists of context and return the corresponding substitution *)
+let merge_context (cs1:(var_name*type_expression) list) (cs2:(var_name*type_expression) list)
     :(var_name*type_expression) list * (type_name*type_expression) list
   =
-    let rec merge_constraints_aux cs1 cs2 sigma = match cs1,cs2 with
+    let rec merge_context_aux cs1 cs2 sigma = match cs1,cs2 with
         | [],cs | cs,[] -> cs,sigma
         | (x1,t1)::cs1, (x2,_)::_ when x1<x2 ->
-            let cs,sigma = merge_constraints_aux cs1 cs2 sigma in
+            let cs,sigma = merge_context_aux cs1 cs2 sigma in
             (x1,t1)::cs , sigma
         | (x1,_)::_, (x2,t2)::cs2 when x1>x2 ->
-            let cs,sigma = merge_constraints_aux cs1 cs2 sigma in
+            let cs,sigma = merge_context_aux cs1 cs2 sigma in
             (x2,t2)::cs , sigma
         | (x1,t1)::cs1, (x2,t2)::cs2 (*when x1=x2*) ->
-            let cs,sigma = merge_constraints_aux cs1 cs2 sigma in
+            let cs,sigma = merge_context_aux cs1 cs2 sigma in
             let tau = unify_type_mgu t1 t2 in
-            (x1,subst_type tau t1)::cs , tau @ (List.map (second (subst_type tau)) sigma)
+            (x1,subst_type tau t1)::cs , compose_type_substitution sigma tau
     in
-    let cs,sigma = merge_constraints_aux cs1 cs2 [] in
+    let cs,sigma = merge_context_aux cs1 cs2 [] in
     List.map (second (subst_type sigma)) cs, sigma
 
 (* infers most general type of "u" in environment "env"
- *   - "constraints" contains the type of some free variables (the function
+ *   - "context" contains the type of some free variables (the function
  *     being defined for exemple)
  *   - "sigma" contains some type substitution that we need to apply
  *
  * the result is the type of the term together with
  *   - the updated types of the free variables: we can discover new free
- *     variables, or discover some new constraints on existing variables
+ *     variables, or discover some new context on existing variables
  *   - the updated list of type substitutions: we can discover that type 'x is
  *     supposed to be nat.
  *  - a list of datatypes that were used during inference (useful for putting
@@ -197,35 +198,37 @@ let merge_constraints (cs1:(var_name*type_expression) list) (cs2:(var_name*type_
 
 let infer_type (env:environment)
                (v:('empty,'t) special_term)
-               (constraints:(var_name*type_expression) list)    (* constraints for the types of free variables *)
+               (context:(var_name*type_expression) list)    (* context for the types of free variables *)
   : type_expression * (empty,type_expression) special_term * (var_name*type_expression) list * (type_name*type_expression) list
   = if verbose 2 then debug "infering type for %s" (string_of_term v);
 
-    let rec infer_type_aux (v:(empty,'t) special_term) constraints
+    let rec infer_type_aux (v:(empty,'t) special_term) context
       : type_expression * (empty,type_expression) special_term * (var_name*type_expression) list * (type_name*type_expression) list
       (* : type_expression * (var_name*type_expression) list * (type_name*type_expression) list *)
       =
           if verbose 4
           then (
             debug "infering type of (recursive call) %s" (string_of_term v);
-            debug "\twith constraints %s" (string_of_list" , " (function x,t -> x^":"^(string_of_type t)) constraints);
+            debug "\twith context %s" (string_of_list" , " (function x,t -> x^":"^(string_of_type t)) context);
             print_newline()
         );
         match v with
             | Angel _ ->
                 let t = instantiate_type (TVar("angel")) in
-                t, Angel(t), constraints, []
+                t, Angel(t), context, []
             | Var(x,_) ->
                 begin
-                    try let t = List.assoc x constraints in
-                    t, Var(x,t), constraints, []
+                    try let t = List.assoc x context in
+                    t, Var(x,t), context, []
                     with Not_found ->
                         begin
                             try
                                 let t = get_function_type env x in
                                 let t = instantiate_type t in
-                                (t, Var(x,t), constraints, [])
-                            with Not_found -> let t = instantiate_type (TVar("type_"^x)) in (t, Var(x,t), add_constraint (x,t) constraints, [])
+                                (t, Var(x,t), context, [])
+                            with Not_found ->
+                                let t = instantiate_type (TVar("type_"^x)) in
+                                (t, Var(x,t), add_to_context (x,t) context, [])
                         end
                 end
             | Const(c,p,_) ->
@@ -233,7 +236,7 @@ let infer_type (env:environment)
                     try
                         let t = instantiate_type (get_constant_type env c) in
                         if is_projection env c then typeError (c ^ " is not a constructor");    (* FIXME: this should be done by a check_term function *)
-                        (t, Const(c,p,t) , constraints, [])
+                        (t, Const(c,p,t) , context, [])
                     with Not_found -> typeError ("cannot infer type of constant " ^ c)
                 end
             | Proj(d,p,_) ->
@@ -241,20 +244,22 @@ let infer_type (env:environment)
                     try
                         let t = instantiate_type (get_constant_type env d) in
                         if not (is_projection env d) then typeError (d ^ " is not a destructor");     (* FIXME: this should be done by a check_term function *)
-                        (t, Proj(d,p,t) , constraints, [])
+                        (t, Proj(d,p,t) , context, [])
                     with Not_found -> typeError ("cannot infer type of constant " ^ d)
                 end
             | App(v1,v2,_) ->
                 begin
-                    let t1,v1,constraints,sigma1 = infer_type_aux v1 constraints in
-                    let t2,v2,constraints,sigma2 = infer_type_aux v2 constraints in
+                    let t1,v1,context,sigma1 = infer_type_aux v1 context in
+                    let t2,v2,context,sigma2 = infer_type_aux v2 context in
                     (* debug "sigma1: %s" (string_of_type_substitution sigma1); *)
                     (* debug "sigma2: %s" (string_of_type_substitution sigma2); *)
+                    let sigma = compose_type_substitution sigma1 sigma2 in
 
                     let tfunc = instantiate_type (Arrow(TVar("arg"),TVar("result"))) in
                     let sigma3 = unify_type_mgu tfunc t1 in
                     (* debug "sigma3: %s" (string_of_type_substitution sigma3); *)
                     let tfunc = subst_type sigma3 tfunc in
+                    let sigma = compose_type_substitution sigma sigma3 in
 
                     let targ,tres = match tfunc with
                         | Arrow(a,b) -> a,b
@@ -262,80 +267,79 @@ let infer_type (env:environment)
                     in
 
                     (* NOTE: do not swap the arguments of unify_type_mgu below!!! TODO: understand... *)
-                    let tau = unify_type_mgu targ t2 in
-                    (* debug "tau: %s" (string_of_type_substitution tau); *)
-                    let sigma = sigma1 @ sigma2 @ sigma3 in
+                    let sigma4 = unify_type_mgu targ t2 in
+                    (* debug "sigma4: %s" (string_of_type_substitution sigma4); *)
+                    let sigma = compose_type_substitution sigma sigma4 in
 
-                    let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
                     (* debug "sigma: %s" (string_of_type_substitution sigma); *)
-                    let constraints = List.map (second (subst_type sigma)) constraints in
+                    let context = List.map (second (subst_type sigma)) context in
                     let tres = subst_type sigma tres in
-                    tres,App(v1,v2,tres),constraints,sigma
+                    tres,App(v1,v2,tres),context,sigma
                 end
             | Special(v,_) -> v.bot
     in
-    let t,v,constraints,sigma = infer_type_aux v constraints in
+    let t,v,context,sigma = infer_type_aux v context in
     let v = subst_type_term sigma v in
     if verbose 3
     then (
         debug "infered type of %s : %s" (string_of_term v) (string_of_type t);
-        debug "\twith free variables: %s" (string_of_list " , " (function x,t -> x^":"^(string_of_type t)) constraints);
+        debug "\twith free variables: %s" (string_of_list " , " (function x,t -> x^":"^(string_of_type t)) context);
         debug "\tand types: %s" (string_of_list " , " (function x,t -> "'"^x^"="^(string_of_type t)) sigma);
         print_newline()
     );
 
     let v = subst_type_term sigma v in
 
-    t,v,constraints,sigma
+    t,v,context,sigma
 
 let infer_type_term (env:environment) (v:(empty,'t) special_term)
   : type_expression * (empty,type_expression) special_term * (var_name*type_expression) list
   = reset_fresh_variable_generator [];
-    let t,v,constraints,_ = infer_type env v [] in
+    let t,v,context,_ = infer_type env v [] in
     t,
     v,
-    constraints
+    context
 
 let infer_type_clause (env:environment)
-                      (constraints:(var_name*type_expression) list)     (* should contain constraints for __ALL__ the functions *)
+                      (context:(var_name*type_expression) list)     (* should contain context for __ALL__ the functions *)
                       (lhs_pattern:(empty,'t) special_term)
                       (rhs_def:(empty,'t) special_term)
   : (var_name*type_expression) list * (empty,type_expression) special_term * (empty,type_expression) special_term
   =
 
-    let funs = List.map fst constraints in
+    let funs = List.map fst context in
 
-    (* infer type of LHS, getting the type constraints on the variables (and the function itself) *)
+    (* infer type of LHS, getting the type context on the variables (and the function itself) *)
     (* reset_fresh_variable_generator []; *)
     (* I need to reset the generator only once for each bunch of recursive definitions. Otherwise, there can be some interference between clauses, like
         val test1 x = []
           | test1 [] = []
     *)
-    let infered_type_lhs, lhs_pattern, constraints_lhs,sigma = infer_type { env with functions=[] } lhs_pattern constraints in
+    let infered_type_lhs, lhs_pattern, context_lhs,sigma = infer_type { env with functions=[] } lhs_pattern context in
 
     let variables = extract_pattern_variables lhs_pattern in
 
     (* print_typed_subterms lhs_pattern; *)
 
     (* infer type of RHS *)
-    let infered_type_rhs, rhs_def, constraints,sigma = infer_type env rhs_def constraints_lhs in
+    let infered_type_rhs, rhs_def, context,sigma = infer_type env rhs_def context_lhs in
     (* print_typed_subterms rhs_def; *)
 
     (* unify types of LHS and RHS *)
     let tau = unify_type_mgu infered_type_rhs infered_type_lhs in
     let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
 
-    (* update constraints ant types of lhs/rhs *)
-    let constraints = List.map (second (subst_type sigma)) constraints in
+    (* update context ant types of lhs/rhs *)
+    let context = List.map (second (subst_type sigma)) context in
     let lhs_pattern = subst_type_term sigma lhs_pattern in
     let rhs_def = subst_type_term sigma rhs_def in
     (* print_typed_subterms lhs_pattern; *)
 
-    (* remove variables from constraints *)
-    let constraints = List.filter (function x,t -> not (List.mem x variables)) constraints in
+    (* remove variables from context *)
+    let context = List.filter (function x,t -> not (List.mem x variables)) context in
 
     (* check that no remaining variables is left *)
-    List.iter (function f,_ -> if not (List.mem f funs) then error (fmt "variable %s is free" f)) constraints;
+    List.iter (function f,_ -> if not (List.mem f funs) then error (fmt "variable %s is free" f)) context;
 
     if verbose 4
     then (
@@ -343,7 +347,7 @@ let infer_type_clause (env:environment)
         debug" and infered type of definition: %s" (string_of_type infered_type_rhs);
         debug "\tgiving %s" (string_of_type (subst_type sigma infered_type_rhs));
         debug "\ttypes: %s" (string_of_list "," (function x,t -> "'"^x^"="^(string_of_type t)) sigma);
-        debug "\twith constraints: %s" (string_of_list "," (function x,t -> x^":"^(string_of_type t)) constraints);
+        debug "\twith context: %s" (string_of_list "," (function x,t -> x^":"^(string_of_type t)) context);
         );
 
     (* the type of the RHS should be an instance of the type of the LHS *)
@@ -351,7 +355,7 @@ let infer_type_clause (env:environment)
     (* if not (infered_type_rhs = subst_type sigma infered_type_rhs) *)
     (* then error ("rhs and lhs do not have the same type"); *)
 
-   constraints, lhs_pattern,rhs_def
+   context, lhs_pattern,rhs_def
 
 
 
@@ -368,35 +372,35 @@ let infer_type_defs
     (* the types of functions, as given by the user *)
     let given_types = List.sort compare (List.concat (List.map (function f,t,_ -> match t with None -> [] | Some t -> [f,t]) defs)) in
 
-    (* initial constraints on the functions *)
-    let initial_constraints = List.sort compare (List.map (function f,t,_ -> match t with None -> (f,TVar("type_"^f)) | Some t -> (f,t)) defs) in
+    (* initial context on the functions *)
+    let initial_context = List.sort compare (List.map (function f,t,_ -> match t with None -> (f,TVar("type_"^f)) | Some t -> (f,t)) defs) in
 
-    let all_constraints,clauses = List.split (
+    let all_context,clauses = List.split (
         List.map
             (function f,lhs,rhs ->
-                let constraints = List.map (second instantiate_type) initial_constraints in
-                let constraints, lhs,rhs = infer_type_clause env constraints lhs rhs in
-                (constraints, (f,lhs,rhs))
+                let context = List.map (second instantiate_type) initial_context in
+                let context, lhs,rhs = infer_type_clause env context lhs rhs in
+                (context, (f,lhs,rhs))
             )
             clauses)
     in
 
-    let constraints,sigma =
+    let context,sigma =
         List.fold_left
-            (fun r constraints ->
-                let constraints',sigma' = r in
-                let constraints,sigma = merge_constraints constraints constraints' in
+            (fun r context ->
+                let context',sigma' = r in
+                let context,sigma = merge_context context context' in
                 let sigma = sigma @ (List.map (second (subst_type sigma)) sigma') in
-                constraints,sigma
+                context,sigma
                 )
             ([],[])
-            all_constraints
+            all_context
     in
 
     let clauses = List.map (function f,lhs,rhs -> (f,subst_type_term sigma lhs,subst_type_term sigma rhs)) clauses in
 
     (* simplify type variables *)
-    let tvars = uniq (List.concat (List.map (function _,t -> extract_type_variables t) constraints)) in
+    let tvars = uniq (List.concat (List.map (function _,t -> extract_type_variables t) context)) in
     reset_fresh_variable_generator [];
     let sigma = List.map (fun x -> x,instantiate_type (TVar x)) tvars in
     let clauses = List.map (function f,lhs,rhs -> (f,subst_type_term sigma lhs,subst_type_term sigma rhs)) clauses in
@@ -418,13 +422,13 @@ let infer_type_defs
         try
             let tf = List.assoc f given_types in
             reset_fresh_variable_generator [tf];
-            let t = instantiate_type (List.assoc f constraints) in
+            let t = instantiate_type (List.assoc f context) in
             if is_instance tf t
             then tf
             else error (fmt "function %s cannot be coerced to type %s" f (string_of_type tf))
         with Not_found ->
             try
-                let t = List.assoc f constraints in
+                let t = List.assoc f context in
                 reset_fresh_variable_generator [];
                 instantiate_type t
             with Not_found -> assert false

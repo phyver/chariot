@@ -260,4 +260,3 @@ let typed_app (f:('a,type_expression) special_term) (args:('a,type_expression) s
   f
   args
 
-

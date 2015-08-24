@@ -163,15 +163,15 @@ let cmd_show_help ()
 
 (* reduce a term and show the result *)
 let cmd_reduce (term:unit term) : unit
-  = let t,term,constraints = infer_type_term current_state.env term in
+  = let t,term,context = infer_type_term current_state.env term in
     msg "term: %s" (string_of_term term);
     let term = reduce_all current_state.env term in
     current_state.last_term <- Some term;
     current_state.last_explore <- None;
     msg "result: %s" (string_of_term term);
     msg "of type: %s" (string_of_type t);
-    if not (constraints = [])
-    then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) constraints);
+    if not (context = [])
+    then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
     print_newline()
 
 let cmd_show_last ()
@@ -182,12 +182,12 @@ let cmd_show_last ()
 
 (* unfold a term by expanding lazy subterms up-to a given depth, and show the result *)
 let cmd_unfold_initial (term:unit term) (depth:int) : unit
-  = let t,term,constraints = infer_type_term current_state.env term in
+  = let t,term,context = infer_type_term current_state.env term in
     let term = unfold_to_depth current_state.env term depth in
     msg "... %s" (string_of_explore_term term);
     msg "of type: %s" (string_of_type t);
-    if not (constraints = [])
-    then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) constraints);
+    if not (context = [])
+    then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
     current_state.last_explore <- Some term;
     print_newline()
 

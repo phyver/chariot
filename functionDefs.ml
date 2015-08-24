@@ -94,7 +94,7 @@ let process_function_defs (env:environment)
   =
 
     (* TODO: I shouldn't look at the types of functions anywhere but should
-     * keep accumulating constraints about the functions type, and check that
+     * keep accumulating context about the functions type, and check that
      * they coincide with the given types at the very end *)
 
     (* check that the functions are all different *)

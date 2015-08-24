@@ -69,6 +69,8 @@ let rec string_of_type = function
         if is_atomic_type t1
         then (string_of_type t1) ^ " → " ^ (string_of_type t2)
         else ("(" ^ (string_of_type t1) ^ ")" ^ " → " ^ (string_of_type t2))
+(* abbreviation *)
+let s_o_t = string_of_type
 
 let rec print_type t = print_string (string_of_type t)
 
@@ -154,6 +156,8 @@ and
         end
 
 let string_of_term u = string_of_special_term () (fun o s -> s.bot) u
+(* abbreviation *)
+let s_o_u = string_of_term
 
 let print_term t = print_string (string_of_term t)
 
@@ -293,7 +297,7 @@ let show_functions env =
         flush_all()
 
 let print_typed_subterms (u:(empty,type_expression) special_term) : unit
-  = 
+  =
     let i = ref 0 in
     let new_i () = incr i ; !i in
 
