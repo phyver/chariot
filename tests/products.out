@@ -1,4 +1,4 @@
-(* ===  functions in environment  =================== *)
+-- functions in environment:
 val
    fst : ('a * 'b) → 'a
     | fst (x, y) = x
@@ -19,14 +19,12 @@ val
    pairs : nat * (nat * (nat * nat))
     | pairs = (Succ¹ Zero¹, (Succ¹ (Succ¹ Zero¹), (Succ¹ (Succ¹ (Succ¹ Zero¹)), Succ¹ (Succ¹ (Succ¹ (Succ¹ Zero¹))))))
 
-(* ================================================== *)
-
 val
    test : nat * nat * nat
     | test = (Succ¹ Zero¹, Succ¹ (Succ¹ Zero¹), Succ¹ (Succ¹ (Succ¹ Zero¹)))
 
 --** typing error: cannot infer type of constant Tuple_4
-(* ===  functions in environment  =================== *)
+-- functions in environment:
 val
    fst : prod_2('a,'b) → 'a
     | fst (Tuple_2¹ x y) = x
@@ -50,6 +48,4 @@ val
 val
    test : prod_3(nat,nat,nat)
     | test = Tuple_3³ (Succ¹ Zero¹) (Succ¹ (Succ¹ Zero¹)) (Succ¹ (Succ¹ (Succ¹ Zero¹)))
-
-(* ================================================== *)
 

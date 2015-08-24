@@ -1,4 +1,4 @@
-(* ===  functions in environment  =================== *)
+-- functions in environment:
 val
    add : nat → nat → nat
     | n+0 = n
@@ -38,9 +38,7 @@ val
    rev : list('a) → list('a)
     | rev l = rev_append Nil l
 
-(* ================================================== *)
-
-(* ===  functions in environment  =================== *)
+-- functions in environment:
 val
    add : nat → nat → nat
     | n+0 = n
@@ -79,6 +77,4 @@ val
 val
    rev : list('a) → list('a)
     | rev l = rev_append [] l
-
-(* ================================================== *)
 

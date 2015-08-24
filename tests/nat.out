@@ -1,4 +1,4 @@
-(* ===  functions in environment  =================== *)
+-- functions in environment:
 val
    add : nat → nat → nat
     | add n Zero = n
@@ -14,9 +14,7 @@ val
     | pow n Zero = Succ Zero
     | pow n (Succ m) = mult n (pow n m)
 
-(* ================================================== *)
-
-(* ===  functions in environment  =================== *)
+-- functions in environment:
 val
    add : nat → nat → nat
     | n+0 = n
@@ -31,8 +29,6 @@ val
    pow : nat → nat → nat
     | pow n 0 = 1
     | pow n (m+1) = mult n (pow n m)
-
-(* ================================================== *)
 
 -- term: 15
 -- result: 15

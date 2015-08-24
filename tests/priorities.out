@@ -1,4 +1,4 @@
-(* ===  functions in environment  =================== *)
+-- functions in environment:
 val
    f : list(list(list(list(nat)))) → nat
     | f (Cons⁹ (Cons⁷ (Cons⁵ (Cons³ Zero¹ Nil³) Nil⁵) Nil⁷) Nil⁹) = Zero¹
@@ -11,8 +11,6 @@ val
 val
    g2 : nat → list(list(list(nat)))
     | g2 x = Nil⁷
-
-(* ================================================== *)
 
 val
    f1 : list(list(list(list(nat)))) → nat

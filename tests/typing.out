@@ -1,4 +1,4 @@
-(* ===  functions in environment  =================== *)
+-- functions in environment:
 val
    map : ('a → 'b) → list('a) → list('b)
     | map f [] = []
@@ -23,7 +23,5 @@ val
    map4 : (nat → list('a)) → list(nat) → list(list('a))
     | map4 f [] = []
     | map4 f (x::xs) = (f x)::(map4 f xs)
-
-(* ================================================== *)
 
 --** function map5 cannot be coerced to type ('a → 'b) → list('b) → list('a)

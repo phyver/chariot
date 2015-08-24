@@ -1,4 +1,4 @@
-(* ===  functions in environment  =================== *)
+-- functions in environment:
 val
    oops : 'a → 'b
     | oops a = ⊤
@@ -6,6 +6,4 @@ val
 val
    oops2 : 'a → 'b
     | oops2 = ⊤
-
-(* ================================================== *)
 

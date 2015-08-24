@@ -1,6 +1,6 @@
 --** function map3_1 cannot be coerced to type ('a → 'b) → list('a) → list('b)
 --** function map4_2 cannot be coerced to type ('a → 'b) → list('a) → list('b)
-(* ===  functions in environment  =================== *)
+-- functions in environment:
 val
    map_1 : ('a → 'b) → list('a) → list('b)
     | map_1 f [] = []
@@ -27,6 +27,4 @@ and
    map2_2 : (nat → nat) → list(nat) → list(nat)
     | map2_2 f [] = []
     | map2_2 f (x::xs) = (f x)::(map2_1 f xs)
-
-(* ================================================== *)
 

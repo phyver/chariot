@@ -1,4 +1,4 @@
-(* ===  functions in environment  =================== *)
+-- functions in environment:
 val
    k : 'a → 'b → 'a
     | k x y = x
@@ -11,9 +11,7 @@ val
    i : 'a → 'a
     | i = s k k
 
-(* ================================================== *)
-
-(* ===  functions in environment  =================== *)
+-- functions in environment:
 val
    k : 'a → 'b → 'a
     | k x y = x
@@ -41,8 +39,6 @@ val
 val
    n : 'a → 'b → 'b
     | n f x = x
-
-(* ================================================== *)
 
 -- term: one Succ⁼ 0
 -- result: 1

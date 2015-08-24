@@ -1,5 +1,4 @@
-
-(* ===  types in environment  ======================= *)
+-- types in environment:
 data
   nat where
     | Zero : nat
@@ -42,6 +41,4 @@ and
   sons('n) where
     | Nil : sons('n)
     | Cons : rtree('n) → sons('n) → sons('n)
-
-(* ================================================== *)
 
