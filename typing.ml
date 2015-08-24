@@ -40,7 +40,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
  * operations on type and type inference
  *)
 open Misc
-open Base
+open Env
 open Utils
 open State
 open Pretty
