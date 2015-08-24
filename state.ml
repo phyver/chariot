@@ -41,8 +41,7 @@ open Env
 
 type state =
     {
-        mutable current_type_bloc: int                      ;  (* counter for blocs of type definitions: odd for data and even for codata *)
-        mutable current_function_bloc: int                  ;
+        mutable current_bloc: int                           ;  (* counter for blocs of function definitions and type definitions (odd for data and even for codata) *)
         mutable env: environment                            ;
 
         mutable prompt: string                              ;
@@ -57,8 +56,7 @@ type state =
 
 let current_state =
     {
-        current_type_bloc     = 0               ;
-        current_function_bloc = 0               ;
+        current_bloc     = 0                    ;
         env = {
                 types                 = []      ;
                 constants             = []      ;

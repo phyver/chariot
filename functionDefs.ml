@@ -157,13 +157,13 @@ let process_function_defs (env:environment)
         List.fold_left (fun functions f ->
             let f,_,clauses = f in
             let t = List.assoc f (List.map (function f,t,_ -> f,t) defs) in
-            (f,current_state.current_function_bloc+1,t,clauses)::functions
+            (f,current_state.current_bloc+1,t,clauses)::functions
         )
         []
         defs
     in
 
-    current_state.current_function_bloc <- current_state.current_function_bloc + 1;
+    current_state.current_bloc <- current_state.current_bloc + 1;
 
     (* TODO: remove *)
     { env with functions = defs @ env.functions }

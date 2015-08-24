@@ -105,9 +105,9 @@ let exec_cmd (cmd:unit->unit) : unit
 (* process some types definitions and add them to the environment *)
 let cmd_process_type_defs n defs
   = (* the real bloc number of this bunch of mutual type definitions *)
-    let n = if even current_state.current_type_bloc = even n
-            then current_state.current_type_bloc+2
-            else current_state.current_type_bloc+1
+    let n = if even current_state.current_bloc = even n
+            then current_state.current_bloc+2
+            else current_state.current_bloc+1
     in
     current_state.env <- process_type_defs current_state.env n defs;
     current_state.last_term <- None;
@@ -125,30 +125,26 @@ let cmd_show s =
     else
     if s = "functions" then show_functions current_state.env
     else
+    if s = "all" || s = "env" then show_environment current_state.env
+    else
+
     (* FIXME: ugly *)
-    let rec auxt = function
+    let rec show_type_aux = function
         | [] -> raise Exit
         | (tname,params,n,consts)::_ when s=tname ->
-            begin
-                if even n
-                then print_string "codata\n"
-                else print_string "data\n";
-                show_data_type current_state.env tname params consts;
-                print_newline()
-            end
-        | _::types -> auxt types
+            show_type_bloc current_state.env [(tname,params,n,consts)]
+        | _::types -> show_type_aux types
     in
-    let rec auxf = function
+    let rec show_function_aux = function
         | [] -> raise Exit
         | (f,m,t,clauses)::_ when s=f ->
-            begin
-                print_string "val\n"; show_function f t clauses;
-                print_newline()
-            end
-        | _::defs -> auxf defs
+            show_function_bloc current_state.env [(f,m,t,clauses)]
+        | _::defs -> show_function_aux defs
     in
-    try auxt current_state.env.types
-    with Exit -> try auxf current_state.env.functions with Exit -> print_endline ("*** no type or function " ^ s ^ " in current_state.environment\n")
+    try show_type_aux current_state.env.types
+    with Exit ->
+        try show_function_aux current_state.env.functions
+        with Exit -> errmsg "no type or function %s in environment" s
 
 
 let cmd_show_help ()

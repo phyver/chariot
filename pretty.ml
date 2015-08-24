@@ -228,39 +228,39 @@ and
 let string_of_sct_clause (l,r) =
     fmt "%s  =>  %s" (string_of_approx_term l) (string_of_approx_term r)
 
-let show_types env =
 
-    let rec showtypesaux = function
+let show_type_bloc env types
+  =
+    let rec show_type_bloc_aux types
+      = match types with
+            | [] -> assert false
+            | [(tname,params,_,consts)] ->
+                    show_data_type env tname params consts;
+            | (tname,params,_,consts)::types ->
+                    begin
+                        show_data_type env tname params consts;
+                        print_string "and\n";
+                        show_type_bloc_aux types
+                    end
+    in
+    match types with
         | [] -> assert false
-        | [(tname,params,_,consts)] -> show_data_type env tname params consts;
-        | (tname,params,n,consts)::(((_,_,_n,_)::_) as types) when _n=n ->
-                begin
-                    show_data_type env tname params consts;
-                    print_string "and\n";
-                    showtypesaux types
-                end
-        | (tname,params,_,consts)::(((_,_,p,_)::_) as types) ->
-                begin
-                    show_data_type env tname params consts;
-                    print_newline();
-                    if even p
-                    then print_string "codata\n"
-                    else print_string "data\n";
-                    showtypesaux types
-                end
+        | (_,_,n,_)::_ ->
+            if even n
+            then print_endline "codata"
+            else print_endline "data";
+            show_type_bloc_aux types;
+            print_newline()
 
 
-    in match List.rev env.types with
-        | [] -> print_string "(* ===  no type in environment  ======================= *)\n";
-                flush_all()
-        | ((_,_,n,_)::_) as types ->
-                print_string "\n(* ===  types in environment  ======================= *)\n";
-                if even n
-                then print_string "codata\n"
-                else print_string "data\n";
-                showtypesaux types;
-                print_string "\n(* ================================================== *)\n\n";
-                flush_all()
+let show_types env =
+    let type_blocs = partition (function _,_,n,_ -> n) (List.rev env.types) in
+    match type_blocs with
+        | [] -> warning "no type in environment"
+        | type_blocs ->
+            msg "types in environment:";
+            List.iter (show_type_bloc env) type_blocs;
+            flush_all()
 
 
 let show_function f t clauses =
@@ -272,31 +272,57 @@ let show_function f t clauses =
                 (function pattern,term -> print_term pattern; print_string " = "; print_term term)
                 clauses
 
-let show_functions env =
-    let rec showfunctionsaux = function
-        | [] -> ()
-        | [ (f,_,t,clauses) ] -> show_function f t clauses
-        | (f,m,t,clauses)::((_,n,_,_)::_ as defs) when m=n ->
-            begin
-                show_function f t clauses;
-                print_string "and\n";
-                showfunctionsaux defs
-            end
-        | (f,m,t,clauses)::((_,n,_,_)::_ as defs) ->
-            begin
-                show_function f t clauses;
-                print_newline ();
-                print_string "val\n";
-                showfunctionsaux defs
-            end
+let show_function_bloc env funs
+  =
+    let rec show_function_bloc_aux funs
+      = match funs with
+            | [] -> assert false
+            | [ (f,_,t,clauses) ] ->
+                show_function f t clauses
+            | (f,_,t,clauses)::funs ->
+                    begin
+                        show_function f t clauses;
+                        print_string "and\n";
+                        show_function_bloc_aux funs
+                    end
     in
-        print_string "(* ===  functions in environment  =================== *)\n";
-        print_string "val\n";
-        showfunctionsaux (List.rev env.functions);
-        print_string "\n(* ================================================== *)\n\n";
-        flush_all()
+    match funs with
+        | [] -> assert false
+        | funs ->
+            print_endline "val";
+            show_function_bloc_aux funs;
+            print_newline()
 
-let print_typed_subterms (u:(empty,type_expression) special_term) : unit
+let show_functions env =
+    let fun_blocs = partition (function _,n,_,_ -> n) (List.rev env.functions) in
+    match fun_blocs with
+        | [] -> warning "no function in environment";
+        | funs ->
+            msg "functions in environment:";
+            List.iter (show_function_bloc env) funs;
+            flush_all()
+
+let show_environment env =
+    let type_blocs = partition (function _,_,n,_ -> n) (List.rev env.types) in
+    let fun_blocs = partition (function _,n,_,_ -> n) (List.rev env.functions) in
+    let rec show_env_aux types funs =
+        match types,funs with
+            | [],[] -> ()
+            | types,[] -> List.iter (show_type_bloc env) types; flush_all()
+            | [],funs -> List.iter (show_function_bloc env) funs; flush_all()
+            | (((_,_,nt,_)::_) as t_bloc)::types , ((_,nf,_,_)::_)::_ when nt<nf ->
+                    show_type_bloc env t_bloc;
+                    show_env_aux types funs
+            | ((_,_,nt,_)::_)::_ , (((_,nf,_,_)::_) as f_bloc)::funs when nt>nf ->
+                    show_function_bloc env f_bloc;
+                    show_env_aux types funs
+            | ((_,_,nt,_)::_)::_ , ((_,nf,_,_)::_)::_ (*when nt=nf*) -> assert false
+            | []::_,_ | _,[]::_ -> assert false
+    in
+    show_env_aux type_blocs fun_blocs
+
+
+let print_typed_subterms (u:type_expression term) : unit
   =
     let i = ref 0 in
     let new_i () = incr i ; !i in

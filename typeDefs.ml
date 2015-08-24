@@ -203,6 +203,6 @@ let process_type_defs (env:environment)
             msg "%s type%s %s %s succesfully defined" (if even n then "coinductive" else "inductive") s (string_of_list  " and " (function (t,_,_) -> t) defs) was
         end;
 
-    current_state.current_type_bloc <- n;
+    current_state.current_bloc <- n;
     { env with  types = types @ env.types;
                 constants = consts @ env.constants }
