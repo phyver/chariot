@@ -42,8 +42,8 @@ open Misc
 open State
 open Pretty
 open Typing
-open CheckCoverage
-open InferPriorities
+open Coverage
+open Priorities
 open SCTCalls
 open SCTGraph
 

@@ -46,9 +46,9 @@ open Pretty
 open Compute
 open Explore
 open SCTCalls
-open CheckCoverage
-open CheckFunctions
-open CheckTypes
+open Coverage
+open FunctionDefs
+open TypeDefs
 
 (* transform a list of types into the product *)
 let list_to_product (l:type_expression list) : type_expression
