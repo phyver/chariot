@@ -42,16 +42,6 @@ open Utils
 open Pretty
 open Typing
 
-(* NOTE: the types in substerms don't mean much as they are unchanged by substitutions *)
-let rec subst_term sigma (v:type_expression term) : type_expression term
-  = match v with
-    | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
-    | Angel t -> Angel t
-    | Const(c,p,t) -> Const(c,p,t)
-    | Proj(d,p,t) -> Proj(d,p,t)
-    | App(v1,v2,t) -> App(subst_term sigma v1, subst_term sigma v2,t)
-    | Special(v,t) -> Special(v,t)
-
 let rec equal_term (v1:type_expression term) (v2:type_expression term) : bool
   = match v1,v2 with
     | Var(x,_),Var(y,_) -> x=y

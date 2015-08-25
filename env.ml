@@ -102,7 +102,10 @@ type environment = {
 
 (* term with CASE and STRUCTS *)
 type 't case_struct_term = ('t case_struct,'t) special_term
- and 't case_struct = Case of var_name * (const_name * var_name list * 't case_struct_term) list | Struct of (const_name * (var_name list) * 't case_struct_term) list | CaseFail
+ and 't case_struct =
+    | Case of var_name * (const_name * (var_name list * 't case_struct_term)) list
+    | Struct of (const_name * ((var_name list) * 't case_struct_term)) list
+    | CaseFail
 
 (* term with possibly unfolded codata *)
 (* FIXME: once I have typed terms, I should remove the type expression from the explore_struct type *)

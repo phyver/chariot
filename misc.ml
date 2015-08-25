@@ -237,3 +237,4 @@ let ansi_code (color:string) (s:string) :string
         Printf.sprintf "%s%s%s" begin_code s end_code
     with Not_found -> raise (Invalid_argument ("ansi_code: color " ^ color ^ " doesn't exist"))
 
+let identity x = x

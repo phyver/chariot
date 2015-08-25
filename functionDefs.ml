@@ -128,8 +128,8 @@ let process_function_defs (env:environment)
     (* check completeness of pattern matching *)
     if option "check_completeness"
     then
-        List.iter (function f,_,clauses ->
-                if not (check_exhaustivity env clauses)
+        List.iter (function f,t,clauses ->
+                if not (check_exhaustivity env t clauses)
                 then error ("function " ^ f ^ " is not complete"))
             defs;
 

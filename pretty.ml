@@ -204,7 +204,11 @@ let rec
             (if option "show_term_struct" then ("=" ^ string_of_term v) else "") ^
             (if option "show_type_struct" then let t = type_of v in (":" ^ string_of_type t) else "") ^
             "…}"
-       | Unfolded fields -> prefix ^ "{" ^ prefix ^ (String.concat ("; "^prefix) (List.map (function d,v -> d ^ "=" ^ (string_of_explore_term new_indent v)) fields)) ^ "}"
+       | Unfolded fields ->
+            prefix ^ "{" ^
+            prefix ^ (String.concat ("; "^prefix)
+                                    (List.map (function d,v -> d ^ "=" ^ (string_of_explore_term new_indent v)) fields)) ^
+            "}"
 and
   string_of_explore_term o v = string_of_special_term o string_of_explore_struct v
 let string_of_explore_term v = string_of_explore_term 2 v
@@ -215,13 +219,27 @@ let print_explore_term v = print_string (string_of_explore_term v)
 (* FIXME: add parameter to string_of_special_term that is passed to the function printing special terms
  * then, I can used it to add indentation for printing case / structs *)
 let rec
-    string_of_case_struct o = function
+    string_of_case_struct indent u =
+       let prefix = if indent > 0 then "\n" ^ String.make indent ' ' else ""
+       in
+       let new_indent = if indent > 0 then indent + 4 else 0
+       in
+
+        match u with
         | CaseFail -> "FAIL"
         | Case(x,l) ->
-            fmt "\n(case %s of\n\t%s)" x (string_of_list "\n\t" (function c,args,v -> fmt "| %s %s -> %s" c (string_of_list " " (fun x -> x) args) (string_of_case_struct_term o v)) l)
-        | Struct l -> fmt "{ %s }" (string_of_list " ; " (function d,args,v -> fmt ".%s %s = %s" d (string_of_list " " (fun x -> x) args) (string_of_case_struct_term o v)) l)
+             prefix ^ (fmt "CASE %s OF" x) ^
+             prefix ^ (String.concat prefix
+                                     (List.map (function c,(args,v) -> fmt "  %s%s  ->  %s" c (if args=[] then "" else " " ^ String.concat " " args) (string_of_case_struct_term new_indent v)) l))
+        | Struct fields -> 
+             prefix ^ "{" ^
+             prefix ^ (String.concat ("; "^prefix)
+                                     (List.map (function d,(args,v) -> d ^ (String.concat " " args) ^ " = " ^ (string_of_case_struct_term new_indent v)) fields)) ^
+            "}"
 and
-    string_of_case_struct_term o v = string_of_special_term () string_of_case_struct v
+    string_of_case_struct_term o v = string_of_special_term o string_of_case_struct v
+
+let string_of_case_struct_term v = string_of_case_struct_term 2 v
 
 
 

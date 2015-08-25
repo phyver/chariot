@@ -79,6 +79,15 @@ let get_constant_type (env:environment) (c:const_name)
         | _::consts -> get_type_constants_aux consts
     in get_type_constants_aux env.constants
 
+let rec type_arity (t:type_expression) : int
+  = match t with
+        | TVar _ | Data _ -> 0
+        | Arrow(_,t) -> 1+type_arity t
+
+let get_constant_arity (env:environment) (c:const_name) : int
+  = let t = get_constant_type env c in
+    type_arity t
+
 let is_projection (env:environment) (c:const_name) : bool
   = let rec is_projection_aux = function
         | [] -> raise Not_found
@@ -211,15 +220,17 @@ let type_of (u:('a,type_expression) special_term) : type_expression
         | App(_,_,t) -> t
         | Special(s,t) -> t
 
-let rec map_type_term (f:'t1 -> 't2) (u:('a,'t1) special_term) : ('a,'t2) special_term
-  = match u with
-        | Angel t -> Angel (f t)
-        | Var(x,t) -> Var(x,f t)
-        | Const(c,p,t) -> Const(c,p,f t)
-        | Proj(d,p,t) -> Proj(d,p,f t)
-        | App(u1,u2,t) -> App(map_type_term f u1, map_type_term f u2, f t)
-        | Special(a,t) -> Special(a,f t)
 
+let rec map_special_term (f:'a1 -> 'a2) (g:'t1 -> 't2) (u:('a1,'t1) special_term) : ('a2,'t2) special_term
+  = match u with
+        | Angel t -> Angel (g t)
+        | Var(x,t) -> Var(x,g t)
+        | Const(c,p,t) -> Const(c,p,g t)
+        | Proj(d,p,t) -> Proj(d,p,g t)
+        | App(u1,u2,t) -> App(map_special_term f g u1, map_special_term f g u2, g t)
+        | Special(a,t) -> Special(f a,g t)
+
+let map_type_term f u = map_special_term identity f u
 
 let add_weight (w1:weight) (w2:weight) : weight
   = match w1,w2 with
@@ -259,4 +270,13 @@ let typed_app (f:('a,type_expression) special_term) (args:('a,type_expression) s
         match tv with Arrow(_t1,t2) when _t1=t1 -> App(v,arg,t2) | _ -> raise (Invalid_argument "typed_app"))
   f
   args
+
+let rec subst_term sigma (v:'t term) : 't term
+  = match v with
+    | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
+    | Angel t -> Angel t
+    | Const(c,p,t) -> Const(c,p,t)
+    | Proj(d,p,t) -> Proj(d,p,t)
+    | App(v1,v2,t) -> App(subst_term sigma v1, subst_term sigma v2,t)
+    | Special(v,t) -> Special(v,t)
 
