@@ -180,7 +180,7 @@ let infer_priorities (env:environment)
             | Proj(d,_,t) ->
                 let dt = get_first_arg_type t in
                 let p = get_priority dt in
-                Proj(d,Some p,dt)
+                Proj(d,Some p,t)
 
     in
     let put_priorities_single_clause (lhs,rhs) = (put_priorities_term lhs,put_priorities_term rhs)
