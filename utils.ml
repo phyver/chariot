@@ -99,7 +99,7 @@ let is_projection (env:environment) (c:const_name) : bool
 let get_function_type (env:environment) (x:var_name)
   = let rec get_function_type_aux = function
         | [] -> raise Not_found
-        | (f,_,t,_)::_ when f=x -> t
+        | (f,_,t,_,_)::_ when f=x -> t
         | _::fcts -> get_function_type_aux fcts
     in
     get_function_type_aux env.functions
@@ -107,10 +107,18 @@ let get_function_type (env:environment) (x:var_name)
 let get_function_clauses (env:environment) (f:var_name)
   = let rec get_function_clauses_aux = function
         | [] -> raise Not_found
-        | (_f,_,_,clauses)::_ when _f=f -> clauses
+        | (_f,_,_,clauses,_)::_ when _f=f -> clauses
         | _::fcts -> get_function_clauses_aux fcts
     in
     get_function_clauses_aux env.functions
+
+let get_function_def (env:environment) (f:var_name)
+  = let rec get_function_def_aux = function
+        | [] -> raise Not_found
+        | (_f,_,_,_,v)::_ when _f=f -> v
+        | _::fcts -> get_function_def_aux fcts
+    in
+    get_function_def_aux env.functions
 
 let get_other_constants (env:environment) (c:const_name) : const_name list
   = let rec get_aux = function

@@ -118,7 +118,7 @@ let process_function_defs (env:environment)
     check_uniqueness_functions new_functions;
 
     (* check that new function are different from old ones *)
-    let old_functions = List.rev_map (function f,_,_,_ -> f) env.functions in
+    let old_functions = List.rev_map (function f,_,_,_,_ -> f) env.functions in
     check_new_funs_different_from_old new_functions old_functions;
 
     (* check clauses *)
@@ -132,6 +132,11 @@ let process_function_defs (env:environment)
     if (verbose 1)
     then msg "Typing for %s successful" (string_of_list ", " identity new_functions);
 
+    let defs = if option "use_priorities"
+               then infer_priorities env defs
+               else defs
+    in
+
     (* List.iter (function f,t,cls -> *)
     (*     List.iter (function lhs,rhs -> *)
     (*         print_typed_subterms lhs; *)
@@ -143,19 +148,21 @@ let process_function_defs (env:environment)
     (* ) defs; *)
 
 
+
     (* check completeness of pattern matching *)
-    if option "check_completeness"
-    then
-        List.iter (function f,t,clauses ->
-                if not (check_exhaustivity env t f clauses)
-                then error ("function " ^ f ^ " is not complete"))
-            defs;
-
-
-    let defs = if option "use_priorities"
-               then infer_priorities env defs
-               else defs
+    let defs = List.map
+        (function f,t,clauses ->
+            let f,args,cs = case_struct_of_clauses env f t clauses in
+            if is_exhaustive f args cs
+            then (if (verbose 1) then msg "function %s is complete" f)
+            else
+                if not (option "allow_incomplete_defs")
+                then error (fmt "function %s is incomplete" f);
+            f,t,clauses,cs
+        )
+        defs
     in
+
 
     (* (1* SCT *1) *)
     (* if option "check_adequacy" *)
@@ -173,9 +180,9 @@ let process_function_defs (env:environment)
 
     let defs =
         List.fold_left (fun functions f ->
-            let f,_,clauses = f in
-            let t = List.assoc f (List.map (function f,t,_ -> f,t) defs) in
-            (f,current_state.current_bloc+1,t,clauses)::functions
+            let f,_,clauses,cs = f in
+            let t = List.assoc f (List.map (function f,t,_,_ -> f,t) defs) in
+            (f,current_state.current_bloc+1,t,clauses,cs)::functions
         )
         []
         defs

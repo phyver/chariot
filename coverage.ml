@@ -203,6 +203,7 @@ let simplify_case_struct v =
     in
     simplify_aux [] v
 
+
 let is_exhaustive f args v =
     let rec get_failure branch v
       = match v with
@@ -236,7 +237,7 @@ let is_exhaustive f args v =
     match get_failure [] v with
         | [] -> true
         | failures ->
-            warning "failures:\n  %s" (string_of_list "\n  " string_of_failure failures);
+            warning "match failures:\n  %s" (string_of_list "\n  " string_of_failure failures);
             false
 
 let add_args_clause args clauses =
@@ -257,8 +258,10 @@ let add_args_clause args clauses =
     ) clauses
 
 
-let check_exhaustivity env (t:type_expression) (f:var_name) (clauses:(type_expression pattern*type_expression term) list) : bool
+let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_expression pattern*type_expression term) list)
+    : (var_name * var_name list * type_expression case_struct_term)
   =
+    (* debug "case_struct_of_clauses for function %s" f; *)
     counter := 0;
     let arity = type_arity t in
     let args = repeat () arity in
@@ -270,9 +273,10 @@ let check_exhaustivity env (t:type_expression) (f:var_name) (clauses:(type_expre
     let clauses = add_args_clause term_args clauses in
 
     let fail = Special(CaseFail,get_result_type t) in
-    let cp = convert_match env args clauses fail in
-    (* debug "obtained:\n    %s %s |--> %s" f (string_of_list " " identity args) (string_of_case_struct_term cp); *)
-    let cp = simplify_case_struct cp in
-    (* debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " identity args) (string_of_case_struct_term cp); *)
+    let cs = convert_match env args clauses fail in
+    (* debug "obtained:\n    %s %s |--> %s" f (string_of_list " " identity args) (string_of_case_struct_term cs); *)
+    let cs = simplify_case_struct cs in
+    (* debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " identity args) (string_of_case_struct_term cs); *)
 
-    is_exhaustive f args cp
+    f,args,cs
+

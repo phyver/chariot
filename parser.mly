@@ -137,8 +137,8 @@ let cmd_show s =
     in
     let rec show_function_aux = function
         | [] -> raise Exit
-        | (f,m,t,clauses)::_ when s=f ->
-            show_function_bloc current_state.env [(f,m,t,clauses)]
+        | (f,m,t,clauses,cs)::_ when s=f ->
+            show_function_bloc current_state.env [(f,m,t,clauses,cs)]
         | _::defs -> show_function_aux defs
     in
     try show_type_aux current_state.env.types

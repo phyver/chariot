@@ -295,9 +295,9 @@ let show_function_bloc env funs
     let rec show_function_bloc_aux funs
       = match funs with
             | [] -> assert false
-            | [ (f,_,t,clauses) ] ->
+            | [ (f,_,t,clauses,_) ] ->
                 show_function f t clauses
-            | (f,_,t,clauses)::funs ->
+            | (f,_,t,clauses,_)::funs ->
                     begin
                         show_function f t clauses;
                         print_string "and\n";
@@ -312,7 +312,7 @@ let show_function_bloc env funs
             print_newline()
 
 let show_functions env =
-    let fun_blocs = partition (function _,n,_,_ -> n) (List.rev env.functions) in
+    let fun_blocs = partition (function _,(n:int),_,_,_ -> n) (List.rev env.functions) in
     match fun_blocs with
         | [] -> warning "no function in environment";
         | funs ->
@@ -321,20 +321,20 @@ let show_functions env =
             flush_all()
 
 let show_environment env =
-    let type_blocs = partition (function _,_,n,_ -> n) (List.rev env.types) in
-    let fun_blocs = partition (function _,n,_,_ -> n) (List.rev env.functions) in
+    let type_blocs = partition (function _,_,(n:int),_ -> n) (List.rev env.types) in
+    let fun_blocs = partition (function _,(n:int),_,_,_ -> n) (List.rev env.functions) in
     let rec show_env_aux types funs =
         match types,funs with
             | [],[] -> ()
             | types,[] -> List.iter (show_type_bloc env) types; flush_all()
             | [],funs -> List.iter (show_function_bloc env) funs; flush_all()
-            | (((_,_,nt,_)::_) as t_bloc)::types , ((_,nf,_,_)::_)::_ when nt<nf ->
+            | (((_,_,nt,_)::_) as t_bloc)::types , ((_,nf,_,_,_)::_)::_ when nt<nf ->
                     show_type_bloc env t_bloc;
                     show_env_aux types funs
-            | ((_,_,nt,_)::_)::_ , (((_,nf,_,_)::_) as f_bloc)::funs when nt>nf ->
+            | ((_,_,nt,_)::_)::_ , (((_,nf,_,_,_)::_) as f_bloc)::funs when nt>nf ->
                     show_function_bloc env f_bloc;
                     show_env_aux types funs
-            | ((_,_,nt,_)::_)::_ , ((_,nf,_,_)::_)::_ (*when nt=nf*) -> assert false
+            | ((_,_,nt,_)::_)::_ , ((_,nf,_,_,_)::_)::_ (*when nt=nf*) -> assert false
             | []::_,_ | _,[]::_ -> assert false
     in
     show_env_aux type_blocs fun_blocs

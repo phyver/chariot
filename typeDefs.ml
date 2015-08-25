@@ -159,7 +159,7 @@ let process_type_defs (env:environment)
     let old_consts = List.map (function c,_,_ -> c) env.constants in
     check_new_consts_different_from_old new_consts old_consts;
     (* and the old functions *)
-    let old_functions = List.map (function f,_,_,_ -> f) env.functions in
+    let old_functions = List.map (function f,_,_,_,_ -> f) env.functions in
     check_new_consts_different_from_old new_consts old_functions;
 
     let process_single_type (tname:type_name)

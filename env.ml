@@ -82,6 +82,13 @@ type bloc_nb = int      (* number of the block of mutual function definitions *)
 type 't pattern = 't term                 (* a pattern (LHS of a clause in a definition) is just a special kind of term *)
 type 't function_clause = 't pattern * 't term     (* clause of a function definition *)
 
+(* term with CASE and STRUCTS *)
+type 't case_struct_term = ('t case_struct,'t) special_term
+ and 't case_struct =
+    | Case of var_name * (const_name * (var_name list * 't case_struct_term)) list
+    | Struct of (const_name * ((var_name list) * 't case_struct_term)) list
+    | CaseFail
+
 (* type for the environment *)
 type environment = {
     (* we keep the names of type arguments of a definition in the environment,
@@ -96,16 +103,14 @@ type environment = {
 
     (* each function is defined inside a bloc of definitions and has a type and
      * a list of defining clauses *)
-    functions: (var_name * bloc_nb * type_expression * type_expression function_clause list) list      }
+    functions: (var_name *
+                bloc_nb *
+                type_expression *
+                type_expression function_clause list *
+                type_expression case_struct_term) list
+    }
 
 
-
-(* term with CASE and STRUCTS *)
-type 't case_struct_term = ('t case_struct,'t) special_term
- and 't case_struct =
-    | Case of var_name * (const_name * (var_name list * 't case_struct_term)) list
-    | Struct of (const_name * ((var_name list) * 't case_struct_term)) list
-    | CaseFail
 
 (* term with possibly unfolded codata *)
 (* FIXME: once I have typed terms, I should remove the type expression from the explore_struct type *)
