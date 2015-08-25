@@ -42,7 +42,7 @@ open Utils
 open State
 open Pretty
 open Typing
-open ComputeRewrite
+open Rewrite
 
 let rec head_to_explore (v:type_expression term) : explore_term = match v with
     | Angel t -> Angel t

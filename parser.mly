@@ -43,7 +43,8 @@ open Utils
 open State
 open Typing
 open Pretty
-open ComputeRewrite
+open Rewrite
+open ComputeCaseStruct
 open Explore
 open SCTCalls
 open Coverage
