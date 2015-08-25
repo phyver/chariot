@@ -102,7 +102,7 @@ rule tokenize = parse
 
     | dummy             { DUMMY }
     | idU               { IDU(remove_exp (Lexing.lexeme lexbuf)) }
-    | idL               { IDL(remove_exp (Lexing.lexeme lexbuf)) }
+    | idL               { IDL(Lexing.lexeme lexbuf) }
     | tvar              { let s = Lexing.lexeme lexbuf in TVAR(String.sub s 1 ((String.length s)-1)) }
     | str               { let s = Lexing.lexeme lexbuf in STR(String.sub s 1 ((String.length s)-2)) }
     | int               { INT(int_of_string (Lexing.lexeme lexbuf)) }

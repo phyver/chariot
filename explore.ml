@@ -42,7 +42,7 @@ open Utils
 open State
 open Pretty
 open Typing
-open Compute
+open ComputeRewrite
 
 let rec head_to_explore (v:type_expression term) : explore_term = match v with
     | Angel t -> Angel t
@@ -67,7 +67,7 @@ let rec term_to_explore_aux (env:environment) (v:type_expression term) : explore
         | Arrow _ | TVar _ ->
             typed_app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
 
-let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (reduce_all env v)
+let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (rewrite_all env v)
 
 
 let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
@@ -79,8 +79,8 @@ let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
         | Special(Folded(n,v),(Data(tname,_) as t)) when (p n) ->
                 let consts = get_type_constants env tname in
                 let fields = List.map (fun d ->
-                    let v = App(Proj(d,None,TVar "dummy"),v,TVar "dummy") in    (* we can use dummy types because "reduce_all" infers types again *)
-                    let v = reduce_all env v in
+                    let v = App(Proj(d,None,TVar "dummy"),v,TVar "dummy") in    (* we can use dummy types because "rewrite_all" infers types again *)
+                    let v = rewrite_all env v in
                     (d, term_to_explore_aux env v)) consts
                 in
                 Special(Unfolded fields,t)

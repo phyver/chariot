@@ -236,7 +236,7 @@ let is_exhaustive f args v =
     match get_failure [] v with
         | [] -> true
         | failures ->
-            warning "failures: %s" (string_of_list "\n" string_of_failure failures);
+            warning "failures:\n  %s" (string_of_list "\n  " string_of_failure failures);
             false
 
 let add_args_clause args clauses =

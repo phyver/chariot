@@ -129,6 +129,8 @@ let process_function_defs (env:environment)
 
 
     let defs = infer_type_defs env defs in
+    if (verbose 1)
+    then msg "Typing for %s successful" (string_of_list ", " identity new_functions);
 
     (* List.iter (function f,t,cls -> *)
     (*     List.iter (function lhs,rhs -> *)

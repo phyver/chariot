@@ -75,16 +75,16 @@ let unify_pattern (pattern,def:type_expression term*type_expression term) (v:typ
     subst_term sigma def
 
 (* NOTE: very inefficient *)
-let reduce_all (env:environment) (v:type_expression term) : type_expression term
+let rewrite_all (env:environment) (v:type_expression term) : type_expression term
   =
     (* NOTE: types aren't used during computation, but the type is infered
      * again once the normal form is reached.
-     * FIXME: note that "take 0 [1;2;3]" of type list(nat) reduces to "[]" of
+     * FIXME: note that "take 0 [1;2;3]" of type list(nat) rewrites to "[]" of
      * type list('a) *)
 
-    (* look for the first clause that can be used to reduce u
+    (* look for the first clause that can be used to rewrite u
      * the boolean in the result indicates if a reduction was made *)
-    let rec reduce_first_clause (v:type_expression term) clauses : type_expression term*bool =
+    let rec rewrite_first_clause (v:type_expression term) clauses : type_expression term*bool =
         match clauses with
             | [] -> v,false
             | clause::clauses ->
@@ -92,25 +92,25 @@ let reduce_all (env:environment) (v:type_expression term) : type_expression term
                     try
                         let new_term = unify_pattern clause v in
                         new_term,true
-                    with UnificationError _ -> reduce_first_clause v clauses
+                    with UnificationError _ -> rewrite_first_clause v clauses
                 end
     and
-      reduce (v:type_expression term) : type_expression term * bool
+      rewrite (v:type_expression term) : type_expression term * bool
         = match v with
-          | Var(f,_) -> (try reduce_first_clause v (get_function_clauses env f)
+          | Var(f,_) -> (try rewrite_first_clause v (get_function_clauses env f)
                          with Not_found -> v,false)
           | Const _ | Angel _ | Proj _ -> v,false
           | App(v1,v2,t) -> 
-                let v1,b1 = reduce v1 in
-                let v2,b2 = reduce v2 in
-                let v3,b3 = (try reduce_first_clause (App(v1,v2,t)) (get_function_clauses env (get_function_name v))
+                let v1,b1 = rewrite v1 in
+                let v2,b2 = rewrite v2 in
+                let v3,b3 = (try rewrite_first_clause (App(v1,v2,t)) (get_function_clauses env (get_function_name v))
                              with Invalid_argument "no head function" | Not_found -> App(v1,v2,t),b1||b2) in
                 v3, b1||b2||b3
           | Special(v,_) -> v.bot
     in
 
     let rec aux v =
-      let v,b = reduce v in
+      let v,b = rewrite v in
       if b then aux v else v
     in
 
