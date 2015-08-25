@@ -67,8 +67,21 @@ let check_new_funs_different_from_old (new_funs:var_name list) (old_funs:var_nam
         | None -> ()
         | Some f -> error (fmt "function %s already exists" f)
 
+(* check that all the constructors are fully applied in a pattern *)
+let rec check_constructor_arity env (v:'t term) : unit
+  = match get_head v,get_args v with
+        | Var _,args -> List.iter (check_constructor_arity env) args
+        | Proj _,v::args -> List.iter (check_constructor_arity env) (v::args)
+        | Proj _,[] -> assert false
+        | App _,_ -> assert false
+        | Const(c,_,_), args ->
+            if (List.length args) <> get_constant_arity env c
+            then error (fmt "the subterm %s starts with a constructor that is not fully applied" (s_o_u v));
+            List.iter (check_constructor_arity env) args
+        | Angel _,_ | Special _,_ -> ()
 
-let check_clause (funs: var_name list) (f:var_name) (lhs:'t pattern) (rhs:'t term) : unit
+
+let check_clause env (funs: var_name list) (f:var_name) (lhs:'t pattern) (rhs:'t term) : unit
   =
     (* get function from LHS and check it is equal to f *)
     let _f = get_function_name lhs in
@@ -83,9 +96,12 @@ let check_clause (funs: var_name list) (f:var_name) (lhs:'t pattern) (rhs:'t ter
 
     (* check that the variables appearing in a pattern are different from the function names being defined *)
     (* FIXME: can I remove this constraint easily? *)
-    match find_common funs variables with
+    (match find_common funs variables with
         | None -> ()
-        | Some x -> error (fmt "you cannot have a variable with same name as one of the defined function (%s)" x)
+        | Some x -> error (fmt "you cannot have a variable with same name as one of the defined function (%s)" x));
+
+    (* check that constructors are fully applied *)
+    check_constructor_arity env lhs
 
 
 let process_function_defs (env:environment)
@@ -107,7 +123,7 @@ let process_function_defs (env:environment)
 
     (* check clauses *)
     List.iter (function f,_,clauses ->
-        List.iter (function (lhs,rhs) -> check_clause new_functions f lhs rhs)
+        List.iter (function (lhs,rhs) -> check_clause env new_functions f lhs rhs)
         clauses)
     defs;
 
