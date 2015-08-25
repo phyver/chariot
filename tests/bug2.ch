@@ -5,7 +5,7 @@ data list('x) where
     | Nil : list('x)
     | Cons : 'x -> list('x) -> list('x)
 
--- BUG: this is seen as incomplete!
+-- BUG: this was seen as incomplete!
 val test x [] = []
   | test [] y = []
   | test (u::xs) (v::ys) = test (u::xs) (v::ys)
