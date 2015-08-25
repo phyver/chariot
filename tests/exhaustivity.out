@@ -1,18 +1,21 @@
 -- inductive type nat was succesfully defined
 -- Typing for f successful
---!! failures:
+--!! match failures:
 --!!   f 1
---** function f is not complete
+--** function f is incomplete
 -- inductive type list was succesfully defined
 -- Typing for last successful
+--!! match failures:
+--!!   last []
 -- Typing for last2 successful
---!! failures:
+--!! match failures:
 --!!   last2 []
---** function last2 is not complete
+--** function last2 is incomplete
 -- Typing for merge successful
+-- function merge is complete
 -- Typing for test1 successful
---!! failures:
+--!! match failures:
 --!!   test1 []
 --!!   test1 [x₂; x₄]
 --!!   test1 [x₂; x₄; x₆; x₈]
---** function test1 is not complete
+--** function test1 is incomplete

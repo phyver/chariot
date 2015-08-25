@@ -13,12 +13,12 @@ data list('x) where
     | Nil : list('x)
     | Cons : 'x -> list('x) -> list('x)
 
-:set check_completeness false
+:set allow_incomplete_defs true
 
 val last [x] = x
   | last (x::xs) = last xs
 
-:set check_completeness true
+:set allow_incomplete_defs false
 
 val last2 [x] = x
   | last2 (x::xs) = last2 xs
