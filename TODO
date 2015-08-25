@@ -1,10 +1,9 @@
-  - convert definitions to CaseStruct terms for exhaustivity checking (it is broken at the moment)
+  - use case_struct terms for computation
+
+  - check that constructor are fully applied in patterns
 
   - change type used for representing calls for SCT:
         type sct_clause = (var_name * approx_term list) * (var_name * approx_term list)
-
-  - add types to all subterms: type ('a,'b) special_term instantiated with
-    'a:=empty and 'b:=unit or 'b:=type_expression, etc.
 
   - use lexing positions for parsing errors:
       - update "file" field
