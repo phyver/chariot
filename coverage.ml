@@ -86,7 +86,6 @@ convert_match env (xs:var_name list)
                   (fail: type_expression case_struct_term)
   : type_expression case_struct_term
   =
-    (* debug "xs: [%s]" (string_of_list ", " identity xs); *)
     (* debug "clauses: {%s}" (string_of_list "," string_of_clause clauses); *)
       match xs,clauses with
         | [],[] -> fail
@@ -104,8 +103,8 @@ convert_match env (xs:var_name list)
 
 convert_match_aux env xs clauses fail
   =
-    debug "xs: [%s]" (string_of_list ", " identity xs);
-    debug "clauses: {%s}" (string_of_list "," string_of_clause clauses);
+    (* debug "xs: [%s]" (string_of_list ", " identity xs); *)
+    (* debug "clauses: {%s}" (string_of_list "," string_of_clause clauses); *)
     match xs,clauses with
         | [],[] -> assert false
 
