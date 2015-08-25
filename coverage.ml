@@ -61,15 +61,17 @@ let  is_var = function
       |  _::_ -> 2
       | [] -> 3
 
-let choose_constructor (c:const_name) (qs:(match_pattern*'t term) list)
+let choose_constructor (c:const_name) (clauses:(match_pattern*'t term) list)
   : (match_pattern*'t term) list
   = List.filter
         (fun q ->
             match get_head (List.hd (fst q)) with
                 | Const(c',_,_) when c=c' -> true
                 | Const(c',_,_) (*when c<>c'*) -> false
+                | Proj(d,_,_) when c=d -> true
+                | Proj(d,_,_) (*when c<>d*) -> false
                 | _ -> assert false)
-        qs
+        clauses
 
 let counter = ref 0
 let new_var () =
@@ -80,61 +82,87 @@ let string_of_clause (pat,def) = fmt "[%s] -> %s" (string_of_list " " s_o_u pat)
 
 let rec
 convert_match env (xs:var_name list)
-                  (qs:(match_pattern*type_expression term) list)
+                  (clauses:(match_pattern*type_expression term) list)
                   (fail: type_expression case_struct_term)
   : type_expression case_struct_term
   =
-    (* debug "xs: %s" (string_of_list ", " identity xs); *)
-    (* debug "qs: {%s}" (string_of_list "," string_of_clause qs); *)
-      match xs,qs with
+    (* debug "xs: [%s]" (string_of_list ", " identity xs); *)
+    (* debug "clauses: {%s}" (string_of_list "," string_of_clause clauses); *)
+      match xs,clauses with
         | [],[] -> fail
         | x::xs,[] -> fail  (* TODO: keep types and check that x is not in a type with 0 constructor *)
         | [],[([],v)] -> map_special_term (fun s->s.bot) identity v
-        | [],([],v)::qs -> debug "TODO: useless case..."; map_special_term (fun s->s.bot) identity v
-        | [],_ -> assert false
+        | [],([],v)::clauses -> debug "TODO: useless case..."; map_special_term (fun s->s.bot) identity v
+        (* | [],_ -> assert false *)
 
-        | xs,qs ->
-            let qss = partition (function p,_ -> is_var p) qs in
-            (* debug "qss: %s" (string_of_list "  |  " (fun qs -> "{" ^ string_of_list ", " string_of_clause qs ^ "}") qss); *)
-            List.fold_right (fun qs e -> convert_match_aux env xs qs e) qss fail
+        | xs,clauses ->
+            let part_clauses = partition (function p,_ -> is_var p) clauses in
+            (* debug "part_clauses: %s" (string_of_list "  |  " (fun clauses -> "{" ^ string_of_list ", " string_of_clause clauses ^ "}") part_clauses); *)
+            List.fold_right (fun clauses e -> convert_match_aux env xs clauses e) part_clauses fail
 
   and
 
-convert_match_aux env xs qs fail
-  = match xs,qs with
+convert_match_aux env xs clauses fail
+  =
+    debug "xs: [%s]" (string_of_list ", " identity xs);
+    debug "clauses: {%s}" (string_of_list "," string_of_clause clauses);
+    match xs,clauses with
         | [],[] -> assert false
 
+        (* variable case *)
         | x::xs,(Var _::_,_)::_ ->
             begin
-                let qs = List.map (fun cl -> match cl with
-                                    | (Var(y,t)::ps,def) -> (ps,subst_term [y,Var(x,t)] def)
-                                    | _ -> assert false
-                                  ) qs
+                let clauses = List.map (fun cl -> match cl with
+                                            | (Var(y,t)::ps,def) -> (ps,subst_term [y,Var(x,t)] def)
+                                            | _ -> assert false)
+                                        clauses
                 in
-                convert_match env xs qs fail
+                convert_match env xs clauses fail
             end
 
-        | x::xs,(Proj(d,_,_)::_,_)::_ -> todo "proj"
-
-        | x::xs,(v::_,_)::_ ->
+        (* projection case *)
+        | xs,(Proj(d,_,t)::_,_)::_ ->
             begin
-                let c,t = (match get_head v with Const(c,_,t) -> c,t | _ -> assert false) in
-                let cs = get_other_constants env c in
-                let clauses = List.map
+                let constants = get_other_constants env d in
+                let struct_fields = List.map
+                    (fun d' ->
+                        let arity = (get_constant_arity env d') - 1 in
+                        let new_xs = repeat () arity in
+                        let new_xs = List.map new_var new_xs in
+
+                        let clauses = List.map
+                                    (function pat,def ->
+                                        get_args (List.hd pat) @ (List.tl pat) , def
+                                    )
+                                    (choose_constructor d' clauses)
+                        in
+                        d', (new_xs, convert_match env (new_xs@xs) clauses fail)
+                    )
+                    constants
+                in
+                Special(Struct(struct_fields),get_first_arg_type t)
+            end
+
+        (* constructor case *)
+        | x::xs,(pattern::_,_)::_ ->
+            begin
+                let c,t = (match get_head pattern with Const(c,_,t) -> c,t | _ -> assert false) in
+                let constants = get_other_constants env c in
+                let case_clauses = List.map
                     (fun c' ->
                         let arity = get_constant_arity env c' in
                         let new_xs = repeat () arity in
                         let new_xs = List.map new_var new_xs in
-                        let qs = List.map
+                        let clauses = List.map
                                     (function pat,def ->
                                         get_args (List.hd pat) @ (List.tl pat) , def
                                     )
-                                    (choose_constructor c' qs)
+                                    (choose_constructor c' clauses)
                         in
-                        c', (new_xs, convert_match env (new_xs@xs) qs fail)
+                        c', (new_xs, convert_match env (new_xs@xs) clauses fail)
                     )
-                    cs in
-                Special(Case(x,clauses), get_result_type t)
+                    constants in
+                Special(Case(x,case_clauses), get_result_type t)
             end
 
         | _ -> assert false
@@ -171,11 +199,12 @@ let simplify_case_struct v =
                     let cases = List.map (function c,(xs,v) -> c,(xs,simplify_aux ((x,(c,xs))::branch) v)) cases in
                     Special(Case(x,cases),t)
                 end
-            | Special(Struct(fields),t) -> todo "..."
+            | Special(Struct(fields),t) ->
+                Special(Struct(List.map (function d,(xs,v) -> d,(xs,simplify_aux branch v)) fields),t)
     in
     simplify_aux [] v
 
-let is_exhaustive (args,v) =
+let is_exhaustive f args v =
     let rec get_failure branch v
       = match v with
             | Var _ | Const _ | Proj _ | Angel _ -> []
@@ -183,21 +212,27 @@ let is_exhaustive (args,v) =
             | App(v1,v2,_) -> (get_failure branch v1) @ (get_failure branch v2)
             | Special(Case(x,cases),_) ->
                 List.concat (List.map (function c,(xs,v) -> get_failure ((x,(c,xs))::branch) v) cases)
-            | Special(Struct(fields),_) -> todo "..."
+            | Special(Struct(fields),_) ->
+                List.concat (List.map (function d,(xs,v) -> get_failure ((".",(d,xs))::branch) v) fields)
     in
 
     let string_of_failure branch =
         let fail = List.fold_right
                         (fun xcxs fail ->
-                            let x,(c,xs) = xcxs in
-                            let v = app (Const(c,None,())) (List.map (fun x->Var(x,())) xs) in
-                            List.map (second (subst_term [x,v])) fail
+                            match xcxs with
+                                | ".",(d,xs) ->
+                                    app (Proj(d,None,())) (fail::(List.map (fun x->Var(x,())) xs))
+                                | x,(c,xs) ->
+                                    let v = app (Const(c,None,())) (List.map (fun x->Var(x,())) xs) in
+                                    subst_term [x,v] fail
                         )
                         branch
-                        (List.map (fun x -> x,Var(x,())) args)
+                        (app
+                            (Var(f,()))
+                            (List.map (fun x -> Var(x,())) args)
+                        )
         in
-
-        string_of_list " " (function x,v -> fmt "%s=%s" x (string_of_term v)) fail
+        string_of_term fail
     in
     match get_failure [] v with
         | [] -> true
@@ -205,18 +240,40 @@ let is_exhaustive (args,v) =
             warning "failures: %s" (string_of_list "\n" string_of_failure failures);
             false
 
+let add_args_clause args clauses =
+    let arity = List.length args in
+    let args = List.rev args in
+    let rec args_aux n xs acc =
+        match n,xs with
+            | n,_ when n<=0 -> acc
+            | n,x::xs -> args_aux (n-1) xs (x::acc)
+            | _,[] -> assert false
+    in
+    let get_args n = args_aux n args [] in
 
-let check_exhaustivity env (t:type_expression) (clauses:(type_expression pattern*type_expression term) list) : bool
+    List.map (function ps,v ->
+        let n = arity - (List.length ps) in
+        let xs = get_args n in
+        ps@xs, typed_app v xs
+    ) clauses
+
+
+let check_exhaustivity env (t:type_expression) (f:var_name) (clauses:(type_expression pattern*type_expression term) list) : bool
   =
     counter := 0;
     let arity = type_arity t in
-    let vars = repeat () arity in
-    let vars = List.map new_var vars in
-    let clauses = List.map (first (fun p -> List.tl (explode_pattern p))) clauses in (* List.tl to remove function name *)
-    let fail = Special(CaseFail,TVar"result_type") in
-    let cp = convert_match env vars clauses fail in
-    (* debug "obtained:\n %s" (string_of_case_struct_term cp); *)
-    let cp = simplify_case_struct cp in
-    (* debug "after simplification:\n %s" (string_of_case_struct_term cp); *)
+    let args = repeat () arity in
+    let args = List.map new_var args in
+    let targs = get_args_type t in
+    let term_args = List.map2 (fun x t -> Var(x,t)) args targs in
 
-    is_exhaustive (vars,cp)
+    let clauses = List.map (first (fun p -> List.tl (explode_pattern p))) clauses in (* List.tl to remove function name *)
+    let clauses = add_args_clause term_args clauses in
+
+    let fail = Special(CaseFail,get_result_type t) in
+    let cp = convert_match env args clauses fail in
+    (* debug "obtained:\n    %s %s |--> %s" f (string_of_list " " identity args) (string_of_case_struct_term cp); *)
+    let cp = simplify_case_struct cp in
+    (* debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " identity args) (string_of_case_struct_term cp); *)
+
+    is_exhaustive f args cp
