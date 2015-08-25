@@ -1,3 +1,4 @@
+:set verbose 1
 :set continue_on_error true
 :set show_priorities false
 
@@ -17,11 +18,19 @@ data list('x) where
 val last [x] = x
   | last (x::xs) = last xs
 
-:show last
-
 :set check_completeness true
 
 val last2 [x] = x
   | last2 (x::xs) = last2 xs
+
+
+val merge f [] ys = ys
+  | merge f xs [] = xs
+  | merge f (x::xs) (y::ys) = (f x y)::(merge f xs ys)
+
+val test1 [a] = 1
+  | test1 [a;b;c] = 2
+  | test1 (a::b::c::d::e::l) = 3
+
 
 
