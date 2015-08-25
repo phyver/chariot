@@ -39,6 +39,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 open Misc
 open Env
 open Utils
+open State
 open Pretty
 open Typing
 
@@ -82,36 +83,42 @@ let rewrite_all (env:environment) (v:type_expression term) : type_expression ter
      * FIXME: note that "take 0 [1;2;3]" of type list(nat) rewrites to "[]" of
      * type list('a) *)
 
+    let counter = ref 0 in
+
     (* look for the first clause that can be used to rewrite u
      * the boolean in the result indicates if a reduction was made *)
-    let rec rewrite_first_clause (v:type_expression term) clauses : type_expression term*bool =
+    let rec rewrite_first_clause (v:type_expression term) clauses : type_expression term =
         match clauses with
-            | [] -> v,false
+            | [] -> v
             | clause::clauses ->
                 begin
                     try
                         let new_term = unify_pattern clause v in
-                        new_term,true
+                        incr counter;
+                        new_term
                     with UnificationError _ -> rewrite_first_clause v clauses
                 end
     and
-      rewrite (v:type_expression term) : type_expression term * bool
+      rewrite (v:type_expression term) : type_expression term
         = match v with
           | Var(f,_) -> (try rewrite_first_clause v (get_function_clauses env f)
-                         with Not_found -> v,false)
-          | Const _ | Angel _ | Proj _ -> v,false
+                         with Not_found -> v)
+          | Const _ | Angel _ | Proj _ -> v
           | App(v1,v2,t) -> 
-                let v1,b1 = rewrite v1 in
-                let v2,b2 = rewrite v2 in
-                let v3,b3 = (try rewrite_first_clause (App(v1,v2,t)) (get_function_clauses env (get_function_name v))
-                             with Invalid_argument "no head function" | Not_found -> App(v1,v2,t),b1||b2) in
-                v3, b1||b2||b3
+                let v1 = rewrite v1 in
+                let v2 = rewrite v2 in
+                let v3 = (try rewrite_first_clause (App(v1,v2,t)) (get_function_clauses env (get_function_name v))
+                             with Invalid_argument "no head function" | Not_found -> App(v1,v2,t)) in
+                v3
           | Special(v,_) -> v.bot
     in
 
     let rec aux v =
-      let v,b = rewrite v in
-      if b then aux v else v
+        let n = !counter in
+        let v = rewrite v in
+        if n = !counter
+        then ((if verbose 1 then msg "%d reductions" n); v)
+        else aux v
     in
 
     let v = aux v in
