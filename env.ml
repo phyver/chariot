@@ -83,11 +83,16 @@ type 't pattern = 't term                 (* a pattern (LHS of a clause in a def
 type 't function_clause = 't pattern * 't term     (* clause of a function definition *)
 
 (* term with CASE and STRUCTS *)
-type 't case_struct_term = ('t case_struct,'t) special_term
- and 't case_struct =
-    | Case of var_name * (const_name * (var_name list * 't case_struct_term)) list
-    | Struct of (const_name * ((var_name list) * 't case_struct_term)) list
+(* type 't case_struct_term = ('t case_struct,'t) special_term *)
+(*  and 't case_struct = *)
+(*     | Case of var_name * (const_name * (var_name list * 't case_struct_term)) list *)
+(*     | Struct of (const_name * ((var_name list) * 't case_struct_term)) list *)
+(*     | CaseFail *)
+type 't case_struct_tree =
     | CaseFail
+    | CSLeaf of 't
+    | Case of var_name * (const_name * (var_name list * 't case_struct_tree)) list
+    | Struct of (const_name * ((var_name list) * 't case_struct_tree)) list
 
 (* type for the environment *)
 type environment = {
@@ -107,7 +112,7 @@ type environment = {
                 bloc_nb *
                 type_expression *
                 type_expression function_clause list *
-                type_expression case_struct_term) list
+                type_expression term case_struct_tree) list
     }
 
 

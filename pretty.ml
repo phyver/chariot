@@ -216,10 +216,8 @@ let string_of_explore_term v = string_of_explore_term 2 v
 let print_explore_term v = print_string (string_of_explore_term v)
 
 
-(* FIXME: add parameter to string_of_special_term that is passed to the function printing special terms
- * then, I can used it to add indentation for printing case / structs *)
 let rec
-    string_of_case_struct indent u =
+    string_of_case_struct_tree indent s u =
        let prefix = if indent > 0 then "\n" ^ String.make indent ' ' else ""
        in
        let new_indent = if indent > 0 then indent + 4 else 0
@@ -230,16 +228,15 @@ let rec
         | Case(x,l) ->
              prefix ^ (fmt "CASE %s OF" x) ^
              prefix ^ (String.concat prefix
-                                     (List.map (function c,(args,v) -> fmt "  %s%s  ->  %s" c (if args=[] then "" else " " ^ String.concat " " args) (string_of_case_struct_term new_indent v)) l))
+                                     (List.map (function c,(args,v) -> fmt "  %s%s  ->  %s" c (if args=[] then "" else " " ^ String.concat " " args) (string_of_case_struct_tree new_indent s v)) l))
         | Struct fields -> 
              prefix ^ "{" ^
              prefix ^ (String.concat ("; "^prefix)
-                                     (List.map (function d,(args,v) -> d ^ (String.concat " " args) ^ " = " ^ (string_of_case_struct_term new_indent v)) fields)) ^
+                                     (List.map (function d,(args,v) -> d ^ (String.concat " " args) ^ " = " ^ (string_of_case_struct_tree new_indent s v)) fields)) ^
             "}"
-and
-    string_of_case_struct_term o v = string_of_special_term o string_of_case_struct v
+        | CSLeaf(v) -> s v
 
-let string_of_case_struct_term v = string_of_case_struct_term 2 v
+let string_of_case_struct_term v = string_of_case_struct_tree 2 v
 
 
 

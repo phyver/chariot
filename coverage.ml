@@ -83,15 +83,15 @@ let string_of_clause (pat,def) = fmt "[%s] -> %s" (string_of_list " " s_o_u pat)
 let rec
 convert_match env (xs:var_name list)
                   (clauses:(match_pattern*type_expression term) list)
-                  (fail: type_expression case_struct_term)
-  : type_expression case_struct_term
+                  (fail: type_expression term case_struct_tree)
+  : type_expression term case_struct_tree
   =
     (* debug "clauses: {%s}" (string_of_list "," string_of_clause clauses); *)
       match xs,clauses with
         | [],[] -> fail
         | x::xs,[] -> fail  (* TODO: keep types and check that x is not in a type with 0 constructor *)
-        | [],[([],v)] -> map_special_term (fun s->s.bot) identity v
-        | [],([],v)::clauses -> debug "TODO: useless case..."; map_special_term (fun s->s.bot) identity v
+        | [],[([],v)] -> CSLeaf(map_special_term (fun s->s.bot) identity v)
+        | [],([],v)::clauses -> debug "TODO: useless case..."; CSLeaf(map_special_term (fun s->s.bot) identity v)
         (* | [],_ -> assert false *)
 
         | xs,clauses ->
@@ -139,7 +139,7 @@ convert_match_aux env xs clauses fail
                     )
                     constants
                 in
-                Special(Struct(struct_fields),get_first_arg_type t)
+                Struct(struct_fields)
             end
 
         (* constructor case *)
@@ -161,34 +161,42 @@ convert_match_aux env xs clauses fail
                         c', (new_xs, convert_match env (new_xs@xs) clauses fail)
                     )
                     constants in
-                Special(Case(x,case_clauses), get_result_type t)
+                Case(x,case_clauses)
             end
 
         | _ -> assert false
 
 
 let simplify_case_struct v =
+    let rec rename_var_term sigma v = match v with
+        | Var(x,t) -> (try Var(List.assoc x sigma,t) with Not_found -> v)
+        | Angel _ | Proj _ | Const _ -> v
+        | Special(s,_) -> s.bot
+        | App(v1,v2,t) -> App(rename_var_term sigma v1,rename_var_term sigma v2,t)
+    in
+
     let rec rename sigma v
       = match v with
-            | Var(x,t) -> (try Var(List.assoc x sigma,t) with Not_found -> v)
-            | Const _ | Proj _ | Angel _ | Special(CaseFail,_)-> v
-            | App(v1,v2,t) -> App(rename sigma v1, rename sigma v2, t)
-            | Special(Case(x,cases),t) ->
+            | CaseFail -> CaseFail
+            (* | Var(x,t) -> (try Var(List.assoc x sigma,t) with Not_found -> v) *)
+            (* | Const _ | Proj _ | Angel _ | Special(CaseFail,_)-> v *)
+            (* | App(v1,v2,t) -> App(rename sigma v1, rename sigma v2, t) *)
+            | Case(x,cases) ->
                 let x = (try List.assoc x sigma with Not_found -> x) in
                 let cases = List.map (function c,(xs,v) -> c,(xs,rename sigma v)) cases in
                 (* NOTE: I assume a kind of Barendregt condition is satisfied by the terms... *)
-                Special(Case(x,cases), t)
-            | Special(Struct(fields),t) ->
+                Case(x,cases)
+            | Struct(fields) ->
                 let fields = List.map (function d,(xs,v) -> d,(xs,rename sigma v)) fields in
                 (* NOTE: I assume a kind of Barendregt condition is satisfied by the terms... *)
-                Special(Struct(fields), t)
+                Struct(fields)
+            | CSLeaf(v) -> CSLeaf(rename_var_term sigma v)
     in
 
     let rec simplify_aux branch v
       = match v with
-            | Var _ | Const _ | Proj _ | Angel _ | Special(CaseFail,_) -> v
-            | App(v1,v2,t) -> App(simplify_aux branch v1, simplify_aux branch v2, t)
-            | Special(Case(x,cases),t) ->
+            | CaseFail -> CaseFail
+            | Case(x,cases) ->
                 begin try
                     let c,xs = List.assoc x branch in
                     let ys,v = List.assoc c cases in
@@ -196,10 +204,11 @@ let simplify_case_struct v =
                     simplify_aux branch v
                 with Not_found ->
                     let cases = List.map (function c,(xs,v) -> c,(xs,simplify_aux ((x,(c,xs))::branch) v)) cases in
-                    Special(Case(x,cases),t)
+                    Case(x,cases)
                 end
-            | Special(Struct(fields),t) ->
-                Special(Struct(List.map (function d,(xs,v) -> d,(xs,simplify_aux branch v)) fields),t)
+            | Struct(fields) ->
+                Struct(List.map (function d,(xs,v) -> d,(xs,simplify_aux branch v)) fields)
+            | CSLeaf v -> CSLeaf v
     in
     simplify_aux [] v
 
@@ -207,12 +216,11 @@ let simplify_case_struct v =
 let is_exhaustive f args v =
     let rec get_failure branch v
       = match v with
-            | Var _ | Const _ | Proj _ | Angel _ -> []
-            | Special(CaseFail,_) -> [branch]
-            | App(v1,v2,_) -> (get_failure branch v1) @ (get_failure branch v2)
-            | Special(Case(x,cases),_) ->
+            | CSLeaf _ -> []
+            | CaseFail -> [branch]
+            | Case(x,cases) ->
                 List.concat (List.map (function c,(xs,v) -> get_failure ((x,(c,xs))::branch) v) cases)
-            | Special(Struct(fields),_) ->
+            | Struct(fields) ->
                 List.concat (List.map (function d,(xs,v) -> get_failure ((".",(d,xs))::branch) v) fields)
     in
 
@@ -259,7 +267,7 @@ let add_args_clause args clauses =
 
 
 let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_expression pattern*type_expression term) list)
-    : (var_name * var_name list * type_expression case_struct_term)
+    : (var_name * var_name list * type_expression term case_struct_tree)
   =
     (* debug "case_struct_of_clauses for function %s" f; *)
     counter := 0;
@@ -272,7 +280,7 @@ let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_e
     let clauses = List.map (first (fun p -> List.tl (explode_pattern p))) clauses in (* List.tl to remove function name *)
     let clauses = add_args_clause term_args clauses in
 
-    let fail = Special(CaseFail,get_result_type t) in
+    let fail = CaseFail in
     let cs = convert_match env args clauses fail in
     (* debug "obtained:\n    %s %s |--> %s" f (string_of_list " " identity args) (string_of_case_struct_term cs); *)
     let cs = simplify_case_struct cs in
