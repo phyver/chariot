@@ -154,7 +154,7 @@ let process_function_defs (env:environment)
         (function f,t,clauses ->
             let f,args,cs = case_struct_of_clauses env f t clauses in
             if is_exhaustive f args cs
-            then (if (verbose 1) then msg "function %s is complete" f)
+            then (if (verbose 1) then msg "definition for %s is complete" f)
             else
                 if not (option "allow_incomplete_defs")
                 then error (fmt "function %s is incomplete" f);

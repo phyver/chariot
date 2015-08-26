@@ -112,6 +112,15 @@ let get_function_clauses (env:environment) (f:var_name)
     in
     get_function_clauses_aux env.functions
 
+let get_function_case_struct (env:environment) (f:var_name)
+  = let rec get_function_case_struct_aux = function
+        | [] -> raise Not_found
+        | (_f,_,_,_,cs)::_ when _f=f -> cs
+        | _::fcts -> get_function_case_struct_aux fcts
+    in
+    get_function_case_struct_aux env.functions
+
+
 let get_function_def (env:environment) (f:var_name)
   = let rec get_function_def_aux = function
         | [] -> raise Not_found
@@ -154,8 +163,19 @@ let get_args (v:('a,'t) special_term) : ('a,'t) special_term list
     in
     get_args_aux [] v
 
-let app (f:('a,unit) special_term) (args:('a,unit) special_term list) : ('a,unit) special_term
-  = List.fold_left (fun t arg -> App(t,arg,())) f args
+let type_of (u:('a,'t) special_term) : 't
+  = match u with
+        | Angel t
+        | Var(_,t)
+        | Const(_,_,t)
+        | Proj(_,_,t)
+        | App(_,_,t) -> t
+        | Special(s,t) -> t
+
+(* NOTE: the result has the same "type" as the function! *)
+let app (f:('a,'t) special_term) (args:('a,'t) special_term list) : ('a,'t) special_term
+  = let t = type_of f in
+      List.fold_left (fun v arg -> App(v,arg,t)) f args
 
 let rec get_result_type (t:type_expression) : type_expression
   = match t with
@@ -218,16 +238,6 @@ let rec extract_pattern_variables (v:(empty,'t) special_term) : var_name list
         | Var(f,_),args -> List.concat (List.map extract_term_variables args)
         | Proj _,v::args -> (extract_pattern_variables v) @ (List.concat (List.map extract_term_variables args))
         | _,_ -> assert false
-
-let type_of (u:('a,type_expression) special_term) : type_expression
-  = match u with
-        | Angel t
-        | Var(_,t)
-        | Const(_,_,t)
-        | Proj(_,_,t)
-        | App(_,_,t) -> t
-        | Special(s,t) -> t
-
 
 let rec map_special_term (f:'a1 -> 'a2) (g:'t1 -> 't2) (u:('a1,'t1) special_term) : ('a2,'t2) special_term
   = match u with

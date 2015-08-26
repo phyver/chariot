@@ -162,7 +162,8 @@ let cmd_show_help ()
 let cmd_reduce (term:unit term) : unit
   = let t,term,context = infer_type_term current_state.env term in
     msg "term: %s" (string_of_term term);
-    let term = rewrite_all current_state.env term in
+    (* let term = rewrite_all current_state.env term in *)
+    let term = reduce current_state.env term in
     current_state.last_term <- Some term;
     current_state.last_explore <- None;
     msg "result: %s" (string_of_term term);
