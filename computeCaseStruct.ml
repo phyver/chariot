@@ -137,7 +137,8 @@ let rec reduce env (v:type_expression term) : type_expression term
                             | CSLeaf v,rest -> implode (v::rest)
                             | _ -> implode (h::args)
                     with Invalid_argument "combine_suffix" -> implode (h::args)
-                    | Exit -> implode (h::args)
+                       | Exit -> implode (h::args)
+                       | Not_found -> implode (h::args) (* f was a free variable *)
                 end
     and
 

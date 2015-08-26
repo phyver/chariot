@@ -182,7 +182,7 @@ let cmd_show_last ()
 let cmd_unfold_initial (term:unit term) (depth:int) : unit
   = let t,term,context = infer_type_term current_state.env term in
     let term = unfold_to_depth current_state.env term depth in
-    msg "... %s" (string_of_explore_term term);
+    msg "%s" (string_of_explore_term term);
     msg "of type: %s" (string_of_type t);
     if not (context = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
@@ -207,7 +207,7 @@ let cmd_unfold (l:int list) : unit
                     | _ ->  unfold current_state.env (fun n -> List.mem n l) t
         in
         current_state.last_explore <- Some t;
-        msg "... %s" (string_of_explore_term t)
+        msg "%s" (string_of_explore_term t)
 
     with Exit -> errmsg "There is no term to unfold..."
 

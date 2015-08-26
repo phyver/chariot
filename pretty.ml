@@ -195,19 +195,20 @@ let rec
    string_of_explore_struct indent u =
        let prefix = if indent > 0 then "\n" ^ String.make indent ' ' else ""
        in
-       let new_indent = if indent > 0 then indent + 2 else 0
+       let new_indent = if indent > 0 then indent + 4 else 0
        in
 
        match u with
        | Folded(n,v) ->
-            prefix ^ "{…<" ^ (string_of_int n) ^ ">" ^
+            prefix ^ "{<" ^ (string_of_int n) ^ ">" ^
             (if option "show_term_struct" then ("=" ^ string_of_term v) else "") ^
             (if option "show_type_struct" then let t = type_of v in (":" ^ string_of_type t) else "") ^
-            "…}"
+            "}"
        | Unfolded fields ->
             prefix ^ "{" ^
-            prefix ^ (String.concat ("; "^prefix)
-                                    (List.map (function d,v -> d ^ "=" ^ (string_of_explore_term new_indent v)) fields)) ^
+            prefix ^ "  " ^ (String.concat (";"^prefix^"  ")
+                                    (List.map (function d,xs,v ->
+                                        fmt "%s%s = %s" d (if xs=[] then "" else " " ^ string_of_list " " identity xs) (string_of_explore_term new_indent v)) fields)) ^
             "}"
 and
   string_of_explore_term o v = string_of_special_term o string_of_explore_struct v

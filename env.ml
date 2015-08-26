@@ -119,7 +119,7 @@ type environment = {
 
 (* term with possibly unfolded codata *)
 (* FIXME: once I have typed terms, I should remove the type expression from the explore_struct type *)
-type explore_struct = Folded of int * type_expression term | Unfolded of (const_name * explore_term) list
+type explore_struct = Folded of int * type_expression term | Unfolded of (const_name * var_name list * explore_term) list
  and explore_term = (explore_struct,type_expression) special_term
 
 (* SCT *)

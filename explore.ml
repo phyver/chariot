@@ -43,6 +43,7 @@ open State
 open Pretty
 open Typing
 open Rewrite
+open ComputeCaseStruct
 
 let rec head_to_explore (v:type_expression term) : explore_term = match v with
     | Angel t -> Angel t
@@ -74,14 +75,17 @@ let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
  =  match v with
         | Angel _ | Var _ | Proj _ | Const _ -> v
         | App(v1,v2,t) -> App(unfold env p v1, unfold env p v2,t)
-        | Special(Unfolded fields,t) -> Special (Unfolded (List.map (second (unfold env p)) fields),t)
+        | Special(Unfolded fields,t) -> Special (Unfolded (List.map (function d,xs,v -> d,xs,unfold env p v) fields),t)
         | Special(Folded(n,v),t) when not (p n) -> incr struct_nb; Special(Folded(!struct_nb,v),t)
         | Special(Folded(n,v),(Data(tname,_) as t)) when (p n) ->
                 let consts = get_type_constants env tname in
                 let fields = List.map (fun d ->
-                    let v = App(Proj(d,None,TVar "dummy"),v,TVar "dummy") in    (* we can use dummy types because "rewrite_all" infers types again *)
-                    let v = rewrite_all env v in
-                    (d, term_to_explore_aux env v)) consts
+                    let v = App(Proj(d,None,TVar "dummy"),v,TVar "dummy") in    (* FIXME: we can use dummy types because "rewrite_all" infers types again *)
+                    let arity = (get_constant_arity env d) - 1 in
+                    let xs = List.map (fun n -> "x"^(sub_of_int n)) (range 1 arity) in
+                    let v = app v (List.map (fun x -> Var(x,TVar "dummy")) xs) in
+                    let v = reduce env v in
+                    (d, xs, term_to_explore_aux env v)) consts
                 in
                 Special(Unfolded fields,t)
         | Special _ -> assert false
