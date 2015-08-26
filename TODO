@@ -1,4 +1,6 @@
-  - use case_struct terms for computation
+  - think again about n-ary application
+
+  - simplify string_of_special_term??? (can I simplify the explore_term type)
 
   - change type used for representing calls for SCT:
         type sct_clause = (var_name * approx_term list) * (var_name * approx_term list)
