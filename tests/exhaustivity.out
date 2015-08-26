@@ -12,7 +12,7 @@
 --!!   last2 []
 --** function last2 is incomplete
 -- Typing for merge successful
--- function merge is complete
+-- definition for merge is complete
 -- Typing for test1 successful
 --!! match failures:
 --!!   test1 []
