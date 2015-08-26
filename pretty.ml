@@ -226,17 +226,17 @@ let rec
         match u with
         | CaseFail -> "FAIL"
         | Case(x,l) ->
-             prefix ^ (fmt "CASE %s OF" x) ^
+             prefix ^ (fmt "case %s of" x) ^
              prefix ^ (String.concat prefix
                                      (List.map (function c,(args,v) -> fmt "  %s%s  ->  %s" c (if args=[] then "" else " " ^ String.concat " " args) (string_of_case_struct_tree new_indent s v)) l))
         | Struct fields -> 
              prefix ^ "{" ^
-             prefix ^ (String.concat ("; "^prefix)
+             prefix ^ "  " ^ (String.concat (" ;"^prefix^"  ")
                                      (List.map (function d,(args,v) -> d ^ (String.concat " " args) ^ " = " ^ (string_of_case_struct_tree new_indent s v)) fields)) ^
-            "}"
+            " }"
         | CSLeaf(v) -> s v
 
-let string_of_case_struct_term v = string_of_case_struct_tree 2 v
+let string_of_case_struct_term v = string_of_case_struct_tree 2 string_of_term v
 
 
 
@@ -278,25 +278,29 @@ let show_types env =
             flush_all()
 
 
-let show_function f t clauses =
+let show_function f t clauses (args,cst) =
     print_string "   ";
     print_string f;
     print_string " : ";
     print_type t;
     print_list "\n    | " "\n    | " "\n"
                 (function pattern,term -> print_term pattern; print_string " = "; print_term term)
-                clauses
+                clauses;
+    if (verbose 2)
+    then
+        let tmp = if args = [] then "" else (string_of_list " " identity args) ^ " -> " in
+        msg "corresponding case and struct form:\n%s%s" tmp (string_of_case_struct_term cst)
 
 let show_function_bloc env funs
   =
     let rec show_function_bloc_aux funs
       = match funs with
             | [] -> assert false
-            | [ (f,_,t,clauses,_) ] ->
-                show_function f t clauses
-            | (f,_,t,clauses,_)::funs ->
+            | [ (f,_,t,clauses,cst) ] ->
+                show_function f t clauses cst
+            | (f,_,t,clauses,cst)::funs ->
                     begin
-                        show_function f t clauses;
+                        show_function f t clauses cst;
                         print_string "and\n";
                         show_function_bloc_aux funs
                     end

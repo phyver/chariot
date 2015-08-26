@@ -158,7 +158,7 @@ let process_function_defs (env:environment)
             else
                 if not (option "allow_incomplete_defs")
                 then error (fmt "function %s is incomplete" f);
-            f,t,clauses,cs
+            f,t,clauses,(args,cs)
         )
         defs
     in

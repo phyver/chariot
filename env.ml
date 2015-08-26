@@ -112,7 +112,7 @@ type environment = {
                 bloc_nb *
                 type_expression *
                 type_expression function_clause list *
-                type_expression term case_struct_tree) list
+                (var_name list * type_expression term case_struct_tree)) list
     }
 
 
