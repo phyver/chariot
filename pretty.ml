@@ -232,7 +232,7 @@ let rec
         | Struct fields -> 
              prefix ^ "{" ^
              prefix ^ "  " ^ (String.concat (" ;"^prefix^"  ")
-                                     (List.map (function d,(args,v) -> d ^ (String.concat " " args) ^ " = " ^ (string_of_case_struct_tree new_indent s v)) fields)) ^
+                                     (List.map (function d,(args,v) -> d ^ (if args=[] then "" else " " ^ (String.concat " " args)) ^ " = " ^ (string_of_case_struct_tree new_indent s v)) fields)) ^
             " }"
         | CSLeaf(v) -> s v
 
