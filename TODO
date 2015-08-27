@@ -1,6 +1,9 @@
-  - think again about n-ary application
 
-  - simplify string_of_special_term??? (can I simplify the explore_term type)
+  - without memoizing, reduction with case is slower than rewritting!!!
+
+  - think again about n-ary application
+        type atomic_term = Var | Proj | Const | Angel
+        type term = App of atomic_term * term list | Special ...
 
   - change type used for representing calls for SCT:
         type sct_clause = (var_name * approx_term list) * (var_name * approx_term list)
