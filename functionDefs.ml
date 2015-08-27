@@ -75,9 +75,13 @@ let rec check_constructor_arity env (v:'t term) : unit
         | Proj _,[] -> assert false
         | App _,_ -> assert false
         | Const(c,_,_), args ->
-            if (List.length args) <> get_constant_arity env c
-            then error (fmt "the subterm %s starts with a constructor that is not fully applied" (s_o_u v));
-            List.iter (check_constructor_arity env) args
+            begin
+                try
+                    if (List.length args) <> get_constant_arity env c
+                    then error (fmt "the subterm %s starts with a constructor that is not fully applied" (s_o_u v));
+                    List.iter (check_constructor_arity env) args
+                with Not_found -> error (fmt "constructor %s doesn't exist in the environment" c)
+            end
         | Angel _,_ | Special _,_ -> ()
 
 
