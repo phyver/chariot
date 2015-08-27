@@ -43,9 +43,12 @@ open State
 open Pretty
 open Typing
 
+module Memo = Map.Make (struct type t=type_expression term let compare=compare end)
+
 let rec reduce env (v:type_expression term) : type_expression term
   =
     let counter = ref 0 in
+    let table = ref Memo.empty in
 
     let rec explode v
       = let h,args = get_head v,get_args v in
@@ -110,36 +113,46 @@ let rec reduce env (v:type_expression term) : type_expression term
                             let xs,cl = (try List.assoc c clauses with Not_found -> assert false) in
                             let tau,rest' = combine_suffix xs args in
                             rewrite_case_struct (tau@sigma) (rest'@rest) cl
-                        | _ -> error "typing error"
+                        | _ -> error (fmt "typing error with %s" (s_o_u v))
                 with Not_found -> assert false
     in
 
     let rec
     rewrite (v:type_expression term) : type_expression term
       =
-        (* debug "rewrite for %s" (s_o_u v); *)
-        let args = explode v in
-        let h,args = (try List.hd args,List.tl args with _ -> assert false) in
-        let args = List.map nf args in
-        match h with
-            | Const _ | Angel _ -> implode (h::args)
+        try
+            let result,n = Memo.find v !table
+            in counter := !counter+n;
+            result
+        with Not_found ->
+            let counter0 = !counter in
+            let result =
+                (* debug "rewrite for %s" (s_o_u v); *)
+                let args = explode v in
+                let h,args = (try List.hd args,List.tl args with _ -> assert false) in
+                let args = List.map nf args in
+                match h with
+                    | Const _ | Angel _ -> implode (h::args)
 
-            | App _ -> assert false
-            | Special(s,_) -> s.bot
-            | Proj(d,_,_) -> assert (args=[]); h
+                    | App _ -> assert false
+                    | Special(s,_) -> s.bot
+                    | Proj(d,_,_) -> assert (args=[]); h
 
-            | Var(f,t) ->
-                begin
-                    try
-                        let xs,csf = get_function_case_struct env f in
-                        let sigma,rest = combine_suffix xs args in
-                        match rewrite_case_struct sigma rest csf with
-                            | CSLeaf v,rest -> implode (v::rest)
-                            | _ -> implode (h::args)
-                    with Invalid_argument "combine_suffix" -> implode (h::args)
-                       | Exit -> implode (h::args)
-                       | Not_found -> implode (h::args) (* f was a free variable *)
-                end
+                    | Var(f,t) ->
+                        begin
+                            try
+                                let xs,csf = get_function_case_struct env f in
+                                let sigma,rest = combine_suffix xs args in
+                                match rewrite_case_struct sigma rest csf with
+                                    | CSLeaf v,rest -> implode (v::rest)
+                                    | _ -> implode (h::args)
+                            with Invalid_argument "combine_suffix" -> implode (h::args)
+                               | Exit -> implode (h::args)
+                               | Not_found -> implode (h::args) (* f was a free variable *)
+                        end
+            in
+            table := Memo.add v (result,!counter-counter0) !table;    (* TODO provokes a problem for pow 1 (pow 1 1) *)
+            result
     and
 
     nf (v:type_expression term) : type_expression term
