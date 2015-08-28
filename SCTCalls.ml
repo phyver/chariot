@@ -652,8 +652,23 @@ let decreasing (l,r : sct_clause)
       = match pats1,pats2 with
             | [],[] -> (match acc with (Some p, Num w) when even p && w<0 -> true | _ -> false)
 
-            | [],_ | _,[] -> raise (Invalid_argument "decreasing should only be called on idempotent rules")
-                                (* FIXME: cannot it happen that we get f x => f x .D y *)
+            | _,[] -> assert false 
+
+            | pats1, (Special(ApproxProj(prio2,w2),_))::pats2 ->
+                begin
+                    assert (pats2 = []);
+                    let app = add_approx
+                                acc
+                                (collapse_apps_proj (List.map snd pats1)) in
+                    match app with
+                        | _,Infty -> assert false
+                        | p,w ->
+                            match add_approx (prio2,w2) (p,op_weight w) with
+                                | (None,Num w) -> w<0
+                                | (Some p, Num w) when even p -> w<0
+                                | _ -> false
+                end
+            | [],pats2 -> assert false
 
             | (app1,u1)::pats1, u2::pats2 ->
                 begin
@@ -699,22 +714,22 @@ let decreasing (l,r : sct_clause)
                             let args2 = repeat u2 (List.length args1) in
                             decreasing_aux (args1@pats1) (args2@pats2) acc
 
-                        | Proj(_,p,_),[],Special(ApproxProj(prio2,w2),_),_ ->
-                            begin
-                                assert (pats2 = []);
-                                let app = add_approx
-                                            acc
-                                            (collapse_apps_proj (List.map snd ((app1,u1)::pats1))) in
-                                match app with
-                                    | _,Infty -> assert false
-                                    | p,w ->
-                                        begin
-                                            match add_approx (prio2,w2) (p,op_weight w) with
-                                                | (None,Num w) -> w<0
-                                                | (Some p, Num w) when even p -> w<0
-                                                | _ -> false
-                                        end
-                            end
+                        (* | Proj(_,p,_),[],Special(ApproxProj(prio2,w2),_),_ ->       (1* do this also when pats1 is empty *1) *)
+                        (*     begin *)
+                        (*         assert (pats2 = []); *)
+                        (*         let app = add_approx *)
+                        (*                     acc *)
+                        (*                     (collapse_apps_proj (List.map snd ((app1,u1)::pats1))) in *)
+                        (*         match app with *)
+                        (*             | _,Infty -> assert false *)
+                        (*             | p,w -> *)
+                        (*                 begin *)
+                        (*                     match add_approx (prio2,w2) (p,op_weight w) with *)
+                        (*                         | (None,Num w) -> w<0 *)
+                        (*                         | (Some p, Num w) when even p -> w<0 *)
+                        (*                         | _ -> false *)
+                        (*                 end *)
+                        (*     end *)
 
                         | _,_,Special(ApproxConst _,_),_ -> assert false
 
@@ -735,3 +750,6 @@ let decreasing (l,r : sct_clause)
     decreasing_aux (List.map (fun p -> (Some 0,Num 0),p) pats1) pats2 (Some 0, Num 0)
 
 
+let decreasing cl =
+    try decreasing cl
+    with _ -> debug "OOPS %s" (string_of_sct_clause cl); assert false
