@@ -171,7 +171,7 @@ let infer_priorities (env:environment)
     let rec put_priorities_term v
       = match v with
             | Angel _ | Var _ -> v
-            | App(u1,u2,t) -> App(put_priorities_term u1, put_priorities_term u2, t)
+            | App(u1,u2) -> App(put_priorities_term u1, put_priorities_term u2)
             | Special(s,_) -> s.bot
             | Const(c,_,t) ->
                 let dt = get_result_type t in

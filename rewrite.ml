@@ -47,7 +47,7 @@ let rec equal_term (v1:type_expression term) (v2:type_expression term) : bool
   = match v1,v2 with
     | Var(x,_),Var(y,_) -> x=y
     | Angel _,Angel _ -> true
-    | App(v11,v12,_),App(v21,v22,_) -> (equal_term v11 v21) && (equal_term v12 v22)
+    | App(v11,v12),App(v21,v22) -> (equal_term v11 v21) && (equal_term v12 v22)
     | Proj(d1,_,_),Proj(d2,_,_) -> d1=d2
     | Const(c1,_,_),Const(c2,_,_) -> c1=c2
     | _,_ -> false
@@ -62,7 +62,7 @@ let unify_pattern (pattern,def:type_expression term*type_expression term) (v:typ
         match eqs with
             | [] -> acc
             | (s,t)::eqs when equal_term s t -> unify_aux eqs acc
-            | (App(u1,v1,_),App(u2,v2,_))::eqs -> unify_aux ((u1,u2)::(v1,v2)::eqs) acc
+            | (App(u1,v1),App(u2,v2))::eqs -> unify_aux ((u1,u2)::(v1,v2)::eqs) acc
             | (Var(_f,_), _)::_ when _f = f -> unificationError "cannot unify the function name"
             | (Var(x,_), v)::eqs ->
                     let eqs = List.map (function u1,u2 -> (subst_term [x,v] u1, subst_term [x,v] u2)) eqs in
@@ -104,11 +104,11 @@ let rewrite_all (env:environment) (v:type_expression term) : type_expression ter
           | Var(f,_) -> (try rewrite_first_clause v (get_function_clauses env f)
                          with Not_found -> v)
           | Const _ | Angel _ | Proj _ -> v
-          | App(v1,v2,t) -> 
+          | App(v1,v2) -> 
                 let v1 = rewrite v1 in
                 let v2 = rewrite v2 in
-                let v3 = (try rewrite_first_clause (App(v1,v2,t)) (get_function_clauses env (get_function_name v))
-                             with Invalid_argument "no head function" | Not_found -> App(v1,v2,t)) in
+                let v3 = (try rewrite_first_clause (App(v1,v2)) (get_function_clauses env (get_function_name v))
+                             with Invalid_argument "no head function" | Not_found -> App(v1,v2)) in
                 v3
           | Special(v,_) -> v.bot
     in

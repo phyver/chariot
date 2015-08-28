@@ -51,7 +51,7 @@ let rec head_to_explore (v:type_expression term) : explore_term = match v with
     | Proj(d,p,t) -> Proj(d,p,t)
     | Const(c,p,t) -> Const(c,p,t)
     | Special(v,t) -> v.bot
-    | App(v1,v2,t) -> assert false
+    | App(v1,v2) -> assert false
 
 let struct_nb = ref 0
 
@@ -62,11 +62,11 @@ let rec term_to_explore_aux (env:environment) (v:type_expression term) : explore
         | Data(tname,_) as t ->
             if (is_inductive env tname)
             then
-                typed_app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
+                app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
             else
                 (incr struct_nb; Special (Folded(!struct_nb,v),t))
         | Arrow _ | TVar _ ->
-            typed_app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
+            app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
 
 let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (reduce env v)
 
@@ -74,13 +74,13 @@ let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (reduce env 
 let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
  =  match v with
         | Angel _ | Var _ | Proj _ | Const _ -> v
-        | App(v1,v2,t) -> App(unfold env p v1, unfold env p v2,t)
+        | App(v1,v2) -> App(unfold env p v1, unfold env p v2)
         | Special(Unfolded fields,t) -> Special (Unfolded (List.map (function d,xs,v -> d,xs,unfold env p v) fields),t)
         | Special(Folded(n,v),t) when not (p n) -> incr struct_nb; Special(Folded(!struct_nb,v),t)
         | Special(Folded(n,v),(Data(tname,_) as t)) when (p n) ->
                 let consts = get_type_constants env tname in
                 let fields = List.map (fun d ->
-                    let v = App(Proj(d,None,TVar "dummy"),v,TVar "dummy") in    (* FIXME: we can use dummy types because "rewrite_all" infers types again *)
+                    let v = App(Proj(d,None,TVar "dummy"),v) in    (* FIXME: we can use dummy types because "rewrite_all" infers types again *)
                     let arity = (get_constant_arity env d) - 1 in
                     let xs = List.map (fun n -> "x"^(sub_of_int n)) (range 1 arity) in
                     let v = app v (List.map (fun x -> Var(x,TVar "dummy")) xs) in

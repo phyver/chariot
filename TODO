@@ -1,6 +1,3 @@
-  - change type used for representing calls for SCT:
-        type sct_clause = (var_name * approx_term list) * (var_name * approx_term list)
-  - put the Special(ApproxProj _) at the front of sct_clause???
 
   - change type used for representing function clauses:
        type clause = (var_name * term list) * term

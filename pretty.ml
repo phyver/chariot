@@ -76,7 +76,7 @@ let rec print_type t = print_string (string_of_type t)
 
 let rec is_atomic_term (v:('a,'t) special_term) = match v with
     | Var _ | Angel _ | Const _ | Proj _ -> true
-    | App(Proj _, v,_) -> is_atomic_term v
+    | App(Proj _, v) -> is_atomic_term v
     | App _ -> false
     | Special _ -> true
 
@@ -85,7 +85,7 @@ let rec
     let rec aux n v =
         match v with
         | Const("Zero",_,_) -> n,None
-        | App(Const("Succ",_,_),v,_) -> aux (n+1) v
+        | App(Const("Succ",_,_),v) -> aux (n+1) v
         | _ -> n,Some v
     in
         if not (option "show_nats")
@@ -103,7 +103,7 @@ and
     let rec aux l v =
         match v with
         | Const("Nil",_,_) -> l,None
-        | App(App(Const("Cons",_,_),h,_),t,_) -> aux (h::l) t
+        | App(App(Const("Cons",_,_),h),t) -> aux (h::l) t
         | _ -> l,Some v
     in
         if not (option "show_lists")
@@ -149,9 +149,9 @@ and
             | Var(x,_) -> if (x.[0]='_' && not (verbose 1)) then "_" else x
             | Const(c,p,_) -> c ^ (if not (option "show_priorities") then "" else string_of_priority p)
             | Proj(d,p,_) -> "." ^ d ^  (if not (option "show_priorities") then "" else string_of_priority p)
-            | App(Proj _ as v1,v2,_) -> (string_of_term_paren o sp v2) ^ (string_of_special_term o sp v1)
-            | App(App(Var("add",_),v1,_),v2,_) when (option "show_nats") -> (string_of_special_term o sp v1) ^ "+" ^ (string_of_term_paren o sp v2)   (* TODO: don't show add as + in pattern *)
-            | App(v1,v2,_) -> (string_of_special_term o sp v1) ^ " " ^ (string_of_term_paren o sp v2)
+            | App(Proj _ as v1,v2) -> (string_of_term_paren o sp v2) ^ (string_of_special_term o sp v1)
+            | App(App(Var("add",_),v1),v2) when (option "show_nats") -> (string_of_special_term o sp v1) ^ "+" ^ (string_of_term_paren o sp v2)   (* TODO: don't show add as + in pattern *)
+            | App(v1,v2) -> (string_of_special_term o sp v1) ^ " " ^ (string_of_term_paren o sp v2)
             | Special(v,_) -> sp o v
         end
 
@@ -354,6 +354,7 @@ let show_environment env =
     show_env_aux type_blocs fun_blocs
 
 
+(* integrate with string_of_term??? *)
 let print_typed_subterms (u:type_expression term) : unit
   =
     let i = ref 0 in
@@ -366,21 +367,19 @@ let print_typed_subterms (u:type_expression term) : unit
             print_string (c^(exp_of_int n)); [n,t]
         | Var(x,t) -> let n = new_i() in
             print_string (x^(exp_of_int n)); [n,t]
-        | App(Proj(d,_,t1),u2,t) ->
+        | App(Proj(d,_,t1),u2) ->
             let n = new_i() in
-            let m = new_i() in
             print_string "(";
             let types = show_term u2 in
-            print_string ("."^d^(exp_of_int n)^")"^(exp_of_int m));
-            (n,t1) ::  (m,t) :: types
-        | App(u1,u2,t) ->
-            let n = new_i() in
+            print_string ("."^d^(exp_of_int n)^")"^(exp_of_int n));
+            (n,t1) ::  types
+        | App(u1,u2) ->
             print_string "(";
             let types1 = show_term u1 in
             print_string " ";
             let types2 = show_term u2 in
-            print_string (")"^(exp_of_int n));
-            (n,t)::types1@types2
+            print_string ")";
+            types1@types2
         | Proj(d,_,t) -> let n = new_i() in
             print_string (d^(exp_of_int n)); [n,t]
         | Special(s,_) -> s.bot

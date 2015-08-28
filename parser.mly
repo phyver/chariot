@@ -60,24 +60,24 @@ let list_to_product (l:type_expression list) : type_expression
 let rec int_to_term (n:int) (u:unit term) : unit term
   = if n=0
     then u
-    else int_to_term (n-1) (App(Const("Succ",None,()),u,()))
+    else int_to_term (n-1) (App(Const("Succ",None,()),u))
 
 (* transform an addition u+v into either an application of the "add" function or, when v is an natural number, into Succ(... Succ (u) *)
 let process_addition u v
   = let rec add_aux u v
       = match v with
             | Const("Zero", _,()) -> u
-            | App(Const("Succ", p,()), v,()) -> add_aux (App(Const("Succ",p,()),u,())) v
+            | App(Const("Succ", p,()), v) -> add_aux (App(Const("Succ",p,()),u)) v
             | _ -> raise Exit
     in
     try add_aux u v
-    with Exit -> App(App(Var("add",()),u,()),v,())
+    with Exit -> App(App(Var("add",()),u),v)
 
 (* tranform a list of terms into the corresponding list by adding Cons constructors in front of u *)
 let rec list_to_term (l:unit term list) (u:unit term) : unit term
   = match l with
         | [] -> u
-        | v::l -> list_to_term l (App(App(Const("Cons",None,()),v,()),u,()))
+        | v::l -> list_to_term l (App(App(Const("Cons",None,()),v),u))
 
 (* tranform a list of terms into the corresponding tuple *)
 let tuple_term (l:unit term list) : unit term =
@@ -438,20 +438,20 @@ rhs_term:
 
 term:
     | atomic_term               { $1 }
-    | term atomic_term          { App($1,$2,()) }
+    | term atomic_term          { App($1,$2) }
 
     | term PLUS atomic_term     { process_addition $1 $3 }
 
 atomic_term:
     | LPAR term RPAR                        { $2 }
-    | atomic_term DOT IDU                   { App(Proj($3,None,()), $1,()) }
+    | atomic_term DOT IDU                   { App(Proj($3,None,()), $1) }
     | IDL                                   { Var($1,()) }
     | IDU                                   { Const($1,None,()) }
     | ANGEL                                 { Angel () }
 
     | INT                                   { int_to_term $1 (Const("Zero",None,())) }
     | term_list                             { list_to_term (List.rev $1) (Const("Nil",None,())) }
-    | atomic_term DOUBLECOLON atomic_term   { App(App(Const("Cons",None,()),$1,()),$3,()) }
+    | atomic_term DOUBLECOLON atomic_term   { App(App(Const("Cons",None,()),$1),$3) }
     | tuple                                 { $1 }
 
 tuple:
@@ -473,8 +473,8 @@ term_list_inside:
 lhs_term:
     | IDL                           { Var($1,()) }
     | LPAR lhs_term RPAR            { $2 }
-    | lhs_term DOT IDU              { App(Proj($3,None,()), $1, ()) }
-    | lhs_term atomic_pattern       { App($1,$2,()) }
+    | lhs_term DOT IDU              { App(Proj($3,None,()), $1) }
+    | lhs_term atomic_pattern       { App($1,$2) }
 
 atomic_pattern:
     | DUMMY                                         { dummy() }
@@ -484,13 +484,13 @@ atomic_pattern:
 
     | INT                                           { int_to_term $1 (Const("Zero",None,())) }
     | pattern_list                                  { list_to_term (List.rev $1) (Const("Nil",None,())) }
-    | atomic_pattern DOUBLECOLON atomic_pattern     { App(App(Const("Cons",None,()),$1,()),$3,()) }
+    | atomic_pattern DOUBLECOLON atomic_pattern     { App(App(Const("Cons",None,()),$1),$3) }
     | atomic_pattern PLUS INT                       { int_to_term $3 $1 }
     | pattern_tuple                                 { $1 }
 
 pattern:
     | atomic_pattern            { $1 }
-    | pattern atomic_pattern    { App($1,$2,()) }
+    | pattern atomic_pattern    { App($1,$2) }
 
 pattern_list:
     | LSQBRAC pattern_list_inside RSQBRAC       { $2 } /* FIXME: check priorities... */

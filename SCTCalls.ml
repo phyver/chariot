@@ -74,7 +74,7 @@ let term_to_sct_pattern (t:approx_term) : sct_pattern =
 let rec collapse_weight_in_term b u
   = match u with
         | Var _ | Const _ | Proj _ | Angel _ -> u
-        | App(u1,u2,t) -> App(collapse_weight_in_term b u1, collapse_weight_in_term b u2,t)
+        | App(u1,u2) -> App(collapse_weight_in_term b u1, collapse_weight_in_term b u2)
         | Special(ApproxProj(p,w),t) -> Special(ApproxProj(p, collapse_weight b w),t)
         | Special(ApproxConst [],_) -> assert false
         | Special(ApproxConst apps,t) -> Special(ApproxConst(List.map (function p,w,x -> p, collapse_weight b w,x) apps),t)
@@ -253,7 +253,7 @@ let rec subst_approx_term sigma v
   = match v with
         | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
         | (Angel _|Const _|Proj _|Special(ApproxProj _,_)) as v -> v
-        | App(v1,v2,t) -> App(subst_approx_term sigma v1, subst_approx_term sigma v2,t)
+        | App(v1,v2) -> App(subst_approx_term sigma v1, subst_approx_term sigma v2)
         | Special(ApproxConst [],_) -> assert false
         | Special(ApproxConst apps,t) -> Special(ApproxConst (subst_approx_term_aux sigma [] apps),t)
 (* let subst_approx_term sigma v = *)
@@ -359,7 +359,7 @@ let rec rename_var x v
     = match v with
         | Var("()",_) -> v
         | Var(y,t) -> Var(y^x,t)
-        | App(v1,v2,t) -> App(rename_var x v1, rename_var x v2,t)
+        | App(v1,v2) -> App(rename_var x v1, rename_var x v2)
         | Const _ | Proj _ | Angel _ -> v
         | Special(ApproxConst [],_) -> assert false
         | Special(ApproxConst apps,t) -> Special(ApproxConst (List.map (function p,w,y -> if y="()" then p,w,y else p,w,y^x) apps),t)
@@ -384,7 +384,7 @@ let unify ?(allow_approx=false) (f_r,patterns_r:sct_pattern) (f_l,patterns_l:sct
 
             | u_r::ps_r,u_l::ps_l when u_r=u_l -> unify_aux ps_r ps_l sigma
 
-            | App(u_r,v_r,_)::ps_r,App(u_l,v_l,_)::ps_l -> unify_aux (u_r::v_r::ps_r) (u_l::v_l::ps_l) sigma
+            | App(u_r,v_r)::ps_r,App(u_l,v_l)::ps_l -> unify_aux (u_r::v_r::ps_r) (u_l::v_l::ps_l) sigma
 
             | Special(ApproxConst [],_)::_,_ -> assert false
 

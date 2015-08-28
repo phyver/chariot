@@ -114,7 +114,7 @@ let callgraph_from_definitions
     let rec extract_params_aux d
       = match d with
             | Var(x,_) -> [x]
-            | App(u1,u2,_) -> (extract_params_aux u1) @ (extract_params_aux u2)
+            | App(u1,u2) -> (extract_params_aux u1) @ (extract_params_aux u2)
             | Const _ -> []
             | Proj _ | Angel _ -> assert false
             | Special(s,_) -> s.bot

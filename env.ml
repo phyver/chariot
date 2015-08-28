@@ -71,7 +71,7 @@ type ('a,'t) special_term =     (* 'a is used to add features to the type, and '
     | Var of var_name*'t
     | Const of const_name * priority *'t   (* constructor, with a priority *)
     | Proj of const_name * priority *'t    (* destructor, with a priority *)
-    | App of ('a,'t) special_term * ('a,'t) special_term * 't
+    | App of ('a,'t) special_term * ('a,'t) special_term
     | Special of 'a*'t
 
 type empty = { bot: 'a .'a }
@@ -79,6 +79,7 @@ type 't term = (empty,'t) special_term
 
 type bloc_nb = int      (* number of the block of mutual function definitions *)
 
+(* TODO: use type 't pattern = var_name * 't term list *)
 type 't pattern = 't term                 (* a pattern (LHS of a clause in a definition) is just a special kind of term *)
 type 't function_clause = 't pattern * 't term     (* clause of a function definition *)
 

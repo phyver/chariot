@@ -140,42 +140,46 @@ let get_other_constants (env:environment) (c:const_name) : const_name list
 let rec get_head (v:('a,'t) special_term) : ('a,'t) special_term
   = match v with
     | Const _ | Angel _ | Var _ | Proj _ | Special _ -> v
-    | App(v,_,_) -> get_head v
+    | App(v,_) -> get_head v
 
 let rec get_head_const (v:('a,'t) special_term) : const_name
   = match v with
     | Const(c,p,_)  -> c
     | Angel _ | Var _ | Proj _ | Special _ ->  raise (Invalid_argument "no head constructor")
-    | App(v,_,_) -> get_head_const v
+    | App(v,_) -> get_head_const v
 
 let rec get_function_name (v:('a,'t) special_term) : var_name
   = match v with
     | Var(f,_) -> f
     | Angel _ | Const _ | Proj _ ->  raise (Invalid_argument "no head function")
-    | App(Proj _,v,_) -> get_function_name v
-    | App(v,_,_) -> get_function_name v
+    | App(Proj _,v) -> get_function_name v
+    | App(v,_) -> get_function_name v
     | Special(v,_) -> v.bot
 
 let get_args (v:('a,'t) special_term) : ('a,'t) special_term list
   = let rec get_args_aux acc = function
         | Const _ | Angel _ | Var _ | Proj _ | Special _ -> acc
-        | App(v1,v2,_) -> get_args_aux (v2::acc) v1
+        | App(v1,v2) -> get_args_aux (v2::acc) v1
     in
     get_args_aux [] v
 
-let type_of (u:('a,'t) special_term) : 't
+let rec type_of (u:('a,type_expression) special_term) : 't
   = match u with
         | Angel t
         | Var(_,t)
         | Const(_,_,t)
         | Proj(_,_,t)
-        | App(_,_,t) -> t
-        | Special(s,t) -> t
+        | Special(_,t) -> t
+        | App(u1,u2) ->
+            begin
+                match type_of u1 with
+                    | Arrow(t2,t) when t2 = type_of u2 -> t
+                    | _ -> assert false
+            end
 
 (* NOTE: the result has the same "type" as the function! *)
 let app (f:('a,'t) special_term) (args:('a,'t) special_term list) : ('a,'t) special_term
-  = let t = type_of f in
-      List.fold_left (fun v arg -> App(v,arg,t)) f args
+  = List.fold_left (fun v arg -> App(v,arg)) f args
 
 let rec get_result_type (t:type_expression) : type_expression
   = match t with
@@ -217,7 +221,7 @@ let rec extract_datatypes (t:type_expression) : type_expression list
 let rec extract_datatypes_from_typed_term (u:(empty,type_expression) special_term) : type_expression list
   = match u with
         | Angel _ | Var _ -> []
-        | App(u1,u2,_) -> merge_uniq (extract_datatypes_from_typed_term u1) (extract_datatypes_from_typed_term u2)
+        | App(u1,u2) -> merge_uniq (extract_datatypes_from_typed_term u1) (extract_datatypes_from_typed_term u2)
         | Const(_,_,t) -> extract_datatypes (get_result_type t)
         | Proj(_,_,t) -> extract_datatypes (get_first_arg_type t)
         | Special(s,_) -> s.bot
@@ -228,7 +232,7 @@ let rec extract_term_variables (v:(empty,'t) special_term) : var_name list
         match v with
             | Angel _ | Const _ | Proj _ -> []
             | Var(x,_) -> [x]
-            | App(v1,v2,_) -> (extract_term_variables_aux v1) @ (extract_term_variables_aux v2)
+            | App(v1,v2) -> (extract_term_variables_aux v1) @ (extract_term_variables_aux v2)
             | Special(v,_) -> v.bot
     in uniq (extract_term_variables_aux v)
 
@@ -245,7 +249,7 @@ let rec map_special_term (f:'a1 -> 'a2) (g:'t1 -> 't2) (u:('a1,'t1) special_term
         | Var(x,t) -> Var(x,g t)
         | Const(c,p,t) -> Const(c,p,g t)
         | Proj(d,p,t) -> Proj(d,p,g t)
-        | App(u1,u2,t) -> App(map_special_term f g u1, map_special_term f g u2, g t)
+        | App(u1,u2) -> App(map_special_term f g u1, map_special_term f g u2)
         | Special(a,t) -> Special(f a,g t)
 
 let map_type_term f u = map_special_term identity f u
@@ -284,16 +288,9 @@ let rec pattern_to_approx_term (v:(empty,'t) special_term) : (approximation,unit
     | Angel(t) -> Angel()
     | Const(c,p,t) -> Const(c,p,())
     | Proj(d,p,t) -> Proj(d,p,())
-    | App(v1,v2,t) -> App(pattern_to_approx_term v1, pattern_to_approx_term v2,())
+    | App(v1,v2) -> App(pattern_to_approx_term v1, pattern_to_approx_term v2)
     | Special(s,t) -> s.bot
 
-let typed_app (f:('a,type_expression) special_term) (args:('a,type_expression) special_term list) : ('a,type_expression) special_term
-  = List.fold_left (fun v arg ->
-        let t1 = type_of arg in
-        let tv = type_of v in
-        match tv with Arrow(_t1,t2) when _t1=t1 -> App(v,arg,t2) | _ -> raise (Invalid_argument "typed_app"))
-  f
-  args
 
 let rec subst_term sigma (v:'t term) : 't term
   = match v with
@@ -301,7 +298,7 @@ let rec subst_term sigma (v:'t term) : 't term
     | Angel t -> Angel t
     | Const(c,p,t) -> Const(c,p,t)
     | Proj(d,p,t) -> Proj(d,p,t)
-    | App(v1,v2,t) -> App(subst_term sigma v1, subst_term sigma v2,t)
+    | App(v1,v2) -> App(subst_term sigma v1, subst_term sigma v2)
     | Special(v,t) -> Special(v,t)
 
 let rec explode v
@@ -316,8 +313,8 @@ let implode args =
     let rec implode_aux args acc
       = match args with
             | [] -> acc
-            | (Var(_,t) | Angel(t) | Const(_,_,t) | App(_,_,t) | Special(_,t) as v)::args -> implode_aux args (App(acc,v,t))  (* TODO: "t" should be updated in the application *)
-            | (Proj(_,_,t) as v)::args -> implode_aux args (App(v,acc,t))  (* TODO: "t" should be updated in the application *)
+            | (Var(_,_) | Angel(_) | Const(_,_,_) | App(_,_) | Special(_,_) as v)::args -> implode_aux args (App(acc,v))
+            | (Proj(_,_,t) as v)::args -> implode_aux args (App(v,acc))
     in
     match args with
         | [] -> assert false

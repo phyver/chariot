@@ -172,7 +172,7 @@ let simplify_case_struct v =
         | Var(x,t) -> (try Var(List.assoc x sigma,t) with Not_found -> v)
         | Angel _ | Proj _ | Const _ -> v
         | Special(s,_) -> s.bot
-        | App(v1,v2,t) -> App(rename_var_term sigma v1,rename_var_term sigma v2,t)
+        | App(v1,v2) -> App(rename_var_term sigma v1,rename_var_term sigma v2)
     in
 
     let rec rename sigma v
@@ -180,7 +180,7 @@ let simplify_case_struct v =
             | CaseFail -> CaseFail
             (* | Var(x,t) -> (try Var(List.assoc x sigma,t) with Not_found -> v) *)
             (* | Const _ | Proj _ | Angel _ | Special(CaseFail,_)-> v *)
-            (* | App(v1,v2,t) -> App(rename sigma v1, rename sigma v2, t) *)
+            (* | App(v1,v2) -> App(rename sigma v1, rename sigma v2) *)
             | Case(x,cases) ->
                 let x = (try List.assoc x sigma with Not_found -> x) in
                 let cases = List.map (function c,(xs,v) -> c,(xs,rename sigma v)) cases in
@@ -262,7 +262,7 @@ let add_args_clause args clauses =
     List.map (function ps,v ->
         let n = arity - (List.length ps) in
         let xs = get_args n in
-        ps@xs, typed_app v xs
+        ps@xs, app v xs
     ) clauses
 
 

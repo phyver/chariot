@@ -59,11 +59,10 @@ let rec subst_type_term  (sigma:type_substitution) (u:(empty,type_expression) sp
         | Var(x,t) -> Var(x,subst_type sigma t)
         | Const(c,p,t) ->  Const(c,p,subst_type sigma t)
         | Proj(d,p,t) ->  Proj(d,p,subst_type sigma t)
-        | App(u1,u2,t) ->
+        | App(u1,u2) ->
             let u1 = subst_type_term sigma u1 in
             let u2 = subst_type_term sigma u2 in
-            let t = subst_type sigma t in
-            App(u1,u2,t)
+            App(u1,u2)
         | Special(s,t) -> s.bot
 
 (* compose two type substitutions *)
@@ -247,7 +246,7 @@ let infer_type (env:environment)
                         (t, Proj(d,p,t) , context, [])
                     with Not_found -> typeError ("cannot infer type of constant " ^ d)
                 end
-            | App(v1,v2,_) ->
+            | App(v1,v2) ->
                 begin
                     let t1,v1,context,sigma1 = infer_type_aux v1 context in
                     let t2,v2,context,sigma2 = infer_type_aux v2 context in
@@ -274,7 +273,7 @@ let infer_type (env:environment)
                     (* debug "sigma: %s" (string_of_type_substitution sigma); *)
                     let context = List.map (second (subst_type sigma)) context in
                     let tres = subst_type sigma tres in
-                    tres,App(v1,v2,tres),context,sigma
+                    tres,App(v1,v2),context,sigma
                 end
             | Special(v,_) -> v.bot
     in
