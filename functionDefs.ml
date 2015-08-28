@@ -179,21 +179,24 @@ let process_function_defs (env:environment)
     then
         begin
             if verbose 1
-            then msg "the definition%s %s are provably correct"
-                    (plural new_functions)
+            then msg "the definition%s %s %s provably correct"
+                    (s_plural new_functions)
                     (string_of_list ", " identity new_functions)
+                    (are_plural new_functions)
         end
     else
         begin
             if option "allow_inadequate_defs"
-             then warning "the definition%s %s are NOT provably correct (weight_bound: %d, depth_bound: %d)"
-                        (plural new_functions)
+             then warning "the definition%s %s %s NOT provably correct (weight_bound: %d, depth_bound: %d)"
+                        (s_plural new_functions)
                         (string_of_list ", " identity new_functions)
+                        (are_plural new_functions)
                         current_state.bound
                         current_state.depth
-             else error (fmt  "the definition%s %s are NOT provably correct (weight_bound: %d, depth_bound: %d)"
-                            (plural new_functions)
+             else error (fmt  "the definition%s %s %s NOT provably correct (weight_bound: %d, depth_bound: %d)"
+                            (s_plural new_functions)
                             (string_of_list ", " identity new_functions)
+                            (are_plural new_functions)
                             current_state.bound
                             current_state.depth)
         end
@@ -210,6 +213,9 @@ let process_function_defs (env:environment)
         []
         defs
     in
+
+    if verbose 1
+    then print_newline();
 
     current_state.current_bloc <- current_state.current_bloc + 1;
 

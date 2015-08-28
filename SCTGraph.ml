@@ -151,7 +151,7 @@ let callgraph_from_definitions
                 | Var(x,_),_ -> top
                 | Angel t,_ -> Angel ()     (* TODO check if t is an inductive type *)
                 | Const(c,prio,t),args -> app (Const(c,prio,())) (List.map process_arg args)
-                | Proj(d,prio,t), args -> Special(ApproxConst (collapse0 (pattern_to_approx_term p)),())
+                | Proj(d,prio,t), args -> top
                 | Special(s,_),_ -> s.bot
                 | App _,_ -> assert false
         in

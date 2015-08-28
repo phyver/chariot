@@ -80,7 +80,7 @@ let current_state =
             "use_subsumption",         true     , "use subsumption to simplify sets of clauses" ;
             "collapse_graph",          true     , "collapse initial call-graph" ;
             "allow_inadequate_defs",   true     , "allow definition that do not pass the SCT" ;
-            "use_SCT",                 false    , "use the SCT";        (* TODO: remove when it works *)
+            "use_SCT",                 true     , "use the SCT";        (* TODO: remove when it works *)
 
 (* various debuging options *)
             "show_initial_graph",      false    , "show initial call graph when checking adequacy" ;

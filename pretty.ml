@@ -171,7 +171,7 @@ let string_of_approx_term : approx_term -> string
         (fun o u ->
             match u with
                 | ApproxProj(p,w) ->
-                    "<" ^ (string_of_weight w) ^ ">" ^ (string_of_priority p) ^ " ."
+                    ".<<" ^ (string_of_weight w) ^ ">>" ^ (string_of_priority p)
                     (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
                 | ApproxConst [] ->
                     "∅"

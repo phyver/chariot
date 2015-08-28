@@ -177,7 +177,7 @@ let merge_context (cs1:(var_name*type_expression) list) (cs2:(var_name*type_expr
         | (x1,t1)::cs1, (x2,t2)::cs2 (*when x1=x2*) ->
             let cs,sigma = merge_context_aux cs1 cs2 sigma in
             let tau = unify_type_mgu t1 t2 in
-            (x1,subst_type tau t1)::cs , compose_type_substitution sigma tau
+            (x1,subst_type tau t1)::cs , compose_type_substitution tau sigma
     in
     let cs,sigma = merge_context_aux cs1 cs2 [] in
     List.map (second (subst_type sigma)) cs, sigma
@@ -322,12 +322,14 @@ let infer_type_clause (env:environment)
     (* print_typed_subterms lhs_pattern; *)
 
     (* infer type of RHS *)
-    let infered_type_rhs, rhs_def, context,sigma = infer_type env rhs_def context_lhs in
+    let infered_type_rhs, rhs_def, context,sigma' = infer_type env rhs_def context_lhs in
     (* print_typed_subterms rhs_def; *)
+
+    let sigma = compose_type_substitution sigma sigma' in
 
     (* unify types of LHS and RHS *)
     let tau = unify_type_mgu infered_type_rhs infered_type_lhs in
-    let sigma = tau @ (List.map (second (subst_type tau)) sigma) in
+    let sigma = compose_type_substitution sigma tau in
 
     (* update context ant types of lhs/rhs *)
     let context = List.map (second (subst_type sigma)) context in
@@ -385,19 +387,41 @@ let infer_type_defs
             clauses)
     in
 
+    (* debug "contexts:\n  %s" (string_of_list "\n  " string_of_context all_context); *)
+
     let context,sigma =
         List.fold_left
             (fun r context ->
                 let context',sigma' = r in
                 let context,sigma = merge_context context context' in
-                let sigma = sigma @ (List.map (second (subst_type sigma)) sigma') in
+    (* debug "sigma: %s" (string_of_type_substitution sigma); *)
+    (* debug "sigma': %s" (string_of_type_substitution sigma'); *)
+                let sigma = compose_type_substitution sigma sigma' in
+    (* debug "new sigma: %s" (string_of_type_substitution sigma); *)
                 context,sigma
                 )
             ([],[])
             all_context
     in
+    (* debug "final context:  %s" (string_of_context context); *)
+
+    (* debug "SIGMA: %s" (string_of_type_substitution sigma); *)
+    (* debug "BEFORE"; *)
+        (* List.iter (function f,lhs,rhs -> *)
+        (*     print_typed_subterms lhs; *)
+        (*     print_string "\n     ==>\n\n"; *)
+        (*     print_typed_subterms rhs; *)
+        (*     print_newline() *)
+    (* ) clauses; *)
 
     let clauses = List.map (function f,lhs,rhs -> (f,subst_type_term sigma lhs,subst_type_term sigma rhs)) clauses in
+    (* debug "AFTER"; *)
+    (*     List.iter (function f,lhs,rhs -> *)
+    (*         print_typed_subterms lhs; *)
+    (*         print_string "\n     ==>\n\n"; *)
+    (*         print_typed_subterms rhs; *)
+    (*         print_newline() *)
+    (* ) clauses; *)
 
     (* simplify type variables *)
     let tvars = uniq (List.concat (List.map (function _,t -> extract_type_variables t) context)) in

@@ -239,4 +239,5 @@ let ansi_code (color:string) (s:string) :string
 
 let identity x = x
 
-let plural = function [] -> assert false | [_] -> "" | _ -> "s"
+let s_plural = function [] -> assert false | [_] -> "" | _ -> "s"
+let are_plural = function [] -> assert false | [_] -> "is" | _ -> "are"
