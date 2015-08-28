@@ -22,20 +22,28 @@ data list('a) where N : list('a) | C : 'a -> list('a) -> list('a)
 val id : nat -> nat
   | id Z = Z
   | id (S n) = S (id n)
--- :show id
 
 val di : nat -> nat
   | di n = di (S n)
--- :show di
 
 val l : list('a) -> nat
   | l N = Z
   | l (C x xs) = S (l xs)
--- :show l
 
 
 val ack Z n = S n
   | ack (S m) Z = ack m (S Z)
   | ack (S m) (S n) = ack m (ack (S m) n)
--- :show ack
+
+data tree('a) where Leaf : tree('a) | Node : tree('a) -> tree('a) -> tree('a)
+
+val comb Leaf = Leaf
+  | comb (Node t Leaf) = Node (comb t) Leaf
+  | comb (Node t1 (Node t2 t3)) = comb (Node (Node t1 t2) t3)
+
+val comb_size Leaf s = Leaf
+  | comb_size (Node t Leaf) (S s) = Node (comb_size t s) Leaf
+  | comb_size (Node t1 (Node t2 t3)) s = comb_size (Node (Node t1 t2) t3) s
+  | comb_size (Node t Leaf) Z = ???
+
 

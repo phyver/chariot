@@ -15,3 +15,11 @@
 -- the definition for ack is complete
 -- the definition ack is provably correct
 
+-- inductive type tree was succesfully defined
+-- Typing for comb successful
+-- the definition for comb is complete
+--** the definition comb is NOT provably correct (weight_bound: 1, depth_bound: 2)
+-- Typing for comb_size successful
+-- the definition for comb_size is complete
+-- the definition comb_size is provably correct
+
