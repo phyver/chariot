@@ -131,13 +131,13 @@ let callgraph_from_definitions
     let rec process_clause graph (lhs,rhs)
       : call_graph
       =
-        let lhs = pattern_to_approx_term lhs
-        in
-
-        let caller = get_function_name lhs
-        in
-
         let params = extract_params lhs
+        in
+
+        let lhs = term_to_sct_pattern (pattern_to_approx_term lhs)
+        in
+
+        let caller = fst lhs
         in
 
         (* let top = todo "top" (1* the greatest element, ie the least informative *1) *)
@@ -162,7 +162,7 @@ let callgraph_from_definitions
                 | Var(called,t), args when List.mem called function_names ->
                     let _args = List.map process_arg args
                     in
-                    let call = lhs, app_all (Var(called,t)) (_args@calling_context)
+                    let call = lhs, (called,(_args@calling_context))
                     in
                     let graph = CallGraph.add (caller,called) (add_call_set call (try CallGraph.find (caller,called) graph with Not_found -> ClauseSet.empty)) graph
                     in
@@ -388,3 +388,4 @@ let size_change_termination graph =
     (*   print_int (current_state.bound);print_string ". **\n\n" *)
     (* end; *)
     false)
+

@@ -241,8 +241,14 @@ let string_of_case_struct_term v = string_of_case_struct_tree 2 string_of_term v
 
 
 
-let string_of_sct_clause (l,r) =
-    fmt "%s  =>  %s" (string_of_approx_term l) (string_of_approx_term r)
+let string_of_sct_pattern ((f_l,ps_l):sct_pattern) : string =
+    fmt "%s %ss"
+        f_l
+        (string_of_list " " string_of_approx_term ps_l)
+
+let string_of_sct_clause (l,r:sct_clause) : string =
+    fmt "%s => %s" (string_of_sct_pattern l) (string_of_sct_pattern r)
+
 
 
 let show_type_bloc env types

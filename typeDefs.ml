@@ -206,3 +206,4 @@ let process_type_defs (env:environment)
     current_state.current_bloc <- n;
     { env with  types = types @ env.types;
                 constants = consts @ env.constants }
+

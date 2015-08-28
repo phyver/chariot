@@ -298,3 +298,24 @@ let rec subst_term sigma (v:'t term) : 't term
     | App(v1,v2,t) -> App(subst_term sigma v1, subst_term sigma v2,t)
     | Special(v,t) -> Special(v,t)
 
+let rec explode v
+  = let h,args = get_head v,get_args v in
+    match h,args with
+        | Var _,args | Const _,args | Angel _,args -> h::args
+        | Proj _,v::args -> (explode v)@(h::args)
+        | Proj _ as p,[] -> [p]
+        | App _,_ -> assert false
+        | Special(s,_),_ -> s.bot
+
+let implode args =
+    let rec implode_aux args acc
+      = match args with
+            | [] -> acc
+            | (Var(_,t) | Angel(t) | Const(_,_,t) | App(_,_,t) as v)::args -> implode_aux args (App(acc,v,t))
+            | (Proj(_,_,t) as v)::args -> implode_aux args (App(v,acc,t))
+            | Special(s,_)::args -> s.bot
+    in
+    match args with
+        | [] -> assert false
+        | v::args -> implode_aux args v
+

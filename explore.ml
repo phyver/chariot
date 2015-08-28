@@ -68,7 +68,7 @@ let rec term_to_explore_aux (env:environment) (v:type_expression term) : explore
         | Arrow _ | TVar _ ->
             typed_app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
 
-let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (rewrite_all env v)
+let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (reduce env v)
 
 
 let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term

@@ -134,7 +134,9 @@ type weight = Num of int | Infty
  *)
 type approximation = ApproxProj of priority * weight | ApproxConst of (priority * weight * var_name) list
 type approx_term = (approximation,unit) special_term
-type sct_clause = approx_term * approx_term
+(* type sct_clause = approx_term * approx_term *)
+ type sct_pattern = (var_name * approx_term list)
+ type sct_clause = sct_pattern * sct_pattern
 (* TODO: use
  * type approx_term = (approximation,type_expression) special_term
  * type sct_clause = (var_name * approx_term list) * (var_name * approx_term list)

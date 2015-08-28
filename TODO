@@ -1,27 +1,33 @@
-
-  - without memoizing, reduction with case is slower than rewritting!!!
-
-  - think again about n-ary application
-        type atomic_term = Var | Proj | Const | Angel
-        type term = App of atomic_term * term list | Special ...
-
   - change type used for representing calls for SCT:
         type sct_clause = (var_name * approx_term list) * (var_name * approx_term list)
+  - put the Special(ApproxProj _) at the front of sct_clause???
+
+  - change type used for representing function clauses:
+       type clause = (var_name * term list) * term
+
+  - without memoizing, reduction with case is slower than rewritting!!!
 
   - use lexing positions for parsing errors:
       - update "file" field
       - print buffer with error underlined ???
 
-  - use type weight for priorities
+  - use type weight for priorities???
 
-  - allow parser to read priorities in terms for testing...
+  - allow parser to read priorities in terms (for testing)???
 
   - README file
+
+
+
 
   - use DeCap?
 
   - remove Proj variant and use Const everywhere (requires thinking about
     priority None: there should be a data and codata version)
+
+  - think again about n-ary application
+        type atomic_term = Var | Proj | Const | Angel
+        type term = App of atomic_term * term list | Special ...
 
   - pygmentize / highlight to get colors???
 

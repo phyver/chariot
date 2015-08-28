@@ -50,29 +50,6 @@ let rec reduce env (v:type_expression term) : type_expression term
     let counter = ref 0 in
     let table = ref Memo.empty in
 
-    let rec explode v
-      = let h,args = get_head v,get_args v in
-        match h,args with
-            | Var _,args | Const _,args | Angel _,args -> h::args
-            | Proj _,v::args -> (explode v)@(h::args)
-            | Proj _ as p,[] -> [p]
-            | App _,_ -> assert false
-            | Special(s,_),_ -> s.bot
-    in
-
-    let implode args =
-        let rec implode_aux args acc
-          = match args with
-                | [] -> acc
-                | (Var(_,t) | Angel(t) | Const(_,_,t) | App(_,_,t) as v)::args -> implode_aux args (App(acc,v,t))
-                | (Proj(_,_,t) as v)::args -> implode_aux args (App(v,acc,t))
-                | Special(s,_)::args -> s.bot
-        in
-        match args with
-            | [] -> assert false
-            | v::args -> implode_aux args v
-    in
-
     let rec extract_value x sigma =
         match sigma with
             | [] -> raise Not_found

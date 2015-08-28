@@ -239,32 +239,32 @@ let test_unify_term pattern term =
 
 let test_compose l1 r1 l2 r2 =
     msg "  %s => %s    o    %s => %s" (string_of_term l1) (string_of_term r1) (string_of_term l2) (string_of_term r2);
-    let l1 = pattern_to_approx_term l1 in
-    let r1 = pattern_to_approx_term r1 in
-    let l2 = pattern_to_approx_term l2 in
-    let r2 = pattern_to_approx_term r2 in
+    let l1 = term_to_sct_pattern (pattern_to_approx_term l1) in
+    let r1 = term_to_sct_pattern (pattern_to_approx_term r1) in
+    let l2 = term_to_sct_pattern (pattern_to_approx_term l2) in
+    let r2 = term_to_sct_pattern (pattern_to_approx_term r2) in
     let l,r = collapsed_compose current_state.bound current_state.depth (l1,r1) (l2,r2) in
-    msg "          =  %s => %s" (string_of_approx_term l) (string_of_approx_term r);
+    msg "          =  %s" (string_of_sct_clause (l,r));
     print_newline()
 
 let test_compare l1 r1 l2 r2 =
-    let l1 = pattern_to_approx_term l1 in
-    let r1 = pattern_to_approx_term r1 in
-    let l2 = pattern_to_approx_term l2 in
-    let r2 = pattern_to_approx_term r2 in
+    let l1 = term_to_sct_pattern (pattern_to_approx_term l1) in
+    let r1 = term_to_sct_pattern (pattern_to_approx_term r1) in
+    let l2 = term_to_sct_pattern (pattern_to_approx_term l2) in
+    let r2 = term_to_sct_pattern (pattern_to_approx_term r2) in
     let l1,r1 = collapse_clause current_state.bound current_state.depth (l1,r1) in
     let l2,r2 = collapse_clause current_state.bound current_state.depth (l2,r2) in
-    msg "  %s => %s    ≥    %s => %s" (string_of_approx_term l1) (string_of_approx_term r1) (string_of_approx_term l2) (string_of_approx_term r2); 
+    msg "  %s    ≥    %s" (string_of_sct_clause (l1,r1)) (string_of_sct_clause (l2,r2));
     if approximates (l1,r1) (l2,r2)
     then msg "        TRUE"
     else msg "        FALSE";
     print_newline()
 
 let test_collapse p =
-    let p = pattern_to_approx_term p in
+    let p = term_to_sct_pattern (pattern_to_approx_term p) in
     let q = collapse_pattern current_state.depth p in
-    let q = collapse_weight_in_term current_state.bound q in
-    msg "  collapse of   %s   is   %s" (string_of_approx_term p) (string_of_approx_term q);
+    let q = collapse_weight_in_pattern current_state.bound q in
+    msg "  collapse of   %s   is   %s" (string_of_sct_pattern p) (string_of_sct_pattern q);
     print_newline()
 
 %}
