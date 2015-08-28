@@ -10,6 +10,7 @@ debug:
 
 native:
 	ocamlbuild -libs str,unix main.native
+# ocamlbuild -libs str,unix main.native -cflag "-noassert"
 	@ln -sf ./main.native ./chariot
 
 byte:
