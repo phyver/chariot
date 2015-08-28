@@ -1,6 +1,42 @@
---   collapse of   ((f (C⁼ x (C⁼ y l))).T⁼).T⁼   is   ((f (C⁼ x (C⁼ y l))).T⁼).T⁼
+--   collapse of   f, Zero⁼   is   f, Zero⁼
 
---   collapse of   (((f (C⁼ x (C⁼ y (C⁼ z l)))).T⁼).T⁼).T⁼   is   <1>⁼ . (((f (C⁼ x (C⁼ y <1>⁼ l + <1>⁼ z))).T⁼).T⁼)
+--   collapse of   f, Succ⁼ Zero⁼   is   f, Succ⁼ Zero⁼
 
---   collapse of   ((((f (C⁼ x (C⁼ y (C⁼ z (C⁼ u l))))).T⁼).T⁼).T⁼).T⁼   is   <∞>⁼ . (((f (C⁼ x (C⁼ y <∞>⁼ l + <∞>⁼ u + <1>⁼ z))).T⁼).T⁼)
+--   collapse of   f, Succ⁼ (Succ⁼ Zero⁼)   is   f, Succ⁼ (Succ⁼ <1>⁼ ())
+
+--   collapse of   f, Succ⁼ (Succ⁼ (Succ⁼ Zero⁼))   is   f, Succ⁼ (Succ⁼ <2>⁼ ())
+
+--   collapse of   f, Succ⁼ (Succ⁼ (Succ⁼ (Succ⁼ Zero⁼)))   is   f, Succ⁼ (Succ⁼ <∞>⁼ ())
+
+--   collapse of   f, Succ⁼ (Succ⁼ (Succ⁼ (Succ⁼ (Succ⁼ Zero⁼))))   is   f, Succ⁼ (Succ⁼ <∞>⁼ ())
+
+--   collapse of   f, B⁼ (B⁼ x1 x2) x3   is   f, B⁼ (B⁼ x1 x2) x3
+
+--   collapse of   f, B⁼ (B⁼ x1 x2) (B⁼ x3 x4)   is   f, B⁼ (B⁼ x1 x2) (B⁼ x3 x4)
+
+--   collapse of   f, B⁼ (B⁼ x1 x2) (B⁼ x3 (B⁼ x4 x5))   is   f, B⁼ (B⁼ x1 x2) (B⁼ x3 <1>⁼ x4 + <1>⁼ x5)
+
+--   collapse of   f, B⁼ (B⁼ x1 x2) (B⁼ x3 (B⁼ x4 (S⁼ x5)))   is   f, B⁼ (B⁼ x1 x2) (B⁼ x3 <1>⁼ x4 + <2>⁼ x5)
+
+--   collapse of   f, B⁼ (B⁼ x1 x2) (B⁼ x3 (B⁼ x4 (S⁼ (S⁼ x5))))   is   f, B⁼ (B⁼ x1 x2) (B⁼ x3 <1>⁼ x4 + <∞>⁼ x5)
+
+--   collapse of   f, B⁼ (B⁼ x1 x2) (B⁼ x3 (B⁼ (B⁼ x4 x5) (B⁼ x6 x7)))   is   f, B⁼ (B⁼ x1 x2) (B⁼ x3 <2>⁼ x4 + <2>⁼ x5 + <2>⁼ x6 + <2>⁼ x7)
+
+--   collapse of   f, B⁼ (B⁼ x1 x2) (B⁼ x3 (B⁼ (B⁼ x4 x5) (B⁼ x6 x5)))   is   f, B⁼ (B⁼ x1 x2) (B⁼ x3 <2>⁼ x4 + <2>⁼ x5 + <2>⁼ x6)
+
+--   collapse of   s,    is   s, 
+
+--   collapse of   s, .Tail⁼   is   s, .Tail⁼
+
+--   collapse of   s, .Tail⁼, .Tail⁼   is   s, .Tail⁼, .Tail⁼
+
+--   collapse of   s, .Tail⁼, .Tail⁼, .Tail⁼   is   s, .Tail⁼, .Tail⁼, <1>⁼ .
+
+--   collapse of   s, .Tail⁼, .Tail⁼, .Tail⁼, .Tail⁼   is   s, .Tail⁼, .Tail⁼, <2>⁼ .
+
+--   collapse of   s, .Tail⁼, .Tail⁼, .Tail⁼, .Tail⁼, .Tail⁼   is   s, .Tail⁼, .Tail⁼, <∞>⁼ .
+
+--   collapse of   t, n1, .Next⁼, n2, n3, .Next⁼, n4, n5, .Next⁼, n6, n7, .Root⁼   is   t, n1, .Next⁼, n2, n3, .Next⁼, n4, n5, <2>⁼ .
+
+--   collapse of   t, S⁼ (S⁼ (S⁼ n1)), .Next⁼, n2, n3, .Next⁼, S⁼ (S⁼ (S⁼ n4)), n5, .Next⁼, n6, S⁼ (S⁼ (S⁼ n7)), .Root⁼   is   t, S⁼ (S⁼ <1>⁼ n1), .Next⁼, n2, n3, .Next⁼, S⁼ (S⁼ <1>⁼ n4), n5, <2>⁼ .
 
