@@ -82,7 +82,7 @@ let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
                 let fields = List.map (fun d ->
                     let v = App(Proj(d,None,TVar "dummy"),v) in    (* FIXME: we can use dummy types because "rewrite_all" infers types again *)
                     let arity = (get_constant_arity env d) - 1 in
-                    let xs = List.map (fun n -> "x"^(sub_of_int n)) (range 1 arity) in
+                    let xs = List.map (fun n -> "x"^(string_of_sub n)) (range 1 arity) in
                     let v = app v (List.map (fun x -> Var(x,TVar "dummy")) xs) in
                     let v = reduce env v in
                     (d, xs, term_to_explore_aux env v)) consts

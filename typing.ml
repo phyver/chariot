@@ -45,30 +45,6 @@ open Utils
 open State
 open Pretty
 
-(* apply a substitution on a type *)
-let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expression
-  = match t with
-    | TVar (y) -> (try List.assoc y sigma with Not_found -> t)
-    | Arrow(t1,t2) -> Arrow(subst_type sigma t1, subst_type sigma t2)
-    | Data(tname, args) -> Data(tname, List.map (subst_type sigma) args)
-
-(* apply a type substitution to all the type annotations inside a typed term *)
-let rec subst_type_term  (sigma:type_substitution) (u:(empty,type_expression) special_term) : (empty,type_expression) special_term
-  = match u with
-        | Angel(t) -> Angel(subst_type sigma t)
-        | Var(x,t) -> Var(x,subst_type sigma t)
-        | Const(c,p,t) ->  Const(c,p,subst_type sigma t)
-        | Proj(d,p,t) ->  Proj(d,p,subst_type sigma t)
-        | App(u1,u2) ->
-            let u1 = subst_type_term sigma u1 in
-            let u2 = subst_type_term sigma u2 in
-            App(u1,u2)
-        | Special(s,t) -> s.bot
-
-(* compose two type substitutions *)
-let compose_type_substitution sigma1 sigma2
-  = sigma2 @ (List.map (second (subst_type sigma2)) sigma1)
-
 (* generate fresh variables *)
 let fresh_variable_nb = ref 0
 let list_type_variables = ref []

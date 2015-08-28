@@ -57,11 +57,6 @@ let rec print_list (b1:string) (sep:string) (b2:string) (p:'a -> unit) (l:'a lis
         | [x] -> print_string b1; p x; print_string b2
         | x::xs -> print_string b1; p x; List.iter (fun x -> print_string sep; p x) xs; print_string b2
 
-let print_bool (b:bool) : unit
-  = if b
-    then print_string "true"
-    else print_string "false"
-
 (* remove duplicates *)
 (* not as efficient as the sorting version, but it keeps the order of the first occurences of the list *)
 let uniq (l:'a list) : 'a list
@@ -123,15 +118,15 @@ let find_in_difference (l1:'a list) (l2:'a list) : 'a option
     find_in_difference_aux (List.sort compare l1) (List.sort compare l2)
 
 (* transforms a positive integer into a UTF-8 string of superscripts *)
-let exp_of_int (n:int) : string
+let string_of_exp (n:int) : string
   = let exp = ["⁰"; "¹"; "²"; "³"; "⁴"; "⁵"; "⁶"; "⁷"; "⁸"; "⁹"]
     in
-    let rec exp_of_int_aux n acc
+    let rec string_of_exp_aux n acc
       = if n = 0
         then acc
         else
             let d = n mod 10 in
-            exp_of_int_aux (n/10) ((List.nth exp d)::acc)
+            string_of_exp_aux (n/10) ((List.nth exp d)::acc)
     in
     let sign = if n<0 then "⁻" else ""
     in
@@ -139,18 +134,18 @@ let exp_of_int (n:int) : string
     in
     if n=0
     then "⁰"
-    else String.concat "" (sign::(exp_of_int_aux n []))
+    else String.concat "" (sign::(string_of_exp_aux n []))
 
 (* transforms a positive integer into a UTF-8 string of subscripts *)
-let sub_of_int (n:int) : string
+let string_of_sub (n:int) : string
   = let sub = ["₀"; "₁"; "₂"; "₃"; "₄"; "₅"; "₆"; "₇"; "₈"; "₉"]
     in
-    let rec sub_of_int_aux n acc
+    let rec string_of_sub_aux n acc
       = if n = 0
         then acc
         else
             let d = n mod 10 in
-            sub_of_int_aux (n/10) ((List.nth sub d)::acc)
+            string_of_sub_aux (n/10) ((List.nth sub d)::acc)
     in
     let sign = if n<0 then "₋" else ""
     in
@@ -158,7 +153,7 @@ let sub_of_int (n:int) : string
     in
     if n=0
     then "₀"
-    else String.concat "" (sign::(sub_of_int_aux n []))
+    else String.concat "" (sign::(string_of_sub_aux n []))
 
 (* combine two lists into a list of pairs, and returns the suffix of the second one
  * raise Invalid_argument if the second list is shorter than the first one *)
@@ -198,7 +193,7 @@ let bool_of_string (s:string) : bool
   = match s with
     | "true" | "True" | "TRUE" | "1" -> true
     | "false" | "False" | "FALSE" | "0" -> false
-    | s -> raise (Invalid_argument ("bool_of_int: " ^ s))
+    | s -> raise (Invalid_argument ("bool_of_string: " ^ s))
 
 
 (* format a string using printf notation *)
@@ -237,7 +232,13 @@ let ansi_code (color:string) (s:string) :string
         Printf.sprintf "%s%s%s" begin_code s end_code
     with Not_found -> raise (Invalid_argument ("ansi_code: color " ^ color ^ " doesn't exist"))
 
-let identity x = x
 
-let s_plural = function [] -> assert false | [_] -> "" | _ -> "s"
-let are_plural = function [] -> assert false | [_] -> "is" | _ -> "are"
+let identity (x:'a) : 'a
+  = x
+
+
+let plural (l:'a list) (sing:string) (plur:string) : string
+  = match l with
+        | [] -> assert false
+        | [_] -> sing
+        | _ -> plur

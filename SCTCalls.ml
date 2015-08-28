@@ -285,7 +285,7 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
     let n = ref 0
     in
 
-    let new_var () = incr n; "x"^sub_of_int !n
+    let new_var () = incr n; "x"^string_of_sub !n
     in
 
     (* process a constructor pattern to get the approximations:

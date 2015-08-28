@@ -76,6 +76,7 @@ type ('a,'t) special_term =     (* 'a is used to add features to the type, and '
 
 type empty = { bot: 'a .'a }
 type 't term = (empty,'t) special_term
+type 't term_substitution = (var_name * 't term) list
 
 type bloc_nb = int      (* number of the block of mutual function definitions *)
 
@@ -100,12 +101,12 @@ type environment = {
     (* we keep the names of type arguments of a definition in the environment,
      * together with its bloc number and the list of its constants
      * (constructors/destrucors) *)
-    types:     (type_name * (type_name list) * int * const_name list) list             ;
+    types:     (type_name * bloc_nb * (type_name list) * const_name list) list         ;
 
     (* each constant (type constructor/destructor) has a type and a bloc number
      * the bloc number is odd for constructors and even for destructors *)
     (* TODO: use separate lists ? *)
-    constants: (const_name * int * type_expression) list                               ;
+    constants: (const_name * bloc_nb * type_expression) list                           ;
 
     (* each function is defined inside a bloc of definitions and has a type and
      * a list of defining clauses *)

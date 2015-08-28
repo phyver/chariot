@@ -48,36 +48,74 @@ open Env
 (*
  * some utility functions
  *)
-let get_type_arity (env:environment) (t:type_name) : int
-  = let rec get_type_arity_aux = function
+let env_type_assoc (env:environment) (t:type_name)
+  = let rec aux = function
         | [] -> raise Not_found
-        | (_t, _params, _, _)::_ when _t=t -> List.length _params
-        | _::ts -> get_type_arity_aux ts
+        | (t', n, params, consts)::_ when t'=t -> (n,params,consts)
+        | _::ts -> aux ts
     in
-    get_type_arity_aux env.types
+    aux env.types
+
+let get_type_arity (env:environment) (t:type_name) : int
+  = match env_type_assoc env t with
+        (_,params,_) -> List.length params
 
 let is_inductive (env:environment) (t:type_name) : bool
-  = let rec is_inductive_aux = function
-        | [] -> raise Not_found
-        | (_t, _, _n, _)::_ when _t=t -> odd _n
-        | _::ts -> is_inductive_aux ts
-    in
-    is_inductive_aux env.types
+  = match env_type_assoc env t with
+        (n,_,_) -> odd n
 
 let get_type_constants (env:environment) (t:type_name) : const_name list
-  = let rec get_type_constants_aux = function
+  = match env_type_assoc env t with
+        (_,_,consts) -> consts
+
+
+let env_const_assoc (env:environment) (c:const_name)
+  = let rec aux = function
         | [] -> raise Not_found
-        | (_t, _, _, _constants)::_ when _t=t -> _constants
-        | _::ts -> get_type_constants_aux ts
+        | (c', n, t)::_ when c'=c -> (n,t)
+        | _::ts -> aux ts
     in
-    get_type_constants_aux env.types
+    aux env.constants
 
 let get_constant_type (env:environment) (c:const_name)
-  = let rec get_type_constants_aux = function
+  = match env_const_assoc env c with
+        (_,t) -> t
+
+let is_projection (env:environment) (c:const_name) : bool
+  = match env_const_assoc env c with
+        (n,t) -> even n
+
+
+
+
+let env_fun_assoc (env:environment) (f:var_name)
+  = let rec aux = function
         | [] -> raise Not_found
-        | (_c,_p,_t)::_ when _c=c -> _t
-        | _::consts -> get_type_constants_aux consts
-    in get_type_constants_aux env.constants
+        | (f', n, t, clauses, cst)::_ when f'=f -> (n, t, clauses, cst)
+        | _::ts -> aux ts
+    in
+    aux env.functions
+
+let get_function_type (env:environment) (f:var_name)
+  = match env_fun_assoc env f with
+        (_,t,_,_) -> t
+
+let get_function_clauses (env:environment) (f:var_name)
+  = match env_fun_assoc env f with
+        (_,_,clauses,_) -> clauses
+
+let get_function_case_struct (env:environment) (f:var_name)
+  = match env_fun_assoc env f with
+        (_,_,_,cst) -> cst
+
+
+let get_other_constants (env:environment) (c:const_name) : const_name list
+  = let rec get_aux = function
+        | [] -> error ("constant " ^ c ^ " doesn't exist")
+        | (_,_,_,consts)::_ when List.mem c consts -> consts
+        | _::types -> get_aux types
+    in get_aux env.types
+
 
 let rec type_arity (t:type_expression) : int
   = match t with
@@ -87,54 +125,6 @@ let rec type_arity (t:type_expression) : int
 let get_constant_arity (env:environment) (c:const_name) : int
   = let t = get_constant_type env c in
     type_arity t
-
-let is_projection (env:environment) (c:const_name) : bool
-  = let rec is_projection_aux = function
-        | [] -> raise Not_found
-        | (_c, _n, _)::_ when _c=c -> even _n
-        | _::cs -> is_projection_aux cs
-    in
-    is_projection_aux env.constants
-
-let get_function_type (env:environment) (x:var_name)
-  = let rec get_function_type_aux = function
-        | [] -> raise Not_found
-        | (f,_,t,_,_)::_ when f=x -> t
-        | _::fcts -> get_function_type_aux fcts
-    in
-    get_function_type_aux env.functions
-
-let get_function_clauses (env:environment) (f:var_name)
-  = let rec get_function_clauses_aux = function
-        | [] -> raise Not_found
-        | (_f,_,_,clauses,_)::_ when _f=f -> clauses
-        | _::fcts -> get_function_clauses_aux fcts
-    in
-    get_function_clauses_aux env.functions
-
-let get_function_case_struct (env:environment) (f:var_name)
-  = let rec get_function_case_struct_aux = function
-        | [] -> raise Not_found
-        | (_f,_,_,_,cs)::_ when _f=f -> cs
-        | _::fcts -> get_function_case_struct_aux fcts
-    in
-    get_function_case_struct_aux env.functions
-
-
-let get_function_def (env:environment) (f:var_name)
-  = let rec get_function_def_aux = function
-        | [] -> raise Not_found
-        | (_f,_,_,_,v)::_ when _f=f -> v
-        | _::fcts -> get_function_def_aux fcts
-    in
-    get_function_def_aux env.functions
-
-let get_other_constants (env:environment) (c:const_name) : const_name list
-  = let rec get_aux = function
-        | [] -> error ("constant " ^ c ^ " doesn't exist")
-        | (_,_,_,consts)::_ when List.mem c consts -> consts
-        | _::types -> get_aux types
-    in get_aux env.types
 
 (* get the function name from a pattern *)
 let rec get_head (v:('a,'t) special_term) : ('a,'t) special_term
@@ -148,6 +138,13 @@ let rec get_head_const (v:('a,'t) special_term) : const_name
     | Angel _ | Var _ | Proj _ | Special _ ->  raise (Invalid_argument "no head constructor")
     | App(v,_) -> get_head_const v
 
+let get_args (v:('a,'t) special_term) : ('a,'t) special_term list
+  = let rec get_args_aux acc = function
+        | Const _ | Angel _ | Var _ | Proj _ | Special _ -> acc
+        | App(v1,v2) -> get_args_aux (v2::acc) v1
+    in
+    get_args_aux [] v
+
 let rec get_function_name (v:('a,'t) special_term) : var_name
   = match v with
     | Var(f,_) -> f
@@ -156,20 +153,9 @@ let rec get_function_name (v:('a,'t) special_term) : var_name
     | App(v,_) -> get_function_name v
     | Special(v,_) -> v.bot
 
-let get_args (v:('a,'t) special_term) : ('a,'t) special_term list
-  = let rec get_args_aux acc = function
-        | Const _ | Angel _ | Var _ | Proj _ | Special _ -> acc
-        | App(v1,v2) -> get_args_aux (v2::acc) v1
-    in
-    get_args_aux [] v
-
-let rec type_of (u:('a,type_expression) special_term) : 't
+let rec type_of (u:('a,type_expression) special_term) : type_expression
   = match u with
-        | Angel t
-        | Var(_,t)
-        | Const(_,_,t)
-        | Proj(_,_,t)
-        | Special(_,t) -> t
+        | Angel t | Var(_,t) | Const(_,_,t) | Proj(_,_,t) | Special(_,t) -> t
         | App(u1,u2) ->
             begin
                 match type_of u1 with
@@ -177,7 +163,7 @@ let rec type_of (u:('a,type_expression) special_term) : 't
                     | _ -> assert false
             end
 
-(* NOTE: the result has the same "type" as the function! *)
+
 let app (f:('a,'t) special_term) (args:('a,'t) special_term list) : ('a,'t) special_term
   = List.fold_left (fun v arg -> App(v,arg)) f args
 
@@ -206,12 +192,6 @@ let extract_type_variables (t:type_expression) : type_name list
     uniq (extract_type_variables_aux t)
 
 
-let rec extract_atomic_types (t:type_expression) : type_expression list
-  = match t with
-    | TVar _ -> [t]
-    | Data(_,params) -> t::(List.concat (List.map extract_atomic_types params))
-    | Arrow(t1,t2) -> (extract_atomic_types t1) @ (extract_atomic_types t2)
-
 let rec extract_datatypes (t:type_expression) : type_expression list
   = match t with
     | TVar _ -> []
@@ -226,16 +206,16 @@ let rec extract_datatypes_from_typed_term (u:(empty,type_expression) special_ter
         | Proj(_,_,t) -> extract_datatypes (get_first_arg_type t)
         | Special(s,_) -> s.bot
 
-
 let rec extract_term_variables (v:(empty,'t) special_term) : var_name list
-  = let rec extract_term_variables_aux v =
-        match v with
+  = let rec extract_term_variables_aux v
+      = match v with
             | Angel _ | Const _ | Proj _ -> []
             | Var(x,_) -> [x]
             | App(v1,v2) -> (extract_term_variables_aux v1) @ (extract_term_variables_aux v2)
             | Special(v,_) -> v.bot
     in uniq (extract_term_variables_aux v)
 
+(* TODO this function and the previous one could be merged... *)
 (* let rec extract_pattern_variables (v:pattern) : var_name list *)
 let rec extract_pattern_variables (v:(empty,'t) special_term) : var_name list
   = match get_head v,get_args v with
@@ -259,6 +239,9 @@ let add_weight (w1:weight) (w2:weight) : weight
     | Infty,_ | _,Infty -> Infty
     | Num a,Num b -> Num (a+b)
 
+
+
+
 let add_weight_int (w:weight) (n:int) : weight
   = add_weight w (Num n)
 
@@ -281,18 +264,12 @@ let collapse_weight (bound:int) (w:weight) : weight
     | Num w (* when w<-bound *) -> Num(-bound)
 
 
-
-let rec pattern_to_approx_term (v:(empty,'t) special_term) : (approximation,unit) special_term
-  = match v with
-    | Var(x,t) -> Var(x,())
-    | Angel(t) -> Angel()
-    | Const(c,p,t) -> Const(c,p,())
-    | Proj(d,p,t) -> Proj(d,p,())
-    | App(v1,v2) -> App(pattern_to_approx_term v1, pattern_to_approx_term v2)
-    | Special(s,t) -> s.bot
+let pattern_to_approx_term (v:(empty,'t) special_term) : (approximation,unit) special_term
+  = map_special_term (fun s -> s.bot) (fun _ -> ()) v
 
 
-let rec subst_term sigma (v:'t term) : 't term
+(* apply a substitution on a term *)
+let rec subst_term (sigma:'t term_substitution) (v:'t term) : 't term
   = match v with
     | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
     | Angel t -> Angel t
@@ -301,7 +278,32 @@ let rec subst_term sigma (v:'t term) : 't term
     | App(v1,v2) -> App(subst_term sigma v1, subst_term sigma v2)
     | Special(v,t) -> Special(v,t)
 
-let rec explode v
+(* apply a substitution on a type *)
+let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expression
+  = match t with
+    | TVar (y) -> (try List.assoc y sigma with Not_found -> t)
+    | Arrow(t1,t2) -> Arrow(subst_type sigma t1, subst_type sigma t2)
+    | Data(tname, args) -> Data(tname, List.map (subst_type sigma) args)
+
+(* apply a type substitution to all the type annotations inside a typed term *)
+let rec subst_type_term  (sigma:type_substitution) (u:(empty,type_expression) special_term) : (empty,type_expression) special_term
+  = match u with
+        | Angel(t) -> Angel(subst_type sigma t)
+        | Var(x,t) -> Var(x,subst_type sigma t)
+        | Const(c,p,t) ->  Const(c,p,subst_type sigma t)
+        | Proj(d,p,t) ->  Proj(d,p,subst_type sigma t)
+        | App(u1,u2) ->
+            let u1 = subst_type_term sigma u1 in
+            let u2 = subst_type_term sigma u2 in
+            App(u1,u2)
+        | Special(s,t) -> s.bot
+
+(* compose two type substitutions *)
+let compose_type_substitution (sigma1:type_substitution) (sigma2:type_substitution) : type_substitution
+  = sigma2 @ (List.map (second (subst_type sigma2)) sigma1)
+
+
+let rec explode (v:('a,'t) special_term) : ('a,'t) special_term list
   = let h,args = get_head v,get_args v in
     match h,args with
         | Var _,args | Const _,args | Angel _,args | Special _,args-> h::args
@@ -309,8 +311,8 @@ let rec explode v
         | Proj _ as p,[] -> [p]
         | App _,_ -> assert false
 
-let implode args =
-    let rec implode_aux args acc
+let implode (args:('a,'t) special_term list) : ('a,'t) special_term
+  = let rec implode_aux args acc
       = match args with
             | [] -> acc
             | (Var(_,_) | Angel(_) | Const(_,_,_) | App(_,_) | Special(_,_) as v)::args -> implode_aux args (App(acc,v))

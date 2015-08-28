@@ -76,7 +76,7 @@ let choose_constructor (c:const_name) (clauses:(match_pattern*'t term) list)
 let counter = ref 0
 let new_var () =
     incr counter;
-    "x"^(sub_of_int !counter)
+    "x"^(string_of_sub !counter)
 
 let string_of_clause (pat,def) = fmt "[%s] -> %s" (string_of_list " " s_o_u pat) (s_o_u def)
 

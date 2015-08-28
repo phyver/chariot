@@ -43,6 +43,7 @@ open State
 open Pretty
 open Typing
 
+(* Map instance for meoizing computation *)
 module Memo = Map.Make (struct type t=type_expression term let compare=compare end)
 
 let rec reduce env (v:type_expression term) : type_expression term
@@ -59,15 +60,11 @@ let rec reduce env (v:type_expression term) : type_expression term
 
     (* NOTE: sigma should only contain terms in normal form *)
     let rec rewrite_case_struct
-        (sigma:(var_name*type_expression term) list)
+        (sigma:type_expression term_substitution)
         (rest:type_expression term list)
         (cs:type_expression term case_struct_tree)
       : type_expression term case_struct_tree * type_expression term list
       =
-        (* debug "rewrite_case_struct %s\nwith sigma=[%s] and rest=[%s]" *)
-        (*             (string_of_case_struct_term cs) *)
-        (*             (string_of_term_substitution sigma) *)
-        (*             (string_of_list "," string_of_term rest); *)
         match cs with
             | CaseFail -> error "match failure"
             | Struct fields ->
@@ -104,7 +101,6 @@ let rec reduce env (v:type_expression term) : type_expression term
         with Not_found ->
             let counter0 = !counter in
             let result =
-                (* debug "rewrite for %s" (s_o_u v); *)
                 let args = explode v in
                 let h,args = (try List.hd args,List.tl args with _ -> assert false) in
                 let args = List.map nf args in
@@ -134,7 +130,6 @@ let rec reduce env (v:type_expression term) : type_expression term
 
     nf (v:type_expression term) : type_expression term
       =
-        (* debug "nf for %s" (s_o_u v); *)
         let n = !counter in
         let v = rewrite v in
         if n = !counter
@@ -142,8 +137,6 @@ let rec reduce env (v:type_expression term) : type_expression term
         else nf v
     in
 
-    (* debug "REDUCING term %s" (s_o_u v); *)
-
     let _,result,_ = infer_type_term env (nf v) in
-    if verbose 1 then msg "%d reduction(s) made" !counter;
+    if verbose 1 then msg "%d reduction%s made" !counter (if !counter > 1 then "s" else "");
     result

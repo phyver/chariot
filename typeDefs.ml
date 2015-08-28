@@ -135,7 +135,7 @@ let rec check_constructor (t:type_name) (c:const_name*type_expression) : unit
     | (c,_) -> error (fmt "constructor %s doesn't appropriate type" c)
 
 let process_type_defs (env:environment)
-                      (n:int)
+                      (n:bloc_nb)
                       (defs:(type_name * (type_expression list) * (const_name * type_expression) list) list)
   : environment
     =
@@ -165,7 +165,7 @@ let process_type_defs (env:environment)
     let process_single_type (tname:type_name)
                             (params:type_expression list)
                             (consts:(const_name*type_expression) list)
-      : (type_name * type_name list * int * const_name list) * (const_name * int * type_expression) list
+      : (type_name * bloc_nb * type_name list * const_name list) * (const_name * int * type_expression) list
         =
         (* we check that all the parameters are different *)
         check_uniqueness_parameters params;
@@ -182,7 +182,7 @@ let process_type_defs (env:environment)
         else List.iter (check_constructor tname) consts;
 
         let params = List.map (function TVar(x) -> x | _ -> assert false) params in
-        (tname, params, n, List.map fst consts) , (List.map (function c,t -> c,n, t) consts)
+        (tname, n, params, List.map fst consts) , (List.map (function c,t -> c,n,t) consts)
     in
 
     (* process all the definitions *)
@@ -199,8 +199,11 @@ let process_type_defs (env:environment)
     if (verbose 1)
     then
         begin
-            let s,was = if List.length defs > 1 then "s","were" else "","was" in
-            msg "%s type%s %s %s succesfully defined" (if even n then "coinductive" else "inductive") s (string_of_list  " and " (function (t,_,_) -> t) defs) was
+            msg "%s type%s %s %s succesfully defined"
+                (if even n then "coinductive" else "inductive")
+                (plural defs "" "s")
+                (string_of_list  " and " (function (t,_,_) -> t) defs)
+                (plural defs "was" "were")
         end;
 
     current_state.current_bloc <- n;

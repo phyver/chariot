@@ -45,7 +45,7 @@ let string_of_priority p = match p with
     (* | None ->  "⁽⁾" *)
     (* | None ->  "⁻" *)
     | None ->  if option "use_ansi_codes" then ansi_code "red" "⁼" else "⁼"
-    | Some p -> if option "use_ansi_codes" then ansi_code "green" (exp_of_int p) else (exp_of_int p)
+    | Some p -> if option "use_ansi_codes" then ansi_code "green" (string_of_exp p) else (string_of_exp p)
 
 let is_atomic_type = function
     | TVar _ -> true
@@ -266,9 +266,9 @@ let show_type_bloc env types
     let rec show_type_bloc_aux types
       = match types with
             | [] -> assert false
-            | [(tname,params,_,consts)] ->
+            | [(tname,_,params,consts)] ->
                     show_data_type env tname params consts;
-            | (tname,params,_,consts)::types ->
+            | (tname,_,params,consts)::types ->
                     begin
                         show_data_type env tname params consts;
                         print_string "and\n";
@@ -277,7 +277,7 @@ let show_type_bloc env types
     in
     match types with
         | [] -> assert false
-        | (_,_,n,_)::_ ->
+        | (_,n,_,_)::_ ->
             if even n
             then print_endline "codata"
             else print_endline "data";
@@ -286,7 +286,7 @@ let show_type_bloc env types
 
 
 let show_types env =
-    let type_blocs = partition (function _,_,n,_ -> n) (List.rev env.types) in
+    let type_blocs = partition (function _,(n:bloc_nb),_,_ -> n) (List.rev env.types) in
     match type_blocs with
         | [] -> warning "no type in environment"
         | type_blocs ->
@@ -330,7 +330,7 @@ let show_function_bloc env funs
             print_newline()
 
 let show_functions env =
-    let fun_blocs = partition (function _,(n:int),_,_,_ -> n) (List.rev env.functions) in
+    let fun_blocs = partition (function _,(n:bloc_nb),_,_,_ -> n) (List.rev env.functions) in
     match fun_blocs with
         | [] -> warning "no function in environment";
         | funs ->
@@ -339,20 +339,20 @@ let show_functions env =
             flush_all()
 
 let show_environment env =
-    let type_blocs = partition (function _,_,(n:int),_ -> n) (List.rev env.types) in
-    let fun_blocs = partition (function _,(n:int),_,_,_ -> n) (List.rev env.functions) in
+    let type_blocs = partition (function _,(n:bloc_nb),_,_ -> n) (List.rev env.types) in
+    let fun_blocs = partition (function _,(n:bloc_nb),_,_,_ -> n) (List.rev env.functions) in
     let rec show_env_aux types funs =
         match types,funs with
             | [],[] -> ()
             | types,[] -> List.iter (show_type_bloc env) types; flush_all()
             | [],funs -> List.iter (show_function_bloc env) funs; flush_all()
-            | (((_,_,nt,_)::_) as t_bloc)::types , ((_,nf,_,_,_)::_)::_ when nt<nf ->
+            | (((_,nt,_,_)::_) as t_bloc)::types , ((_,nf,_,_,_)::_)::_ when nt<nf ->
                     show_type_bloc env t_bloc;
                     show_env_aux types funs
-            | ((_,_,nt,_)::_)::_ , (((_,nf,_,_,_)::_) as f_bloc)::funs when nt>nf ->
+            | ((_,nt,_,_)::_)::_ , (((_,nf,_,_,_)::_) as f_bloc)::funs when nt>nf ->
                     show_function_bloc env f_bloc;
                     show_env_aux types funs
-            | ((_,_,nt,_)::_)::_ , ((_,nf,_,_,_)::_)::_ (*when nt=nf*) -> assert false
+            | ((_,nt,_,_)::_)::_ , ((_,nf,_,_,_)::_)::_ (*when nt=nf*) -> assert false
             | []::_,_ | _,[]::_ -> assert false
     in
     show_env_aux type_blocs fun_blocs
@@ -366,16 +366,16 @@ let print_typed_subterms (u:type_expression term) : unit
 
     let rec show_term u = match u with
         | Angel(t) -> let n = new_i() in
-            print_string ("???"^(exp_of_int n)); [n,t]
+            print_string ("???"^(string_of_exp n)); [n,t]
         | Const(c,_,t) -> let n = new_i() in
-            print_string (c^(exp_of_int n)); [n,t]
+            print_string (c^(string_of_exp n)); [n,t]
         | Var(x,t) -> let n = new_i() in
-            print_string (x^(exp_of_int n)); [n,t]
+            print_string (x^(string_of_exp n)); [n,t]
         | App(Proj(d,_,t1),u2) ->
             let n = new_i() in
             print_string "(";
             let types = show_term u2 in
-            print_string ("."^d^(exp_of_int n)^")"^(exp_of_int n));
+            print_string ("."^d^(string_of_exp n)^")"^(string_of_exp n));
             (n,t1) ::  types
         | App(u1,u2) ->
             print_string "(";
@@ -385,7 +385,7 @@ let print_typed_subterms (u:type_expression term) : unit
             print_string ")";
             types1@types2
         | Proj(d,_,t) -> let n = new_i() in
-            print_string (d^(exp_of_int n)); [n,t]
+            print_string (d^(string_of_exp n)); [n,t]
         | Special(s,_) -> s.bot
     in
 
@@ -397,3 +397,5 @@ let print_typed_subterms (u:type_expression term) : unit
 let string_of_type_substitution sigma = string_of_list " , " (function x,t -> fmt "'%s=%s" x (string_of_type t)) sigma
 let string_of_term_substitution sigma = string_of_list " , " (function x,t -> fmt "%s=%s" x (string_of_term t)) sigma
 let string_of_context gamma = string_of_list " , " (function x,t -> fmt "%s:%s" x (string_of_type t)) gamma
+
+

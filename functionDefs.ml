@@ -180,23 +180,23 @@ let process_function_defs (env:environment)
         begin
             if verbose 1
             then msg "the definition%s %s %s provably correct"
-                    (s_plural new_functions)
+                    (plural new_functions "" "s")
                     (string_of_list ", " identity new_functions)
-                    (are_plural new_functions)
+                    (plural new_functions "is" "are")
         end
     else
         begin
             if option "allow_inadequate_defs"
              then warning "the definition%s %s %s NOT provably correct (weight_bound: %d, depth_bound: %d)"
-                        (s_plural new_functions)
+                        (plural new_functions "" "s")
                         (string_of_list ", " identity new_functions)
-                        (are_plural new_functions)
+                        (plural new_functions "is" "are")
                         current_state.bound
                         current_state.depth
              else error (fmt  "the definition%s %s %s NOT provably correct (weight_bound: %d, depth_bound: %d)"
-                            (s_plural new_functions)
+                            (plural new_functions "" "s")
                             (string_of_list ", " identity new_functions)
-                            (are_plural new_functions)
+                            (plural new_functions "is" "are")
                             current_state.bound
                             current_state.depth)
         end

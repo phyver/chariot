@@ -88,7 +88,7 @@ let tuple_term (l:unit term list) : unit term =
 (* a reference to number dummy arguments in terms *) (*FIXME: necessary??? *)
 let dummy_nb = ref 0
 (* generate a fresh dummy variable *)
-let dummy () = incr dummy_nb; Var("_" ^ (sub_of_int !dummy_nb),())
+let dummy () = incr dummy_nb; Var("_" ^ (string_of_sub !dummy_nb),())
 
 (* execute a statement and catch appropriate errors *)
 let exec_cmd (cmd:unit->unit) : unit
