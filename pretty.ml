@@ -166,20 +166,24 @@ let string_of_weight w = match w with
     | Infty -> "∞"
     | Num n -> (string_of_int n)
 
-let string_of_approx_term : approx_term -> string
-  = string_of_special_term ()
-        (fun o u ->
-            match u with
-                | ApproxProj(p,w) ->
-                    ".<<" ^ (string_of_weight w) ^ ">>" ^ (string_of_priority p)
-                    (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
-                | ApproxConst [] ->
-                    "∅"
-                    (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
-                | ApproxConst l ->
-                    (string_of_list " + " (function p,w,x ->  "<" ^ (string_of_weight w) ^ ">" ^ (string_of_priority p) ^ " " ^ x) l)
-                    (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
-        )
+let string_of_approx_term (v:approx_term) : string
+  =
+    let string_of_approx_term_aux
+      = string_of_special_term ()
+            (fun o u ->
+                match u with
+                    | ApproxProj(p,w) -> assert false
+                    | ApproxConst [] -> assert false
+                    | ApproxConst l ->
+                        (string_of_list " + " (function p,w,x ->  "<" ^ (string_of_weight w) ^ ">" ^ (string_of_priority p) ^ " " ^ x) l)
+                        (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
+            )
+    in
+    match v with
+        | Special(ApproxProj(p,w),_) ->
+            ".<<" ^ (string_of_weight w) ^ ">>" ^ (string_of_priority p)
+            (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
+        | v -> string_of_approx_term_aux v
 
 
 let show_data_type env tname params consts =
