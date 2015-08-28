@@ -99,13 +99,13 @@ let collapse_graph b d graph
  * applied to the result of a call, and Const variants to register destructor
  * in argument position... *)
 let callgraph_from_definitions
-  (functions : (var_name * type_expression * 't function_clause list) list)
+  (functions : (var_name * type_expression * type_expression function_clause list * 'a) list)
   : call_graph
   =
-    let function_names = List.map (function f,_,_ -> f) functions
+    let function_names = List.map (function f,_,_,_ -> f) functions
     in
 
-    let clauses = List.concat (List.map (function _,_,cls -> cls) functions)
+    let clauses = List.concat (List.map (function _,_,cls,_ -> cls) functions)
     in
 
     let graph = CallGraph.empty
@@ -128,7 +128,7 @@ let callgraph_from_definitions
             | Special(s,_),_ -> s.bot
     in
 
-    let rec process_clause graph (lhs,rhs)
+    let rec process_clause graph (lhs,rhs:type_expression pattern * type_expression term)
       : call_graph
       =
         let params = extract_params lhs
@@ -144,19 +144,19 @@ let callgraph_from_definitions
         let top = Special(ApproxConst (List.map (fun x -> (None,Infty,x)) params),())
         in
 
-        let rec process_arg (p:'t term)
+        let rec process_arg (p:type_expression term)
           : approx_term
           = match get_head p,get_args p with
-                | Var(x,t),_ when List.mem x params -> Var(x,t)   (* TODO: check if some function appears in the arguments... *)
+                | Var(x,t),_ when List.mem x params -> Var(x,())   (* TODO: check if some function appears in the arguments... *)
                 | Var(x,_),_ -> top
-                | Angel t,_ -> Angel t
-                | Const(c,prio,t),args -> app (Const(c,prio,t)) (List.map process_arg args)
-                | Proj(d,prio,t), args -> Special(ApproxConst (collapse0 (pattern_to_approx_term p)),t)
+                | Angel t,_ -> Angel ()     (* TODO check if t is an inductive type *)
+                | Const(c,prio,t),args -> app (Const(c,prio,())) (List.map process_arg args)
+                | Proj(d,prio,t), args -> Special(ApproxConst (collapse0 (pattern_to_approx_term p)),())
                 | Special(s,_),_ -> s.bot
                 | App _,_ -> assert false
         in
 
-        let rec process_rhs graph rhs calling_context
+        let rec process_rhs (graph:call_graph) (rhs:type_expression term) (calling_context:approx_term list)
           : call_graph
           = match get_head rhs, get_args rhs with
                 | Var(called,t), args when List.mem called function_names ->
@@ -172,14 +172,14 @@ let callgraph_from_definitions
                     List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty),())]) graph args
 
                 | Const(c,p,t),args ->
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs ((Special(ApproxProj(p,Num 1),t))::calling_context)) graph args
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs ((Special(ApproxProj(p,Num 1),()))::calling_context)) graph args
 
                 | Proj(d,p,t),u::args ->
                     let _args = List.map process_arg args
                     in
-                    let graph = process_rhs graph u (Proj(d,p,t)::_args@calling_context)
+                    let graph = process_rhs graph u (Proj(d,p,())::_args@calling_context)
                     in
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty),t)]) graph args
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty),())]) graph args
 
                 | Special(s,_), _ -> s.bot
 
@@ -189,7 +189,11 @@ let callgraph_from_definitions
         process_rhs graph rhs []
     in
 
-    let graph = List.fold_left (fun graph clause -> process_clause graph clause) graph clauses
+    let graph = List.fold_left
+                    (fun graph clause ->
+                        process_clause graph clause)
+                    graph
+                    clauses
     in
     graph
 

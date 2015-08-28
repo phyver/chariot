@@ -109,7 +109,7 @@ let _
         ("--dont_show_nats",          Arg.Unit (fun _ -> set_option "show_nats" "false"),                   "do not use decimal notation for displaying natural numbers");
         ("--dont_show_lists",         Arg.Unit (fun _ -> set_option "show_lists" "false"),                  "do not use standard notations for displaying lists");
         ("--dont_show_tuples",        Arg.Unit (fun _ -> set_option "show_tuples" "false"),                 "do not use standard notations for displaying tuples");
-        ("--allow_incomplete_defs",   Arg.Unit (fun _ -> set_option "allow_incomplete_defs" "true"),       "allow incomplete definitions");
+        ("--dont_allow_incomplete_defs",   Arg.Unit (fun _ -> set_option "allow_incomplete_defs" "false"),       "forbid incomplete definitions");
         ("--dont_use_priorities",     Arg.Unit (fun _ -> set_option "show_use_priorities" "false"),         "do not use priorities for checking termination (unsound)");
         ("--dont_show_priorities",    Arg.Unit (fun _ -> set_option "show_priorities" "false"),             "do not display priorities when showing function definitions");
         ("--continue_on_error",       Arg.Unit (fun _ -> set_option "continue_on_error" "true"),            "do not exit on errors (only for non-interactive use)");
@@ -117,7 +117,7 @@ let _
         ("--use_ansi_codes",          Arg.Unit (fun _ -> set_option "use_ansi_codes" "true"),               "use ANSI color codes to display various information");
         ("--dont_use_subsumption",    Arg.Unit (fun _ -> set_option "use_subsumption" "false"),             "don't use subsumption to simplify sets of clauses");
         ("--dont_collapse_graph",     Arg.Unit (fun _ -> set_option "collapse_graph" "false"),              "don't collapse initial call-graph");
-        ("--check_adequacy",          Arg.Unit (fun _ -> set_option "check_adequacy" "true"),               "use the SCT to check adequacy of definitions");
+        ("--dont_allow_inadequate_defs",   Arg.Unit (fun _ -> set_option "allow_inadequate_defs" "false"),        "forbid definitions that do not pass the SCT");
       ] in
     let help = "usage: " ^ Sys.argv.(0) ^ " [-i] [file]\n" in
     Arg.parse args (fun f -> incr nb_files; loadfile f) help;

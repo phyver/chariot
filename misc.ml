@@ -238,3 +238,5 @@ let ansi_code (color:string) (s:string) :string
     with Not_found -> raise (Invalid_argument ("ansi_code: color " ^ color ^ " doesn't exist"))
 
 let identity x = x
+
+let plural = function [] -> assert false | [_] -> "" | _ -> "s"

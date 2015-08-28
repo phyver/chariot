@@ -71,7 +71,7 @@ let current_state =
             "show_lists",              true     , "use standard notations for displaying lists" ;
             "show_tuples",             true     , "use standard notations for displaying tuples" ;
 
-            "allow_incomplete_defs",   false    , "allow incomplete definitions";
+            "allow_incomplete_defs",   true     , "allow incomplete definitions";
             "use_priorities",          true     , "use priorities for checking termination (unsound if false)" ;  (* FIXME -> only check termination *)
             "show_priorities",         true     , "display priorities when showing function definitions" ;
             "continue_on_error",       false    , "do not quit on errors (only for non-interactive use)" ;
@@ -79,7 +79,8 @@ let current_state =
             "use_ansi_codes",          false    , "use ANSI color codes to display various information" ;
             "use_subsumption",         true     , "use subsumption to simplify sets of clauses" ;
             "collapse_graph",          true     , "collapse initial call-graph" ;
-            "check_adequacy",          false    , "use the SCT to check adequacy of definitions" ;      (* FIXME: allow_non_adequate_definitions *)
+            "allow_inadequate_defs",   true     , "allow definition that do not pass the SCT" ;
+            "use_SCT",                 false    , "use the SCT";        (* TODO: remove when it works *)
 
 (* various debuging options *)
             "show_initial_graph",      false    , "show initial call graph when checking adequacy" ;

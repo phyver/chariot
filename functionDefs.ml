@@ -158,27 +158,46 @@ let process_function_defs (env:environment)
         (function f,t,clauses ->
             let f,args,cs = case_struct_of_clauses env f t clauses in
             if is_exhaustive f args cs
-            then (if (verbose 1) then msg "definition for %s is complete" f)
+            then (if (verbose 1) then msg "the definition for %s is complete" f)
             else
-                if not (option "allow_incomplete_defs")
-                then error (fmt "function %s is incomplete" f);
+                if option "allow_incomplete_defs"
+                then warning "the definition for %s is incomplete" f
+                else error (fmt "the definition for %s is incomplete" f);
             f,t,clauses,(args,cs)
         )
         defs
     in
 
 
-    (* (1* SCT *1) *)
-    (* if option "check_adequacy" *)
-    (* then *)
-    (*     begin *)
-    (*         let graph = callgraph_from_definitions defs *)
-    (*         in *)
-    (*         let graph = if option "collapse_graph" then collapse_graph current_state.bound current_state.depth graph else graph in *)
-    (*         if size_change_termination graph *)
-    (*         then msg "the functions are correct" *)
-    (*         else msg "the functions are NOT provably correct" *)
-    (*     end; *)
+    (* SCT *)
+    if (option "use_SCT")
+    then begin
+    let graph = callgraph_from_definitions defs
+    in
+    let graph = if option "collapse_graph" then collapse_graph current_state.bound current_state.depth graph else graph in
+    if size_change_termination graph
+    then
+        begin
+            if verbose 1
+            then msg "the definition%s %s are provably correct"
+                    (plural new_functions)
+                    (string_of_list ", " identity new_functions)
+        end
+    else
+        begin
+            if option "allow_inadequate_defs"
+             then warning "the definition%s %s are NOT provably correct (weight_bound: %d, depth_bound: %d)"
+                        (plural new_functions)
+                        (string_of_list ", " identity new_functions)
+                        current_state.bound
+                        current_state.depth
+             else error (fmt  "the definition%s %s are NOT provably correct (weight_bound: %d, depth_bound: %d)"
+                            (plural new_functions)
+                            (string_of_list ", " identity new_functions)
+                            current_state.bound
+                            current_state.depth)
+        end
+    end;
 
 
 

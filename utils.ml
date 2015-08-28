@@ -278,13 +278,13 @@ let collapse_weight (bound:int) (w:weight) : weight
 
 
 
-let rec pattern_to_approx_term (v:(empty,'t) special_term) : (approximation,'t) special_term
+let rec pattern_to_approx_term (v:(empty,'t) special_term) : (approximation,unit) special_term
   = match v with
-    | Var(x,t) -> Var(x,t)
-    | Angel(t) -> Angel(t)
-    | Const(c,p,t) -> Const(c,p,t)
-    | Proj(d,p,t) -> Proj(d,p,t)
-    | App(v1,v2,t) -> App(pattern_to_approx_term v1, pattern_to_approx_term v2,t)
+    | Var(x,t) -> Var(x,())
+    | Angel(t) -> Angel()
+    | Const(c,p,t) -> Const(c,p,())
+    | Proj(d,p,t) -> Proj(d,p,())
+    | App(v1,v2,t) -> App(pattern_to_approx_term v1, pattern_to_approx_term v2,())
     | Special(s,t) -> s.bot
 
 let typed_app (f:('a,type_expression) special_term) (args:('a,type_expression) special_term list) : ('a,type_expression) special_term

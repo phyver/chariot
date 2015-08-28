@@ -238,11 +238,11 @@ let test_unify_term pattern term =
     print_newline()
 
 let test_compose l1 r1 l2 r2 =
-    msg "  %s => %s    o    %s => %s" (string_of_term l1) (string_of_term r1) (string_of_term l2) (string_of_term r2);
     let l1 = term_to_sct_pattern (pattern_to_approx_term l1) in
     let r1 = term_to_sct_pattern (pattern_to_approx_term r1) in
     let l2 = term_to_sct_pattern (pattern_to_approx_term l2) in
     let r2 = term_to_sct_pattern (pattern_to_approx_term r2) in
+    msg "  %s    o    %s" (string_of_sct_clause (l1,r1)) (string_of_sct_clause (l2,r2));
     let l,r = collapsed_compose current_state.bound current_state.depth (l1,r1) (l2,r2) in
     msg "          =  %s" (string_of_sct_clause (l,r));
     print_newline()

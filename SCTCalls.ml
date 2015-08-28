@@ -292,7 +292,7 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
     let rec process_const_pattern p =
         match get_head p, get_args p with
 
-            | Var(x,t),[] -> Var(x,t) , []
+            | Var(x,t),[] -> let y = new_var() in Var(y,t) , [x,Var(y,t)]
             | Var _,_ -> assert false
 
             | Const(c,p,t), args ->
@@ -327,8 +327,8 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
                 (p::l_patterns) , sigma , app_res
 
             | pat::l_patterns ->
-                let l_patterns,sigma,app_res = process_lhs l_patterns in
                 let pat,sigma' = process_const_pattern pat in
+                let l_patterns,sigma,app_res = process_lhs l_patterns in
                 (pat::l_patterns) , (sigma'@sigma) , app_res
     in
     (* let process_lhs lhs = *)
@@ -346,6 +346,7 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
     in
 
     (*   (1* debug "obtained %s" (string_of_sct_clause (lhs,rhs)) *1) *)
+
     (f_l,patterns_l) , (f_r,patterns_r)
 
 
@@ -357,7 +358,8 @@ let rec rename_var x v
         | Const _ | Proj _ | Angel _ -> v
         | Special(ApproxConst [],_) -> assert false
         | Special(ApproxConst apps,t) -> Special(ApproxConst (List.map (function p,w,y -> if y="()" then p,w,y else p,w,y^x) apps),t)
-        | _ -> assert false
+        | Special(ApproxProj _,_) -> v
+        (* | _ -> assert false *)
 
 
 (* unify the rhs of a clause with the lhs of another *)
@@ -704,12 +706,6 @@ let decreasing (l,r : sct_clause)
                         | _,_,_,_ -> debug "OOPS, u1=%s and u2=%s" (string_of_approx_term u1) (string_of_approx_term u2); assert false
                 end
     in
-    (* let rec remove_result_constants u = *)
-    (*     match get_head u, get_args u with *)
-    (*         | Special(ApproxProj _,_),[u] *)
-    (*         | Const _, [u] -> remove_result_constants u *)
-    (*         | _,_ -> u *)
-    (* in *)
 
     (* debug "check in %s and %s" (string_of_approx_term l) (string_of_approx_term (remove_result_constants r)); *)
     let f1,pats1 = l in
