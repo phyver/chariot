@@ -84,6 +84,23 @@ let collapse_weight_in_pattern b (f,ps) =
 
 (* misc operations on approximations *)
 
+(* comparing two approximations *)
+let compare_approx a1 a2     (* check if a1 is an approximation of a2, ie if a2 is more informative *)
+  = match a1,a2 with
+        | (Some 0,w1),(Some 0,w2) -> assert ((w1=Num 0) && (w2=Num 0)); true
+        | (Some 0,w1),_ -> assert (w1=Num 0); false
+        | (_,Infty), (Some 0,w2) -> assert (w2=Num 0); true
+        | (_,Num w), (Some 0,w2) -> assert (w2=Num 0); w>=0
+
+        | (None,w) , (Some _,_) -> true
+        | (Some _,_),(None,w) -> false
+        | (Some p1, w1) , (Some p2, w2) when p1<p2 -> true
+        | (Some p1, w1) , (Some p2, w2) when p1>p2 -> false
+
+        | (p1, Infty) , (p2, _) (*when p1=p2*) -> true
+        | (p1, _) , (p2, Infty) (*when p1=p2*) -> false
+        | (p1, Num w1) , (p2, Num w2) (*when p1=p2*) -> w2 <= w1
+
 (* composing two approximations, for constructors *)
 let sup_approx a1 a2
   = match a1,a2 with
@@ -113,7 +130,7 @@ let collapse_apps_proj args
             | [] -> acc
     in collapse_apps_proj_aux args (Some 0,Num 0)
 
-let app_all (f,args1) args2 =
+let app_all (f,args1:sct_pattern) (args2:approx_term list) : sct_pattern =
     let rec aux args = match args with
         | [] -> []
         | (Special(ApproxProj _,t))::_ ->
@@ -470,6 +487,7 @@ let approx_approx (p1,w1) (p2,w2) =
                     | Num w1,Num w2 -> w1 >= w2
             end
 
+(* check if p1 approximates p2 *)
 let approximates p1 p2 =
 
     let rec approximates_aux pats1 pats2 =
@@ -484,14 +502,18 @@ let approximates p1 p2 =
                     approximates_aux ((get_head u1)::(get_args u1)@_pats1) ((get_head u2)::(get_args u2)@_pats2)
             | Special(ApproxConst [],_)::_,_
             | _,Special(ApproxConst [],_)::_ -> assert false
-            | Special(ApproxConst apps1,_)::pats1,Special(ApproxConst apps2,_)::pats2 ->
-                    List.for_all (function p2,w2,x2 ->
-                    List.exists  (function p1,w1,x1 ->
-                        (* debug "x1=%s, x2=%s, p1=%s, p2=%s, w1=%s, w2=%s" x1 x2 (string_of_priority p1) (string_of_priority p2) (string_of_weight w1) (string_of_weight w2); *)
-                            x1=x2 && (p1 < p2 || (p1 = p2 && w1 >= w2))
-                        )
-                        apps1)
-                        apps2
+            | Special(ApproxConst apps1,t1)::pats1,Special(ApproxConst apps2,t2)::pats2 ->
+                    (* debug "left: %s, right: %s" *)
+                    (*     (string_of_approx_term (Special(ApproxConst apps1,t1))) *)
+                    (*     (string_of_approx_term (Special(ApproxConst apps2,t2))); *)
+                let b = List.for_all (function p2,w2,x2 ->
+                        List.exists  (function p1,w1,x1 ->
+                            (* debug "x1=%s, x2=%s, p1=%s, p2=%s, w1=%s, w2=%s" x1 x2 (string_of_priority p1) (string_of_priority p2) (string_of_weight w1) (string_of_weight w2); *)
+                                x1=x2 && (compare_approx (p1,w1) (p2,w2))
+                            )
+                            apps1)
+                            apps2
+                in b && approximates_aux pats1 pats2
             | Special(ApproxConst _,_)::_,u2::_pats2 ->
                     let aps2 = collapse0 u2 in
                     approximates_aux pats1 (Special(ApproxConst aps2,())::_pats2)
@@ -521,10 +543,10 @@ let approximates p1 p2 =
         let subst (f,pats) = (f,List.map (subst_approx_term sigma) pats) in
 
         let r1 = subst r1 in
-        let f1,pats1 = app_all r1 context1 in
+        let f1,pats1 = app_all r1 context2 in
         let r2 = subst r2 in
-        let f2,pats2 = app_all r2 context2 in
-        (* debug "r1=%s  and  r2=%s" (string_of_approx_term r1) (string_of_approx_term r2); *)
+        let f2,pats2 = app_all r2 context1 in
+        (* debug "r1=%s  and  r2=%s" (string_of_sct_pattern (f1,pats1)) (string_of_sct_pattern (f2,pats2)); *)
 
         f1 = f2 && approximates_aux pats1 pats2
 
