@@ -1,44 +1,109 @@
+-- TRUE means that the first pattern is an approximation of the second
 -- expect TRUE
---   f x₁ => g x₁    ≥    f x₁ => g x₁
+--   f, x => g, x    ≥    f, x => g, x
 --         TRUE
 
 -- expect FALSE
---   f x₁ => g (S⁼ x₁)    ≥    f x₁ => g x₁
+--   f, x => g, S⁼ x    ≥    f, x => g, x
 --         FALSE
 
 -- expect FALSE
---   f x₁ => g x₁    ≥    f x₁ => g (S⁼ x₁)
+--   f, x => g, x    ≥    f, x => g, S⁼ x
 --         FALSE
 
 -- expect FALSE
---   f (S⁼ x₁) => g x₁    ≥    f x₁ => g x₁
+--   f, S⁼ x => g, x    ≥    f, x => g, x
 --         FALSE
 
 -- expect FALSE
---   f x₁ => g x₁    ≥    f (S⁼ x₁) => g x₁
+--   f, x => g, x    ≥    f, S⁼ x => g, x
 --         FALSE
 
 -- expect TRUE
---   f x₁ => g <0>⁼ x₁    ≥    f x₁ => g <0>⁼ x₁
+--   f, x₁ => g, <0>⁼ x₁    ≥    f, x₁ => g, <0>⁼ x₁
 --         TRUE
 
 -- expect TRUE
---   f x₁ => g <1>⁼ x₁    ≥    f x₁ => g <0>⁼ x₁
+--   f, x₁ => g, <1>⁼ x₁    ≥    f, x₁ => g, <0>⁼ x₁
 --         TRUE
 
 -- expect FALSE
---   f x₁ => g <0>⁼ x₁    ≥    f x₁ => g <1>⁼ x₁
+--   f, x₁ => g, <0>⁼ x₁    ≥    f, x₁ => g, <1>⁼ x₁
 --         FALSE
 
 -- expect TRUE
---   f (S⁼ x₁) => g (S⁼ x₁)    ≥    f (S⁼ x₁) => g (S⁼ x₁)
+--   f, S⁼ x => g, S⁼ x    ≥    f, S⁼ x => g, S⁼ x
 --         TRUE
 
 -- expect TRUE
---   f (S⁼ x₁) => g (S⁼ <1>⁼ x₁)    ≥    f (S⁼ x₁) => g (S⁼ x₁)
+--   f, S⁼ x => g, S⁼ <1>⁼ x    ≥    f, S⁼ x => g, S⁼ x
 --         TRUE
 
 -- expect FALSE
---   f (S⁼ x₁) => g (S⁼ x₁)    ≥    f (S⁼ x₁) => g (S⁼ <1>⁼ x₁)
+--   f, S⁼ x => g, S⁼ x    ≥    f, S⁼ x => g, S⁼ <1>⁼ x
 --         FALSE
+
+-- expect TRUE
+--   f, x, y => g, x, y    ≥    f, x, y => g, x, y
+--         TRUE
+
+-- expect TRUE
+--   f, x, y => g, x, y    ≥    f, x => g, x
+--         TRUE
+
+-- expect TRUE
+--   f, x => g, x    ≥    f, x, y => g, x, y
+--         TRUE
+
+-- expect FALSE
+--   f, x, y => g, x, y    ≥    f, x, y => g, x
+--         FALSE
+
+-- expect FALSE
+--   f, x, y => g, x, y    ≥    f, x, y => g, x, x
+--         FALSE
+
+-- expect FALSE
+--   f, x, y => g, x, y    ≥    f, x, y => g, y, x
+--         FALSE
+
+-- expect FALSE
+--   f, x, y => g, x, y    ≥    f, x, y => g, x, S⁼ y
+--         FALSE
+
+-- expect FALSE
+--   f, S⁼ x, y => g, x, y    ≥    f, x, y => g, x, y
+--         FALSE
+
+-- expect FALSE
+--   f, x, y => g, x, y    ≥    f, x, y => g, x, <1>⁼ y
+--         FALSE
+
+-- expect FALSE
+--   f, x₁, y => g, <-1>⁼ x₁, y    ≥    f, x, y => g, x, y
+--         FALSE
+
+-- expect TRUE
+--   f, x, y => g, <1>⁼ x, y    ≥    f, x, y => g, x, y
+--         TRUE
+
+-- expect FALSE
+--   f, x, y => g, x, y    ≥    f, x, x₁ => g, x, <-1>⁼ x₁
+--         FALSE
+
+-- expect TRUE
+--   f, x, y => g, <1>⁼ x, y    ≥    f, x₁, y => g, <-1>⁼ x₁, y
+--         TRUE
+
+-- expect FALSE
+--   f, x₁, y => g, y, <-1>⁼ x₁    ≥    f, x, y => g, <1>⁼ x, y
+--         FALSE
+
+-- expect FALSE
+--   f, x₁ => g, <-1>⁼ x₁    ≥    f, x => g, x
+--         FALSE
+
+-- expect TRUE
+--   f, x => g, <1>⁼ x    ≥    f, x => g, x
+--         TRUE
 
