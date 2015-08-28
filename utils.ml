@@ -258,6 +258,12 @@ let add_weight (w1:weight) (w2:weight) : weight
 let add_weight_int (w:weight) (n:int) : weight
   = add_weight w (Num n)
 
+let sup_weight (w1:weight) (w2:weight) : weight
+  = match w1,w2 with
+        | Infty,_ | _,Infty -> Infty
+        | Num w1,Num w2 -> Num (max w1 w2)
+
+
 let op_weight (w:weight) : weight
   = match w with
         | Infty -> raise (Invalid_argument "op_weight")
@@ -272,7 +278,7 @@ let collapse_weight (bound:int) (w:weight) : weight
 
 
 
-let rec pattern_to_approx_term (v:'t pattern) (*: approx_term *)
+let rec pattern_to_approx_term (v:(empty,'t) special_term) : (approximation,'t) special_term
   = match v with
     | Var(x,t) -> Var(x,t)
     | Angel(t) -> Angel(t)
@@ -301,21 +307,18 @@ let rec subst_term sigma (v:'t term) : 't term
 let rec explode v
   = let h,args = get_head v,get_args v in
     match h,args with
-        | Var _,args | Const _,args | Angel _,args -> h::args
+        | Var _,args | Const _,args | Angel _,args | Special _,args-> h::args
         | Proj _,v::args -> (explode v)@(h::args)
         | Proj _ as p,[] -> [p]
         | App _,_ -> assert false
-        | Special(s,_),_ -> s.bot
 
 let implode args =
     let rec implode_aux args acc
       = match args with
             | [] -> acc
-            | (Var(_,t) | Angel(t) | Const(_,_,t) | App(_,_,t) as v)::args -> implode_aux args (App(acc,v,t))
-            | (Proj(_,_,t) as v)::args -> implode_aux args (App(v,acc,t))
-            | Special(s,_)::args -> s.bot
+            | (Var(_,t) | Angel(t) | Const(_,_,t) | App(_,_,t) | Special(_,t) as v)::args -> implode_aux args (App(acc,v,t))  (* TODO: "t" should be updated in the application *)
+            | (Proj(_,_,t) as v)::args -> implode_aux args (App(v,acc,t))  (* TODO: "t" should be updated in the application *)
     in
     match args with
         | [] -> assert false
         | v::args -> implode_aux args v
-

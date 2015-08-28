@@ -83,6 +83,17 @@ let collapse_weight_in_pattern b (f,ps) =
 
 
 (* misc operations on approximations *)
+
+(* composing two approximations, for constructors *)
+let sup_approx a1 a2
+  = match a1,a2 with
+        | (None,w1) , (None,w2) -> (None, sup_weight w1 w2)
+        | (Some p1, w1) , (Some p2, w2) when p1<p2 -> (Some p2, w2)
+        | (Some p1, w1) , (Some p2, w2) when p1>p2 -> (Some p1, w1)
+        | (Some p1, w1) , (Some p2, w2) (*when p1=p2*) -> (Some p1, sup_weight w1 w2)
+        | (None,w) , (Some _,_) | (Some _,_),(None,w) -> (None, w)
+
+(* composing two approximations, for destructors *)
 let add_approx a1 a2
   = match a1,a2 with
         | (None,w1) , (None,w2) -> (None, add_weight w1 w2)
@@ -91,13 +102,16 @@ let add_approx a1 a2
         | (Some p1, w1) , (Some p2, w2) (*when p1=p2*) -> (Some p1, add_weight w1 w2)
         | (None,w) , (Some _,_) | (Some _,_),(None,w) -> (None, w)
 
-let rec collapse_apps_proj args
-  = match args with
-        | Special(ApproxProj(p1,w1),t1)::args ->
-            let p,w = collapse_apps_proj args in
-            add_approx (p,w) (p1,w1)
-        | _::args -> collapse_apps_proj args
-        | [] -> (Some 0, Num 0)
+let collapse_apps_proj args
+  =
+    let rec collapse_apps_proj_aux args acc
+      = match args with
+            | Special(ApproxProj(p1,w1),_)::args ->
+                collapse_apps_proj_aux args (add_approx acc (p1,w1))
+            | Proj(_,p,_)::args -> collapse_apps_proj_aux args (add_approx acc (p,Num 1))
+            | _::args -> collapse_apps_proj_aux args acc
+            | [] -> acc
+    in collapse_apps_proj_aux args (Some 0,Num 0)
 
 let app_all (f,args1) args2 =
     let rec aux args = match args with
@@ -109,6 +123,7 @@ let app_all (f,args1) args2 =
 
     in f,aux(args1@args2)
 
+(* simplify a sum of approximations *)
 let simplify_approx aps =
     let aps = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) aps in
     let rec simplify_aux = function
@@ -117,11 +132,12 @@ let simplify_approx aps =
         | (p1,w1,x1)::(((_,_,x2)::_) as aps) when x1<x2 -> (p1,w1,x1)::(simplify_aux aps)
         | (p1,w1,x1)::(p2,w2,x2)::aps (*when x1<x2*) ->
                 assert (x1=x2);
-                let p,w = add_approx (p1,w1) (p2,w2) in
+                let p,w = sup_approx (p1,w1) (p2,w2) in
                 simplify_aux ((p,w,x1)::aps)
     in
     simplify_aux aps
 
+(* merge two sums of approximations *)
 let merge_approx as1 as2 =
     let as1 = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) as1 in
     let as2 = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) as2 in
@@ -130,7 +146,7 @@ let merge_approx as1 as2 =
         | (p1,w1,x1)::as1 , (_,_,x2)::_ when x1<x2 -> (p1,w1,x1)::(merge_aux as1 as2)
         | (_,_,x1)::_ , (p2,w2,x2)::as2 when x1>x2 -> (p2,w2,x2)::(merge_aux as1 as2)
         | (p1,w1,x1)::as1 , (p2,w2,x2)::as2 (*when x1=x2*) ->
-                let (p,w) = add_approx (p1,w1) (p2,w2) in
+                let (p,w) = sup_approx (p1,w1) (p2,w2) in
                 (p,w,x1)::(merge_aux as1 as2)
     in
     merge_aux as1 as2
@@ -171,7 +187,7 @@ let collapse_pattern (depth:int) (pattern:sct_pattern) : sct_pattern
     let rec collapse_aux dp ps
       = match ps with
         | [] -> []
-        | (Proj _ as d)::_ when dp>0 ->
+        | (Proj _ as d)::ps when dp>0 ->
             d::(collapse_aux (dp-1) ps)
         | (Proj(_,prio,t))::ps (*when dp=0*) ->
             let p,w = collapse_apps_proj ((Special(ApproxProj(prio,Num 1),t))::ps) in

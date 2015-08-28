@@ -241,10 +241,16 @@ let string_of_case_struct_term v = string_of_case_struct_tree 2 string_of_term v
 
 
 
-let string_of_sct_pattern ((f_l,ps_l):sct_pattern) : string =
-    fmt "%s %ss"
-        f_l
-        (string_of_list " " string_of_approx_term ps_l)
+let string_of_sct_pattern ((f,ps):sct_pattern) : string =
+    (* let f = Var(f,()) in *)
+    (* let v = match implode (f::ps) with *)
+    (*             | App(v,Special(ApproxProj(p,w),t),t') -> App(Special(ApproxProj(p,w),t),v,t') *)
+    (*             | v -> v *)
+    (* in *)
+    (* string_of_approx_term v *)
+    fmt "%s, %s"
+        f
+        (string_of_list ", " string_of_approx_term ps)
 
 let string_of_sct_clause (l,r:sct_clause) : string =
     fmt "%s => %s" (string_of_sct_pattern l) (string_of_sct_pattern r)
