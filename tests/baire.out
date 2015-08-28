@@ -1,6 +1,6 @@
 -- inductive type nat was succesfully defined
 -- coinductive type tree was succesfully defined
 -- Typing for ones successful
--- definition for ones is complete
+-- the definition for ones is complete
 -- Typing for t successful
--- definition for t is complete
+-- the definition for t is complete

@@ -2,20 +2,21 @@
 -- Typing for f successful
 --!! match failures:
 --!!   f 1
---** function f is incomplete
+--!! the definition for f is incomplete
 -- inductive type list was succesfully defined
 -- Typing for last successful
 --!! match failures:
 --!!   last []
+--!! the definition for last is incomplete
 -- Typing for last2 successful
 --!! match failures:
 --!!   last2 []
---** function last2 is incomplete
+--** the definition for last2 is incomplete
 -- Typing for merge successful
--- definition for merge is complete
+-- the definition for merge is complete
 -- Typing for test1 successful
 --!! match failures:
 --!!   test1 []
 --!!   test1 [x₂; x₄]
 --!!   test1 [x₂; x₄; x₆; x₈]
---** function test1 is incomplete
+--** the definition for test1 is incomplete

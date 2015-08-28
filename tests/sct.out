@@ -1,4 +1,14 @@
--- the functions are correct
--- the functions are NOT provably correct
--- the functions are correct
--- the functions are correct
+-- inductive type nat was succesfully defined
+-- inductive type list was succesfully defined
+-- Typing for id successful
+-- the definition for id is complete
+-- the definition id are provably correct
+-- Typing for di successful
+-- the definition for di is complete
+--** the definition di are NOT provably correct (weight_bound: 1, depth_bound: 2)
+-- Typing for l successful
+-- the definition for l is complete
+-- the definition l are provably correct
+-- Typing for ack successful
+-- the definition for ack is complete
+-- the definition ack are provably correct
