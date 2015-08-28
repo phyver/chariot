@@ -3,17 +3,23 @@
 --!! match failures:
 --!!   f 1
 --!! the definition for f is incomplete
+-- the definition f is provably correct
+
 -- inductive type list was succesfully defined
 -- Typing for last successful
 --!! match failures:
 --!!   last []
 --!! the definition for last is incomplete
+-- the definition last is provably correct
+
 -- Typing for last2 successful
 --!! match failures:
 --!!   last2 []
 --** the definition for last2 is incomplete
 -- Typing for merge successful
 -- the definition for merge is complete
+-- the definition merge is provably correct
+
 -- Typing for test1 successful
 --!! match failures:
 --!!   test1 []

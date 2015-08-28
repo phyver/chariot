@@ -1,3 +1,4 @@
+--!! the definition bad is NOT provably correct (weight_bound: 2, depth_bound: 2)
 val
    bad : nat → nat * list(nat)
     | (bad n).Fst² = n

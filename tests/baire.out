@@ -2,5 +2,9 @@
 -- coinductive type tree was succesfully defined
 -- Typing for ones successful
 -- the definition for ones is complete
+-- the definition ones is provably correct
+
 -- Typing for t successful
 -- the definition for t is complete
+-- the definition t is provably correct
+

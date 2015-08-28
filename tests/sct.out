@@ -2,13 +2,16 @@
 -- inductive type list was succesfully defined
 -- Typing for id successful
 -- the definition for id is complete
--- the definition id are provably correct
+-- the definition id is provably correct
+
 -- Typing for di successful
 -- the definition for di is complete
---** the definition di are NOT provably correct (weight_bound: 1, depth_bound: 2)
+--** the definition di is NOT provably correct (weight_bound: 1, depth_bound: 2)
 -- Typing for l successful
 -- the definition for l is complete
--- the definition l are provably correct
+-- the definition l is provably correct
+
 -- Typing for ack successful
 -- the definition for ack is complete
--- the definition ack are provably correct
+-- the definition ack is provably correct
+

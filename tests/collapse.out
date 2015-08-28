@@ -30,13 +30,13 @@
 
 --   collapse of   s, .Tail⁼, .Tail⁼   is   s, .Tail⁼, .Tail⁼
 
---   collapse of   s, .Tail⁼, .Tail⁼, .Tail⁼   is   s, .Tail⁼, .Tail⁼, <1>⁼ .
+--   collapse of   s, .Tail⁼, .Tail⁼, .Tail⁼   is   s, .Tail⁼, .Tail⁼, .<<1>>⁼
 
---   collapse of   s, .Tail⁼, .Tail⁼, .Tail⁼, .Tail⁼   is   s, .Tail⁼, .Tail⁼, <2>⁼ .
+--   collapse of   s, .Tail⁼, .Tail⁼, .Tail⁼, .Tail⁼   is   s, .Tail⁼, .Tail⁼, .<<2>>⁼
 
---   collapse of   s, .Tail⁼, .Tail⁼, .Tail⁼, .Tail⁼, .Tail⁼   is   s, .Tail⁼, .Tail⁼, <∞>⁼ .
+--   collapse of   s, .Tail⁼, .Tail⁼, .Tail⁼, .Tail⁼, .Tail⁼   is   s, .Tail⁼, .Tail⁼, .<<∞>>⁼
 
---   collapse of   t, n1, .Next⁼, n2, n3, .Next⁼, n4, n5, .Next⁼, n6, n7, .Root⁼   is   t, n1, .Next⁼, n2, n3, .Next⁼, n4, n5, <2>⁼ .
+--   collapse of   t, n1, .Next⁼, n2, n3, .Next⁼, n4, n5, .Next⁼, n6, n7, .Root⁼   is   t, n1, .Next⁼, n2, n3, .Next⁼, n4, n5, .<<2>>⁼
 
---   collapse of   t, S⁼ (S⁼ (S⁼ n1)), .Next⁼, n2, n3, .Next⁼, S⁼ (S⁼ (S⁼ n4)), n5, .Next⁼, n6, S⁼ (S⁼ (S⁼ n7)), .Root⁼   is   t, S⁼ (S⁼ <1>⁼ n1), .Next⁼, n2, n3, .Next⁼, S⁼ (S⁼ <1>⁼ n4), n5, <2>⁼ .
+--   collapse of   t, S⁼ (S⁼ (S⁼ n1)), .Next⁼, n2, n3, .Next⁼, S⁼ (S⁼ (S⁼ n4)), n5, .Next⁼, n6, S⁼ (S⁼ (S⁼ n7)), .Root⁼   is   t, S⁼ (S⁼ <1>⁼ n1), .Next⁼, n2, n3, .Next⁼, S⁼ (S⁼ <1>⁼ n4), n5, .<<2>>⁼
 

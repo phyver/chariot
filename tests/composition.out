@@ -11,23 +11,23 @@
 --           =  nats, .P⁼, .P⁼ => nats, 
 
 --   nats, .P⁼, .P⁼ => nats,     o    nats, .P⁼ => nats, 
---           =  nats, .P⁼, .P⁼ => nats, <-1>⁼ .
+--           =  nats, .P⁼, .P⁼ => nats, .<<-1>>⁼
 
 --   nats, .P⁼, .P⁼ => nats,     o    nats, .P⁼, .P⁼, .P⁼ => nats, 
---           =  nats, .P⁼, .P⁼ => nats, <-2>⁼ .
+--           =  nats, .P⁼, .P⁼ => nats, .<<-2>>⁼
 
 --   nats,  => nats, .P⁼    o    nats,  => nats, .P⁼
 --           =  nats,  => nats, .P⁼, .P⁼
 
 --   nats,  => nats, .P⁼, .P⁼    o    nats,  => nats, .P⁼
---           =  nats,  => nats, .P⁼, .P⁼, <1>⁼ .
+--           =  nats,  => nats, .P⁼, .P⁼, .<<1>>⁼
 
 --   nats,  => nats, .P⁼, .P⁼    o    nats,  => nats, .P⁼, .P⁼
---           =  nats,  => nats, .P⁼, .P⁼, <∞>⁼ .
+--           =  nats,  => nats, .P⁼, .P⁼, .<<∞>>⁼
 
 --   f, x, .P⁼, y => g, x    o    g, x, .Q⁼, y => f, y
 --           =  f, x₁, .P⁼, x₂, .Q⁼, x₃ => f, x₃
 
 --   f, x, .P⁼, y, .P⁼, z => g, x    o    g, x, .Q⁼, y, .Q⁼, z => f, y
---           =  f, x₁, .P⁼, x₂, .P⁼, x₃ => f, x₄, <-2>⁼ .
+--           =  f, x₁, .P⁼, x₂, .P⁼, x₃ => f, x₄, .<<-2>>⁼
 
