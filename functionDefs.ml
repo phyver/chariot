@@ -156,7 +156,7 @@ let process_function_defs (env:environment)
     (* check completeness of pattern matching *)
     let defs = List.map
         (function f,t,clauses ->
-            let f,args,cs = case_struct_of_clauses env f t clauses in
+            let f,clauses,args,cs = case_struct_of_clauses env f t clauses in
             if is_exhaustive f args cs
             then (if (verbose 1) then msg "the definition for %s is complete" f)
             else

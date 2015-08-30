@@ -72,6 +72,7 @@ let current_state =
             "show_tuples",             true     , "use standard notations for displaying tuples" ;
 
             "allow_incomplete_defs",   true     , "allow incomplete definitions";
+            "keep_useless_clauses",    false    , "keep useless clauses in function definitions";
             "use_priorities",          true     , "use priorities for checking termination (unsound if false)" ;  (* FIXME -> only check termination *)
             "show_priorities",         true     , "display priorities when showing function definitions" ;
             "continue_on_error",       false    , "do not quit on errors (only for non-interactive use)" ;

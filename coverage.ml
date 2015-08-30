@@ -61,11 +61,11 @@ let  is_var = function
       |  _::_ -> 2
       | [] -> 3
 
-let choose_constructor (c:const_name) (clauses:(match_pattern*'t term) list)
-  : (match_pattern*'t term) list
+let choose_constructor (c:const_name) (clauses:(int*match_pattern*'t term) list)
+  : (int*match_pattern*'t term) list
   = List.filter
-        (fun q ->
-            match get_head (List.hd (fst q)) with
+        (fun (_,pat,def) ->
+            match get_head (List.hd pat) with
                 | Const(c',_,_) when c=c' -> true
                 | Const(c',_,_) (*when c<>c'*) -> false
                 | Proj(d,_,_) when c=d -> true
@@ -80,22 +80,23 @@ let new_var () =
 
 let string_of_clause (pat,def) = fmt "[%s] -> %s" (string_of_list " " s_o_u pat) (s_o_u def)
 
+(* TODO: generate a (int*type_expression term) case_struct_tree to be able to remove useless clauses *)
 let rec
 convert_match env (xs:var_name list)
-                  (clauses:(match_pattern*type_expression term) list)
-                  (fail: type_expression term case_struct_tree)
-  : type_expression term case_struct_tree
+                  (clauses:(int*match_pattern*type_expression term) list)
+                  (fail: (int*type_expression term) case_struct_tree)
+  : (int * type_expression term) case_struct_tree
   =
     (* debug "clauses: {%s}" (string_of_list "," string_of_clause clauses); *)
       match xs,clauses with
         | [],[] -> fail
         | x::xs,[] -> fail  (* TODO: keep types and check that x is not in a type with 0 constructor *)
-        | [],[([],v)] -> CSLeaf(map_special_term (fun s->s.bot) identity v)
-        | [],([],v)::clauses -> debug "TODO: useless case..."; CSLeaf(map_special_term (fun s->s.bot) identity v)
+        | [],[(n,[],v)] -> CSLeaf(n,map_special_term (fun s->s.bot) identity v)
+        | [],(n,[],v)::clauses ->  CSLeaf(n,map_special_term (fun s->s.bot) identity v)
         (* | [],_ -> assert false *)
 
         | xs,clauses ->
-            let part_clauses = partition (function p,_ -> is_var p) clauses in
+            let part_clauses = partition (function _,p,_ -> is_var p) clauses in
             (* debug "part_clauses: %s" (string_of_list "  |  " (fun clauses -> "{" ^ string_of_list ", " string_of_clause clauses ^ "}") part_clauses); *)
             List.fold_right (fun clauses e -> convert_match_aux env xs clauses e) part_clauses fail
 
@@ -109,10 +110,10 @@ convert_match_aux env xs clauses fail
         | [],[] -> assert false
 
         (* variable case *)
-        | x::xs,(Var _::_,_)::_ ->
+        | x::xs,(_,Var _::_,_)::_ ->
             begin
                 let clauses = List.map (fun cl -> match cl with
-                                            | (Var(y,t)::ps,def) -> (ps,subst_term [y,Var(x,t)] def)
+                                            | (n,Var(y,t)::ps,def) -> (n,ps,subst_term [y,Var(x,t)] def)
                                             | _ -> assert false)
                                         clauses
                 in
@@ -120,7 +121,7 @@ convert_match_aux env xs clauses fail
             end
 
         (* projection case *)
-        | xs,(Proj(d,_,t)::_,_)::_ ->
+        | xs,(_,Proj(d,_,t)::_,_)::_ ->
             begin
                 let constants = get_other_constants env d in
                 let struct_fields = List.map
@@ -130,8 +131,8 @@ convert_match_aux env xs clauses fail
                         let new_xs = List.map new_var new_xs in
 
                         let clauses = List.map
-                                    (function pat,def ->
-                                        get_args (List.hd pat) @ (List.tl pat) , def
+                                    (function n,pat,def ->
+                                        n,get_args (List.hd pat) @ (List.tl pat) , def
                                     )
                                     (choose_constructor d' clauses)
                         in
@@ -143,7 +144,7 @@ convert_match_aux env xs clauses fail
             end
 
         (* constructor case *)
-        | x::xs,(pattern::_,_)::_ ->
+        | x::xs,(_,pattern::_,_)::_ ->
             begin
                 let c,t = (match get_head pattern with Const(c,_,t) -> c,t | _ -> assert false) in
                 let constants = get_other_constants env c in
@@ -153,8 +154,8 @@ convert_match_aux env xs clauses fail
                         let new_xs = repeat () arity in
                         let new_xs = List.map new_var new_xs in
                         let clauses = List.map
-                                    (function pat,def ->
-                                        get_args (List.hd pat) @ (List.tl pat) , def
+                                    (function n,pat,def ->
+                                        n,get_args (List.hd pat) @ (List.tl pat) , def
                                     )
                                     (choose_constructor c' clauses)
                         in
@@ -190,7 +191,7 @@ let simplify_case_struct v =
                 let fields = List.map (function d,(xs,v) -> d,(xs,rename sigma v)) fields in
                 (* NOTE: I assume a kind of Barendregt condition is satisfied by the terms... *)
                 Struct(fields)
-            | CSLeaf(v) -> CSLeaf(rename_var_term sigma v)
+            | CSLeaf(n,v) -> CSLeaf(n,rename_var_term sigma v)
     in
 
     let rec simplify_aux branch v
@@ -259,15 +260,30 @@ let add_args_clause args clauses =
     in
     let get_args n = args_aux n args [] in
 
-    List.map (function ps,v ->
-        let n = arity - (List.length ps) in
-        let xs = get_args n in
-        ps@xs, app v xs
+    List.map (function n,ps,v ->
+        let a = arity - (List.length ps) in
+        let xs = get_args a in
+        n,ps@xs, app v xs
     ) clauses
+
+let rec remove_clause_numbers cs
+  = match cs with
+            | Case(x,cases) -> Case(x,List.map (function c,(xs,cs) -> c,(xs,remove_clause_numbers cs)) cases)
+            | Struct(fields) -> Struct(List.map (function d,(xs,cs) -> d,(xs,remove_clause_numbers cs)) fields)
+            | CaseFail -> CaseFail
+            | CSLeaf(n,v) -> CSLeaf(v)
+
+let extract_clause_numbers cs
+  = let rec extract_clause_numbers_aux cs
+      = match cs with
+            | Case(_,cases) | Struct(cases) -> List.concat (List.map (function _,(_,cs) -> extract_clause_numbers_aux cs) cases)
+            | CaseFail -> []
+            | CSLeaf(n,v) -> [n]
+    in uniq (extract_clause_numbers_aux cs)
 
 
 let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_expression pattern*type_expression term) list)
-    : (var_name * var_name list * type_expression term case_struct_tree)
+    : (var_name * (type_expression pattern*type_expression term) list * var_name list * type_expression term case_struct_tree)
   =
     (* debug "case_struct_of_clauses for function %s" f; *)
     counter := 0;
@@ -277,14 +293,31 @@ let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_e
     let targs = get_args_type t in
     let term_args = List.map2 (fun x t -> Var(x,t)) args targs in
 
-    let clauses = List.map (first (fun p -> List.tl (explode_pattern p))) clauses in (* List.tl to remove function name *)
-    let clauses = add_args_clause term_args clauses in
+    let clauses = List.map2 (fun n cl -> n,fst cl,snd cl) (range 1 (List.length clauses)) clauses in
 
-    let fail = CaseFail in
-    let cs = convert_match env args clauses fail in
+    let cs =
+        let fail = CaseFail in
+        let clauses = List.map (function n,p,def -> n,List.tl (explode_pattern p),def) clauses in (* List.tl to remove function name *)
+        let clauses = add_args_clause term_args clauses in
+        convert_match env args clauses fail
+    in
+
     (* debug "obtained:\n    %s %s |--> %s" f (string_of_list " " identity args) (string_of_case_struct_term cs); *)
     let cs = simplify_case_struct cs in
     (* debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " identity args) (string_of_case_struct_term cs); *)
 
-    f,args,cs
+    let ns = extract_clause_numbers cs in
+    let clauses = List.filter
+        (function n,pat,def ->
+            if not (List.mem n ns)
+            then (
+                warning "useless clause %d: %s = %s" n (string_of_term pat) (string_of_term def); option "keep_useless_clauses")
+            else true)
+        clauses
+    in
+
+    let clauses = List.map (function _,lhs,rhs-> lhs,rhs) clauses in
+    let cs = remove_clause_numbers cs in
+
+    f,clauses,args,cs
 
