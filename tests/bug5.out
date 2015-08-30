@@ -1,1 +1,1 @@
---** constructor A doesn't exist in the environment
+** error: constructor A doesn't exist in the environment

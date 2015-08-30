@@ -1,4 +1,4 @@
--- types in environment:
+>> types in environment:
 data
   nat where
     | Zero : nat

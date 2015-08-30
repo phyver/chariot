@@ -1,4 +1,4 @@
---!! the definition bad is NOT provably correct (weight_bound: 2, depth_bound: 2)
+!! warning: the definition bad is NOT provably correct (weight_bound: 2, depth_bound: 2)
 val
    bad : stream(tree)
     | bad.Head² = Node³ bad

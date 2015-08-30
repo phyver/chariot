@@ -10,7 +10,7 @@ TESTS=$(filter-out $(EXCLUDE), $(FILES))
 all: $(TESTS)
 
 %.ch: FORCE
-	@./check.sh -x "^--==" $(INTERACTIVE) $@
+	@./check.sh -x "^=*\s*debug:" $(INTERACTIVE) $@
 
 FORCE:
 

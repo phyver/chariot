@@ -1,4 +1,4 @@
---!! useless clause 2: test [] = []
+!! warning: useless clause 2: test [] = []
 val
    test : list('a) → list('b)
     | test x = []

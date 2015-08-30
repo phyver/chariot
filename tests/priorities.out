@@ -1,4 +1,4 @@
--- functions in environment:
+>> functions in environment:
 val
    f : list(list(list(list(nat)))) → nat
     | f (Cons⁹ (Cons⁷ (Cons⁵ (Cons³ Zero¹ Nil³) Nil⁵) Nil⁷) Nil⁹) = Zero¹

@@ -1,4 +1,4 @@
--- functions in environment:
+>> functions in environment:
 val
    f : 'a → 'b → 'c → 'a
     | f x _ y = x
@@ -11,7 +11,7 @@ val
    h : 'a → 'b → 'c → 'd → unit
     | h _ _ _ _ = ()
 
--- functions in environment:
+>> functions in environment:
 val
    f : 'a → 'b → 'c → 'a
     | f x _₁ y = x

@@ -1,1 +1,1 @@
---!! the definition test is NOT provably correct (weight_bound: 2, depth_bound: 2)
+!! warning: the definition test is NOT provably correct (weight_bound: 2, depth_bound: 2)
