@@ -106,23 +106,28 @@ let verbose (k:int) : bool
   = current_state.verbose >= k
 
 (* various helper function to print messages *)
-let msg ?(indent=0) fmt
-  = let prefix = "--" ^ (String.make indent ' ') ^ " " in
+let msg ?(indent=2) fmt
+  (* = let prefix = "--" ^ (String.make indent ' ') ^ " " in *)
+  = let prefix = (String.make indent '>') ^ " " in
+    let prefix = if option "use_ansi_codes" then ansi_code "green" prefix else prefix in
     print_prefix stdout prefix fmt
 
 let warning ?(indent=2) fmt
-  = let prefix = "--" ^ (String.make indent '!') ^ " " in
-    let prefix = if option "use_ansi_codes" then ansi_code "cyan" prefix else prefix in
+  (* = let prefix = "--" ^ (String.make indent '!') ^ " " in *)
+  = let prefix = (String.make indent '!') ^ " warning: " in
+    let prefix = if option "use_ansi_codes" then ansi_code "yellow" prefix else prefix in
     print_prefix stdout prefix fmt
 
 let errmsg ?(indent=2) fmt
-  = let prefix = "--" ^ (String.make indent '*') ^ " " in
+  (* = let prefix = "--" ^ (String.make indent '*') ^ " " in *)
+  = let prefix = (String.make indent '*') ^ " error: " in
     let prefix = if option "use_ansi_codes" then ansi_code "red" prefix else prefix in
     print_prefix stdout prefix fmt
 
 let debug ?(indent=2) fmt
-  = let prefix = "--" ^ (String.make indent '=') ^ " " in
-    let prefix = if option "use_ansi_codes" then ansi_code "yellow" prefix else prefix in
+  (* = let prefix = "--" ^ (String.make indent '=') ^ " " in *)
+  = let prefix = (String.make indent '=') ^ " debug: " in
+    let prefix = if option "use_ansi_codes" then ansi_code "blue" prefix else prefix in
     print_prefix stdout prefix fmt
 
 
