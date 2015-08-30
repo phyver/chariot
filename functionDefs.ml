@@ -217,7 +217,6 @@ let process_function_defs (env:environment)
     if verbose 1
     then print_newline();
 
-    debug "TEST";
     current_state.current_bloc <- current_state.current_bloc + 1;
 
     (* TODO: remove *)
