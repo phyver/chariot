@@ -26,3 +26,45 @@
 --!!   test1 [x₂; x₄]
 --!!   test1 [x₂; x₄; x₆; x₈]
 --** the definition for test1 is incomplete
+-- Typing for test2 successful
+--!! useless clause 2: test2 [] = ⊤
+-- the definition for test2 is complete
+-- the definition test2 is provably correct
+
+val
+   test2 : list('a) → 'b
+    | test2 x = ⊤
+
+-- Typing for test3 successful
+--!! useless clause 4: test3 _₁ = ⊤
+-- the definition for test3 is complete
+-- the definition test3 is provably correct
+
+val
+   test3 : list(list('a)) → 'b
+    | test3 [] = ⊤
+    | test3 ([]::xs) = ⊤
+    | test3 (y::ys::xs) = ⊤
+
+-- Typing for test4 successful
+--!! useless clause 2: test4 [] = ⊤
+-- the definition for test4 is complete
+-- the definition test4 is provably correct
+
+val
+   test4 : list('a) → 'b
+    | test4 x = ⊤
+    | test4 [] = ⊤
+
+-- Typing for test5 successful
+--!! useless clause 4: test5 _₁ = ⊤
+-- the definition for test5 is complete
+-- the definition test5 is provably correct
+
+val
+   test5 : list(list('a)) → 'b
+    | test5 [] = ⊤
+    | test5 ([]::xs) = ⊤
+    | test5 (y::ys::xs) = ⊤
+    | test5 _₁ = ⊤
+

@@ -33,4 +33,24 @@ val test1 [a] = 1
   | test1 (a::b::c::d::e::l) = 3
 
 
+-- useless clauses
+val test2 x = ???
+  | test2 [] = ???
+:show test2
 
+val test3 [] = ???
+  | test3 ([]::xs) = ???
+  | test3 ((y::ys)::xs) = ???
+  | test3 _ = ???
+:show test3
+
+:set keep_useless_clauses true
+val test4 x = ???
+  | test4 [] = ???
+:show test4
+
+val test5 [] = ???
+  | test5 ([]::xs) = ???
+  | test5 ((y::ys)::xs) = ???
+  | test5 _ = ???
+:show test5

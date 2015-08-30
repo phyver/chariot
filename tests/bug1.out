@@ -1,5 +1,5 @@
+--!! useless clause 2: test [] = []
 val
    test : list('a) → list('b)
     | test x = []
-    | test [] = []
 
