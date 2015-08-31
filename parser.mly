@@ -269,7 +269,7 @@ let test_collapse p =
 
 %}
 
-%token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL ARROW PLUS MINUS STAR GT
+%token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL DAIMON ARROW PLUS MINUS STAR GT
 %token LSQBRAC RSQBRAC DOUBLECOLON DOUBLEARROW
 %token DATA CODATA WHERE AND VAL
 %token CMDHELP CMDQUIT CMDSHOW CMDSET
@@ -448,6 +448,7 @@ atomic_term:
     | IDL                                   { Var($1,()) }
     | IDU                                   { Const($1,None,()) }
     | ANGEL                                 { Angel () }
+    | DAIMON                                { Daimon () }
 
     | INT                                   { int_to_term $1 (Const("Zero",None,())) }
     | term_list                             { list_to_term (List.rev $1) (Const("Nil",None,())) }

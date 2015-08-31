@@ -46,7 +46,7 @@ open Pretty
 let rec explode_approx v
   = let h,args = get_head v,get_args v in
     match h,args with
-        | Var _,args | Const _,args | Angel _,args | Special((ApproxConst _),_),args-> h::args
+        | Var _,args | Const _,args | Angel _,args | Daimon _,args | Special((ApproxConst _),_),args-> h::args
         | Proj _,v::args -> (explode_approx v)@(h::args)
         | Special(ApproxProj _,_),[v] -> (explode_approx v)@[h]
         | Special(ApproxProj _,_),_ -> assert false
@@ -73,7 +73,7 @@ let term_to_sct_pattern (t:approx_term) : sct_pattern =
 (* collapsing the weights inside a term *)
 let rec collapse_weight_in_term b u
   = match u with
-        | Var _ | Const _ | Proj _ | Angel _ -> u
+        | Var _ | Const _ | Proj _ | Angel _ | Daimon _ -> u
         | App(u1,u2) -> App(collapse_weight_in_term b u1, collapse_weight_in_term b u2)
         | Special(ApproxProj(p,w),t) -> Special(ApproxProj(p, collapse_weight b w),t)
         | Special(ApproxConst [],_) -> assert false
@@ -177,7 +177,8 @@ let merge_approx as1 as2 =
 (* collapse all the constructors from a contructorn pattern with approximations *)
 let rec collapse0 p = match get_head p,get_args p with
     | Var(x,_),[] -> [ (Some 0, Num 0, x) ]
-    | Angel _,[] -> assert false (* FIXME *)
+    | Angel _,[] -> raise (Invalid_argument "collapse0: Angel")     (* TODO: deal with that... *)
+    | Daimon _,[] -> raise (Invalid_argument "collapse0: Daimon")   (* TODO: deal with that... *)
     | Special (ApproxConst [],_),_ -> assert false
     | Special (ApproxConst ap,_),[] -> ap
     | Const(_,prio,_),[] -> [ (prio, Num 1, "()") ]
@@ -196,7 +197,7 @@ let collapse_pattern (depth:int) (pattern:sct_pattern) : sct_pattern
     let rec collapse_const d p =
         match get_head p,get_args p with
             | Special (ApproxConst [],_),_ -> assert false
-            | Var _,[] | Angel _,[] | Special (ApproxConst _,_),[] -> p
+            | Var _,[] | Angel _,[] | Daimon _,[] | Special (ApproxConst _,_),[] -> p
             | Const(c,prio,_),ps ->
                 if d=0
                 then Special (ApproxConst (collapse0 p),())
@@ -252,7 +253,7 @@ let rec subst_approx_term_aux sigma acc apps
 let rec subst_approx_term sigma v
   = match v with
         | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
-        | (Angel _|Const _|Proj _|Special(ApproxProj _,_)) as v -> v
+        | (Angel _|Daimon _|Const _|Proj _|Special(ApproxProj _,_)) as v -> v
         | App(v1,v2) -> App(subst_approx_term sigma v1, subst_approx_term sigma v2)
         | Special(ApproxConst [],_) -> assert false
         | Special(ApproxConst apps,t) -> Special(ApproxConst (subst_approx_term_aux sigma [] apps),t)
@@ -360,7 +361,7 @@ let rec rename_var x v
         | Var("()",_) -> v
         | Var(y,t) -> Var(y^x,t)
         | App(v1,v2) -> App(rename_var x v1, rename_var x v2)
-        | Const _ | Proj _ | Angel _ -> v
+        | Const _ | Proj _ | Angel _ | Daimon _ -> v
         | Special(ApproxConst [],_) -> assert false
         | Special(ApproxConst apps,t) -> Special(ApproxConst (List.map (function p,w,y -> if y="()" then p,w,y else p,w,y^x) apps),t)
         | Special(ApproxProj _,_) -> v
@@ -376,7 +377,7 @@ let unify ?(allow_approx=false) (f_r,patterns_r:sct_pattern) (f_l,patterns_l:sct
 
     assert (f_r = f_l);
 
-    (* TODO: rewrite to have a list of equations as argument *)
+    (* TODO: rewrite to have a list of equations as argument??? *)
     let rec unify_aux (ps_r:approx_term list) (ps_l:approx_term list)
                       (sigma:(var_name*approx_term) list)
       : (var_name*approx_term) list * approx_term list * approx_term list
@@ -506,13 +507,49 @@ let approximates p1 p2 =
         (* debug "pats2 = %s" (string_of_list " , " string_of_approx_term pats2); *)
         match pats1,pats2 with
             | [],[] -> true
-            | Proj(d1,_,_)::pats1,Proj(d2,_,_)::pats2 -> d1=d2 && approximates_aux pats1 pats2
-            | Var(x1,_)::pats1,Var(x2,_)::pats2 -> x1=x2 && approximates_aux pats1 pats2
-            | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 -> c1=c2 && approximates_aux pats1 pats2
+
+            | (Angel _)::pats1,(Angel _)::pats2 -> approximates_aux pats1 pats2
+            | (Angel _)::pats1,_::pats2 -> false
+            | _::pats1,(Angel _)::pats2 -> approximates_aux pats1 pats2
+            | (Angel _)::_,[] | [],(Angel _)::_-> false
+
+            | (Daimon _)::pats1,_::pats2 -> approximates_aux pats1 pats2
+            | _::pats1,(Daimon _)::pats2 -> false
+            | (Daimon _)::_,[] | [],(Daimon _)::_ -> false
+
+            | Proj(d1,_,_)::pats1,Proj(d2,_,_)::pats2 when d1=d2 -> approximates_aux pats1 pats2
+            | Proj(d1,_,_)::_,Proj(d2,_,_)::_ (* when d1<>d2*) -> false
+            | (Proj _)::_,[] | [],(Proj _)::_-> false
+            | (Proj _)::_,(Const _ | Var _ | App _ )::_ -> assert false
+            | Proj _::_ , Special(ApproxProj _,_)::_ -> false
+            | Proj _::_ , Special(ApproxConst _,_)::_ -> assert false
+
+            | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 when c1=c2 -> approximates_aux pats1 pats2
+            | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 (*c1<>c2*) -> false
+            | (Const _)::_,[] | [],(Const _)::_-> false
+            | (Const _)::_,(Var _ | App _ )::_ -> false
+            | (Const _)::_,(Proj _)::_ -> assert false
+            | Const _::_ , Special(ApproxConst _,_)::_ -> false
+            | Const _::_ , Special(ApproxProj _,_)::_ -> assert false
+
+            | Var(x1,_)::pats1,Var(x2,_)::pats2 when x1=x2 -> approximates_aux pats1 pats2
+            | Var(x1,_)::pats1,Var(x2,_)::pats2 (*x1<>x2*) -> false
+            | (Var _)::_,[] | [],(Var _)::_-> false
+            | (Var _)::_,(Const _ | Proj _ | App _ )::_ -> false
+            | Var _::_ , Special(ApproxConst _,_)::_ -> false
+            | Var _::_ , Special(ApproxProj _,_)::_ -> assert false
+
             | ((App _) as u1)::_pats1,((App _) as u2)::_pats2 ->
                     approximates_aux ((get_head u1)::(get_args u1)@_pats1) ((get_head u2)::(get_args u2)@_pats2)
+            | (App _)::_,[] | [],(App _)::_-> false
+            | (App _)::_,(Var _ | Const _)::_ -> false
+            | (App _)::_,(Proj _)::_ -> assert false
+            | App _::_ , Special(ApproxProj _,_)::_ -> assert false
+            | App _::_ , Special(ApproxConst _,_)::_ -> false
+
             | Special(ApproxConst [],_)::_,_
             | _,Special(ApproxConst [],_)::_ -> assert false
+
             | Special(ApproxConst apps1,t1)::pats1,Special(ApproxConst apps2,t2)::pats2 ->
                     (* debug "left: %s, right: %s" *)
                     (*     (string_of_approx_term (Special(ApproxConst apps1,t1))) *)
@@ -528,6 +565,9 @@ let approximates p1 p2 =
             | Special(ApproxConst _,_)::_,u2::_pats2 ->
                     let aps2 = collapse0 u2 in
                     approximates_aux pats1 (Special(ApproxConst aps2,())::_pats2)
+            | Special(ApproxConst _,_)::_,[] -> false
+            | [],Special(ApproxConst _,_)::_ -> false
+
             | [Special(ApproxProj(p,w),_)],pats2 ->
                     begin
                         let projs = List.filter (function Special(ApproxProj _,_) -> true | _ -> false) pats2 in
@@ -540,7 +580,12 @@ let approximates p1 p2 =
                         in
                         approx_approx (p,w) (p2,w2)
                     end
-            | _,_ -> false
+            | Special(ApproxProj _,_)::_,_ ->
+                    debug "OOPS: %s" (string_of_sct_pattern ("pat1:",pats1)); assert false
+            | _,[Special(ApproxProj _,_)] -> false
+            | _,(Special(ApproxProj _,_))::_ ->
+                    debug "OOPS: %s" (string_of_sct_pattern ("pat2:",pats2)); assert false
+
     in
 
     try
@@ -578,13 +623,26 @@ let compatible (p1:sct_clause) (p2:sct_clause) : bool =
         (* debug "pats2 = %s" (string_of_list " , " string_of_approx_term pats2); *)
         match pats1,pats2 with
             | [],[] -> true
-            | Proj(d1,_,_)::pats1,Proj(d2,_,_)::pats2 -> d1=d2 && compatible_aux pats1 pats2
+
+            | (Angel _)::pats1,_::pats2
+            | _::pats1,(Angel _)::pats2 -> compatible_aux pats1 pats2
+
+            | (Daimon _)::pats1,_::pats2
+            | _::pats1,(Daimon _)::pats2 -> compatible_aux pats1 pats2
+
+            | Proj(d1,_,_)::pats1,Proj(d2,_,_)::pats2 when d1=d2 -> compatible_aux pats1 pats2
+            | Proj(d1,_,_)::pats1,Proj(d2,_,_)::pats2 (*d1<>d2*) -> false
+
             | Var(x1,_)::pats1,Var(x2,_)::pats2 when x1=x2 -> compatible_aux pats1 pats2
             | Var(x1,_)::_,_ -> approximates p2 p1
             | _,Var(x2,_)::_-> approximates p1 p2
-            | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 -> c1=c2 && compatible_aux pats1 pats2
+
+            | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 when c1=c2 -> compatible_aux pats1 pats2
+            | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 (*when c1<>c2*) -> false
+
             | ((App _) as u1)::_pats1,((App _) as u2)::_pats2 ->
                     compatible_aux ((get_head u1)::(get_args u1)@_pats1) ((get_head u2)::(get_args u2)@_pats2)
+
             | Special(ApproxConst [],_)::_,_
             | _,Special(ApproxConst [],_)::_ -> assert false
             | Special(ApproxConst apps1,_)::pats1,Special(ApproxConst apps2,_)::pats2 ->
@@ -625,7 +683,7 @@ let compatible (p1:sct_clause) (p2:sct_clause) : bool =
     try
         let l1,r1 = p1 in
         let l2,r2 = p2 in
-        (* debug "          check if %s\nis compatible with %s" (string_of_sct_clause p1) (string_of_sct_clause p2); *)
+        debug "          check if %s\nis compatible with %s" (string_of_sct_clause p1) (string_of_sct_clause p2);
         let sigma,context1,context2 = unify l1 l2 in
 
         let subst (f,pats) = (f,List.map (subst_approx_term sigma) pats) in
@@ -635,10 +693,10 @@ let compatible (p1:sct_clause) (p2:sct_clause) : bool =
         let r2 = subst r2 in
         let f2,pats2 = app_all r2 context1 in
 
-        (* debug "  got %s and %s" (string_of_sct_pattern (f1,pats1))(string_of_sct_pattern (f2,pats2)); *)
+        debug "  got %s and %s" (string_of_sct_pattern (f1,pats1))(string_of_sct_pattern (f2,pats2));
 
         let r = f1 = f2 && compatible_aux pats1 pats2 in
-        (* debug "%s" (string_of_bool r); *)
+        debug "%s" (string_of_bool r);
         r
 
 
@@ -653,7 +711,7 @@ let decreasing (l,r : sct_clause)
       = match pats1,pats2 with
             | [],[] -> (match acc with (Some p, Num w) when even p && w<0 -> true | _ -> false)
 
-            | _,[] -> assert false 
+            | _,[] -> assert false
 
             | pats1, (Special(ApproxProj(prio2,w2),_))::pats2 ->
                 begin
@@ -715,28 +773,13 @@ let decreasing (l,r : sct_clause)
                             let args2 = repeat u2 (List.length args1) in
                             decreasing_aux (args1@pats1) (args2@pats2) acc
 
-                        (* | Proj(_,p,_),[],Special(ApproxProj(prio2,w2),_),_ ->       (1* do this also when pats1 is empty *1) *)
-                        (*     begin *)
-                        (*         assert (pats2 = []); *)
-                        (*         let app = add_approx *)
-                        (*                     acc *)
-                        (*                     (collapse_apps_proj (List.map snd ((app1,u1)::pats1))) in *)
-                        (*         match app with *)
-                        (*             | _,Infty -> assert false *)
-                        (*             | p,w -> *)
-                        (*                 begin *)
-                        (*                     match add_approx (prio2,w2) (p,op_weight w) with *)
-                        (*                         | (None,Num w) -> w<0 *)
-                        (*                         | (Some p, Num w) when even p -> w<0 *)
-                        (*                         | _ -> false *)
-                        (*                 end *)
-                        (*     end *)
-
                         | _,_,Special(ApproxConst _,_),_ -> assert false
 
-                        | _,_,Angel _,_ -> true   (* FIXME: if the Angel isn't in a data, it should be "false" *)
+                        | _,_,Angel _,_ -> true
+                        | _,_,Daimon _,_ -> false
 
                         | Angel _,_,_,_ -> assert false
+                        | Daimon _,_,_,_ -> assert false
                         | App _,_,_,_ | _,_,App _,_ -> assert false
                         | Special _,_,_,_ -> assert false
 

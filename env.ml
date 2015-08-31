@@ -68,6 +68,7 @@ type var_name = string
 type priority = int option    (* priority of types and constants: odd for data and even for codata *)
 type ('a,'t) special_term =     (* 'a is used to add features to the type, and 't is used to put types on all subterms *)
     | Angel of 't                               (* generic meta variable, living in all types *)
+    | Daimon of 't
     | Var of var_name*'t
     | Const of const_name * priority *'t   (* constructor, with a priority *)
     | Proj of const_name * priority *'t    (* destructor, with a priority *)

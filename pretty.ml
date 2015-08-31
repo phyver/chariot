@@ -75,7 +75,7 @@ let s_o_t = string_of_type
 let rec print_type t = print_string (string_of_type t)
 
 let rec is_atomic_term (v:('a,'t) special_term) = match v with
-    | Var _ | Angel _ | Const _ | Proj _ -> true
+    | Var _ | Angel _ | Daimon _ | Const _ | Proj _ -> true
     | App(Proj _, v) -> is_atomic_term v
     | App _ -> false
     | Special _ -> true
@@ -146,6 +146,7 @@ and
         begin
         match v with
             | Angel _ -> "⊤"
+            | Daimon _ -> "⊥"
             | Var(x,_) -> if (x.[0]='_' && not (verbose 1)) then "_" else x
             | Const(c,p,_) -> c ^ (if not (option "show_priorities") then "" else string_of_priority p)
             | Proj(d,p,_) -> "." ^ d ^  (if not (option "show_priorities") then "" else string_of_priority p)
@@ -367,6 +368,8 @@ let print_typed_subterms (u:type_expression term) : unit
     let rec show_term u = match u with
         | Angel(t) -> let n = new_i() in
             print_string ("???"^(string_of_exp n)); [n,t]
+        | Daimon(t) -> let n = new_i() in
+            print_string ("!!!"^(string_of_exp n)); [n,t]
         | Const(c,_,t) -> let n = new_i() in
             print_string (c^(string_of_exp n)); [n,t]
         | Var(x,t) -> let n = new_i() in

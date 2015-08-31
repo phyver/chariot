@@ -47,6 +47,7 @@ open ComputeCaseStruct
 
 let rec head_to_explore (v:type_expression term) : explore_term = match v with
     | Angel t -> Angel t
+    | Daimon t -> Daimon t
     | Var(x,t) -> Var(x,t)
     | Proj(d,p,t) -> Proj(d,p,t)
     | Const(c,p,t) -> Const(c,p,t)
@@ -73,7 +74,7 @@ let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (reduce env 
 
 let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
  =  match v with
-        | Angel _ | Var _ | Proj _ | Const _ -> v
+        | Angel _ | Daimon _ | Var _ | Proj _ | Const _ -> v
         | App(v1,v2) -> App(unfold env p v1, unfold env p v2)
         | Special(Unfolded fields,t) -> Special (Unfolded (List.map (function d,xs,v -> d,xs,unfold env p v) fields),t)
         | Special(Folded(n,v),t) when not (p n) -> incr struct_nb; Special(Folded(!struct_nb,v),t)

@@ -94,6 +94,7 @@ let rec reduce env (v:type_expression term) : type_expression term
     let rec
     rewrite (v:type_expression term) : type_expression term
       =
+        (* debug "rewrite %s" (string_of_term v); *)
         try
             let result,n = Memo.find v !table
             in counter := !counter+n;
@@ -105,7 +106,7 @@ let rec reduce env (v:type_expression term) : type_expression term
                 let h,args = (try List.hd args,List.tl args with _ -> assert false) in
                 let args = List.map nf args in
                 match h with
-                    | Const _ | Angel _ -> implode (h::args)
+                    | Const _ | Angel _ | Daimon _ -> implode (h::args)
 
                     | App _ -> assert false
                     | Special(s,_) -> s.bot

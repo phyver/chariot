@@ -47,6 +47,7 @@ let rec equal_term (v1:type_expression term) (v2:type_expression term) : bool
   = match v1,v2 with
     | Var(x,_),Var(y,_) -> x=y
     | Angel _,Angel _ -> true
+    | Daimon _,Daimon _ -> true
     | App(v11,v12),App(v21,v22) -> (equal_term v11 v21) && (equal_term v12 v22)
     | Proj(d1,_,_),Proj(d2,_,_) -> d1=d2
     | Const(c1,_,_),Const(c2,_,_) -> c1=c2
@@ -103,8 +104,8 @@ let rewrite_all (env:environment) (v:type_expression term) : type_expression ter
         = match v with
           | Var(f,_) -> (try rewrite_first_clause v (get_function_clauses env f)
                          with Not_found -> v)
-          | Const _ | Angel _ | Proj _ -> v
-          | App(v1,v2) -> 
+          | Const _ | Angel _ | Daimon _ | Proj _ -> v
+          | App(v1,v2) ->
                 let v1 = rewrite v1 in
                 let v2 = rewrite v2 in
                 let v3 = (try rewrite_first_clause (App(v1,v2)) (get_function_clauses env (get_function_name v))

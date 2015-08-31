@@ -129,18 +129,18 @@ let get_constant_arity (env:environment) (c:const_name) : int
 (* get the function name from a pattern *)
 let rec get_head (v:('a,'t) special_term) : ('a,'t) special_term
   = match v with
-    | Const _ | Angel _ | Var _ | Proj _ | Special _ -> v
+    | Const _ | Angel _ | Daimon _ | Var _ | Proj _ | Special _ -> v
     | App(v,_) -> get_head v
 
 let rec get_head_const (v:('a,'t) special_term) : const_name
   = match v with
     | Const(c,p,_)  -> c
-    | Angel _ | Var _ | Proj _ | Special _ ->  raise (Invalid_argument "no head constructor")
+    | Angel _ | Daimon _ | Var _ | Proj _ | Special _ ->  raise (Invalid_argument "no head constructor")
     | App(v,_) -> get_head_const v
 
 let get_args (v:('a,'t) special_term) : ('a,'t) special_term list
   = let rec get_args_aux acc = function
-        | Const _ | Angel _ | Var _ | Proj _ | Special _ -> acc
+        | Const _ | Angel _ | Daimon _ | Var _ | Proj _ | Special _ -> acc
         | App(v1,v2) -> get_args_aux (v2::acc) v1
     in
     get_args_aux [] v
@@ -148,14 +148,14 @@ let get_args (v:('a,'t) special_term) : ('a,'t) special_term list
 let rec get_function_name (v:('a,'t) special_term) : var_name
   = match v with
     | Var(f,_) -> f
-    | Angel _ | Const _ | Proj _ ->  raise (Invalid_argument "no head function")
+    | Angel _ | Daimon _ | Const _ | Proj _ ->  raise (Invalid_argument "no head function")
     | App(Proj _,v) -> get_function_name v
     | App(v,_) -> get_function_name v
     | Special(v,_) -> v.bot
 
 let rec type_of (u:('a,type_expression) special_term) : type_expression
   = match u with
-        | Angel t | Var(_,t) | Const(_,_,t) | Proj(_,_,t) | Special(_,t) -> t
+        | Daimon t | Angel t | Var(_,t) | Const(_,_,t) | Proj(_,_,t) | Special(_,t) -> t
         | App(u1,u2) ->
             begin
                 match type_of u1 with
@@ -200,7 +200,7 @@ let rec extract_datatypes (t:type_expression) : type_expression list
 
 let rec extract_datatypes_from_typed_term (u:(empty,type_expression) special_term) : type_expression list
   = match u with
-        | Angel _ | Var _ -> []
+        | Daimon _ | Angel _ | Var _ -> []
         | App(u1,u2) -> merge_uniq (extract_datatypes_from_typed_term u1) (extract_datatypes_from_typed_term u2)
         | Const(_,_,t) -> extract_datatypes (get_result_type t)
         | Proj(_,_,t) -> extract_datatypes (get_first_arg_type t)
@@ -209,7 +209,7 @@ let rec extract_datatypes_from_typed_term (u:(empty,type_expression) special_ter
 let rec extract_term_variables (v:(empty,'t) special_term) : var_name list
   = let rec extract_term_variables_aux v
       = match v with
-            | Angel _ | Const _ | Proj _ -> []
+            | Angel _ | Daimon _ | Const _ | Proj _ -> []
             | Var(x,_) -> [x]
             | App(v1,v2) -> (extract_term_variables_aux v1) @ (extract_term_variables_aux v2)
             | Special(v,_) -> v.bot
@@ -226,6 +226,7 @@ let rec extract_pattern_variables (v:(empty,'t) special_term) : var_name list
 let rec map_special_term (f:'a1 -> 'a2) (g:'t1 -> 't2) (u:('a1,'t1) special_term) : ('a2,'t2) special_term
   = match u with
         | Angel t -> Angel (g t)
+        | Daimon t -> Daimon (g t)
         | Var(x,t) -> Var(x,g t)
         | Const(c,p,t) -> Const(c,p,g t)
         | Proj(d,p,t) -> Proj(d,p,g t)
@@ -273,6 +274,7 @@ let rec subst_term (sigma:'t term_substitution) (v:'t term) : 't term
   = match v with
     | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
     | Angel t -> Angel t
+    | Daimon t -> Daimon t
     | Const(c,p,t) -> Const(c,p,t)
     | Proj(d,p,t) -> Proj(d,p,t)
     | App(v1,v2) -> App(subst_term sigma v1, subst_term sigma v2)
@@ -289,6 +291,7 @@ let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expressi
 let rec subst_type_term  (sigma:type_substitution) (u:(empty,type_expression) special_term) : (empty,type_expression) special_term
   = match u with
         | Angel(t) -> Angel(subst_type sigma t)
+        | Daimon(t) -> Daimon(subst_type sigma t)
         | Var(x,t) -> Var(x,subst_type sigma t)
         | Const(c,p,t) ->  Const(c,p,subst_type sigma t)
         | Proj(d,p,t) ->  Proj(d,p,subst_type sigma t)
@@ -306,7 +309,7 @@ let compose_type_substitution (sigma1:type_substitution) (sigma2:type_substituti
 let rec explode (v:('a,'t) special_term) : ('a,'t) special_term list
   = let h,args = get_head v,get_args v in
     match h,args with
-        | Var _,args | Const _,args | Angel _,args | Special _,args-> h::args
+        | Var _,args | Const _,args | Angel _,args | Daimon _,args | Special _,args-> h::args
         | Proj _,v::args -> (explode v)@(h::args)
         | Proj _ as p,[] -> [p]
         | App _,_ -> assert false
@@ -315,7 +318,7 @@ let implode (args:('a,'t) special_term list) : ('a,'t) special_term
   = let rec implode_aux args acc
       = match args with
             | [] -> acc
-            | (Var(_,_) | Angel(_) | Const(_,_,_) | App(_,_) | Special(_,_) as v)::args -> implode_aux args (App(acc,v))
+            | (Var(_,_) | Angel _ | Daimon _ | Const(_,_,_) | App(_,_) | Special(_,_) as v)::args -> implode_aux args (App(acc,v))
             | (Proj(_,_,t) as v)::args -> implode_aux args (App(v,acc))
     in
     match args with

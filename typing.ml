@@ -106,7 +106,10 @@ let unify_type_mgu (t1:type_expression) (t2:type_expression) : type_substitution
             | (_,TVar _)::_ -> unificationError "cannot unify: loop"
             | (Arrow _,Data _)::_
             | (Data _,Arrow _)::_ -> unificationError "cannot unify arrow and data type"
-            | (Data _, Data _)::_ -> unificationError "cannot unify different datatypes"
+            | ((Data _ as t1), (Data _ as t2))::_ ->
+                unificationError (fmt "cannot unify datatypes %s and %s"
+                    (string_of_type t1)
+                    (string_of_type t2))
     in
     mgu_aux [ (t1,t2) ] []
 
@@ -191,6 +194,9 @@ let infer_type (env:environment)
             | Angel _ ->
                 let t = instantiate_type (TVar("angel")) in
                 t, Angel(t), context, []
+            | Daimon _ ->
+                let t = instantiate_type (TVar("daimon")) in
+                t, Daimon(t), context, []
             | Var(x,_) ->
                 begin
                     try let t = List.assoc x context in
@@ -253,19 +259,22 @@ let infer_type (env:environment)
                 end
             | Special(v,_) -> v.bot
     in
-    let t,v,context,sigma = infer_type_aux v context in
-    let v = subst_type_term sigma v in
-    if verbose 3
-    then (
-        debug "infered type of %s : %s" (string_of_term v) (string_of_type t);
-        debug "\twith free variables: %s" (string_of_list " , " (function x,t -> x^":"^(string_of_type t)) context);
-        debug "\tand types: %s" (string_of_list " , " (function x,t -> "'"^x^"="^(string_of_type t)) sigma);
-        print_newline()
-    );
 
-    let v = subst_type_term sigma v in
+    try
+        let t,v,context,sigma = infer_type_aux v context in
+        let v = subst_type_term sigma v in
+        if verbose 3
+        then (
+            debug "infered type of %s : %s" (string_of_term v) (string_of_type t);
+            debug "\twith free variables: %s" (string_of_list " , " (function x,t -> x^":"^(string_of_type t)) context);
+            debug "\tand types: %s" (string_of_list " , " (function x,t -> "'"^x^"="^(string_of_type t)) sigma);
+            print_newline()
+        );
 
-    t,v,context,sigma
+        let v = subst_type_term sigma v in
+
+        t,v,context,sigma
+    with UnificationError e -> error (fmt "unification error when typing %s: %s" (string_of_term v) e)
 
 let infer_type_term (env:environment) (v:(empty,'t) special_term)
   : type_expression * (empty,type_expression) special_term * (var_name*type_expression) list

@@ -170,7 +170,7 @@ convert_match_aux env xs clauses fail
 let simplify_case_struct v =
     let rec rename_var_term sigma v = match v with
         | Var(x,t) -> (try Var(List.assoc x sigma,t) with Not_found -> v)
-        | Angel _ | Proj _ | Const _ -> v
+        | Angel _ | Daimon _ | Proj _ | Const _ -> v
         | Special(s,_) -> s.bot
         | App(v1,v2) -> App(rename_var_term sigma v1,rename_var_term sigma v2)
     in

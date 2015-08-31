@@ -82,7 +82,7 @@ let rec check_constructor_arity env (v:'t term) : unit
                     List.iter (check_constructor_arity env) args
                 with Not_found -> error (fmt "constructor %s doesn't exist in the environment" c)
             end
-        | Angel _,_ | Special _,_ -> ()
+        | Angel _,_ | Daimon _,_ | Special _,_ -> ()
 
 
 let check_clause env (funs: var_name list) (f:var_name) (lhs:'t pattern) (rhs:'t term) : unit
@@ -185,8 +185,7 @@ let process_function_defs (env:environment)
 
 
     (* SCT *)
-    let graph = callgraph_from_definitions defs
-    in
+    let graph = callgraph_from_definitions env defs in
     let graph = if option "collapse_graph" then collapse_graph current_state.bound current_state.depth graph else graph in
     if size_change_termination graph
     then
