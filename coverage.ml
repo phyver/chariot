@@ -80,7 +80,6 @@ let new_var () =
 
 let string_of_clause (pat,def) = fmt "[%s] -> %s" (string_of_list " " s_o_u pat) (s_o_u def)
 
-(* TODO: generate a (int*type_expression term) case_struct_tree to be able to remove useless clauses *)
 let rec
 convert_match env (xs:var_name list)
                   (clauses:(int*match_pattern*type_expression term) list)
@@ -280,6 +279,39 @@ let extract_clause_numbers cs
             | CaseFail -> []
             | CSLeaf(n,v) -> [n]
     in uniq (extract_clause_numbers_aux cs)
+
+let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:'t term case_struct_tree)
+  : (unit pattern * unit term) list
+  = 
+    let rec convert_cs_to_clauses_aux (pat:unit pattern) (cs:type_expression term case_struct_tree)
+      : (unit pattern * unit term) list
+      = match cs with
+        | CaseFail -> []
+        | CSLeaf(v) -> [pat,map_type_term (fun t->()) v]
+        | Case(x,cases) ->
+            List.concat (List.map (function c,(xs,cs) ->
+                                let xs = List.map (function x->Var(x,())) xs in
+                                let c = app (Const(c,None,())) xs in
+                                let pat = subst_term [x,c] pat in
+                                convert_cs_to_clauses_aux pat cs)
+                            cases)
+        | Struct(fields) ->
+            List.concat (List.map (function d,(xs,cs) ->
+                                let xs = List.map (function x->Var(x,())) xs in
+                                let d = Proj(d,None,()) in
+                                let pat = implode (pat::d::xs) in
+                                convert_cs_to_clauses_aux pat cs)
+                            fields)
+    in
+
+    let pat = app (Var(f,())) (List.map (fun x -> Var(x,())) xs) in
+
+    let clauses = convert_cs_to_clauses_aux pat cs in
+
+    debug "new clauses:\n  %s" (string_of_list "\n  " (function p,d -> fmt "%s => %s" (string_of_term p) (string_of_term d)) clauses);
+
+    clauses
+
 
 
 let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_expression pattern*type_expression term) list)

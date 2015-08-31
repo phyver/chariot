@@ -168,10 +168,23 @@ let process_function_defs (env:environment)
         defs
     in
 
+    let defs =
+        if option "expand_clauses"
+        then
+            let new_defs = List.map (function f,t,_,(xs,pat) -> f, Some t, convert_cs_to_clauses f xs pat) defs in
+            let new_defs = infer_type_defs env new_defs in
+            let new_defs = infer_priorities env new_defs in
+            List.map2 (fun f_orig f_new ->
+                            let f,t,_,cs = f_orig in
+                            let f',t',cls = f_new in
+                            assert (f=f');
+                            assert (t=t');
+                            f,t,cls,cs) defs new_defs
+        else defs
+    in
+
 
     (* SCT *)
-    if (option "use_SCT")
-    then begin
     let graph = callgraph_from_definitions defs
     in
     let graph = if option "collapse_graph" then collapse_graph current_state.bound current_state.depth graph else graph in
@@ -199,8 +212,7 @@ let process_function_defs (env:environment)
                             (plural new_functions "is" "are")
                             current_state.bound
                             current_state.depth)
-        end
-    end;
+        end;
 
 
 

@@ -376,6 +376,7 @@ let unify ?(allow_approx=false) (f_r,patterns_r:sct_pattern) (f_l,patterns_l:sct
 
     assert (f_r = f_l);
 
+    (* TODO: rewrite to have a list of equations as argument *)
     let rec unify_aux (ps_r:approx_term list) (ps_l:approx_term list)
                       (sigma:(var_name*approx_term) list)
       : (var_name*approx_term) list * approx_term list * approx_term list
