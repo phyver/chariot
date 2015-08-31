@@ -1,0 +1,13 @@
+>> inductive type bool was succesfully defined
+>> Typing for f successful
+>> the definition for f is complete
+>> the definition f is provably correct
+
+>> Typing for g successful
+>> the definition for g is complete
+!! warning: the definition g is NOT provably correct (weight_bound: 2, depth_bound: 2)
+
+>> Typing for h successful
+>> the definition for h is complete
+>> the definition h is provably correct
+
