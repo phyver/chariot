@@ -1,3 +1,7 @@
+  - rewrite unify for approx_terms
+
+  - better exceptions than "Not_found" for utils.ml functions
+
   - use type coefficiont = Top | Prio of int*weight
 
   - change type used for representing function clauses:
