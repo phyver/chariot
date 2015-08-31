@@ -4,7 +4,7 @@ data nat where Zero : nat | Succ : nat -> nat
 
 val add : nat -> nat -> nat
     | add n 0 = n
-    | add n (m+1) = Succ (add n m)
+    | add n (m+1) = (add n m) + 1
 
 val mult : nat -> nat -> nat
     | mult n 0 = 0
