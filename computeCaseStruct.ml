@@ -66,8 +66,8 @@ let rec reduce env (v:type_expression term) : type_expression term
       : type_expression term case_struct_tree * type_expression term list
       =
         match cs with
-            | CaseFail -> error "match failure"
-            | Struct fields ->
+            | CSFail -> error "match failure"
+            | CSStruct fields ->
                 begin
                     match rest with
                         | Proj(d,_,_)::rest ->
@@ -79,7 +79,7 @@ let rec reduce env (v:type_expression term) : type_expression term
             | CSLeaf v ->
                     incr counter;
                     CSLeaf (subst_term sigma v),rest
-            | Case(x,clauses) ->
+            | CSCase(x,clauses) ->
                 try
                     let v,sigma = extract_value x sigma in
                     match get_head v,get_args v with

@@ -139,7 +139,7 @@ convert_match_aux env xs clauses fail
                     )
                     constants
                 in
-                Struct(struct_fields)
+                CSStruct(struct_fields)
             end
 
         (* constructor case *)
@@ -161,7 +161,7 @@ convert_match_aux env xs clauses fail
                         c', (new_xs, convert_match env (new_xs@xs) clauses fail)
                     )
                     constants in
-                Case(x,case_clauses)
+                CSCase(x,case_clauses)
             end
 
         | _ -> assert false
@@ -177,26 +177,26 @@ let simplify_case_struct v =
 
     let rec rename sigma v
       = match v with
-            | CaseFail -> CaseFail
+            | CSFail -> CSFail
             (* | Var(x,t) -> (try Var(List.assoc x sigma,t) with Not_found -> v) *)
-            (* | Const _ | Proj _ | Angel _ | Sp(CaseFail,_)-> v *)
+            (* | Const _ | Proj _ | Angel _ | Sp(CSFail,_)-> v *)
             (* | App(v1,v2) -> App(rename sigma v1, rename sigma v2) *)
-            | Case(x,cases) ->
+            | CSCase(x,cases) ->
                 let x = (try List.assoc x sigma with Not_found -> x) in
                 let cases = List.map (function c,(xs,v) -> c,(xs,rename sigma v)) cases in
                 (* NOTE: I assume a kind of Barendregt condition is satisfied by the terms... *)
-                Case(x,cases)
-            | Struct(fields) ->
+                CSCase(x,cases)
+            | CSStruct(fields) ->
                 let fields = List.map (function d,(xs,v) -> d,(xs,rename sigma v)) fields in
                 (* NOTE: I assume a kind of Barendregt condition is satisfied by the terms... *)
-                Struct(fields)
+                CSStruct(fields)
             | CSLeaf(n,v) -> CSLeaf(n,rename_var_term sigma v)
     in
 
     let rec simplify_aux branch v
       = match v with
-            | CaseFail -> CaseFail
-            | Case(x,cases) ->
+            | CSFail -> CSFail
+            | CSCase(x,cases) ->
                 begin try
                     let c,xs = List.assoc x branch in
                     let ys,v = List.assoc c cases in
@@ -204,10 +204,10 @@ let simplify_case_struct v =
                     simplify_aux branch v
                 with Not_found ->
                     let cases = List.map (function c,(xs,v) -> c,(xs,simplify_aux ((x,(c,xs))::branch) v)) cases in
-                    Case(x,cases)
+                    CSCase(x,cases)
                 end
-            | Struct(fields) ->
-                Struct(List.map (function d,(xs,v) -> d,(xs,simplify_aux branch v)) fields)
+            | CSStruct(fields) ->
+                CSStruct(List.map (function d,(xs,v) -> d,(xs,simplify_aux branch v)) fields)
             | CSLeaf v -> CSLeaf v
     in
     simplify_aux [] v
@@ -217,10 +217,10 @@ let is_exhaustive f args v =
     let rec get_failure branch v
       = match v with
             | CSLeaf _ -> []
-            | CaseFail -> [branch]
-            | Case(x,cases) ->
+            | CSFail -> [branch]
+            | CSCase(x,cases) ->
                 List.concat (List.map (function c,(xs,v) -> get_failure ((x,(c,xs))::branch) v) cases)
-            | Struct(fields) ->
+            | CSStruct(fields) ->
                 List.concat (List.map (function d,(xs,v) -> get_failure ((".",(d,xs))::branch) v) fields)
     in
 
@@ -267,16 +267,16 @@ let add_args_clause args clauses =
 
 let rec remove_clause_numbers cs
   = match cs with
-            | Case(x,cases) -> Case(x,List.map (function c,(xs,cs) -> c,(xs,remove_clause_numbers cs)) cases)
-            | Struct(fields) -> Struct(List.map (function d,(xs,cs) -> d,(xs,remove_clause_numbers cs)) fields)
-            | CaseFail -> CaseFail
+            | CSCase(x,cases) -> CSCase(x,List.map (function c,(xs,cs) -> c,(xs,remove_clause_numbers cs)) cases)
+            | CSStruct(fields) -> CSStruct(List.map (function d,(xs,cs) -> d,(xs,remove_clause_numbers cs)) fields)
+            | CSFail -> CSFail
             | CSLeaf(n,v) -> CSLeaf(v)
 
 let extract_clause_numbers cs
   = let rec extract_clause_numbers_aux cs
       = match cs with
-            | Case(_,cases) | Struct(cases) -> List.concat (List.map (function _,(_,cs) -> extract_clause_numbers_aux cs) cases)
-            | CaseFail -> []
+            | CSCase(_,cases) | CSStruct(cases) -> List.concat (List.map (function _,(_,cs) -> extract_clause_numbers_aux cs) cases)
+            | CSFail -> []
             | CSLeaf(n,v) -> [n]
     in uniq (extract_clause_numbers_aux cs)
 
@@ -286,16 +286,16 @@ let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:'t term case_struc
     let rec convert_cs_to_clauses_aux (pat:unit pattern) (cs:type_expression term case_struct_tree)
       : (unit pattern * unit term) list
       = match cs with
-        | CaseFail -> []
+        | CSFail -> []
         | CSLeaf(v) -> [pat,map_type_term (fun t->()) v]
-        | Case(x,cases) ->
+        | CSCase(x,cases) ->
             List.concat (List.map (function c,(xs,cs) ->
                                 let xs = List.map (function x->Var(x,())) xs in
                                 let c = app (Const(c,None,())) xs in
                                 let pat = subst_term [x,c] pat in
                                 convert_cs_to_clauses_aux pat cs)
                             cases)
-        | Struct(fields) ->
+        | CSStruct(fields) ->
             List.concat (List.map (function d,(xs,cs) ->
                                 let xs = List.map (function x->Var(x,())) xs in
                                 let d = Proj(d,None,()) in
@@ -329,7 +329,7 @@ let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_e
     let clauses = List.map2 (fun n cl -> n,fst cl,snd cl) (range 1 (List.length clauses)) clauses in
 
     let cs =
-        let fail = CaseFail in
+        let fail = CSFail in
         let clauses = List.map (function n,p,def -> n,List.tl (explode_pattern p),def) clauses in (* List.tl to remove function name *)
         let clauses = add_args_clause term_args clauses in
         convert_match env args clauses fail

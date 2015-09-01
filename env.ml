@@ -88,14 +88,14 @@ type 't function_clause = 't pattern * 't term     (* clause of a function defin
 (* term with CASE and STRUCTS *)
 (* type 't case_struct_term = ('t case_struct,'t) special_term *)
 (*  and 't case_struct = *)
-(*     | Case of var_name * (const_name * (var_name list * 't case_struct_term)) list *)
-(*     | Struct of (const_name * ((var_name list) * 't case_struct_term)) list *)
-(*     | CaseFail *)
+(*     | CSCase of var_name * (const_name * (var_name list * 't case_struct_term)) list *)
+(*     | CSStruct of (const_name * ((var_name list) * 't case_struct_term)) list *)
+(*     | CSFail *)
 type 't case_struct_tree =
-    | CaseFail
+    | CSFail
     | CSLeaf of 't
-    | Case of var_name * (const_name * (var_name list * 't case_struct_tree)) list
-    | Struct of (const_name * ((var_name list) * 't case_struct_tree)) list
+    | CSCase of var_name * (const_name * (var_name list * 't case_struct_tree)) list
+    | CSStruct of (const_name * ((var_name list) * 't case_struct_tree)) list
 
 (* type for the environment *)
 type environment = {

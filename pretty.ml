@@ -230,12 +230,12 @@ let rec
        in
 
         match u with
-        | CaseFail -> "FAIL"
-        | Case(x,l) ->
+        | CSFail -> "FAIL"
+        | CSCase(x,l) ->
              prefix ^ (fmt "case %s of" x) ^
              prefix ^ (String.concat prefix
                                      (List.map (function c,(args,v) -> fmt "  %s%s  ->  %s" c (if args=[] then "" else " " ^ String.concat " " args) (string_of_case_struct_tree new_indent s v)) l))
-        | Struct fields -> 
+        | CSStruct fields -> 
              prefix ^ "{" ^
              prefix ^ "  " ^ (String.concat (" ;"^prefix^"  ")
                                      (List.map (function d,(args,v) -> d ^ (if args=[] then "" else " " ^ (String.concat " " args)) ^ " = " ^ (string_of_case_struct_tree new_indent s v)) fields)) ^
