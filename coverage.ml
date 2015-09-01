@@ -314,6 +314,7 @@ let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:'t term case_struc
 
 
 
+(* TODO: do something with types with 0 constructors  /  0 destructors *)
 let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_expression pattern*type_expression term) list)
     : (var_name * (type_expression pattern*type_expression term) list * var_name list * type_expression term case_struct_tree)
   =

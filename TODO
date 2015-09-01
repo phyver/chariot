@@ -1,8 +1,8 @@
-  - rewrite unify for approx_terms
+  - deal with types with 0 destructors / 0 constructors in coverage.ml
 
   - better exceptions than "Not_found" for utils.ml functions
 
-  - use type coefficiont = Top | Prio of int*weight
+  - use type coefficiont = Top | Prio of int*weight???
 
   - change type used for representing function clauses:
        type clause = (var_name * term list) * term
