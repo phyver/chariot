@@ -90,7 +90,8 @@ let rec check_parameters (env:environment) (defs:(type_name*type_expression list
                     try
                         let a = get_type_arity env t in
                         if not (a = List.length params)
-                        then error (fmt "type %s should has arity %d" t a)
+                        then error (fmt "type %s should has arity %d" t a);
+                        List.iter (check_parameters env defs) params
                     with Not_found -> error (fmt "type %s doesn't exist" t)
             end
 
