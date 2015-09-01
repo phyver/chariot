@@ -10,9 +10,9 @@ endif
 syntax keyword chKeyword val type and where
 syntax keyword chData data codata
 syntax match chInt '\<\d\+\>'
-syntax match chConst '[A-Z][a-zA-Z0-9_]*'
+syntax match chConst '\<[A-Z][a-zA-Z0-9_]*\>'
 syntax match chAngel "???"
-syntax match chTVar '\'[a-z][a-zA-Z0-9_]*'
+syntax match chTVar '\'[a-z][a-zA-Z0-9_]*\>'
 
 syn region chComment start="(\*" end="\*)" contains=chComment
 syn match chComment '--.*'
