@@ -149,13 +149,20 @@ let callgraph_from_definitions
                 | Angel t,_ ->
                     begin
                         match type_of p with
-                            | Data(tname,_) when is_inductive env tname -> Angel()
+                            | Data(tname,_) (*when is_inductive env tname*) -> Angel()  (* FIXME: do I need to check if tname is inductive? *)
                             | _ -> Daimon()
                     end
                 | Daimon _,_ -> Daimon()
                 | Const(c,prio,t),args -> app (Const(c,prio,())) (List.map process_arg args)
-                | Proj(_,prio,t), u::args -> (* look at t *)
-                        Daimon()
+                | Proj(_,prio,t) as d, u::args ->
+                    begin
+                        debug "ICI,t=%s" (string_of_type (type_of p));
+                        match type_of p with
+                            | Data(tname,_) ->
+                                    let r = collapse0 (map_special_term (fun s->s.bot) (fun _->()) (App(d,u)))
+                                    in debug "LA: %s" (string_of_approx_term r); r
+                            | _ -> Daimon()
+                    end
                 | Proj _,[] -> assert false
 
                 | Sp(s,_),_ -> s.bot

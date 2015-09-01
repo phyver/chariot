@@ -43,31 +43,21 @@ open State
 open Pretty
 
 
-let rec explode_approx v
-  = let h,args = get_head v,get_args v in
-    match h,args with
-        | Var _,args | Const _,args | Angel _,args | Daimon _,args | Sp((AppArg _),_),args-> h::args
-        | Proj _,v::args -> (explode_approx v)@(h::args)
-        | Sp(AppRes _,_),[v] -> (explode_approx v)@[h]
-        | Sp(AppRes _,_),_ -> assert false
-        | Proj _,[] -> assert false
-        | App _,_ -> assert false
 
 let term_to_sct_pattern (t:approx_term) : sct_pattern =
+    let rec explode_approx v
+      = let h,args = get_head v,get_args v in
+        match h,args with
+            | Var _,args | Const _,args | Angel _,args | Daimon _,args | Sp((AppArg _),_),args-> h::args
+            | Proj _,v::args -> (explode_approx v)@(h::args)
+            | Sp(AppRes _,_),[v] -> (explode_approx v)@[h]
+            | Sp(AppRes _,_),_ -> assert false
+            | Proj _,[] -> assert false
+            | App _,_ -> assert false
+    in
     match explode_approx t with
         | (Var(f,_))::args -> f,args
         | _ -> assert false
-
-(* let explode_pattern pattern *)
-(*   = *)
-(*     let rec explode_aux pattern acc *)
-(*       = match pattern with *)
-(*             | (Var(f,_)) -> f,acc *)
-(*             | App((Sp (AppRes _,_) | Proj _) as proj,u,_) -> explode_aux u (proj::acc) *)
-(*             | App(u1,u2,_) -> explode_aux u1 (u2::acc) *)
-(*             | _ -> assert false *)
-(*     in *)
-(*     explode_aux pattern [] *)
 
 
 (* collapsing the weights inside a term *)
@@ -187,25 +177,34 @@ let merge_approx v1 v2 =
 (* TODO: make that function return an approx_term, ie a Sp(AppArg...), Angel or Daimon...
  *       also, add an argument to be added to the result *)
 let collapse0 ?(app=(Some 0,Num 0)) (p:approx_term) : approx_term =
-    let rec collapse0_aux app p = match get_head p,get_args p with
-        | Var(x,_),[] -> Sp(AppArg([ (fst app,snd app, x) ]),())
-        | Angel _,[] -> raise (Invalid_argument "collapse0_aux: Angel")     (* TODO: deal with that... *)
-        | Daimon _,[] -> raise (Invalid_argument "collapse0_aux: Daimon")   (* TODO: deal with that... *)
-        | Sp (AppArg [],_),_ -> assert false
-        | Sp (AppArg apps,_),[] -> Sp(AppArg(List.map (function p,w,x -> let p,w = add_approx app (p,w) in p,w,x ) apps),())
-        | Const(_,prio,_),[] -> let p,w = add_approx app (prio,Num 1) in Sp(AppArg([ (p,w, "()") ]),())
-        | Const(_,prio,_),ps ->
-            begin
-                let app = add_approx app (prio,Num 1) in
-                let approx_s = List.map (collapse0_aux app) ps in
-                List.fold_left
-                    (fun v1 v2 -> merge_approx v1 (simplify_approx v2))
-                    (Angel())
-                    approx_s  (* NOTE: not necessary to simplify v1: it is the recursive call and is simplified *)
+    let rec collapse0_aux app p =
+        match get_head p,get_args p with
+            | Var(x,_),[] -> Sp(AppArg([ (fst app,snd app, x) ]),())
+            | Angel _,[] -> raise (Invalid_argument "collapse0_aux: Angel")     (* TODO: deal with that... *)
+            | Daimon _,[] -> raise (Invalid_argument "collapse0_aux: Daimon")   (* TODO: deal with that... *)
+            | Sp (AppArg [],_),_ -> assert false
+            | Sp (AppArg apps,_),[] -> Sp(AppArg(List.map (function p,w,x -> let p,w = add_approx app (p,w) in p,w,x ) apps),())
+            | Const(_,prio,_),[] -> let p,w = add_approx app (prio,Num 1) in Sp(AppArg([ (p,w, "()") ]),())
+            | Const(_,prio,_),ps ->
+                begin
+                    let app = add_approx app (prio,Num 1) in
+                    let approx_s = List.map (collapse0_aux app) ps in
+                    List.fold_left
+                        (fun v1 v2 -> merge_approx v1 (simplify_approx v2))
+                        (Angel())
+                        approx_s  (* NOTE: not necessary to simplify v1: it is the recursive call and is simplified *)
 
-            end
-        | Proj _,_ | Sp (AppRes _,_),[] -> debug "OOPS: %s" (string_of_approx_term p); assert false
-        | _,_ -> assert false
+                end
+            | Proj(_,prio,_),p::ps ->
+                begin
+                    debug "LA";
+                    let app = add_approx app (prio,Num 1) in
+                    collapse0_aux app p
+                end
+
+            | Proj(_,prio,_),[] -> assert false
+            | Sp (AppRes _,_),[] -> debug "OOPS: %s" (string_of_approx_term p); assert false
+            | _,_ -> assert false
     in
     try
         collapse0_aux app p
@@ -218,12 +217,16 @@ let collapse_pattern (depth:int) (pattern:sct_pattern) : sct_pattern
     let rec collapse_const d p =
         match get_head p,get_args p with
             | Sp (AppArg [],_),_ -> assert false
-            | Var _,[] | Angel _,[] | Daimon _,[] | Sp (AppArg _,_),[] -> p
-            | Const(c,prio,_),ps ->
-                if d=0
-                then collapse0 p
-                else app (Const(c,prio,())) (List.map (collapse_const (d-1)) ps)
-            | _,_ -> assert false
+            | (Var _ | Angel _ | Daimon _ | Sp (AppArg _,_)),[] -> p
+            | (Var _ | Angel _ | Daimon _ | Sp (AppArg _,_)),_::_ -> assert false
+            | Const(c,prio,_),ps when d>0 -> app (Const(c,prio,())) (List.map (collapse_const (d-1)) ps)
+            | Const _,_ (* when d=0*) -> collapse0 p
+            | Proj(x,prio,_),p::ps when d>0 -> app (Proj(x,prio,())) (List.map (collapse_const (d-1)) (p::ps))
+            | Proj _,_::_ (*when d=0*) -> collapse0 p
+            | Proj _,[] -> assert false
+            | Sp(AppRes _,_),_ -> assert false
+            | App _,_ -> assert false
+
 
     in
 
