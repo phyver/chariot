@@ -1,1 +1,2 @@
+>> inductive type t was succesfully defined
 ** error: the subterm A⁼ starts with a constructor that is not fully applied

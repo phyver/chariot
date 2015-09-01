@@ -1,4 +1,9 @@
+>> inductive type list was succesfully defined
+>> Typing for test successful
 !! warning: useless clause 2: test [] = []
+>> the definition for test is complete
+>> the definition test is provably correct
+
 val
    test : list('a) → list('b)
     | test x = []

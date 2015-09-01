@@ -46,7 +46,7 @@ OUTFILE=${INFILE%$EXT}.out
 
 TMPFILE=${INFILE%$EXT}.tmpout
 
-CHARIOT=../chariot
+CHARIOT="../chariot --verbose 1"
 
 # DIFF_PRG="diff -y"
 # DIFF_PRG="git diff --color-words --no-index"

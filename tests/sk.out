@@ -1,3 +1,15 @@
+>> Typing for k successful
+>> the definition for k is complete
+>> the definition k is provably correct
+
+>> Typing for s successful
+>> the definition for s is complete
+>> the definition s is provably correct
+
+>> Typing for i successful
+>> the definition for i is complete
+>> the definition i is provably correct
+
 >> functions in environment:
 val
    k : 'a → 'b → 'a
@@ -10,6 +22,22 @@ val
 val
    i : 'a → 'a
     | i = s k k
+
+>> Typing for a successful
+>> the definition for a is complete
+>> the definition a is provably correct
+
+>> Typing for m successful
+>> the definition for m is complete
+>> the definition m is provably correct
+
+>> Typing for e successful
+>> the definition for e is complete
+>> the definition e is provably correct
+
+>> Typing for n successful
+>> the definition for n is complete
+>> the definition n is provably correct
 
 >> functions in environment:
 val
@@ -40,6 +68,27 @@ val
    n : 'a → 'b → 'b
     | n f x = x
 
+>> Typing for one successful
+>> the definition for one is complete
+>> the definition one is provably correct
+
+>> Typing for two successful
+>> the definition for two is complete
+>> the definition two is provably correct
+
+>> Typing for three successful
+>> the definition for three is complete
+>> the definition three is provably correct
+
+>> Typing for four successful
+>> the definition for four is complete
+>> the definition four is provably correct
+
+>> Typing for nine successful
+>> the definition for nine is complete
+>> the definition nine is provably correct
+
+>> inductive type nat was succesfully defined
 >> term: one Succ⁼ 0
 >> result: 1
 >> of type: nat

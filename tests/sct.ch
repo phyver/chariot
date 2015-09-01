@@ -1,4 +1,3 @@
-:set verbose 1
 :set depth 2
 :set bound 1
 

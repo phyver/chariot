@@ -1,3 +1,11 @@
+>> Typing for oops successful
+>> the definition for oops is complete
+>> the definition oops is provably correct
+
+>> Typing for oops2 successful
+>> the definition for oops2 is complete
+>> the definition oops2 is provably correct
+
 >> functions in environment:
 val
    oops : 'a → 'b

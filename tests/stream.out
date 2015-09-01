@@ -1,3 +1,33 @@
+>> inductive type nat was succesfully defined
+>> Typing for add successful
+>> the definition for add is complete
+>> the definition add is provably correct
+
+>> Typing for mult successful
+>> the definition for mult is complete
+>> the definition mult is provably correct
+
+>> Typing for pow successful
+>> the definition for pow is complete
+>> the definition pow is provably correct
+
+>> coinductive type stream was succesfully defined
+>> Typing for map successful
+>> the definition for map is complete
+>> the definition map is provably correct
+
+>> Typing for arith successful
+>> the definition for arith is complete
+>> the definition arith is provably correct
+
+>> Typing for get_nth successful
+>> the definition for get_nth is complete
+>> the definition get_nth is provably correct
+
+>> Typing for double successful
+>> the definition for double is complete
+>> the definition double is provably correct
+
 >> term: map double (arith 3 3)
 >> result: map double (arith 3 3)
 >> of type: stream(nat)
@@ -5,6 +35,10 @@
 >> term: get_nth (mult 3 3) (map double (arith 3 3))
 >> result: 60
 >> of type: nat
+
+>> Typing for fib successful
+>> the definition for fib is complete
+>> the definition fib is provably correct
 
 >> term: get_nth 11 (map double (fib 0 1))
 >> result: 178

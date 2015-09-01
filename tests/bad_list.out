@@ -1,4 +1,14 @@
+>> coinductive type prod_2 was succesfully defined
+>> inductive type list was succesfully defined
+>> inductive type nat was succesfully defined
+>> Typing for bad successful
+>> the definition for bad is complete
 !! warning: the definition bad is NOT provably correct (weight_bound: 2, depth_bound: 2)
+
+>> Typing for inf successful
+>> the definition for inf is complete
+>> the definition inf is provably correct
+
 val
    bad : nat → nat * list(nat)
     | (bad n).Fst² = n

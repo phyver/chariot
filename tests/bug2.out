@@ -1,1 +1,5 @@
+>> inductive type list was succesfully defined
+>> Typing for test successful
+>> the definition for test is complete
 !! warning: the definition test is NOT provably correct (weight_bound: 2, depth_bound: 2)
+

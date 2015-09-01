@@ -1,7 +1,6 @@
 -- problem with idempotent loops...
 -- Invalid_argument("decreasing should only be called on idempotent rules")
 
-:set verbose 1
 :set show_lists false
 
 data list_aux('a,'l) where Nil : list_aux('a,'l) | Cons : 'a -> 'l -> list_aux('a,'l)

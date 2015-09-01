@@ -1,3 +1,11 @@
+>> inductive type nat was succesfully defined
+>> inductive type nat2 was succesfully defined
+>> inductive type nat3 was succesfully defined
+>> inductive type nat4 was succesfully defined
+>> inductive type nat5 was succesfully defined
+>> coinductive type stream was succesfully defined
+>> coinductive type stream2 was succesfully defined
+>> inductive types rtree and sons were succesfully defined
 >> types in environment:
 data
   nat where

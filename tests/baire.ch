@@ -1,5 +1,3 @@
-:set verbose 1
-
 data nat where
     | Zero : nat
     | Succ : nat -> nat

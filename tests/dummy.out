@@ -1,15 +1,15 @@
->> functions in environment:
-val
-   f : 'a → 'b → 'c → 'a
-    | f x _ y = x
+>> inductive type unit was succesfully defined
+>> Typing for f successful
+>> the definition for f is complete
+>> the definition f is provably correct
 
-val
-   g : 'a → 'b → 'c → 'b
-    | g _ x _ = x
+>> Typing for g successful
+>> the definition for g is complete
+>> the definition g is provably correct
 
-val
-   h : 'a → 'b → 'c → 'd → unit
-    | h _ _ _ _ = ()
+>> Typing for h successful
+>> the definition for h is complete
+>> the definition h is provably correct
 
 >> functions in environment:
 val
@@ -23,4 +23,17 @@ val
 val
    h : 'a → 'b → 'c → 'd → unit
     | h _₁ _₂ _₃ _₄ = ()
+
+>> functions in environment:
+val
+   f : 'a → 'b → 'c → 'a
+    | f x _ y = x
+
+val
+   g : 'a → 'b → 'c → 'b
+    | g _ x _ = x
+
+val
+   h : 'a → 'b → 'c → 'd → unit
+    | h _ _ _ _ = ()
 

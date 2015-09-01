@@ -1,3 +1,25 @@
+>> inductive type nat was succesfully defined
+>> inductive type list was succesfully defined
+>> Typing for map successful
+>> the definition for map is complete
+>> the definition map is provably correct
+
+>> Typing for map1 successful
+>> the definition for map1 is complete
+>> the definition map1 is provably correct
+
+>> Typing for map2 successful
+>> the definition for map2 is complete
+>> the definition map2 is provably correct
+
+>> Typing for map3 successful
+>> the definition for map3 is complete
+>> the definition map3 is provably correct
+
+>> Typing for map4 successful
+>> the definition for map4 is complete
+>> the definition map4 is provably correct
+
 >> functions in environment:
 val
    map : ('a → 'b) → list('a) → list('b)

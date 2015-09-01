@@ -1,3 +1,39 @@
+>> inductive type nat was succesfully defined
+>> Typing for add successful
+>> the definition for add is complete
+>> the definition add is provably correct
+
+>> Typing for mult successful
+>> the definition for mult is complete
+>> the definition mult is provably correct
+
+>> Typing for pow successful
+>> the definition for pow is complete
+>> the definition pow is provably correct
+
+>> inductive type list_aux was succesfully defined
+>> coinductive type colist was succesfully defined
+>> Typing for freeze successful
+>> the definition for freeze is complete
+>> the definition freeze is provably correct
+
+>> Typing for map_aux, map successful
+>> the definition for map is complete
+>> the definition for map_aux is complete
+>> the definitions map_aux, map are provably correct
+
+>> Typing for zeros successful
+>> the definition for zeros is complete
+>> the definition zeros is provably correct
+
+>> Typing for incr successful
+>> the definition for incr is complete
+>> the definition incr is provably correct
+
+>> Typing for decr successful
+>> the definition for decr is complete
+>> the definition decr is provably correct
+
 >> term: incr 10
 >> result: incr 10
 >> of type: colist(nat)

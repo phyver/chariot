@@ -139,5 +139,5 @@ let rec reduce env (v:type_expression term) : type_expression term
     in
 
     let _,result,_ = infer_type_term env (nf v) in
-    if verbose 1 then msg "%d reduction%s made" !counter (if !counter > 1 then "s" else "");
+    if verbose 2 then msg "%d reduction%s made" !counter (if !counter > 1 then "s" else "");
     result

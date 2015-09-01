@@ -1,3 +1,27 @@
+>> inductive type nat was succesfully defined
+>> inductive type unit was succesfully defined
+>> inductive type prod_2 was succesfully defined
+>> Typing for fst successful
+>> the definition for fst is complete
+>> the definition fst is provably correct
+
+>> Typing for snd successful
+>> the definition for snd is complete
+>> the definition snd is provably correct
+
+>> Typing for pair successful
+>> the definition for pair is complete
+>> the definition pair is provably correct
+
+>> inductive type list was succesfully defined
+>> Typing for onetwothree successful
+>> the definition for onetwothree is complete
+>> the definition onetwothree is provably correct
+
+>> Typing for pairs successful
+>> the definition for pairs is complete
+>> the definition pairs is provably correct
+
 >> functions in environment:
 val
    fst : ('a * 'b) → 'a
@@ -18,6 +42,11 @@ val
 val
    pairs : nat * (nat * (nat * nat))
     | pairs = (Succ¹ Zero¹, (Succ¹ (Succ¹ Zero¹), (Succ¹ (Succ¹ (Succ¹ Zero¹)), Succ¹ (Succ¹ (Succ¹ (Succ¹ Zero¹))))))
+
+>> inductive type prod_3 was succesfully defined
+>> Typing for test successful
+>> the definition for test is complete
+>> the definition test is provably correct
 
 val
    test : nat * nat * nat

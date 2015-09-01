@@ -1,3 +1,37 @@
+>> inductive type list was succesfully defined
+>> inductive type nat was succesfully defined
+>> Typing for add successful
+>> the definition for add is complete
+>> the definition add is provably correct
+
+>> Typing for mult successful
+>> the definition for mult is complete
+>> the definition mult is provably correct
+
+>> Typing for pow successful
+>> the definition for pow is complete
+>> the definition pow is provably correct
+
+>> Typing for length successful
+>> the definition for length is complete
+>> the definition length is provably correct
+
+>> Typing for map successful
+>> the definition for map is complete
+>> the definition map is provably correct
+
+>> Typing for decr successful
+>> the definition for decr is complete
+>> the definition decr is provably correct
+
+>> Typing for rev_append successful
+>> the definition for rev_append is complete
+>> the definition rev_append is provably correct
+
+>> Typing for rev successful
+>> the definition for rev is complete
+>> the definition rev is provably correct
+
 >> functions in environment:
 val
    add : nat → nat → nat

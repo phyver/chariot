@@ -1,3 +1,17 @@
+>> inductive type nat was succesfully defined
+>> inductive type list was succesfully defined
+>> Typing for f successful
+>> the definition for f is complete
+>> the definition f is provably correct
+
+>> Typing for g1 successful
+>> the definition for g1 is complete
+>> the definition g1 is provably correct
+
+>> Typing for g2 successful
+>> the definition for g2 is complete
+>> the definition g2 is provably correct
+
 >> functions in environment:
 val
    f : list(list(list(list(nat)))) → nat
@@ -11,6 +25,10 @@ val
 val
    g2 : nat → list(list(list(nat)))
     | g2 x = Nil⁷
+
+>> Typing for f1 successful
+>> the definition for f1 is complete
+>> the definition f1 is provably correct
 
 val
    f1 : list(list(list(list(nat)))) → nat

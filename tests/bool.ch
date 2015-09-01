@@ -1,5 +1,3 @@
-:set verbose 1
-
 data bool where True | False : bool
 
 val f True = False

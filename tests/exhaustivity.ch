@@ -1,4 +1,3 @@
-:set verbose 1
 :set continue_on_error true
 :set show_priorities false
 
