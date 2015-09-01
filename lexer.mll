@@ -63,6 +63,7 @@ rule tokenize = parse
     | ":set"            { CMDSET }
     | ":show"           { CMDSHOW }
     | ":reduce"         { CMDREDUCE }
+    | ":type"           { CMDSHOWTYPE }
     | ":unfold"         { CMDUNFOLD }
     | ":quit"           { CMDQUIT }
 

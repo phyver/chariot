@@ -157,6 +157,11 @@ let cmd_show_help ()
         "";
     ]
 
+let cmd_show_type (term:unit term) : unit
+  = let t,term,context = infer_type_term current_state.env term in
+    print_typed_subterms term;
+    if not (context = [])
+    then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context)
 
 (* reduce a term and show the result *)
 let cmd_reduce (term:unit term) : unit
@@ -273,7 +278,7 @@ let test_collapse p =
 %token LSQBRAC RSQBRAC DOUBLECOLON DOUBLEARROW
 %token DATA CODATA WHERE AND VAL
 %token CMDHELP CMDQUIT CMDSHOW CMDSET
-%token CMDUNFOLD CMDREDUCE CMDUNFOLD CMDECHO
+%token CMDUNFOLD CMDREDUCE CMDUNFOLD CMDECHO CMDSHOWTYPE
 %token TESTUNIFYTYPES TESTUNIFYTERMS TESTCOMPOSE TESTCOMPARE TESTCOLLAPSE
 %token EOF
 %token <string> IDU IDL STR TVAR
@@ -319,6 +324,7 @@ statement:
     | command         {$1 }
 
 command:
+    | CMDSHOWTYPE term                                  { fun () -> cmd_show_type $2 }
     | CMDREDUCE term                                    { fun () -> cmd_reduce $2 }
     | CMDQUIT                                           { fun () -> raise Exit }
     | CMDSHOW string                                    { fun () -> cmd_show $2 }

@@ -1,0 +1,7 @@
+>> inductive type nat was succesfully defined
+(x¹ (x² Zero³))
+with types:
+  - 1: nat → nat
+  - 2: nat → nat
+  - 3: nat
+>> with free variables: x : nat → nat
