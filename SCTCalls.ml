@@ -197,7 +197,6 @@ let collapse0 ?(app=(Some 0,Num 0)) (p:approx_term) : approx_term =
                 end
             | Proj(_,prio,_),p::ps ->
                 begin
-                    debug "LA";
                     let app = add_approx app (prio,Num 1) in
                     collapse0_aux app p
                 end
@@ -706,7 +705,7 @@ let compatible (p1:sct_clause) (p2:sct_clause) : bool =
     try
         let l1,r1 = p1 in
         let l2,r2 = p2 in
-        debug "          check if %s\nis compatible with %s" (string_of_sct_clause p1) (string_of_sct_clause p2);
+        (* debug "          check if %s\nis compatible with %s" (string_of_sct_clause p1) (string_of_sct_clause p2); *)
         let sigma,context1,context2 = unify l1 l2 in
 
         let subst (f,pats) = (f,List.map (subst_approx_term sigma) pats) in
@@ -716,10 +715,10 @@ let compatible (p1:sct_clause) (p2:sct_clause) : bool =
         let r2 = subst r2 in
         let f2,pats2 = app_all r2 context1 in
 
-        debug "  got %s and %s" (string_of_sct_pattern (f1,pats1))(string_of_sct_pattern (f2,pats2));
+        (* debug "  got %s and %s" (string_of_sct_pattern (f1,pats1))(string_of_sct_pattern (f2,pats2)); *)
 
         let r = f1 = f2 && compatible_aux pats1 pats2 in
-        debug "%s" (string_of_bool r);
+        (* debug "%s" (string_of_bool r); *)
         r
 
 

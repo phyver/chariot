@@ -43,6 +43,8 @@ open State
 open Pretty
 open SCTCalls
 
+exception Non_terminating
+
 (*****************************
  * Sets of calls and graphs. *
  *****************************)
@@ -144,7 +146,7 @@ let callgraph_from_definitions
         let rec process_arg (p:type_expression term)
           : approx_term
           = match get_head p,get_args p with
-                | Var(x,t),_ when List.mem x params -> Var(x,())   (* TODO: check if some function is not fully applied *)
+                | Var(x,t),_ when List.mem x params -> Var(x,())
                 | Var(x,_),_ -> Daimon()
                 | Angel t,_ ->
                     begin
@@ -156,11 +158,9 @@ let callgraph_from_definitions
                 | Const(c,prio,t),args -> app (Const(c,prio,())) (List.map process_arg args)
                 | Proj(_,prio,t) as d, u::args ->
                     begin
-                        debug "ICI,t=%s" (string_of_type (type_of p));
                         match type_of p with
                             | Data(tname,_) ->
-                                    let r = collapse0 (map_special_term (fun s->s.bot) (fun _->()) (App(d,u)))
-                                    in debug "LA: %s" (string_of_approx_term r); r
+                                    collapse0 (map_special_term (fun s->s.bot) (fun _->()) (App(d,u)))
                             | _ -> Daimon()
                     end
                 | Proj _,[] -> assert false
@@ -171,15 +171,22 @@ let callgraph_from_definitions
 
         let rec process_rhs (graph:call_graph) (rhs:type_expression term) (calling_context:approx_term list)
           : call_graph
-          = match get_head rhs, get_args rhs with
+          =
+              match get_head rhs, get_args rhs with
                 | Var(called,t), args when List.mem called function_names ->
-                    let _args = List.map process_arg args
-                    in
-                    let call = lhs, (called,(_args@calling_context))
-                    in
-                    let graph = CallGraph.add (caller,called) (add_call_set call (try CallGraph.find (caller,called) graph with Not_found -> ClauseSet.empty)) graph
-                    in
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes(None,Infty),())]) graph args
+                    begin
+                        match type_of rhs with
+                            | Data _ | TVar _ ->
+                                let _args = List.map process_arg args
+                                in
+                                let call = lhs, (called,(_args@calling_context))
+                                in
+                                let graph = CallGraph.add (caller,called) (add_call_set call (try CallGraph.find (caller,called) graph with Not_found -> ClauseSet.empty)) graph
+                                in
+                                List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes(None,Infty),())]) graph args
+                            | t ->
+                                    if verbose 1 then warning "the function %s appears not fully applied!" called; raise Non_terminating (* FIXME change exception *)
+                    end
 
                 | Var _, args ->
                     List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes(None,Infty),())]) graph args
@@ -364,47 +371,54 @@ let size_change_termination_bounds graph b d =
  * The functions called from the outside *
  *****************************************)
 
-let size_change_termination graph =
+let size_change_termination env defs =
+    try
+        let graph = callgraph_from_definitions env defs in
+        let graph = if option "collapse_graph"
+                    then collapse_graph current_state.bound current_state.depth graph
+                    else graph
+        in
 
-  let rec test = function
-      [] -> false
-    | d::ds ->
-        (* ifDebug "show_summary_TC" *)
-        (* begin fun _ -> *)
-        (*   print_string "** Incremental test: using d = "; *)
-        (*   print_int d; *)
-        (*   print_string " **"; *)
-        (*   print_newline() *)
-        (* end; *)
-        let t = size_change_termination_bounds graph current_state.bound d in
+        let rec test = function
+            [] -> false
+          | d::ds ->
+              (* ifDebug "show_summary_TC" *)
+              (* begin fun _ -> *)
+              (*   print_string "** Incremental test: using d = "; *)
+              (*   print_int d; *)
+              (*   print_string " **"; *)
+              (*   print_newline() *)
+              (* end; *)
+              let t = size_change_termination_bounds graph current_state.bound d in
+              if t
+              then (
+                (* ifDebug "show_summary_TC" *)
+                (* begin fun _ -> *)
+                (*   print_string "** These functions are size change terminating for d="; *)
+                (*   print_int d; print_string " and b="; *)
+                (*   print_int current_state.bound;print_string ". **\n\n" *)
+                (* end; *)
+                true)
+              else
+                test ds
+        in
+        (* FIXME: use this once it works *)
+        (* let rec ds n acc = *)
+        (*   if (current_state.depth <= n) *)
+        (*   then List.rev (current_state.depth::acc) *)
+        (*   else ds (2*n) (n::acc) *)
+        (* in *)
+        (* let t = test (ds 1 [0]) in *)
+        let t = test [current_state.depth] in
         if t
-        then (
+        then true
+        else (
           (* ifDebug "show_summary_TC" *)
           (* begin fun _ -> *)
-          (*   print_string "** These functions are size change terminating for d="; *)
-          (*   print_int d; print_string " and b="; *)
-          (*   print_int current_state.bound;print_string ". **\n\n" *)
+          (*   print_string "** These functions are NOT size change terminating for d="; *)
+          (*   print_int (current_state.depth); print_string " and b="; *)
+          (*   print_int (current_state.bound);print_string ". **\n\n" *)
           (* end; *)
-          true)
-        else
-          test ds
-  in
-  (* FIXME: use this once it works *)
-  (* let rec ds n acc = *)
-  (*   if (current_state.depth <= n) *)
-  (*   then List.rev (current_state.depth::acc) *)
-  (*   else ds (2*n) (n::acc) *)
-  (* in *)
-  (* let t = test (ds 1 [0]) in *)
-  let t = test [current_state.depth] in
-  if t
-  then true
-  else (
-    (* ifDebug "show_summary_TC" *)
-    (* begin fun _ -> *)
-    (*   print_string "** These functions are NOT size change terminating for d="; *)
-    (*   print_int (current_state.depth); print_string " and b="; *)
-    (*   print_int (current_state.bound);print_string ". **\n\n" *)
-    (* end; *)
-    false)
+          false)
+    with Non_terminating -> false
 

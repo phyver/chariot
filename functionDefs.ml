@@ -185,9 +185,7 @@ let process_function_defs (env:environment)
 
 
     (* SCT *)
-    let graph = callgraph_from_definitions env defs in
-    let graph = if option "collapse_graph" then collapse_graph current_state.bound current_state.depth graph else graph in
-    if size_change_termination graph
+    if size_change_termination env defs
     then
         begin
             if verbose 1
