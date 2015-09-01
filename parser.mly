@@ -477,10 +477,13 @@ term_list_inside:
     | term                              { [$1] }
     | term SEMICOLON term_list_inside   { $1::$3 }
 
-lhs_term:
+atomic_lhs_term:
     | IDL                           { Var($1,()) }
     | LPAR lhs_term RPAR            { $2 }
-    | lhs_term DOT IDU              { App(Proj($3,None,()), $1) }
+    | atomic_lhs_term DOT IDU       { App(Proj($3,None,()), $1) }
+
+lhs_term:
+    | atomic_lhs_term               { $1 }
     | lhs_term atomic_pattern       { App($1,$2) }
 
 atomic_pattern:
