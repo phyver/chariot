@@ -29,4 +29,5 @@
 :test collapse ((((t n1).Next n2 n3).Next n4 n5).Next n6 n7).Root
 :test collapse ((((t (S(S(S n1)))).Next n2 n3).Next (S(S(S n4))) n5).Next n6 (S(S(S n7)))).Root
 
-
+:test collapse f (x.Tail)
+:test collapse f x.Tail.Tail.Tail.Tail

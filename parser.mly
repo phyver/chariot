@@ -334,7 +334,7 @@ command:
 
     | TESTUNIFYTYPES type_expression AND type_expression                                 { fun () -> test_unify_type $2 $4 }
     | TESTUNIFYTERMS pattern AND term                                                    { fun () -> test_unify_term $2 $4 }
-    | TESTCOLLAPSE lhs_term                                                              { fun () -> test_collapse $2 }
+    | TESTCOLLAPSE term                                                                  { fun () -> test_collapse $2 }
     | TESTCOMPOSE lhs_term DOUBLEARROW rhs_term AND lhs_term DOUBLEARROW rhs_term        { fun () -> test_compose $2 $4 $6 $8 }
     | TESTCOMPARE lhs_term DOUBLEARROW rhs_term AND lhs_term DOUBLEARROW rhs_term        { fun () -> test_compare $2 $4 $6 $8 }
 

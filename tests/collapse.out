@@ -40,3 +40,7 @@
 
 >>   collapse of   t, S⁼ (S⁼ (S⁼ n1)), .Next⁼, n2, n3, .Next⁼, S⁼ (S⁼ (S⁼ n4)), n5, .Next⁼, n6, S⁼ (S⁼ (S⁼ n7)), .Root⁼   is   t, S⁼ (S⁼ <1>⁼ n1), .Next⁼, n2, n3, .Next⁼, S⁼ (S⁼ <1>⁼ n4), n5, .<<2>>⁼
 
+>>   collapse of   f, x.Tail⁼   is   f, x.Tail⁼
+
+>>   collapse of   f, x.Tail⁼.Tail⁼.Tail⁼.Tail⁼   is   f, <2>⁼ x.Tail⁼.Tail⁼
+
