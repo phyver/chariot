@@ -69,7 +69,7 @@ let unify_pattern (pattern,def:type_expression term*type_expression term) (v:typ
                     let eqs = List.map (function u1,u2 -> (subst_term [x,v] u1, subst_term [x,v] u2)) eqs in
                     let acc = List.map (function _x,_u -> (_x, subst_term [x,v] _u)) acc in
                     unify_aux eqs ((x,v)::acc)
-            | (Special(v,_),_)::_ | (_,Special(v,_))::_ -> v.bot
+            | (Sp(v,_),_)::_ | (_,Sp(v,_))::_ -> v.bot
             | _ -> unificationError "cannot unify"
 
     in
@@ -111,7 +111,7 @@ let rewrite_all (env:environment) (v:type_expression term) : type_expression ter
                 let v3 = (try rewrite_first_clause (App(v1,v2)) (get_function_clauses env (get_function_name v))
                              with Invalid_argument "no head function" | Not_found -> App(v1,v2)) in
                 v3
-          | Special(v,_) -> v.bot
+          | Sp(v,_) -> v.bot
     in
 
     let rec aux v =

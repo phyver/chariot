@@ -118,7 +118,7 @@ let callgraph_from_definitions
             | App(u1,u2) -> (extract_params_aux u1) @ (extract_params_aux u2)
             | Const _ -> []
             | Proj _ | Angel _ | Daimon _ -> assert false
-            | Special(s,_) -> s.bot
+            | Sp(s,_) -> s.bot
     in
 
     let rec extract_params d
@@ -126,7 +126,7 @@ let callgraph_from_definitions
             | Var(f,_),args -> List.concat (List.map extract_params_aux args)
             | Proj _,u::args -> (extract_params u) @ (List.concat (List.map extract_params_aux args))
             | Proj _,[] | Const _,_ | Angel _,_ | Daimon _,_ | App _,_ -> assert false
-            | Special(s,_),_ -> s.bot
+            | Sp(s,_),_ -> s.bot
     in
 
     let rec process_clause graph (lhs,rhs:type_expression pattern * type_expression term)
@@ -145,20 +145,20 @@ let callgraph_from_definitions
           : approx_term
           = match get_head p,get_args p with
                 | Var(x,t),_ when List.mem x params -> Var(x,())   (* TODO: check if some function is not fully applied *)
-                | Var(x,_),_ -> Daimon ()
+                | Var(x,_),_ -> Daimon()
                 | Angel t,_ ->
                     begin
                         match type_of p with
-                            | Data(tname,_) when is_inductive env tname -> Angel ()
-                            | _ -> Daimon ()
+                            | Data(tname,_) when is_inductive env tname -> Angel()
+                            | _ -> Daimon()
                     end
-                | Daimon _,_ -> Daimon ()
+                | Daimon _,_ -> Daimon()
                 | Const(c,prio,t),args -> app (Const(c,prio,())) (List.map process_arg args)
                 | Proj(_,prio,t), u::args -> (* look at t *)
-                        Daimon ()
+                        Daimon()
                 | Proj _,[] -> assert false
 
-                | Special(s,_),_ -> s.bot
+                | Sp(s,_),_ -> s.bot
                 | App _,_ -> assert false
         in
 
@@ -172,24 +172,24 @@ let callgraph_from_definitions
                     in
                     let graph = CallGraph.add (caller,called) (add_call_set call (try CallGraph.find (caller,called) graph with Not_found -> ClauseSet.empty)) graph
                     in
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty),())]) graph args
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes(None,Infty),())]) graph args
 
                 | Var _, args ->
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty),())]) graph args
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes(None,Infty),())]) graph args
                 | Angel _,[] | Daimon _,[] -> graph
                 | Angel _,_ | Daimon _,_ -> graph       (* we already removed all the arguments to Angel / Daimon *)
 
                 | Const(c,p,t),args ->
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs ((Special(ApproxProj(p,Num 1),()))::calling_context)) graph args
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs ((Sp(AppRes(p,Num 1),()))::calling_context)) graph args
 
                 | Proj(d,p,t),u::args ->
                     let _args = List.map process_arg args
                     in
                     let graph = process_rhs graph u (Proj(d,p,())::_args@calling_context)
                     in
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Special(ApproxProj(None,Infty),())]) graph args
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes(None,Infty),())]) graph args
 
-                | Special(s,_), _ -> s.bot
+                | Sp(s,_), _ -> s.bot
 
                 | App _, _ -> assert false
                 | Proj _,[] -> assert false

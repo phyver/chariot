@@ -51,7 +51,7 @@ let rec head_to_explore (v:type_expression term) : explore_term = match v with
     | Var(x,t) -> Var(x,t)
     | Proj(d,p,t) -> Proj(d,p,t)
     | Const(c,p,t) -> Const(c,p,t)
-    | Special(v,t) -> v.bot
+    | Sp(v,t) -> v.bot
     | App(v1,v2) -> assert false
 
 let struct_nb = ref 0
@@ -65,7 +65,7 @@ let rec term_to_explore_aux (env:environment) (v:type_expression term) : explore
             then
                 app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
             else
-                (incr struct_nb; Special (Folded(!struct_nb,v),t))
+                (incr struct_nb; Sp (Folded(!struct_nb,v),t))
         | Arrow _ | TVar _ ->
             app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
 
@@ -76,9 +76,9 @@ let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
  =  match v with
         | Angel _ | Daimon _ | Var _ | Proj _ | Const _ -> v
         | App(v1,v2) -> App(unfold env p v1, unfold env p v2)
-        | Special(Unfolded fields,t) -> Special (Unfolded (List.map (function d,xs,v -> d,xs,unfold env p v) fields),t)
-        | Special(Folded(n,v),t) when not (p n) -> incr struct_nb; Special(Folded(!struct_nb,v),t)
-        | Special(Folded(n,v),(Data(tname,_) as t)) when (p n) ->
+        | Sp(Unfolded fields,t) -> Sp (Unfolded (List.map (function d,xs,v -> d,xs,unfold env p v) fields),t)
+        | Sp(Folded(n,v),t) when not (p n) -> incr struct_nb; Sp(Folded(!struct_nb,v),t)
+        | Sp(Folded(n,v),(Data(tname,_) as t)) when (p n) ->
                 let consts = get_type_constants env tname in
                 let fields = List.map (fun d ->
                     let v = App(Proj(d,None,TVar "dummy"),v) in    (* FIXME: we can use dummy types because "rewrite_all" infers types again *)
@@ -88,8 +88,8 @@ let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
                     let v = reduce env v in
                     (d, xs, term_to_explore_aux env v)) consts
                 in
-                Special(Unfolded fields,t)
-        | Special _ -> assert false
+                Sp(Unfolded fields,t)
+        | Sp _ -> assert false
 
 let unfold env p v = struct_nb:=0; unfold env p v
 

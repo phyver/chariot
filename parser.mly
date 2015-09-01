@@ -447,8 +447,8 @@ atomic_term:
     | atomic_term DOT IDU                   { App(Proj($3,None,()), $1) }
     | IDL                                   { Var($1,()) }
     | IDU                                   { Const($1,None,()) }
-    | ANGEL                                 { Angel () }
-    | DAIMON                                { Daimon () }
+    | ANGEL                                 { Angel() }
+    | DAIMON                                { Daimon() }
 
     | INT                                   { int_to_term $1 (Const("Zero",None,())) }
     | term_list                             { list_to_term (List.rev $1) (Const("Nil",None,())) }

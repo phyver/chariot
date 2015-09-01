@@ -73,7 +73,7 @@ type ('a,'t) special_term =     (* 'a is used to add features to the type, and '
     | Const of const_name * priority *'t   (* constructor, with a priority *)
     | Proj of const_name * priority *'t    (* destructor, with a priority *)
     | App of ('a,'t) special_term * ('a,'t) special_term
-    | Special of 'a*'t
+    | Sp of 'a*'t
 
 type empty = { bot: 'a .'a }
 type 't term = (empty,'t) special_term
@@ -135,7 +135,7 @@ type weight = Num of int | Infty
  *  - each param_i is either a constructor pattern or a destructor
  *  - each arg_i i either a constructor pattern (with possible approximations) or a destructor
  *)
-type approximation = ApproxProj of priority * weight | ApproxConst of (priority * weight * var_name) list
+type approximation = AppRes of priority * weight | AppArg of (priority * weight * var_name) list
 type approx_term = (approximation,unit) special_term
 (* type sct_clause = approx_term * approx_term *)
  type sct_pattern = (var_name * approx_term list)

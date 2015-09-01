@@ -257,7 +257,7 @@ let infer_type (env:environment)
                     let tres = subst_type sigma tres in
                     tres,App(v1,v2),context,sigma
                 end
-            | Special(v,_) -> v.bot
+            | Sp(v,_) -> v.bot
     in
 
     try

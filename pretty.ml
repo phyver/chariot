@@ -78,7 +78,7 @@ let rec is_atomic_term (v:('a,'t) special_term) = match v with
     | Var _ | Angel _ | Daimon _ | Const _ | Proj _ -> true
     | App(Proj _, v) -> is_atomic_term v
     | App _ -> false
-    | Special _ -> true
+    | Sp _ -> true
 
 let rec
   string_of_term_int (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,'t) special_term) =
@@ -153,7 +153,7 @@ and
             | App(Proj _ as v1,v2) -> (string_of_term_paren o sp v2) ^ (string_of_special_term o sp v1)
             | App(App(Var("add",_),v1),v2) when (option "show_nats") -> (string_of_special_term o sp v1) ^ "+" ^ (string_of_term_paren o sp v2)   (* TODO: don't show add as + in pattern *)
             | App(v1,v2) -> (string_of_special_term o sp v1) ^ " " ^ (string_of_term_paren o sp v2)
-            | Special(v,_) -> sp o v
+            | Sp(v,_) -> sp o v
         end
 
 let string_of_term u = string_of_special_term () (fun o s -> s.bot) u
@@ -173,15 +173,15 @@ let string_of_approx_term (v:approx_term) : string
       = string_of_special_term ()
             (fun o u ->
                 match u with
-                    | ApproxProj(p,w) -> assert false
-                    | ApproxConst [] -> assert false
-                    | ApproxConst l ->
+                    | AppRes(p,w) -> assert false
+                    | AppArg [] -> assert false
+                    | AppArg l ->
                         (string_of_list " + " (function p,w,x ->  "<" ^ (string_of_weight w) ^ ">" ^ (string_of_priority p) ^ " " ^ x) l)
                         (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
             )
     in
     match v with
-        | Special(ApproxProj(p,w),_) ->
+        | Sp(AppRes(p,w),_) ->
             ".<<" ^ (string_of_weight w) ^ ">>" ^ (string_of_priority p)
             (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
         | v -> string_of_approx_term_aux v
@@ -249,7 +249,7 @@ let string_of_case_struct_term v = string_of_case_struct_tree 2 string_of_term v
 let string_of_sct_pattern ((f,ps):sct_pattern) : string =
     (* let f = Var(f,()) in *)
     (* let v = match implode (f::ps) with *)
-    (*             | App(v,Special(ApproxProj(p,w),t),t') -> App(Special(ApproxProj(p,w),t),v,t') *)
+    (*             | App(v,Sp(AppRes(p,w),t),t') -> App(Sp(AppRes(p,w),t),v,t') *)
     (*             | v -> v *)
     (* in *)
     (* string_of_approx_term v *)
@@ -389,7 +389,7 @@ let print_typed_subterms (u:type_expression term) : unit
             types1@types2
         | Proj(d,_,t) -> let n = new_i() in
             print_string (d^(string_of_exp n)); [n,t]
-        | Special(s,_) -> s.bot
+        | Sp(s,_) -> s.bot
     in
 
     let types = show_term u in

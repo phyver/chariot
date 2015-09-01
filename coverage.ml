@@ -171,7 +171,7 @@ let simplify_case_struct v =
     let rec rename_var_term sigma v = match v with
         | Var(x,t) -> (try Var(List.assoc x sigma,t) with Not_found -> v)
         | Angel _ | Daimon _ | Proj _ | Const _ -> v
-        | Special(s,_) -> s.bot
+        | Sp(s,_) -> s.bot
         | App(v1,v2) -> App(rename_var_term sigma v1,rename_var_term sigma v2)
     in
 
@@ -179,7 +179,7 @@ let simplify_case_struct v =
       = match v with
             | CaseFail -> CaseFail
             (* | Var(x,t) -> (try Var(List.assoc x sigma,t) with Not_found -> v) *)
-            (* | Const _ | Proj _ | Angel _ | Special(CaseFail,_)-> v *)
+            (* | Const _ | Proj _ | Angel _ | Sp(CaseFail,_)-> v *)
             (* | App(v1,v2) -> App(rename sigma v1, rename sigma v2) *)
             | Case(x,cases) ->
                 let x = (try List.assoc x sigma with Not_found -> x) in

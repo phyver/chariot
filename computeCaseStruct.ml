@@ -109,7 +109,7 @@ let rec reduce env (v:type_expression term) : type_expression term
                     | Const _ | Angel _ | Daimon _ -> implode (h::args)
 
                     | App _ -> assert false
-                    | Special(s,_) -> s.bot
+                    | Sp(s,_) -> s.bot
                     | Proj(d,_,_) -> assert (args=[]); h
 
                     | Var(f,t) ->

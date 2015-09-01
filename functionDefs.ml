@@ -82,7 +82,7 @@ let rec check_constructor_arity env (v:'t term) : unit
                     List.iter (check_constructor_arity env) args
                 with Not_found -> error (fmt "constructor %s doesn't exist in the environment" c)
             end
-        | Angel _,_ | Daimon _,_ | Special _,_ -> ()
+        | Angel _,_ | Daimon _,_ | Sp _,_ -> ()
 
 
 let check_clause env (funs: var_name list) (f:var_name) (lhs:'t pattern) (rhs:'t term) : unit
