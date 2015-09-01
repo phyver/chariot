@@ -230,29 +230,26 @@ let infer_type (env:environment)
                 end
             | App(v1,v2) ->
                 begin
-                    let t1,v1,context,sigma1 = infer_type_aux v1 context in
+                    (* do not interchange the order of the next two lines! *)
+                    (* TODO: understand why *)
                     let t2,v2,context,sigma2 = infer_type_aux v2 context in
-                    (* debug "sigma1: %s" (string_of_type_substitution sigma1); *)
-                    (* debug "sigma2: %s" (string_of_type_substitution sigma2); *)
+                    let t1,v1,context,sigma1 = infer_type_aux v1 context in
                     let sigma = compose_type_substitution sigma1 sigma2 in
 
                     let tfunc = instantiate_type (Arrow(TVar("arg"),TVar("result"))) in
-                    let sigma3 = unify_type_mgu tfunc t1 in
+                    let sigma3 = unify_type_mgu t1 tfunc in
                     (* debug "sigma3: %s" (string_of_type_substitution sigma3); *)
                     let tfunc = subst_type sigma3 tfunc in
-                    let sigma = compose_type_substitution sigma sigma3 in
+                    let sigma = compose_type_substitution sigma3 sigma in   (* do not interchange sigma3 and sigma *)
 
                     let targ,tres = match tfunc with
                         | Arrow(a,b) -> a,b
                         | _ -> assert false
                     in
 
-                    (* NOTE: do not swap the arguments of unify_type_mgu below!!! TODO: understand... *)
-                    let sigma4 = unify_type_mgu targ t2 in
-                    (* debug "sigma4: %s" (string_of_type_substitution sigma4); *)
+                    let sigma4 = unify_type_mgu t2 targ in
                     let sigma = compose_type_substitution sigma sigma4 in
 
-                    (* debug "sigma: %s" (string_of_type_substitution sigma); *)
                     let context = List.map (second (subst_type sigma)) context in
                     let tres = subst_type sigma tres in
                     tres,App(v1,v2),context,sigma
@@ -266,8 +263,8 @@ let infer_type (env:environment)
         if verbose 3
         then (
             debug "infered type of %s : %s" (string_of_term v) (string_of_type t);
-            debug "\twith free variables: %s" (string_of_list " , " (function x,t -> x^":"^(string_of_type t)) context);
-            debug "\tand types: %s" (string_of_list " , " (function x,t -> "'"^x^"="^(string_of_type t)) sigma);
+            debug "\twith free variables: %s" (string_of_context context);
+            debug "\tand types: %s" (string_of_type_substitution sigma);
             print_newline()
         );
 
