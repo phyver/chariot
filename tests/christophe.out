@@ -1,0 +1,648 @@
+>> inductive type nat was succesfully defined
+>> inductive type plus was succesfully defined
+>> coinductive type stream was succesfully defined
+>> coinductive type nuY was succesfully defined
+>> inductive type muY was succesfully defined
+>> inductive type list1 was succesfully defined
+>> coinductive type stream2 was succesfully defined
+>> inductive type stream3 was succesfully defined
+>> coinductive type stream4 was succesfully defined
+>> Typing for convert2_aux, convert2 successful
+>> the definition for convert2 is complete
+>> the definition for convert2_aux is complete
+>> the definitions convert2_aux, convert2 are provably correct
+
+>> Typing for convert3_aux, convert3 successful
+>> the definition for convert3 is complete
+>> the definition for convert3_aux is complete
+>> the definitions convert3_aux, convert3 are provably correct
+
+>> Typing for convert4_aux, convert4 successful
+>> the definition for convert4 is complete
+>> the definition for convert4_aux is complete
+>> the definitions convert4_aux, convert4 are provably correct
+
+>> Typing for stream2_to_4_aux, stream2_to_4 successful
+>> the definition for stream2_to_4 is complete
+>> the definition for stream2_to_4_aux is complete
+>> the definitions stream2_to_4_aux, stream2_to_4 are provably correct
+
+>> Typing for map_aux2, map_aux, stream3_to_4_aux, stream3_to_4 successful
+>> the definition for stream3_to_4 is complete
+>> the definition for stream3_to_4_aux is complete
+>> the definition for map_aux is complete
+>> the definition for map_aux2 is complete
+>> the definitions map_aux2, map_aux, stream3_to_4_aux, stream3_to_4 are provably correct
+
+>> Typing for aux2, aux1, stream3_to_2_op_aux, stream3_to_2_op successful
+>> the definition for stream3_to_2_op is complete
+>> the definition for stream3_to_2_op_aux is complete
+>> the definition for aux1 is complete
+>> the definition for aux2 is complete
+>> the definitions aux2, aux1, stream3_to_2_op_aux, stream3_to_2_op are provably correct
+
+>> Typing for zeros2 successful
+>> the definition for zeros2 is complete
+>> the definition zeros2 is provably correct
+
+>> Typing for ones_n2_aux successful
+>> the definition for ones_n2_aux is complete
+>> the definition ones_n2_aux is provably correct
+
+>> Typing for ones_n2 successful
+>> the definition for ones_n2 is complete
+>> the definition ones_n2 is provably correct
+
+>> Typing for ones_f2_aux successful
+>> the definition for ones_f2_aux is complete
+>> the definition ones_f2_aux is provably correct
+
+>> Typing for ones_f2 successful
+>> the definition for ones_f2 is complete
+>> the definition ones_f2 is provably correct
+
+>> Typing for ones3_aux successful
+>> the definition for ones3_aux is complete
+>> the definition ones3_aux is provably correct
+
+>> Typing for ones3 successful
+>> the definition for ones3 is complete
+>> the definition ones3 is provably correct
+
+>> Typing for n_zeros_ones3_aux, n_zeros_ones3 successful
+>> the definition for n_zeros_ones3 is complete
+>> the definition for n_zeros_ones3_aux is complete
+>> the definitions n_zeros_ones3_aux, n_zeros_ones3 are provably correct
+
+>> Typing for get_n_ones3_aux, get_n_ones3 successful
+>> the definition for get_n_ones3 is complete
+>> the definition for get_n_ones3_aux is complete
+>> the definitions get_n_ones3_aux, get_n_ones3 are provably correct
+
+>> Typing for map_length1_aux, map_length1 successful
+>> the definition for map_length1 is complete
+>> the definition for map_length1_aux is complete
+>> the definitions map_length1_aux, map_length1 are provably correct
+
+>> Typing for test1 successful
+>> the definition for test1 is complete
+>> the definition test1 is provably correct
+
+>> 
+>>   {
+>>     Head = 0;
+>>     Tail = 
+>>       {
+>>         Head = 0;
+>>         Tail = 
+>>           {
+>>             Head = 0;
+>>             Tail = 
+>>               {<1>}}}}
+>> of type: stream(nat)
+
+>> Typing for test2 successful
+>> the definition for test2 is complete
+>> the definition test2 is provably correct
+
+>> 
+>>   {
+>>     Head = 1;
+>>     Tail = 
+>>       {
+>>         Head = 1;
+>>         Tail = 
+>>           {
+>>             Head = 1;
+>>             Tail = 
+>>               {
+>>                 Head = 0;
+>>                 Tail = 
+>>                   {
+>>                     Head = 1;
+>>                     Tail = 
+>>                       {
+>>                         Head = 1;
+>>                         Tail = 
+>>                           {
+>>                             Head = 1;
+>>                             Tail = 
+>>                               {
+>>                                 Head = 0;
+>>                                 Tail = 
+>>                                   {
+>>                                     Head = 1;
+>>                                     Tail = 
+>>                                       {<1>}}}}}}}}}}
+>> of type: stream(nat)
+
+>> Typing for k3 successful
+>> the definition for k3 is complete
+>> the definition k3 is provably correct
+
+>> Typing for test3 successful
+>> the definition for test3 is complete
+>> the definition test3 is provably correct
+
+>> 
+>>   {
+>>     Head = 0;
+>>     Tail = 
+>>       {
+>>         Head = 1;
+>>         Tail = 
+>>           {
+>>             Head = 1;
+>>             Tail = 
+>>               {
+>>                 Head = 1;
+>>                 Tail = 
+>>                   {
+>>                     Head = 0;
+>>                     Tail = 
+>>                       {
+>>                         Head = 1;
+>>                         Tail = 
+>>                           {
+>>                             Head = 1;
+>>                             Tail = 
+>>                               {
+>>                                 Head = 1;
+>>                                 Tail = 
+>>                                   {
+>>                                     Head = 0;
+>>                                     Tail = 
+>>                                       {<1>}}}}}}}}}}
+>> of type: stream(nat)
+
+>> Typing for id successful
+>> the definition for id is complete
+>> the definition id is provably correct
+
+>> Typing for test4 successful
+>> the definition for test4 is complete
+>> the definition test4 is provably correct
+
+>> 
+>>   {
+>>     Head = 0;
+>>     Tail = 
+>>       {
+>>         Head = 0;
+>>         Tail = 
+>>           {
+>>             Head = 1;
+>>             Tail = 
+>>               {
+>>                 Head = 0;
+>>                 Tail = 
+>>                   {
+>>                     Head = 1;
+>>                     Tail = 
+>>                       {
+>>                         Head = 1;
+>>                         Tail = 
+>>                           {
+>>                             Head = 0;
+>>                             Tail = 
+>>                               {
+>>                                 Head = 1;
+>>                                 Tail = 
+>>                                   {
+>>                                     Head = 1;
+>>                                     Tail = 
+>>                                       {
+>>                                         Head = 1;
+>>                                         Tail = 
+>>                                           {
+>>                                             Head = 0;
+>>                                             Tail = 
+>>                                               {
+>>                                                 Head = 1;
+>>                                                 Tail = 
+>>                                                   {
+>>                                                     Head = 1;
+>>                                                     Tail = 
+>>                                                       {
+>>                                                         Head = 1;
+>>                                                         Tail = 
+>>                                                           {
+>>                                                             Head = 1;
+>>                                                             Tail = 
+>>                                                               {
+>>                                                                 Head = 0;
+>>                                                                 Tail = 
+>>                                                                   {<1>}}}}}}}}}}}}}}}}}
+>> of type: stream(nat)
+
+>> Typing for test5 successful
+>> the definition for test5 is complete
+>> the definition test5 is provably correct
+
+>> 
+>>   {
+>>     Head = 1;
+>>     Tail = 
+>>       {
+>>         Head = 1;
+>>         Tail = 
+>>           {
+>>             Head = 1;
+>>             Tail = 
+>>               {
+>>                 Head = 1;
+>>                 Tail = 
+>>                   {
+>>                     Head = 1;
+>>                     Tail = 
+>>                       {
+>>                         Head = 1;
+>>                         Tail = 
+>>                           {<1>}}}}}}}
+>> of type: stream(nat)
+
+>> Typing for test6 successful
+>> the definition for test6 is complete
+>> the definition test6 is provably correct
+
+>> 
+>>   {
+>>     Head = 0;
+>>     Tail = 
+>>       {
+>>         Head = 0;
+>>         Tail = 
+>>           {
+>>             Head = 0;
+>>             Tail = 
+>>               {
+>>                 Head = 0;
+>>                 Tail = 
+>>                   {
+>>                     Head = 0;
+>>                     Tail = 
+>>                       {
+>>                         Head = 1;
+>>                         Tail = 
+>>                           {
+>>                             Head = 1;
+>>                             Tail = 
+>>                               {
+>>                                 Head = 1;
+>>                                 Tail = 
+>>                                   {
+>>                                     Head = 1;
+>>                                     Tail = 
+>>                                       {<1>}}}}}}}}}}
+>> of type: stream(nat)
+
+>> Typing for test7 successful
+>> the definition for test7 is complete
+>> the definition test7 is provably correct
+
+>> 
+>>   {
+>>     Head = 0;
+>>     Tail = 
+>>       {
+>>         Head = 0;
+>>         Tail = 
+>>           {
+>>             Head = 1;
+>>             Tail = 
+>>               {
+>>                 Head = 0;
+>>                 Tail = 
+>>                   {
+>>                     Head = 1;
+>>                     Tail = 
+>>                       {
+>>                         Head = 1;
+>>                         Tail = 
+>>                           {
+>>                             Head = 0;
+>>                             Tail = 
+>>                               {
+>>                                 Head = 1;
+>>                                 Tail = 
+>>                                   {
+>>                                     Head = 1;
+>>                                     Tail = 
+>>                                       {
+>>                                         Head = 1;
+>>                                         Tail = 
+>>                                           {
+>>                                             Head = 0;
+>>                                             Tail = 
+>>                                               {
+>>                                                 Head = 1;
+>>                                                 Tail = 
+>>                                                   {
+>>                                                     Head = 1;
+>>                                                     Tail = 
+>>                                                       {
+>>                                                         Head = 1;
+>>                                                         Tail = 
+>>                                                           {
+>>                                                             Head = 1;
+>>                                                             Tail = 
+>>                                                               {
+>>                                                                 Head = 1;
+>>                                                                 Tail = 
+>>                                                                   {
+>>                                                                     Head = 1;
+>>                                                                     Tail = 
+>>                                                                       {
+>>                                                                         Head = 1;
+>>                                                                         Tail = 
+>>                                                                           {
+>>                                                                             Head = 1;
+>>                                                                             Tail = 
+>>                                                                               {
+>>                                                                                 Head = 1;
+>>                                                                                 Tail = 
+>>                                                                                   {<1>}}}}}}}}}}}}}}}}}}}}}
+>> of type: stream(nat)
+
+>> Typing for test8 successful
+>> the definition for test8 is complete
+>> the definition test8 is provably correct
+
+>> 
+>>   {
+>>     Head = 3;
+>>     Tail = 
+>>       {
+>>         Head = 3;
+>>         Tail = 
+>>           {
+>>             Head = 3;
+>>             Tail = 
+>>               {
+>>                 Head = 3;
+>>                 Tail = 
+>>                   {
+>>                     Head = 3;
+>>                     Tail = 
+>>                       {
+>>                         Head = 3;
+>>                         Tail = 
+>>                           {
+>>                             Head = 3;
+>>                             Tail = 
+>>                               {
+>>                                 Head = 3;
+>>                                 Tail = 
+>>                                   {
+>>                                     Head = 3;
+>>                                     Tail = 
+>>                                       {
+>>                                         Head = 3;
+>>                                         Tail = 
+>>                                           {<1>}}}}}}}}}}}
+>> of type: stream(nat)
+
+>> Typing for test9 successful
+>> the definition for test9 is complete
+>> the definition test9 is provably correct
+
+>> 
+>>   {
+>>     Head = 0;
+>>     Tail = 
+>>       {
+>>         Head = 3;
+>>         Tail = 
+>>           {
+>>             Head = 3;
+>>             Tail = 
+>>               {
+>>                 Head = 3;
+>>                 Tail = 
+>>                   {
+>>                     Head = 3;
+>>                     Tail = 
+>>                       {
+>>                         Head = 3;
+>>                         Tail = 
+>>                           {
+>>                             Head = 3;
+>>                             Tail = 
+>>                               {
+>>                                 Head = 3;
+>>                                 Tail = 
+>>                                   {
+>>                                     Head = 3;
+>>                                     Tail = 
+>>                                       {
+>>                                         Head = 3;
+>>                                         Tail = 
+>>                                           {<1>}}}}}}}}}}}
+>> of type: stream(nat)
+
+>> Typing for test10 successful
+>> the definition for test10 is complete
+>> the definition test10 is provably correct
+
+>> 
+>>   {
+>>     Head = 0;
+>>     Tail = 
+>>       {
+>>         Head = 0;
+>>         Tail = 
+>>           {
+>>             Head = 1;
+>>             Tail = 
+>>               {
+>>                 Head = 2;
+>>                 Tail = 
+>>                   {
+>>                     Head = 3;
+>>                     Tail = 
+>>                       {
+>>                         Head = 4;
+>>                         Tail = 
+>>                           {
+>>                             Head = 5;
+>>                             Tail = 
+>>                               {
+>>                                 Head = 6;
+>>                                 Tail = 
+>>                                   {
+>>                                     Head = 7;
+>>                                     Tail = 
+>>                                       {
+>>                                         Head = 8;
+>>                                         Tail = 
+>>                                           {<1>}}}}}}}}}}}
+>> of type: stream(nat)
+
+>> Typing for test12 successful
+>> the definition for test12 is complete
+>> the definition test12 is provably correct
+
+>> 
+>>   {
+>>     Head = 0;
+>>     Tail = 
+>>       {
+>>         Head = 0;
+>>         Tail = 
+>>           {
+>>             Head = 1;
+>>             Tail = 
+>>               {
+>>                 Head = 0;
+>>                 Tail = 
+>>                   {
+>>                     Head = 1;
+>>                     Tail = 
+>>                       {
+>>                         Head = 1;
+>>                         Tail = 
+>>                           {
+>>                             Head = 0;
+>>                             Tail = 
+>>                               {
+>>                                 Head = 1;
+>>                                 Tail = 
+>>                                   {
+>>                                     Head = 1;
+>>                                     Tail = 
+>>                                       {
+>>                                         Head = 1;
+>>                                         Tail = 
+>>                                           {
+>>                                             Head = 0;
+>>                                             Tail = 
+>>                                               {
+>>                                                 Head = 1;
+>>                                                 Tail = 
+>>                                                   {
+>>                                                     Head = 1;
+>>                                                     Tail = 
+>>                                                       {
+>>                                                         Head = 1;
+>>                                                         Tail = 
+>>                                                           {
+>>                                                             Head = 1;
+>>                                                             Tail = 
+>>                                                               {
+>>                                                                 Head = 0;
+>>                                                                 Tail = 
+>>                                                                   {<1>}}}}}}}}}}}}}}}}}
+>> of type: stream(nat)
+
+>> Typing for test13 successful
+>> the definition for test13 is complete
+>> the definition test13 is provably correct
+
+>> 
+>>   {
+>>     Head = 0;
+>>     Tail = 
+>>       {
+>>         Head = 0;
+>>         Tail = 
+>>           {
+>>             Head = 1;
+>>             Tail = 
+>>               {
+>>                 Head = 0;
+>>                 Tail = 
+>>                   {
+>>                     Head = 1;
+>>                     Tail = 
+>>                       {
+>>                         Head = 1;
+>>                         Tail = 
+>>                           {
+>>                             Head = 0;
+>>                             Tail = 
+>>                               {
+>>                                 Head = 1;
+>>                                 Tail = 
+>>                                   {
+>>                                     Head = 1;
+>>                                     Tail = 
+>>                                       {
+>>                                         Head = 1;
+>>                                         Tail = 
+>>                                           {
+>>                                             Head = 0;
+>>                                             Tail = 
+>>                                               {
+>>                                                 Head = 1;
+>>                                                 Tail = 
+>>                                                   {
+>>                                                     Head = 1;
+>>                                                     Tail = 
+>>                                                       {
+>>                                                         Head = 1;
+>>                                                         Tail = 
+>>                                                           {
+>>                                                             Head = 1;
+>>                                                             Tail = 
+>>                                                               {
+>>                                                                 Head = 1;
+>>                                                                 Tail = 
+>>                                                                   {
+>>                                                                     Head = 1;
+>>                                                                     Tail = 
+>>                                                                       {
+>>                                                                         Head = 1;
+>>                                                                         Tail = 
+>>                                                                           {
+>>                                                                             Head = 1;
+>>                                                                             Tail = 
+>>                                                                               {
+>>                                                                                 Head = 1;
+>>                                                                                 Tail = 
+>>                                                                                   {<1>}}}}}}}}}}}}}}}}}}}}}
+>> of type: stream(nat)
+
+>> Typing for test14 successful
+>> the definition for test14 is complete
+>> the definition test14 is provably correct
+
+>> 
+>>   {
+>>     Head = 1;
+>>     Tail = 
+>>       {
+>>         Head = 1;
+>>         Tail = 
+>>           {
+>>             Head = 1;
+>>             Tail = 
+>>               {
+>>                 Head = 1;
+>>                 Tail = 
+>>                   {
+>>                     Head = 1;
+>>                     Tail = 
+>>                       {
+>>                         Head = 0;
+>>                         Tail = 
+>>                           {
+>>                             Head = 0;
+>>                             Tail = 
+>>                               {
+>>                                 Head = 0;
+>>                                 Tail = 
+>>                                   {
+>>                                     Head = 0;
+>>                                     Tail = 
+>>                                       {
+>>                                         Head = 0;
+>>                                         Tail = 
+>>                                           {
+>>                                             Head = 0;
+>>                                             Tail = 
+>>                                               {
+>>                                                 Head = 0;
+>>                                                 Tail = 
+>>                                                   {<1>}}}}}}}}}}}}}
+>> of type: stream(nat)
+
