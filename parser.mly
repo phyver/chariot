@@ -50,6 +50,7 @@ open SCTCalls
 open Coverage
 open FunctionDefs
 open TypeDefs
+open StructPattern
 
 (* transform a list of types into the product *)
 let list_to_product (l:type_expression list) : type_expression
