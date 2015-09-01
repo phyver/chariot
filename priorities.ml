@@ -176,7 +176,7 @@ let infer_priorities (env:environment)
             | Const(c,_,t) ->
                 let dt = get_result_type t in
                 let p = get_priority dt in
-                Const(c,Some p,dt)
+                Const(c,Some p,t)
             | Proj(d,_,t) ->
                 let dt = get_first_arg_type t in
                 let p = get_priority dt in
