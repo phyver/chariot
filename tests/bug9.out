@@ -1,0 +1,9 @@
+>> coinductive type stream was succesfully defined
+>> Typing for f successful
+>> the definition for f is complete
+>> initial callgraph:
+>> calls from f to f:
+>>     f, x₁ => f, <1>² x₁
+
+!! warning: the definition f is NOT provably correct (weight_bound: 2, depth_bound: 2)
+

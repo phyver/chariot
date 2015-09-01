@@ -1,0 +1,17 @@
+>> inductive type list was succesfully defined
+>> Typing for test1 successful
+>> the definition for test1 is complete
+!! warning: the definition test1 is NOT provably correct (weight_bound: 2, depth_bound: 2)
+
+>> Typing for test2 successful
+>> the definition for test2 is complete
+>> the definition test2 is provably correct
+
+>> Typing for test3 successful
+>> the definition for test3 is complete
+>> the definition test3 is provably correct
+
+>> Typing for test4 successful
+>> the definition for test4 is complete
+!! warning: the definition test4 is NOT provably correct (weight_bound: 2, depth_bound: 2)
+

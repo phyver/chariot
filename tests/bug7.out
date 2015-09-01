@@ -1,0 +1,10 @@
+>> inductive type nat was succesfully defined
+>> Typing for f successful
+>> the definition for f is complete
+>> the definition f is provably correct
+
+val
+   f : nat → nat
+    | f (_₁+1) = 0
+    | f 0 = 0
+
