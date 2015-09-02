@@ -128,7 +128,59 @@ let remove_match_struct (clauses:(struct_term*struct_term) list)
 let remove_term_struct (clauses:(unit term*struct_term) list)
   : (unit term*unit term) list
   =
-    List.map (function lhs,rhs -> lhs,map_special_term (fun _ -> assert false) identity rhs) clauses
+
+    let rec extract_variables_from_struct (v:struct_term) : var_name list
+      = 
+        match get_head v with
+            | Var(x,()) -> [x]
+            | Angel _ | Daimon _ | Const _ | Proj _ -> []
+            | Sp(Struct fields,_) ->
+                    List.fold_left (fun r dv -> merge_uniq r (extract_variables_from_struct (snd dv))) [] fields
+            | App _ -> assert false
+    in
+
+    let rec process_term (v:struct_term)
+      : unit term * (unit term * struct_term) list
+      =
+        let args,new_clauses =
+            let tmp = List.map process_term (get_args v) in
+            List.map fst tmp , List.concat (List.map snd tmp)
+        in
+
+        match get_head v with
+            | Sp(Struct fields,_) ->
+                assert (args=[]);
+                let f_aux = new_aux () in
+                let params = extract_variables_from_struct v in
+                let new_f = app f_aux (List.map (fun x -> Var(x,())) params) in
+                let new_clauses = List.map (function d,v -> App(  Proj(d,None,()) , new_f) , v) fields in
+                new_f , new_clauses
+
+            | Angel _ -> app (Angel()) args , new_clauses
+            | Daimon _ -> app (Daimon()) args , new_clauses
+            | Var(x,_) -> app (Var(x,())) args , new_clauses
+            | Proj(d,p,_) -> app (Proj(d,p,())) args , new_clauses
+            | Const(c,p,_) -> app (Const(c,p,())) args , new_clauses
+            | App _ -> assert false
+    in
+
+    let rec process_clause (lhs,rhs:(unit term*struct_term))
+      : (unit term*unit term) list
+      = match process_term rhs with
+            | rhs,[] ->
+                (* debug "finished with %s => %s\n" (string_of_term lhs) (string_of_term rhs); *)
+                [lhs,rhs]
+            | rhs,new_clauses ->
+                (* debug "new processed clause: %s => %s" (string_of_term lhs) (string_of_term rhs); *)
+                (* debug "new clause to process: %s => %s\n" (string_of_struct_term (fst cl')) (string_of_struct_term (snd cl')); *)
+                (lhs,rhs)::(List.concat (List.map process_clause new_clauses))
+    in
+
+    List.concat (List.map process_clause clauses)
+
+
+
+
 
 let remove_struct_defs (defs:(var_name * type_expression option * (struct_term*struct_term) list) list)
   : (var_name * type_expression option * (unit term*unit term) list) list
@@ -137,13 +189,31 @@ let remove_struct_defs (defs:(var_name * type_expression option * (struct_term*s
     let clauses = List.concat (List.map (function f,_,clauses -> clauses) defs) in
     let new_clauses = remove_match_struct clauses in
     let new_clauses = remove_term_struct new_clauses in
+
     let new_defs = List.map (function lhs,rhs -> get_function_name lhs, (lhs,rhs)) new_clauses in
+    let new_defs =
+        let aux_funs,old_funs = List.partition (function f,_ -> f.[0] = '_') new_defs in
+        let aux_funs = List.stable_sort (fun cl1 cl2 -> compare (fst cl1) (fst cl2)) aux_funs in
+        old_funs @ aux_funs
+    in
+
     let new_defs = partition (function f,_ -> f) new_defs in
-    List.map
-        (function
-            | [] -> assert false
-            | ((f,_)::_) as clauses ->
-                let t = (try List.assoc f types with Not_found -> None) in
-                f,t,List.map (function _,cl -> cl) clauses)
-        new_defs
+    let new_defs = List.map
+                    (function
+                        | [] -> assert false
+                        | ((f,_)::_) as clauses ->
+                            let t = (try List.assoc f types with Not_found -> None) in
+                            f,t,List.map (function _,cl -> cl) clauses)
+                    new_defs
+    in
+
+    (* List.iter (function f,t,cls -> *)
+    (*     List.iter (function lhs,rhs -> *)
+    (*         debug "%s => %s" (string_of_term lhs) (string_of_term rhs) *)
+    (*     ) *)
+    (*     cls *)
+    (* ) new_defs; *)
+
+    new_defs
+
 
