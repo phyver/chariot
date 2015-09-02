@@ -185,6 +185,7 @@ let process_function_defs (env:environment)
                then infer_priorities env defs
                else defs
     in
+    (* TODO: check that all priorities are > 0 and remove the instance of option "use_priorities" *)
 
     (* List.iter (function f,t,cls -> *)
     (*     List.iter (function lhs,rhs -> *)
