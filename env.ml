@@ -49,9 +49,6 @@ let error s = raise (Error s)
 exception UnificationError of string
 let unificationError s = raise (UnificationError s)
 
-exception TypeError of string
-let typeError s = raise (TypeError s)
-
 
 (* types for type expressions and substitutions *)
 type type_name = string

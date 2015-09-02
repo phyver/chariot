@@ -227,17 +227,17 @@ let infer_type (env:environment)
                 begin
                     try
                         let t = instantiate_type (get_constant_type env c) in
-                        if is_projection env c then typeError (c ^ " is not a constructor");    (* FIXME: this should be done by a check_term function *)
+                        if is_projection env c then error (fmt "typing problem: %s is not a constructor" c);    (* FIXME: this should be done by a check_term function *)
                         (t, Const(c,p,t) , context, [])
-                    with Not_found -> typeError ("cannot infer type of constant " ^ c)
+                    with Not_found -> error (fmt "cannot infer type of constant %s" c)
                 end
             | Proj(d,p,_) ->
                 begin
                     try
                         let t = instantiate_type (get_constant_type env d) in
-                        if not (is_projection env d) then typeError (d ^ " is not a destructor");     (* FIXME: this should be done by a check_term function *)
+                        if not (is_projection env d) then error (fmt "typing problem: %s is not a destructor" d);     (* FIXME: this should be done by a check_term function *)
                         (t, Proj(d,p,t) , context, [])
-                    with Not_found -> typeError ("cannot infer type of constant " ^ d)
+                    with Not_found -> error (fmt "typing problem: cannot infer type of constant %s" d)
                 end
             | App(v1,v2) ->
                 begin

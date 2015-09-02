@@ -72,7 +72,6 @@ let loadfile path
     with
         | Parsing.Parse_error -> parse_error lexbuf
         | Error err -> errmsg "%s" err
-        | TypeError err -> errmsg "typing error: %s" err
         | Sys_error err -> errmsg "%s" err
         | Exit -> close_in f_in
 
@@ -88,7 +87,6 @@ let mainloop ()
         with
             | Parsing.Parse_error -> parse_error lexbuf; show_error lexbuf
             | Error err -> errmsg "%s" err
-            | TypeError err -> errmsg "typing error: %s" err
     done
 
 

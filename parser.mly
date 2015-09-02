@@ -103,10 +103,6 @@ let exec_cmd (cmd:unit->unit) : unit
             if option "continue_on_error"
             then errmsg "%s" err
             else error err
-        | TypeError err ->
-            if option "continue_on_error"
-            then errmsg "typing error: %s" err
-            else error err
 
 (* process some types definitions and add them to the environment *)
 let cmd_process_type_defs n defs
