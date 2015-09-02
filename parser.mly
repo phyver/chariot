@@ -54,7 +54,7 @@ open StructPattern
 
 (* transform a struct_term without structs into a unit term *)
 let struct_to_term v
-  = map_raw_term (fun _ -> error "no structure allowed for this command") identity v
+  = map_raw_term (fun _ -> error "no structure allowed for this command") identity identity v
 
 (* transform a list of types into the product *)
 let list_to_product (l:type_expression list) : type_expression

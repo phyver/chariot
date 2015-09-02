@@ -186,13 +186,13 @@ let merge_context (cs1:(var_name*type_expression) list) (cs2:(var_name*type_expr
  *)
 
 let infer_type (env:environment)
-               (v:('empty,'t) raw_term)
+               (v:('empty,'p,'t) raw_term)
                (context:(var_name*type_expression) list)    (* context for the types of free variables *)
-  : type_expression * (empty,type_expression) raw_term * (var_name*type_expression) list * (type_name*type_expression) list
+  : type_expression * (empty,'p,type_expression) raw_term * (var_name*type_expression) list * (type_name*type_expression) list
   = if verbose 2 then debug "infering type for %s" (string_of_term v);
 
-    let rec infer_type_aux (v:(empty,'t) raw_term) context
-      : type_expression * (empty,type_expression) raw_term * (var_name*type_expression) list * (type_name*type_expression) list
+    let rec infer_type_aux (v:(empty,'p,'t) raw_term) context
+      : type_expression * (empty,'p,type_expression) raw_term * (var_name*type_expression) list * (type_name*type_expression) list
       (* : type_expression * (var_name*type_expression) list * (type_name*type_expression) list *)
       =
           if verbose 4
@@ -293,8 +293,8 @@ let infer_type (env:environment)
         t,v,context,sigma
     with UnificationError e -> error (fmt "unification error when typing %s: %s" (string_of_term v) e)
 
-let infer_type_term (env:environment) (v:(empty,'t) raw_term)
-  : type_expression * (empty,type_expression) raw_term * (var_name*type_expression) list
+let infer_type_term (env:environment) (v:(empty,'p,'t) raw_term)
+  : type_expression * (empty,'p,type_expression) raw_term * (var_name*type_expression) list
   = reset_fresh_variable_generator [];
     let t,v,context,_ = infer_type env v [] in
     t,
@@ -303,9 +303,9 @@ let infer_type_term (env:environment) (v:(empty,'t) raw_term)
 
 let infer_type_clause (env:environment)
                       (context:(var_name*type_expression) list)     (* should contain context for __ALL__ the functions *)
-                      (lhs_pattern:(empty,'t) raw_term)
-                      (rhs_def:(empty,'t) raw_term)
-  : (var_name*type_expression) list * (empty,type_expression) raw_term * (empty,type_expression) raw_term
+                      (lhs_pattern:(empty,'p,'t) raw_term)
+                      (rhs_def:(empty,'p,'t) raw_term)
+  : (var_name*type_expression) list * (empty,'p,type_expression) raw_term * (empty,'p,type_expression) raw_term
   =
 
     let funs = List.map fst context in

@@ -127,25 +127,25 @@ let get_constant_arity (env:environment) (c:const_name) : int
     type_arity t
 
 (* get the function name from a pattern *)
-let rec get_head (v:('a,'t) raw_term) : ('a,'t) raw_term
+let rec get_head (v:('a,'p,'t) raw_term) : ('a,'p,'t) raw_term
   = match v with
     | Const _ | Angel _ | Daimon _ | Var _ | Proj _ | Sp _ -> v
     | App(v,_) -> get_head v
 
-let rec get_head_const (v:('a,'t) raw_term) : const_name
+let rec get_head_const (v:('a,'p,'t) raw_term) : const_name
   = match v with
     | Const(c,p,_)  -> c
     | Angel _ | Daimon _ | Var _ | Proj _ | Sp _ ->  raise (Invalid_argument "no head constructor")
     | App(v,_) -> get_head_const v
 
-let get_args (v:('a,'t) raw_term) : ('a,'t) raw_term list
+let get_args (v:('a,'p,'t) raw_term) : ('a,'p,'t) raw_term list
   = let rec get_args_aux acc = function
         | Const _ | Angel _ | Daimon _ | Var _ | Proj _ | Sp _ -> acc
         | App(v1,v2) -> get_args_aux (v2::acc) v1
     in
     get_args_aux [] v
 
-let rec get_function_name (v:('a,'t) raw_term) : var_name
+let rec get_function_name (v:('a,'p,'t) raw_term) : var_name
   = match v with
     | Var(f,_) -> f
     | Angel _ | Daimon _ | Const _ | Proj _ ->  raise (Invalid_argument "no head function")
@@ -153,7 +153,7 @@ let rec get_function_name (v:('a,'t) raw_term) : var_name
     | App(v,_) -> get_function_name v
     | Sp(v,_) -> assert false
 
-let rec type_of (u:('a,type_expression) raw_term) : type_expression
+let rec type_of (u:('a,'p,type_expression) raw_term) : type_expression
   = match u with
         | Daimon t | Angel t | Var(_,t) | Const(_,_,t) | Proj(_,_,t) | Sp(_,t) -> t
         | App(u1,u2) ->
@@ -164,7 +164,7 @@ let rec type_of (u:('a,type_expression) raw_term) : type_expression
             end
 
 
-let app (f:('a,'t) raw_term) (args:('a,'t) raw_term list) : ('a,'t) raw_term
+let app (f:('a,'p,'t) raw_term) (args:('a,'p,'t) raw_term list) : ('a,'p,'t) raw_term
   = List.fold_left (fun v arg -> App(v,arg)) f args
 
 let rec get_result_type (t:type_expression) : type_expression
@@ -198,7 +198,7 @@ let rec extract_datatypes (t:type_expression) : type_expression list
     | Data(_,params) -> t::(List.concat (List.map extract_datatypes params))
     | Arrow(t1,t2) -> (extract_datatypes t1) @ (extract_datatypes t2)
 
-let rec extract_datatypes_from_typed_term (u:(empty,type_expression) raw_term) : type_expression list
+let rec extract_datatypes_from_typed_term (u:(empty,'p,type_expression) raw_term) : type_expression list
   = match u with
         | Daimon _ | Angel _ | Var _ -> []
         | App(u1,u2) -> merge_uniq (extract_datatypes_from_typed_term u1) (extract_datatypes_from_typed_term u2)
@@ -206,7 +206,7 @@ let rec extract_datatypes_from_typed_term (u:(empty,type_expression) raw_term) :
         | Proj(_,_,t) -> extract_datatypes (get_first_arg_type t)
         | Sp(s,_) -> s.bot
 
-let rec extract_term_variables (v:(empty,'t) raw_term) : var_name list
+let rec extract_term_variables (v:(empty,'p,'t) raw_term) : var_name list
   = let rec extract_term_variables_aux v
       = match v with
             | Angel _ | Daimon _ | Const _ | Proj _ -> []
@@ -217,23 +217,23 @@ let rec extract_term_variables (v:(empty,'t) raw_term) : var_name list
 
 (* TODO this function and the previous one could be merged... *)
 (* let rec extract_pattern_variables (v:pattern) : var_name list *)
-let rec extract_pattern_variables (v:(empty,'t) raw_term) : var_name list
+let rec extract_pattern_variables (v:(empty,'p,'t) raw_term) : var_name list
   = match get_head v,get_args v with
         | Var(f,_),args -> List.concat (List.map extract_term_variables args)
         | Proj _,v::args -> (extract_pattern_variables v) @ (List.concat (List.map extract_term_variables args))
         | _,_ -> assert false
 
-let rec map_raw_term (f:'a1 -> 'a2) (g:'t1 -> 't2) (u:('a1,'t1) raw_term) : ('a2,'t2) raw_term
-  = match u with
-        | Angel t -> Angel (g t)
-        | Daimon t -> Daimon (g t)
-        | Var(x,t) -> Var(x,g t)
-        | Const(c,p,t) -> Const(c,p,g t)
-        | Proj(d,p,t) -> Proj(d,p,g t)
-        | App(u1,u2) -> App(map_raw_term f g u1, map_raw_term f g u2)
-        | Sp(a,t) -> Sp(f a,g t)
+let rec map_raw_term (f:'a1 -> 'a2) (g:'p1 -> 'p2) (h:'t1 -> 't2) (v:('a1,'p1,'t1) raw_term) : ('a2,'p2,'t2) raw_term
+  = match v with
+        | Angel t -> Angel (h t)
+        | Daimon t -> Daimon (h t)
+        | Var(x,t) -> Var(x,h t)
+        | Const(c,p,t) -> Const(c,g p,h t)
+        | Proj(d,p,t) -> Proj(d,g p,h t)
+        | App(v1,v2) -> App(map_raw_term f g h v1, map_raw_term f g h v2)
+        | Sp(a,t) -> Sp(f a,h t)
 
-let map_type_term f u = map_raw_term identity f u
+let map_type_term f u = map_raw_term identity identity f u
 
 let add_weight (w1:weight) (w2:weight) : weight
   = match w1,w2 with
@@ -265,8 +265,8 @@ let collapse_weight (bound:int) (w:weight) : weight
     | Num w (* when w<-bound *) -> Num(-bound)
 
 
-let pattern_to_approx_term (v:(empty,'t) raw_term) : (approximation,unit) raw_term
-  = map_raw_term (fun s -> s.bot) (fun _ -> ()) v
+let pattern_to_approx_term (v:(empty,'p,'t) raw_term) : (approximation,'p,unit) raw_term
+  = map_raw_term (fun s -> s.bot) identity (fun _ -> ()) v
 
 
 (* apply a substitution on a term *)
@@ -288,7 +288,7 @@ let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expressi
     | Data(tname, args) -> Data(tname, List.map (subst_type sigma) args)
 
 (* apply a type substitution to all the type annotations inside a typed term *)
-let rec subst_type_term  (sigma:type_substitution) (u:(empty,type_expression) raw_term) : (empty,type_expression) raw_term
+let rec subst_type_term  (sigma:type_substitution) (u:(empty,'p,type_expression) raw_term) : (empty,'p,type_expression) raw_term
   = match u with
         | Angel(t) -> Angel(subst_type sigma t)
         | Daimon(t) -> Daimon(subst_type sigma t)
@@ -306,7 +306,7 @@ let compose_type_substitution (sigma1:type_substitution) (sigma2:type_substituti
   = sigma2 @ (List.map (second (subst_type sigma2)) sigma1)
 
 
-let rec explode (v:('a,'t) raw_term) : ('a,'t) raw_term list
+let rec explode (v:('a,'p,'t) raw_term) : ('a,'p,'t) raw_term list
   = let h,args = get_head v,get_args v in
     match h,args with
         | Var _,args | Const _,args | Angel _,args | Daimon _,args | Sp _,args-> h::args
@@ -314,7 +314,7 @@ let rec explode (v:('a,'t) raw_term) : ('a,'t) raw_term list
         | Proj _ as p,[] -> [p]
         | App _,_ -> assert false
 
-let implode (args:('a,'t) raw_term list) : ('a,'t) raw_term
+let implode (args:('a,'p,'t) raw_term list) : ('a,'p,'t) raw_term
   = let rec implode_aux args acc
       = match args with
             | [] -> acc

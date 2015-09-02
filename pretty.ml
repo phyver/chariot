@@ -74,14 +74,14 @@ let s_o_t = string_of_type
 
 let rec print_type t = print_string (string_of_type t)
 
-let rec is_atomic_term (v:('a,'t) raw_term) = match v with
+let rec is_atomic_term (v:('a,'p,'t) raw_term) = match v with
     | Var _ | Angel _ | Daimon _ | Const _ | Proj _ -> true
     | App(Proj _, v) -> is_atomic_term v
     | App _ -> false
     | Sp _ -> true
 
 let rec
-  string_of_term_int (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,'t) raw_term) =
+  string_of_term_int (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,priority,'t) raw_term) =
     let rec aux n v =
         match v with
         | Const("Zero",_,_) -> n,None
@@ -99,7 +99,7 @@ let rec
                               else (string_of_raw_term o sp v) ^ "+" ^ (string_of_int n)
 
 and
-  string_of_term_list (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,'t) raw_term) =
+  string_of_term_list (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,priority,'t) raw_term) =
     let rec aux l v =
         match v with
         | Const("Nil",_,_) -> l,None
@@ -117,7 +117,7 @@ and
                               else String.concat "::" (List.map (string_of_term_paren o sp) (List.rev l)) ^ "::" ^ (string_of_term_paren o sp v)
 
 and
-  string_of_term_tuple (o:'o) (sp:'o -> 'a -> string) (u:('a,'t) raw_term) =
+  string_of_term_tuple (o:'o) (sp:'o -> 'a -> string) (u:('a,priority,'t) raw_term) =
     if not (option "show_tuples")
     then raise (Invalid_argument "string_of_term_tuple")
     else
@@ -130,7 +130,7 @@ and
             | _ -> raise (Invalid_argument "string_of_term_tuple")
 
 and
-  string_of_term_paren (o:'o) (sp:'o -> 'a -> string) (v:('a,'t) raw_term) =
+  string_of_term_paren (o:'o) (sp:'o -> 'a -> string) (v:('a,priority,'t) raw_term) =
     try string_of_term_int o sp true v with Invalid_argument "string_of_term_int" ->
     try string_of_term_list o sp true v with Invalid_argument "string_of_term_list" ->
     try string_of_term_tuple o sp v with Invalid_argument "string_of_term_tuple" ->
@@ -139,7 +139,7 @@ and
         else ("(" ^ (string_of_raw_term o sp v) ^ ")")
 
 and
-  string_of_raw_term (o:'o) (sp:'o -> 'a -> string) (v:('a,'t) raw_term) =
+  string_of_raw_term (o:'o) (sp:'o -> 'a -> string) (v:('a,priority,'t) raw_term) =
     try string_of_term_int o sp false v with Invalid_argument "string_of_term_int" ->
     try string_of_term_list o sp false v with Invalid_argument "string_of_term_list" ->
     try string_of_term_tuple o sp v with Invalid_argument "string_of_term_tuple" ->

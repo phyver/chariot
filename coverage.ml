@@ -90,8 +90,8 @@ convert_match env (xs:var_name list)
       match xs,clauses with
         | [],[] -> fail
         | x::xs,[] -> fail  (* TODO: keep types and check that x is not in a type with 0 constructor *)
-        | [],[(n,[],v)] -> CSLeaf(n,map_raw_term (fun s->s.bot) identity v)
-        | [],(n,[],v)::clauses ->  CSLeaf(n,map_raw_term (fun s->s.bot) identity v)
+        | [],[(n,[],v)] -> CSLeaf(n,map_raw_term (fun s->s.bot) identity identity v)
+        | [],(n,[],v)::clauses ->  CSLeaf(n,map_raw_term (fun s->s.bot) identity identity v)
         (* | [],_ -> assert false *)
 
         | xs,clauses ->

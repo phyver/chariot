@@ -5,7 +5,7 @@ open State
 open Pretty
 
 type structure = Struct of (const_name * struct_term) list
-and struct_term = (structure,unit) raw_term
+and struct_term = (structure,priority,unit) raw_term
 
 let rec string_of_struct () (Struct fields)
   = fmt "{ %s }" (string_of_list " ; " (function d,t -> fmt "%s = %s" d (string_of_struct_term t) ) fields)
@@ -65,7 +65,7 @@ let remove_match_struct (clauses:(struct_term*struct_term) list)
 
         if List.for_all (function _,Var _ -> true | _,_ -> false) sigma
         then begin
-            (map_raw_term (fun _ -> assert false) identity lhs, rhs) , None
+            (map_raw_term (fun _ -> assert false) identity identity lhs, rhs) , None
         end
         else
             let lhs = implode (f::lhs_pattern) in

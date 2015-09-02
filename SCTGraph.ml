@@ -160,7 +160,7 @@ let callgraph_from_definitions
                     begin
                         match type_of p with
                             | Data(tname,_) ->
-                                    collapse0 (map_raw_term (fun s->s.bot) (fun _->()) (App(d,u)))
+                                    collapse0 (map_raw_term (fun s->s.bot) identity (fun _->()) (App(d,u)))
                             | _ -> Daimon()
                     end
                 | Proj _,[] -> assert false

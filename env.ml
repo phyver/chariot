@@ -63,17 +63,17 @@ type type_substitution = (type_name * type_expression) list
 type const_name = string
 type var_name = string
 type priority = int option    (* priority of types and constants: odd for data and even for codata *)
-type ('a,'t) raw_term =     (* 'a is used to add features to the type, and 't is used to put types on all subterms *)
+type ('s,'p,'t) raw_term =     (* 's is used to add features to the type, and 't is used to put types on all subterms *)
     | Angel of 't                               (* generic meta variable, living in all types *)
     | Daimon of 't
     | Var of var_name*'t
-    | Const of const_name * priority *'t   (* constructor, with a priority *)
-    | Proj of const_name * priority *'t    (* destructor, with a priority *)
-    | App of ('a,'t) raw_term * ('a,'t) raw_term
-    | Sp of 'a*'t
+    | Const of const_name * 'p *'t   (* constructor, with a priority *)
+    | Proj of const_name * 'p *'t    (* destructor, with a priority *)
+    | App of ('s,'p,'t) raw_term * ('s,'p,'t) raw_term
+    | Sp of 's*'t
 
 type empty = { bot: 'a .'a }
-type 't term = (empty,'t) raw_term
+type 't term = (empty,priority,'t) raw_term
 type 't term_substitution = (var_name * 't term) list
 
 type bloc_nb = int      (* number of the block of mutual function definitions *)
@@ -120,7 +120,7 @@ type environment = {
 (* term with possibly unfolded codata *)
 (* FIXME: once I have typed terms, I should remove the type expression from the explore_struct type *)
 type explore_struct = Folded of int * type_expression term | Unfolded of (const_name * var_name list * explore_term) list
- and explore_term = (explore_struct,type_expression) raw_term
+ and explore_term = (explore_struct,priority,type_expression) raw_term
 
 (* SCT *)
 type weight = Num of int | Infty
@@ -133,7 +133,7 @@ type weight = Num of int | Infty
  *  - each arg_i i either a constructor pattern (with possible approximations) or a destructor
  *)
 type approximation = AppRes of priority * weight | AppArg of (priority * weight * var_name) list
-type approx_term = (approximation,unit) raw_term
+type approx_term = (approximation,priority,unit) raw_term
 (* type sct_clause = approx_term * approx_term *)
  type sct_pattern = (var_name * approx_term list)
  type sct_clause = sct_pattern * sct_pattern

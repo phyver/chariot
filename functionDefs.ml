@@ -146,8 +146,8 @@ let process_function_defs (env:environment)
                 (function f,t,clauses ->
                     let clauses = List.map
                                     (function lhs,rhs ->
-                                        map_raw_term (fun _ -> error "no structure allowed") identity lhs ,
-                                        map_raw_term (fun _ -> error "no structure allowed") identity rhs
+                                        map_raw_term (fun _ -> error "no structure allowed") identity identity lhs ,
+                                        map_raw_term (fun _ -> error "no structure allowed") identity identity rhs
                                     )
                                     clauses in
                     f,t,clauses)
