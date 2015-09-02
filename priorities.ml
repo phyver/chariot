@@ -130,8 +130,8 @@ let find_types_priorities env ts
     List.fold_left (fun acc t -> let n,acc = order t acc [] in acc) [] datatypes
 
 let infer_priorities (env:environment)
-                     (defs:(var_name * type_expression * ((empty,'t) special_term * (empty,'t) special_term) list) list)
-  : (var_name * type_expression * ((empty,'t) special_term * (empty,'t) special_term) list) list
+                     (defs:(var_name * type_expression * ((empty,'t) raw_term * (empty,'t) raw_term) list) list)
+  : (var_name * type_expression * ((empty,'t) raw_term * (empty,'t) raw_term) list) list
   =
 
     let datatypes = List.fold_left

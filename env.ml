@@ -66,17 +66,17 @@ type type_substitution = (type_name * type_expression) list
 type const_name = string
 type var_name = string
 type priority = int option    (* priority of types and constants: odd for data and even for codata *)
-type ('a,'t) special_term =     (* 'a is used to add features to the type, and 't is used to put types on all subterms *)
+type ('a,'t) raw_term =     (* 'a is used to add features to the type, and 't is used to put types on all subterms *)
     | Angel of 't                               (* generic meta variable, living in all types *)
     | Daimon of 't
     | Var of var_name*'t
     | Const of const_name * priority *'t   (* constructor, with a priority *)
     | Proj of const_name * priority *'t    (* destructor, with a priority *)
-    | App of ('a,'t) special_term * ('a,'t) special_term
+    | App of ('a,'t) raw_term * ('a,'t) raw_term
     | Sp of 'a*'t
 
 type empty = { bot: 'a .'a }
-type 't term = (empty,'t) special_term
+type 't term = (empty,'t) raw_term
 type 't term_substitution = (var_name * 't term) list
 
 type bloc_nb = int      (* number of the block of mutual function definitions *)
@@ -86,7 +86,7 @@ type 't pattern = 't term                 (* a pattern (LHS of a clause in a def
 type 't function_clause = 't pattern * 't term     (* clause of a function definition *)
 
 (* term with CASE and STRUCTS *)
-(* type 't case_struct_term = ('t case_struct,'t) special_term *)
+(* type 't case_struct_term = ('t case_struct,'t) raw_term *)
 (*  and 't case_struct = *)
 (*     | CSCase of var_name * (const_name * (var_name list * 't case_struct_term)) list *)
 (*     | CSStruct of (const_name * ((var_name list) * 't case_struct_term)) list *)
@@ -123,7 +123,7 @@ type environment = {
 (* term with possibly unfolded codata *)
 (* FIXME: once I have typed terms, I should remove the type expression from the explore_struct type *)
 type explore_struct = Folded of int * type_expression term | Unfolded of (const_name * var_name list * explore_term) list
- and explore_term = (explore_struct,type_expression) special_term
+ and explore_term = (explore_struct,type_expression) raw_term
 
 (* SCT *)
 type weight = Num of int | Infty
@@ -136,12 +136,12 @@ type weight = Num of int | Infty
  *  - each arg_i i either a constructor pattern (with possible approximations) or a destructor
  *)
 type approximation = AppRes of priority * weight | AppArg of (priority * weight * var_name) list
-type approx_term = (approximation,unit) special_term
+type approx_term = (approximation,unit) raw_term
 (* type sct_clause = approx_term * approx_term *)
  type sct_pattern = (var_name * approx_term list)
  type sct_clause = sct_pattern * sct_pattern
 (* TODO: use
- * type approx_term = (approximation,type_expression) special_term
+ * type approx_term = (approximation,type_expression) raw_term
  * type sct_clause = (var_name * approx_term list) * (var_name * approx_term list)
  *)
 

@@ -74,14 +74,14 @@ let s_o_t = string_of_type
 
 let rec print_type t = print_string (string_of_type t)
 
-let rec is_atomic_term (v:('a,'t) special_term) = match v with
+let rec is_atomic_term (v:('a,'t) raw_term) = match v with
     | Var _ | Angel _ | Daimon _ | Const _ | Proj _ -> true
     | App(Proj _, v) -> is_atomic_term v
     | App _ -> false
     | Sp _ -> true
 
 let rec
-  string_of_term_int (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,'t) special_term) =
+  string_of_term_int (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,'t) raw_term) =
     let rec aux n v =
         match v with
         | Const("Zero",_,_) -> n,None
@@ -95,11 +95,11 @@ let rec
                 | n,None -> string_of_int n
                 | 0,Some v -> raise (Invalid_argument "string_of_term_int")
                 | n,Some v -> if p
-                              then "(" ^ (string_of_special_term o sp v) ^ "+" ^ (string_of_int n) ^ ")"
-                              else (string_of_special_term o sp v) ^ "+" ^ (string_of_int n)
+                              then "(" ^ (string_of_raw_term o sp v) ^ "+" ^ (string_of_int n) ^ ")"
+                              else (string_of_raw_term o sp v) ^ "+" ^ (string_of_int n)
 
 and
-  string_of_term_list (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,'t) special_term) =
+  string_of_term_list (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,'t) raw_term) =
     let rec aux l v =
         match v with
         | Const("Nil",_,_) -> l,None
@@ -110,14 +110,14 @@ and
         then raise (Invalid_argument "string_of_term_list")
         else
             match aux [] u with
-                | l,None -> "[" ^ (String.concat "; " (List.map (string_of_special_term o sp) (List.rev l))) ^ "]"
+                | l,None -> "[" ^ (String.concat "; " (List.map (string_of_raw_term o sp) (List.rev l))) ^ "]"
                 | [],Some v -> raise (Invalid_argument "string_of_term_list")
                 | l,Some v -> if p
-                              then "(" ^ (String.concat "::" (List.map (string_of_special_term o sp) (List.rev l))) ^ "::" ^ (string_of_special_term o sp v) ^ ")"
+                              then "(" ^ (String.concat "::" (List.map (string_of_raw_term o sp) (List.rev l))) ^ "::" ^ (string_of_raw_term o sp v) ^ ")"
                               else String.concat "::" (List.map (string_of_term_paren o sp) (List.rev l)) ^ "::" ^ (string_of_term_paren o sp v)
 
 and
-  string_of_term_tuple (o:'o) (sp:'o -> 'a -> string) (u:('a,'t) special_term) =
+  string_of_term_tuple (o:'o) (sp:'o -> 'a -> string) (u:('a,'t) raw_term) =
     if not (option "show_tuples")
     then raise (Invalid_argument "string_of_term_tuple")
     else
@@ -125,21 +125,21 @@ and
             | Const(c,p,_), args when Str.string_match (Str.regexp "Tuple_\\(0\\|[1-9][0-9]*\\)") c 0 ->
                     let n = int_of_string (String.sub c 6 ((String.length c) - 6)) in
                     if List.length args = n
-                    then ("(" ^ (string_of_list ", " (string_of_special_term o sp) args) ^ ")")
+                    then ("(" ^ (string_of_list ", " (string_of_raw_term o sp) args) ^ ")")
                     else raise (Invalid_argument "string_of_term_tuple")
             | _ -> raise (Invalid_argument "string_of_term_tuple")
 
 and
-  string_of_term_paren (o:'o) (sp:'o -> 'a -> string) (v:('a,'t) special_term) =
+  string_of_term_paren (o:'o) (sp:'o -> 'a -> string) (v:('a,'t) raw_term) =
     try string_of_term_int o sp true v with Invalid_argument "string_of_term_int" ->
     try string_of_term_list o sp true v with Invalid_argument "string_of_term_list" ->
     try string_of_term_tuple o sp v with Invalid_argument "string_of_term_tuple" ->
         if is_atomic_term v
-        then string_of_special_term o sp v
-        else ("(" ^ (string_of_special_term o sp v) ^ ")")
+        then string_of_raw_term o sp v
+        else ("(" ^ (string_of_raw_term o sp v) ^ ")")
 
 and
-  string_of_special_term (o:'o) (sp:'o -> 'a -> string) (v:('a,'t) special_term) =
+  string_of_raw_term (o:'o) (sp:'o -> 'a -> string) (v:('a,'t) raw_term) =
     try string_of_term_int o sp false v with Invalid_argument "string_of_term_int" ->
     try string_of_term_list o sp false v with Invalid_argument "string_of_term_list" ->
     try string_of_term_tuple o sp v with Invalid_argument "string_of_term_tuple" ->
@@ -150,13 +150,13 @@ and
             | Var(x,_) -> if (x.[0]='_' && not (verbose 1)) then "_" else x
             | Const(c,p,_) -> c ^ (if not (option "show_priorities") then "" else string_of_priority p)
             | Proj(d,p,_) -> "." ^ d ^  (if not (option "show_priorities") then "" else string_of_priority p)
-            | App(Proj _ as v1,v2) -> (string_of_term_paren o sp v2) ^ (string_of_special_term o sp v1)
-            | App(App(Var("add",_),v1),v2) when (option "show_nats") -> (string_of_special_term o sp v1) ^ "+" ^ (string_of_term_paren o sp v2)   (* TODO: don't show add as + in pattern *)
-            | App(v1,v2) -> (string_of_special_term o sp v1) ^ " " ^ (string_of_term_paren o sp v2)
+            | App(Proj _ as v1,v2) -> (string_of_term_paren o sp v2) ^ (string_of_raw_term o sp v1)
+            | App(App(Var("add",_),v1),v2) when (option "show_nats") -> (string_of_raw_term o sp v1) ^ "+" ^ (string_of_term_paren o sp v2)   (* TODO: don't show add as + in pattern *)
+            | App(v1,v2) -> (string_of_raw_term o sp v1) ^ " " ^ (string_of_term_paren o sp v2)
             | Sp(v,_) -> sp o v
         end
 
-let string_of_term u = string_of_special_term () (fun o s -> s.bot) u
+let string_of_term u = string_of_raw_term () (fun o s -> s.bot) u
 (* abbreviation *)
 let s_o_u = string_of_term
 
@@ -170,7 +170,7 @@ let string_of_weight w = match w with
 let string_of_approx_term (v:approx_term) : string
   =
     let string_of_approx_term_aux
-      = string_of_special_term ()
+      = string_of_raw_term ()
             (fun o u ->
                 match u with
                     | AppRes(p,w) -> assert false
@@ -216,7 +216,7 @@ let rec
                                         fmt "%s%s = %s" d (if xs=[] then "" else " " ^ string_of_list " " identity xs) (string_of_explore_term new_indent v)) fields)) ^
             "}"
 and
-  string_of_explore_term o v = string_of_special_term o string_of_explore_struct v
+  string_of_explore_term o v = string_of_raw_term o string_of_explore_struct v
 let string_of_explore_term v = string_of_explore_term 2 v
 
 let print_explore_term v = print_string (string_of_explore_term v)
