@@ -172,6 +172,15 @@ let process_function_defs (env:environment)
     if (verbose 1)
     then msg "Typing for %s successful" (string_of_list ", " identity new_functions);
 
+    (* check that the types of all subterms are consistant *)
+    assert (
+        List.iter (function f,t,clauses ->
+            List.iter (function lhs,rhs -> ignore (type_of lhs) ; ignore (type_of rhs)
+                    ) clauses
+                  ) defs;
+        true
+    );
+
     let defs = if option "use_priorities"
                then infer_priorities env defs
                else defs

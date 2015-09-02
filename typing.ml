@@ -45,6 +45,15 @@ open Utils
 open State
 open Pretty
 
+
+(* let compose_type_substitution (sigma1:type_substitution) (sigma2:type_substitution) : type_substitution *)
+(*   = debug "compose [%s] and [%s]" (string_of_type_substitution sigma1)(string_of_type_substitution sigma2); *)
+(*     let sigma = compose_type_substitution sigma1 sigma2 in *)
+(*     debug "result12 %s" (string_of_type_substitution sigma); *)
+(*     debug "result21 %s\n" (string_of_type_substitution (compose_type_substitution sigma2 sigma1)); *)
+(*     sigma *)
+
+
 (* generate fresh variables *)
 let fresh_variable_nb = ref 0
 let list_type_variables = ref []
@@ -236,13 +245,17 @@ let infer_type (env:environment)
                     (* TODO: understand why *)
                     let t2,v2,context,sigma2 = infer_type_aux v2 context in
                     let t1,v1,context,sigma1 = infer_type_aux v1 context in
+                    (* debug "1"; *)
                     let sigma = compose_type_substitution sigma1 sigma2 in
 
                     let tfunc = instantiate_type (Arrow(TVar("arg"),TVar("result"))) in
                     let sigma3 = unify_type_mgu t1 tfunc in
+                    (* debug "sigma: %s" (string_of_type_substitution sigma); *)
                     (* debug "sigma3: %s" (string_of_type_substitution sigma3); *)
                     let tfunc = subst_type sigma3 tfunc in
-                    let sigma = compose_type_substitution sigma3 sigma in   (* do not interchange sigma3 and sigma *)
+                    (* debug "2 OK?"; *)
+                    let sigma = compose_type_substitution sigma sigma3 in   (* do not interchange sigma3 and sigma *)
+                    (* debug " composition: %s\n" (string_of_type_substitution sigma); *)
 
                     let targ,tres = match tfunc with
                         | Arrow(a,b) -> a,b
@@ -250,7 +263,8 @@ let infer_type (env:environment)
                     in
 
                     let sigma4 = unify_type_mgu t2 targ in
-                    let sigma = compose_type_substitution sigma sigma4 in
+                    (* debug "3 OK?"; *)
+                    let sigma = compose_type_substitution sigma sigma4 in (* do not interchange sigma4 and sigma *)
 
                     let context = List.map (second (subst_type sigma)) context in
                     let tres = subst_type sigma tres in
@@ -270,7 +284,11 @@ let infer_type (env:environment)
             print_newline()
         );
 
+
+        (* debug "sigma %s" (string_of_type_substitution sigma); *)
+        (* debug "before:"; print_typed_subterms v; *)
         let v = subst_type_term sigma v in
+        (* debug "after:"; print_typed_subterms v; *)
 
         t,v,context,sigma
     with UnificationError e -> error (fmt "unification error when typing %s: %s" (string_of_term v) e)
@@ -370,16 +388,16 @@ let infer_type_defs
             clauses)
     in
 
-    debug "contexts:\n  %s" (string_of_list "\n  " string_of_context all_context);
+    (* debug "contexts:\n  %s" (string_of_list "\n  " string_of_context all_context); *)
 
     let context,sigma =
         List.fold_left
             (fun r context ->
                 let context',sigma' = r in
-    debug "merge contexts  %s and %s" (string_of_context context) (string_of_context context');
+    (* debug "merge contexts  %s and %s" (string_of_context context) (string_of_context context'); *)
                 let context,sigma = merge_context context context' in
-    debug "result:  %s" (string_of_context context);
-    debug "with sigma: %s" (string_of_type_substitution sigma);
+    (* debug "result:  %s" (string_of_context context); *)
+    (* debug "with sigma: %s" (string_of_type_substitution sigma); *)
     (* debug "sigma': %s" (string_of_type_substitution sigma'); *)
                 let sigma = compose_type_substitution sigma sigma' in
     (* debug "new sigma: %s" (string_of_type_substitution sigma); *)
@@ -390,7 +408,7 @@ let infer_type_defs
     in
     (* debug "final context:  %s" (string_of_context context); *)
 
-    debug "SIGMA: %s" (string_of_type_substitution sigma);
+    (* debug "SIGMA: %s" (string_of_type_substitution sigma); *)
     (* debug "BEFORE"; *)
         (* List.iter (function f,lhs,rhs -> *)
         (*     print_typed_subterms lhs; *)
