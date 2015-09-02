@@ -1,0 +1,39 @@
+>> inductive type prod_2 was succesfully defined
+>> coinductive type struct_2 was succesfully defined
+>> Typing for f successful
+>> the definition for f is complete
+>> the definition f is provably correct
+
+>> Typing for _aux₁, g successful
+>> the definition for g is complete
+>> the definition for _aux₁ is complete
+>> the definitions _aux₁, g are provably correct
+
+>> Typing for _aux₃, _aux₂, h successful
+>> the definition for h is complete
+>> the definition for _aux₂ is complete
+>> the definition for _aux₃ is complete
+>> the definitions _aux₃, _aux₂, h are provably correct
+
+>> functions in environment:
+val
+   f : struct_2('a,'b) → prod_2('a,'b)
+    | f p = Tuple_2¹ p.Fst² p.Snd²
+
+val
+   g : struct_2('a,'b) → prod_2('a,'b)
+    | g x₁ = _aux₁ x₁.Fst² x₁.Snd²
+and
+   _aux₁ : 'a → 'b → prod_2('a,'b)
+    | _aux₁ x y = Tuple_2¹ x y
+
+val
+   h : struct_2('a,struct_2('b,'c)) → prod_2(prod_2('a,'b),'c)
+    | h x₁ = _aux₂ x₁.Fst⁴ x₁.Snd⁴
+and
+   _aux₂ : 'a → struct_2('b,'c) → prod_2(prod_2('a,'b),'c)
+    | _aux₂ x₁ x₂ = _aux₃ x₁ x₂.Fst² x₂.Snd²
+and
+   _aux₃ : 'a → 'b → 'c → prod_2(prod_2('a,'b),'c)
+    | _aux₃ x y z = Tuple_2³ (Tuple_2¹ x y) z
+

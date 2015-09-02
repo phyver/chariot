@@ -83,6 +83,8 @@ rule tokenize = parse
     | ")"               { RPAR }
     | "["               { LSQBRAC }
     | "]"               { RSQBRAC }
+    | "{"               { LCBRAC }
+    | "}"               { RCBRAC }
     | ","               { COMMA }
     | "|"               { PIPE }
     | "."               { DOT }

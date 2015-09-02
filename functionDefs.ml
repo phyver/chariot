@@ -41,6 +41,7 @@ open Utils
 open Misc
 open State
 open Pretty
+open StructPattern
 open Typing
 open Coverage
 open Priorities
@@ -84,6 +85,28 @@ let rec check_constructor_arity env (v:'t term) : unit
             end
         | Angel _,_ | Daimon _,_ | Sp _,_ -> ()
 
+(* check that a term has the shape of a lhs pattern *)
+let check_lhs (v:'t term) : unit
+  =
+    let rec check_constructors v
+      = match get_head v,get_args v with
+            | Var _,[] -> ()
+            | Var _,_ -> error "no function application is allowed inside constructor pattern"
+            | Proj _,[] -> ()
+            | Proj _,_ -> error "no projection is allowed inside constructor patterns"
+            | App _,_ -> assert false
+            | Const _, args -> List.iter check_constructors args
+            | Angel _,_ -> error "no angel is allowed inside constructor patterns"
+            | Daimon _,_ -> error "no daimon is allowed inside constructor patterns"
+            | Sp(s,_),_ -> s.bot
+            (* | Sp(Struct fields,_), [] -> List.iter (function _,v -> check_constructors v) fields *)
+            (* | Sp(Struct _,_), _ -> error "structures cannot be applied" *)
+    in
+    match explode v with
+        | (Var(f,()))::pats ->
+            List.iter check_constructors pats
+        | [] -> assert false
+        | u::_ -> error (fmt "lhs of definition cannot start with %s" (string_of_term u))
 
 let check_clause env (funs: var_name list) (f:var_name) (lhs:'t pattern) (rhs:'t term) : unit
   =
@@ -109,13 +132,27 @@ let check_clause env (funs: var_name list) (f:var_name) (lhs:'t pattern) (rhs:'t
 
 
 let process_function_defs (env:environment)
-                          (defs:(var_name * type_expression option * ('t pattern * 't term) list) list)
+                          (* (defs:(var_name * type_expression option * ('t pattern * 't term) list) list) *)
+                          defs
   : environment
   =
 
-    (* TODO: I shouldn't look at the types of functions anywhere but should
-     * keep accumulating context about the functions type, and check that
-     * they coincide with the given types at the very end *)
+    (* remove structures *)
+    let defs =
+        if option "allow_structs"
+        then remove_struct_defs defs
+        else
+            List.map
+                (function f,t,clauses ->
+                    let clauses = List.map
+                                    (function lhs,rhs ->
+                                        map_special_term (fun _ -> error "no structure allowed") identity lhs ,
+                                        map_special_term (fun _ -> error "no structure allowed") identity rhs
+                                    )
+                                    clauses in
+                    f,t,clauses)
+                defs
+    in
 
     (* check that the functions are all different *)
     let new_functions = List.rev_map (function f,_,_ -> f) defs in
@@ -127,10 +164,9 @@ let process_function_defs (env:environment)
 
     (* check clauses *)
     List.iter (function f,_,clauses ->
-        List.iter (function (lhs,rhs) -> check_clause env new_functions f lhs rhs)
+        List.iter (function (lhs,rhs) -> check_lhs lhs ; check_clause env new_functions f lhs rhs)
         clauses)
     defs;
-
 
     let defs = infer_type_defs env defs in
     if (verbose 1)

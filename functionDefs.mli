@@ -37,8 +37,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 
 open Env
+open StructPattern
 
 val process_function_defs :
     environment ->
-    (var_name * type_expression option * ('t pattern * 't term) list) list ->
+    (var_name * type_expression option * (struct_term * struct_term) list) list ->
         environment

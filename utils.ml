@@ -151,7 +151,7 @@ let rec get_function_name (v:('a,'t) special_term) : var_name
     | Angel _ | Daimon _ | Const _ | Proj _ ->  raise (Invalid_argument "no head function")
     | App(Proj _,v) -> get_function_name v
     | App(v,_) -> get_function_name v
-    | Sp(v,_) -> v.bot
+    | Sp(v,_) -> assert false
 
 let rec type_of (u:('a,type_expression) special_term) : type_expression
   = match u with

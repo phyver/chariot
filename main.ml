@@ -120,6 +120,7 @@ let _
         ("--dont_collapse_graph",     Arg.Unit (fun _ -> set_option "collapse_graph" "false"),              "don't collapse initial call-graph");
         ("--dont_allow_inadequate_defs",   Arg.Unit (fun _ -> set_option "allow_inadequate_defs" "false"),        "forbid definitions that do not pass the SCT");
         ("--expand_clauses",            Arg.Unit (fun _ -> set_option "expand_clauses" "true"),             "use the case expression of the definitions to regenerate the clauses");
+        ("--allow_structs",           Arg.Unit (fun _ -> set_option "allow_structs" "true"),                "allow structures inside terms");
       ] in
     let help = "usage: " ^ Sys.argv.(0) ^ " [-i] [file]\n" in
     Arg.parse args (fun f -> incr nb_files; loadfile f) help;
