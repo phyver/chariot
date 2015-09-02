@@ -153,8 +153,10 @@ let merge_context (cs1:(var_name*type_expression) list) (cs2:(var_name*type_expr
             let cs,sigma = merge_context_aux cs1 cs2 sigma in
             (x2,t2)::cs , sigma
         | (x1,t1)::cs1, (x2,t2)::cs2 (*when x1=x2*) ->
-            let cs,sigma = merge_context_aux cs1 cs2 sigma in
             let tau = unify_type_mgu t1 t2 in
+            let cs1 = List.map (second (subst_type tau)) cs1 in
+            let cs2 = List.map (second (subst_type tau)) cs2 in
+            let cs,sigma = merge_context_aux cs1 cs2 sigma in
             (x1,subst_type tau t1)::cs , compose_type_substitution tau sigma
     in
     let cs,sigma = merge_context_aux cs1 cs2 [] in
@@ -368,14 +370,16 @@ let infer_type_defs
             clauses)
     in
 
-    (* debug "contexts:\n  %s" (string_of_list "\n  " string_of_context all_context); *)
+    debug "contexts:\n  %s" (string_of_list "\n  " string_of_context all_context);
 
     let context,sigma =
         List.fold_left
             (fun r context ->
                 let context',sigma' = r in
+    debug "merge contexts  %s and %s" (string_of_context context) (string_of_context context');
                 let context,sigma = merge_context context context' in
-    (* debug "sigma: %s" (string_of_type_substitution sigma); *)
+    debug "result:  %s" (string_of_context context);
+    debug "with sigma: %s" (string_of_type_substitution sigma);
     (* debug "sigma': %s" (string_of_type_substitution sigma'); *)
                 let sigma = compose_type_substitution sigma sigma' in
     (* debug "new sigma: %s" (string_of_type_substitution sigma); *)
@@ -386,7 +390,7 @@ let infer_type_defs
     in
     (* debug "final context:  %s" (string_of_context context); *)
 
-    (* debug "SIGMA: %s" (string_of_type_substitution sigma); *)
+    debug "SIGMA: %s" (string_of_type_substitution sigma);
     (* debug "BEFORE"; *)
         (* List.iter (function f,lhs,rhs -> *)
         (*     print_typed_subterms lhs; *)

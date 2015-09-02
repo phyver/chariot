@@ -37,7 +37,7 @@
 
 >> functions in environment:
 val
-   s01 : 'a
+   s01 : struct_2(nat,nat)
     | s01 = _aux₁
 and
    _aux₁ : struct_2(nat,nat)
@@ -45,7 +45,7 @@ and
     | _aux₁.Snd² = 1
 
 val
-   s012 : 'a
+   s012 : struct_2(nat,struct_2(nat,nat))
     | s012 = _aux₂
 and
    _aux₂ : struct_2(nat,struct_2(nat,nat))
@@ -78,17 +78,17 @@ and
     | _aux₆ x y z = Tuple_2³ (Tuple_2¹ x y) z
 
 val
-   s : struct_2('a,struct_2('b,'c)) → struct_2('d,'c)
+   s : struct_2('a,struct_2('b,'c)) → struct_2(struct_2('a,'b),'c)
     | s x₁ = _aux₇ x₁.Fst⁴ x₁.Snd⁴
 and
    _aux₁₀ : 'a → 'b → struct_2('a,'b)
     | (_aux₁₀ x y).Fst² = x
     | (_aux₁₀ x y).Snd² = y
 and
-   _aux₇ : 'a → struct_2('b,'c) → struct_2('d,'c)
+   _aux₇ : 'a → struct_2('b,'c) → struct_2(struct_2('a,'b),'c)
     | _aux₇ x₁ x₂ = _aux₈ x₁ x₂.Fst² x₂.Snd²
 and
-   _aux₈ : 'a → 'b → 'c → struct_2('d,'c)
+   _aux₈ : 'a → 'b → 'c → struct_2(struct_2('a,'b),'c)
     | _aux₈ x y z = _aux₉ x y z
 and
    _aux₉ : 'a → 'b → 'c → struct_2(struct_2('a,'b),'c)
