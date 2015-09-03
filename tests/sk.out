@@ -89,23 +89,23 @@ val
 >> the definition nine is provably correct
 
 >> inductive type nat was succesfully defined
->> term: one Succ⁼ 0
+>> term: one Succ 0
 >> result: 1
 >> of type: nat
 
->> term: two Succ⁼ 0
+>> term: two Succ 0
 >> result: 2
 >> of type: nat
 
->> term: three Succ⁼ 0
+>> term: three Succ 0
 >> result: 3
 >> of type: nat
 
->> term: four Succ⁼ 0
+>> term: four Succ 0
 >> result: 4
 >> of type: nat
 
->> term: nine Succ⁼ 0
+>> term: nine Succ 0
 >> result: 9
 >> of type: nat
 

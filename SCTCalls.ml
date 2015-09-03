@@ -42,6 +42,7 @@ open Utils
 open State
 open Pretty
 
+exception Impossible_case
 
 
 let term_to_sct_pattern (t:approx_term) : sct_pattern =

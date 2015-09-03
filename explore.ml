@@ -45,7 +45,7 @@ open Typing
 open Rewrite
 open ComputeCaseStruct
 
-let rec head_to_explore (v:type_expression term) : explore_term = match v with
+let rec head_to_explore (v:type_expression term) : ('p,'t) unfolded_term = match v with
     | Angel t -> Angel t
     | Daimon t -> Daimon t
     | Var(x,t) -> Var(x,t)
@@ -56,7 +56,7 @@ let rec head_to_explore (v:type_expression term) : explore_term = match v with
 
 let struct_nb = ref 0
 
-let rec term_to_explore_aux (env:environment) (v:type_expression term) : explore_term
+let rec term_to_explore_aux (env:environment) (v:type_expression term) : (priority,type_expression) unfolded_term
   = let t = type_of v in
     let hd,args = get_head v, get_args v in
      match t with
@@ -72,7 +72,7 @@ let rec term_to_explore_aux (env:environment) (v:type_expression term) : explore
 let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (reduce env v)
 
 
-let rec unfold (env:environment) (p:int->bool) (v:explore_term) : explore_term
+let rec unfold (env:environment) (p:int->bool) (v:(priority,type_expression) unfolded_term) : (priority,type_expression) unfolded_term
  =  match v with
         | Angel _ | Daimon _ | Var _ | Proj _ | Const _ -> v
         | App(v1,v2) -> App(unfold env p v1, unfold env p v2)
@@ -98,8 +98,5 @@ let rec unfold_to_depth env v depth
     then term_to_explore env v
     else
         let v = unfold_to_depth env v (depth-1) in
-        unfold env (fun _ -> true) v
-
-let explore_term_depth (env:environment) (v:type_expression term) (depth:int) : unit
-  = print_explore_term (unfold_to_depth env v depth)
+        unfold env (k true) v
 

@@ -78,7 +78,7 @@ let new_var () =
     incr counter;
     "x"^(string_of_sub !counter)
 
-let string_of_clause (pat,def) = fmt "[%s] -> %s" (string_of_list " " s_o_u pat) (s_o_u def)
+let string_of_clause (pat,def) = fmt "[%s] -> %s" (string_of_list " " string_of_plain_term pat) (string_of_plain_term def)
 
 let rec
 convert_match env (xs:var_name list)
@@ -90,8 +90,8 @@ convert_match env (xs:var_name list)
       match xs,clauses with
         | [],[] -> fail
         | x::xs,[] -> fail  (* TODO: keep types and check that x is not in a type with 0 constructor *)
-        | [],[(n,[],v)] -> CSLeaf(n,map_raw_term (fun s->s.bot) identity identity v)
-        | [],(n,[],v)::clauses ->  CSLeaf(n,map_raw_term (fun s->s.bot) identity identity v)
+        | [],[(n,[],v)] -> CSLeaf(n,map_raw_term (fun s->s.bot) id id v)
+        | [],(n,[],v)::clauses ->  CSLeaf(n,map_raw_term (fun s->s.bot) id id v)
         (* | [],_ -> assert false *)
 
         | xs,clauses ->
@@ -103,7 +103,7 @@ convert_match env (xs:var_name list)
 
 convert_match_aux env xs clauses fail
   =
-    (* debug "xs: [%s]" (string_of_list ", " identity xs); *)
+    (* debug "xs: [%s]" (string_of_list ", " id xs); *)
     (* debug "clauses: {%s}" (string_of_list "," string_of_clause clauses); *)
     match xs,clauses with
         | [],[] -> assert false
@@ -240,7 +240,7 @@ let is_exhaustive f args v =
                             (List.map (fun x -> Var(x,())) args)
                         )
         in
-        string_of_term fail
+        string_of_plain_term fail
     in
     match get_failure [] v with
         | [] -> true
@@ -281,10 +281,10 @@ let extract_clause_numbers cs
     in uniq (extract_clause_numbers_aux cs)
 
 let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:'t term case_struct_tree)
-  : (unit pattern * unit term) list
+  : (unit term * unit term) list
   = 
-    let rec convert_cs_to_clauses_aux (pat:unit pattern) (cs:type_expression term case_struct_tree)
-      : (unit pattern * unit term) list
+    let rec convert_cs_to_clauses_aux (pat:unit term) (cs:type_expression term case_struct_tree)
+      : (unit term * unit term) list
       = match cs with
         | CSFail -> []
         | CSLeaf(v) -> [pat,map_type_term (fun t->()) v]
@@ -308,15 +308,15 @@ let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:'t term case_struc
 
     let clauses = convert_cs_to_clauses_aux pat cs in
 
-    debug "new clauses:\n  %s" (string_of_list "\n  " (function p,d -> fmt "%s => %s" (string_of_term p) (string_of_term d)) clauses);
+    debug "new clauses:\n  %s" (string_of_list "\n  " (function p,d -> fmt "%s => %s" (string_of_plain_term p) (string_of_plain_term d)) clauses);
 
     clauses
 
 
 
 (* TODO: do something with types with 0 constructors  /  0 destructors *)
-let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_expression pattern*type_expression term) list)
-    : (var_name * (type_expression pattern*type_expression term) list * var_name list * type_expression term case_struct_tree)
+let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_expression term*type_expression term) list)
+    : (var_name * (type_expression term*type_expression term) list * var_name list * type_expression term case_struct_tree)
   =
     (* debug "case_struct_of_clauses for function %s" f; *)
     counter := 0;
@@ -335,16 +335,16 @@ let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_e
         convert_match env args clauses fail
     in
 
-    (* debug "obtained:\n    %s %s |--> %s" f (string_of_list " " identity args) (string_of_case_struct_term cs); *)
+    (* debug "obtained:\n    %s %s |--> %s" f (string_of_list " " id args) (string_of_case_struct_term cs); *)
     let cs = simplify_case_struct cs in
-    (* debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " identity args) (string_of_case_struct_term cs); *)
+    (* debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " id args) (string_of_case_struct_term cs); *)
 
     let ns = extract_clause_numbers cs in
     let clauses = List.filter
         (function n,pat,def ->
             if not (List.mem n ns)
             then (
-                warning "useless clause %d: %s = %s" n (string_of_term pat) (string_of_term def); option "keep_useless_clauses")
+                warning "useless clause %d: %s = %s" n (string_of_plain_term pat) (string_of_plain_term def); option "keep_useless_clauses")
             else true)
         clauses
     in

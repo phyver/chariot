@@ -233,7 +233,7 @@ let rec map_raw_term (f:'a1 -> 'a2) (g:'p1 -> 'p2) (h:'t1 -> 't2) (v:('a1,'p1,'t
         | App(v1,v2) -> App(map_raw_term f g h v1, map_raw_term f g h v2)
         | Sp(a,t) -> Sp(f a,h t)
 
-let map_type_term f u = map_raw_term identity identity f u
+let map_type_term f u = map_raw_term id id f u
 
 let add_weight (w1:weight) (w2:weight) : weight
   = match w1,w2 with
@@ -266,7 +266,7 @@ let collapse_weight (bound:int) (w:weight) : weight
 
 
 let pattern_to_approx_term (v:(empty,'p,'t) raw_term) : (approximation,'p,unit) raw_term
-  = map_raw_term (fun s -> s.bot) identity (fun _ -> ()) v
+  = map_raw_term (fun s -> s.bot) id (fun _ -> ()) v
 
 
 (* apply a substitution on a term *)

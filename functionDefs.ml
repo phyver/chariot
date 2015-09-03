@@ -79,7 +79,7 @@ let rec check_constructor_arity env (v:'t term) : unit
             begin
                 try
                     if (List.length args) <> get_constant_arity env c
-                    then error (fmt "the subterm %s starts with a constructor that is not fully applied" (s_o_u v));
+                    then error (fmt "the subterm %s starts with a constructor that is not fully applied" (string_of_plain_term v));
                     List.iter (check_constructor_arity env) args
                 with Not_found -> error (fmt "constructor %s doesn't exist in the environment" c)
             end
@@ -106,9 +106,9 @@ let check_lhs (v:'t term) : unit
         | (Var(f,()))::pats ->
             List.iter check_constructors pats
         | [] -> assert false
-        | u::_ -> error (fmt "lhs of definition cannot start with %s" (string_of_term u))
+        | u::_ -> error (fmt "lhs of definition cannot start with %s" (string_of_plain_term u))
 
-let check_clause env (funs: var_name list) (f:var_name) (lhs:'t pattern) (rhs:'t term) : unit
+let check_clause env (funs: var_name list) (f:var_name) (lhs:'t term) (rhs:'t term) : unit
   =
     (* get function from LHS and check it is equal to f *)
     let _f = get_function_name lhs in
@@ -133,6 +133,7 @@ let check_clause env (funs: var_name list) (f:var_name) (lhs:'t pattern) (rhs:'t
 
 let process_function_defs (env:environment)
                           (* (defs:(var_name * type_expression option * ('t pattern * 't term) list) list) *)
+                          (* TODO: check types *)
                           defs
   : environment
   =
@@ -146,8 +147,8 @@ let process_function_defs (env:environment)
                 (function f,t,clauses ->
                     let clauses = List.map
                                     (function lhs,rhs ->
-                                        map_raw_term (fun _ -> error "no structure allowed") identity identity lhs ,
-                                        map_raw_term (fun _ -> error "no structure allowed") identity identity rhs
+                                        map_raw_term (fun _ -> error "no structure allowed") id id lhs ,
+                                        map_raw_term (fun _ -> error "no structure allowed") id id rhs
                                     )
                                     clauses in
                     f,t,clauses)
@@ -170,7 +171,7 @@ let process_function_defs (env:environment)
 
     let defs = infer_type_defs env defs in
     if (verbose 1)
-    then msg "Typing for %s successful" (string_of_list ", " identity new_functions);
+    then msg "Typing for %s successful" (string_of_list ", " id new_functions);
 
     (* check that the types of all subterms are consistant *)
     assert (
@@ -237,7 +238,7 @@ let process_function_defs (env:environment)
             if verbose 1
             then msg "the definition%s %s %s provably correct"
                     (plural new_functions "" "s")
-                    (string_of_list ", " identity new_functions)
+                    (string_of_list ", " id new_functions)
                     (plural new_functions "is" "are")
         end
     else
@@ -245,13 +246,13 @@ let process_function_defs (env:environment)
             if option "allow_inadequate_defs"
              then warning "the definition%s %s %s NOT provably correct (weight_bound: %d, depth_bound: %d)"
                         (plural new_functions "" "s")
-                        (string_of_list ", " identity new_functions)
+                        (string_of_list ", " id new_functions)
                         (plural new_functions "is" "are")
                         current_state.bound
                         current_state.depth
              else error (fmt  "the definition%s %s %s NOT provably correct (weight_bound: %d, depth_bound: %d)"
                             (plural new_functions "" "s")
-                            (string_of_list ", " identity new_functions)
+                            (string_of_list ", " id new_functions)
                             (plural new_functions "is" "are")
                             current_state.bound
                             current_state.depth)

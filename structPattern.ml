@@ -42,14 +42,6 @@ open Utils
 open State
 open Pretty
 
-type structure = Struct of (const_name * struct_term) list
-and struct_term = (structure,priority,unit) raw_term
-
-let rec string_of_struct () (Struct fields)
-  = fmt "{ %s }" (string_of_list " ; " (function d,t -> fmt "%s = %s" d (string_of_struct_term t) ) fields)
-and
-  string_of_struct_term t = string_of_raw_term () string_of_struct t
-
 let rec subst_struct_term sigma v
     = match v with
         | Angel _ | Daimon _ | Const _ | Proj _ -> v
@@ -62,15 +54,15 @@ let new_aux () = incr aux_function_counter; Var("_aux"^(string_of_sub !aux_funct
 
 let aux_functions = ref []
 
-let remove_match_struct (clauses:(struct_term*struct_term) list)
-  : (unit term*struct_term) list
+let remove_match_struct (clauses:(('p,'t) struct_term*('p,'t) struct_term) list)
+  : (unit term*('p,'t) struct_term) list
   =
 
     let arg_counter = ref 0 in
     let new_var () = incr arg_counter; "x"^(string_of_sub !arg_counter) in
 
-    let rec process_arg (pat:struct_term)
-      :  unit term * (var_name*struct_term) list
+    let rec process_arg (pat:('p,'t) struct_term)
+      :  unit term * (var_name*('p,'t) struct_term) list
       = match pat with
             | Var(x,()) -> let y=new_var() in Var(y,()),[y,Var(x,())]
             | Angel _ | Daimon _ -> assert false
@@ -83,15 +75,15 @@ let remove_match_struct (clauses:(struct_term*struct_term) list)
             | Sp(Struct fields,()) -> let y=new_var() in Var(y,()),[y,Sp(Struct fields,())]
     in
 
-    let process_clause_aux (lhs,rhs:struct_term*struct_term)
-      : (unit term*struct_term) * (struct_term*struct_term) option
+    let process_clause_aux (lhs,rhs:('p,'t) struct_term*('p,'t) struct_term)
+      : (unit term*('p,'t) struct_term) * (('p,'t) struct_term*('p,'t) struct_term) option
       =
         arg_counter := 0;
 
         let f,lhs_pattern =
             match explode lhs with f::args -> f,args | [] -> assert false in
 
-        (* we need to change the type of f from struct_term to unit term *)
+        (* we need to change the type of f from ('p,'t) struct_term to unit term *)
         let f = match f with Var(f,()) -> Var(f,()) | _ -> assert false in
 
         (* process the lhs *)
@@ -103,7 +95,7 @@ let remove_match_struct (clauses:(struct_term*struct_term) list)
 
         if List.for_all (function _,Var _ -> true | _,_ -> false) sigma
         then begin
-            (map_raw_term (fun _ -> assert false) identity identity lhs, rhs) , None
+            (map_raw_term (fun _ -> assert false) id id lhs, rhs) , None
         end
         else
             let lhs = implode (f::lhs_pattern) in
@@ -142,15 +134,15 @@ let remove_match_struct (clauses:(struct_term*struct_term) list)
 
     in
 
-    let rec process_clause (cl:struct_term*struct_term)
-      : (unit term*struct_term) list
+    let rec process_clause (cl:('p,'t) struct_term*('p,'t) struct_term)
+      : (unit term*('p,'t) struct_term) list
       =
         match process_clause_aux cl with
             | cl,None ->
-                (* debug "finished with %s => %s\n" (string_of_term (fst cl)) (string_of_struct_term (snd cl)); *)
+                (* debug "finished with %s => %s\n" (string_of_plain_term (fst cl)) (string_of_struct_term (snd cl)); *)
                 [cl]
             | cl,Some cl' ->
-                (* debug "new processed clause: %s => %s" (string_of_term (fst cl)) (string_of_struct_term (snd cl)); *)
+                (* debug "new processed clause: %s => %s" (string_of_plain_term (fst cl)) (string_of_struct_term (snd cl)); *)
                 (* debug "new clause to process: %s => %s\n" (string_of_struct_term (fst cl')) (string_of_struct_term (snd cl')); *)
                 cl::(process_clause cl')
     in
@@ -163,11 +155,11 @@ let remove_match_struct (clauses:(struct_term*struct_term) list)
 
 
 
-let remove_term_struct (clauses:(unit term*struct_term) list)
+let remove_term_struct (clauses:(unit term*('p,'t) struct_term) list)
   : (unit term*unit term) list
   =
 
-    let rec extract_variables_from_struct (v:struct_term) : var_name list
+    let rec extract_variables_from_struct (v:('p,'t) struct_term) : var_name list
       = 
         match get_head v with
             | Var(x,()) -> [x]
@@ -177,8 +169,8 @@ let remove_term_struct (clauses:(unit term*struct_term) list)
             | App _ -> assert false
     in
 
-    let rec process_term (v:struct_term)
-      : unit term * (unit term * struct_term) list
+    let rec process_term (v:('p,'t) struct_term)
+      : unit term * (unit term * ('p,'t) struct_term) list
       =
         let args,new_clauses =
             let tmp = List.map process_term (get_args v) in
@@ -202,14 +194,14 @@ let remove_term_struct (clauses:(unit term*struct_term) list)
             | App _ -> assert false
     in
 
-    let rec process_clause (lhs,rhs:(unit term*struct_term))
+    let rec process_clause (lhs,rhs:(unit term*('p,'t) struct_term))
       : (unit term*unit term) list
       = match process_term rhs with
             | rhs,[] ->
-                (* debug "finished with %s => %s\n" (string_of_term lhs) (string_of_term rhs); *)
+                (* debug "finished with %s => %s\n" (string_of_plain_term lhs) (string_of_plain_term rhs); *)
                 [lhs,rhs]
             | rhs,new_clauses ->
-                (* debug "new processed clause: %s => %s" (string_of_term lhs) (string_of_term rhs); *)
+                (* debug "new processed clause: %s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs); *)
                 (* debug "new clause to process: %s => %s\n" (string_of_struct_term (fst cl')) (string_of_struct_term (snd cl')); *)
                 (lhs,rhs)::(List.concat (List.map process_clause new_clauses))
     in
@@ -220,7 +212,7 @@ let remove_term_struct (clauses:(unit term*struct_term) list)
 
 
 
-let remove_struct_defs (defs:(var_name * type_expression option * (struct_term*struct_term) list) list)
+let remove_struct_defs (defs:(var_name * type_expression option * (('p,'t) struct_term*('p,'t) struct_term) list) list)
   : (var_name * type_expression option * (unit term*unit term) list) list
   =
     let types = List.map (function f,t,_ -> f,t) defs in
@@ -247,7 +239,7 @@ let remove_struct_defs (defs:(var_name * type_expression option * (struct_term*s
 
     (* List.iter (function f,t,cls -> *)
     (*     List.iter (function lhs,rhs -> *)
-    (*         debug "%s => %s" (string_of_term lhs) (string_of_term rhs) *)
+    (*         debug "%s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs) *)
     (*     ) *)
     (*     cls *)
     (* ) new_defs; *)

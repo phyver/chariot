@@ -1,9 +1,10 @@
-(((((f¹ x²) x³) x⁴) x⁵) x⁶)
-with types:
-  - 1: 'a → 'a → 'a → 'a → 'a → 'l
-  - 2: 'a
-  - 3: 'a
-  - 4: 'a
-  - 5: 'a
-  - 6: 'a
+>> f¹ x² x³ x⁴ x⁵ x⁶
+>> with:
+>>   - 1: 'a → 'a → 'a → 'a → 'a → 'l
+>>   - 2: 'a
+>>   - 3: 'a
+>>   - 4: 'a
+>>   - 5: 'a
+>>   - 6: 'a
+>> 
 >> with free variables: f : 'a → 'a → 'a → 'a → 'a → 'l , x : 'a

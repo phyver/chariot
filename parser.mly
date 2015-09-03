@@ -54,7 +54,7 @@ open StructPattern
 
 (* transform a struct_term without structs into a unit term *)
 let struct_to_term v
-  = map_raw_term (fun _ -> error "no structure allowed for this command") identity identity v
+  = map_raw_term (fun _ -> error "no structure allowed for this command") id id v
 
 (* transform a list of types into the product *)
 let list_to_product (l:type_expression list) : type_expression
@@ -62,7 +62,7 @@ let list_to_product (l:type_expression list) : type_expression
     Data("prod_" ^ (string_of_int n), l)
 
 (* transforms an integer into a term by adding Succ constructors in front of u *)
-let rec int_to_term (n:int) (u:struct_term) : struct_term
+let rec int_to_term (n:int) (u:(priority,unit) struct_term) : (priority,unit) struct_term
   = if n=0
     then u
     else int_to_term (n-1) (App(Const("Succ",None,()),u))
@@ -79,13 +79,13 @@ let process_addition u v
     with Exit -> App(App(Var("add",()),u),v)
 
 (* tranform a list of terms into the corresponding list by adding Cons constructors in front of u *)
-let rec list_to_term (l:struct_term list) (u:struct_term) : struct_term
+let rec list_to_term (l:(priority,unit) struct_term list) (u:(priority,unit) struct_term) : (priority,unit) struct_term
   = match l with
         | [] -> u
         | v::l -> list_to_term l (App(App(Const("Cons",None,()),v),u))
 
 (* tranform a list of terms into the corresponding tuple *)
-let tuple_term (l:struct_term list) : struct_term =
+let tuple_term (l:(priority,unit) struct_term list) : (priority,unit) struct_term =
     let n = List.length l in
     app (Const("Tuple_" ^ (string_of_int n),None,())) l
 
@@ -158,23 +158,23 @@ let cmd_show_help ()
         "";
     ]
 
-let cmd_show_type (term:struct_term) : unit
+let cmd_show_type (term:(priority,unit) struct_term) : unit
   = let term = struct_to_term term in
     let t,term,context = infer_type_term current_state.env term in
-    print_typed_subterms term;
+    msg "%s" (string_of_typed_term term);
     if not (context = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context)
 
 (* reduce a term and show the result *)
-let cmd_reduce (term:struct_term) : unit
+let cmd_reduce (term:(priority,unit) struct_term) : unit
   = let term = struct_to_term term in
     let t,term,context = infer_type_term current_state.env term in
-    msg "term: %s" (string_of_term term);
+    msg "term: %s" (string_of_plain_term term);
     (* let term = rewrite_all current_state.env term in *)
     let term = reduce current_state.env term in
     current_state.last_term <- Some term;
     current_state.last_explore <- None;
-    msg "result: %s" (string_of_term term);
+    msg "result: %s" (string_of_plain_term term);
     msg "of type: %s" (string_of_type t);
     if not (context = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
@@ -184,14 +184,14 @@ let cmd_show_last ()
   = match current_state.last_term with
         | None -> ()
         | Some t ->
-            msg "last result: %s" (string_of_term t)
+            msg "last result: %s" (string_of_plain_term t)
 
 (* unfold a term by expanding lazy subterms up-to a given depth, and show the result *)
-let cmd_unfold_initial (term:struct_term) (depth:int) : unit
+let cmd_unfold_initial (term:(priority,unit) struct_term) (depth:int) : unit
   = let term = struct_to_term term in
     let t,term,context = infer_type_term current_state.env term in
     let term = unfold_to_depth current_state.env term depth in
-    msg "%s" (string_of_explore_term term);
+    msg "%s" (string_of_unfolded_term term);
     msg "of type: %s" (string_of_type t);
     if not (context = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
@@ -216,7 +216,7 @@ let cmd_unfold (l:int list) : unit
                     | _ ->  unfold current_state.env (fun n -> List.mem n l) t
         in
         current_state.last_explore <- Some t;
-        msg "%s" (string_of_explore_term t)
+        msg "%s" (string_of_unfolded_term t)
 
     with Exit -> errmsg "There is no term to unfold..."
 
@@ -242,10 +242,10 @@ let test_unify_term pattern term
     let pattern = struct_to_term pattern in
     let _,pattern,_ = infer_type_term current_state.env pattern in
     let _,term,_ = infer_type_term current_state.env term in
-    msg "unifying pattern   %s" (string_of_term pattern);
-    msg "        and term   %s" (string_of_term term);
+    msg "unifying pattern   %s" (string_of_plain_term pattern);
+    msg "        and term   %s" (string_of_plain_term term);
     let new_term = unify_pattern (pattern,pattern) term in
-    msg "          result   %s" (string_of_term new_term);
+    msg "          result   %s" (string_of_plain_term new_term);
     print_newline()
 
 let test_compose l1 r1 l2 r2 =
@@ -305,8 +305,8 @@ let test_collapse p =
 %type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
 %type <type_name * (type_expression list) * (const_name * type_expression) list> type_def
 
-%type <var_name * type_expression option * (struct_term * struct_term) list> function_def
-%type <(var_name * type_expression option * (struct_term * struct_term) list ) list> function_defs
+%type <var_name * type_expression option * ((priority,unit) struct_term * (priority,unit) struct_term) list> function_def
+%type <(var_name * type_expression option * ((priority,unit) struct_term * (priority,unit) struct_term) list ) list> function_defs
 
 %%
 

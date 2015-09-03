@@ -233,8 +233,8 @@ let ansi_code (color:string) (s:string) :string
     with Not_found -> raise (Invalid_argument ("ansi_code: color " ^ color ^ " doesn't exist"))
 
 
-let identity (x:'a) : 'a
-  = x
+let id x = x
+let k x _ = x
 
 
 let plural (l:'a list) (sing:string) (plur:string) : string

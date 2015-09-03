@@ -189,7 +189,7 @@ let infer_type (env:environment)
                (v:('empty,'p,'t) raw_term)
                (context:(var_name*type_expression) list)    (* context for the types of free variables *)
   : type_expression * (empty,'p,type_expression) raw_term * (var_name*type_expression) list * (type_name*type_expression) list
-  = if verbose 2 then debug "infering type for %s" (string_of_term v);
+  = if verbose 2 then debug "infering type for %s" (string_of_plain_term v);
 
     let rec infer_type_aux (v:(empty,'p,'t) raw_term) context
       : type_expression * (empty,'p,type_expression) raw_term * (var_name*type_expression) list * (type_name*type_expression) list
@@ -197,7 +197,7 @@ let infer_type (env:environment)
       =
           if verbose 4
           then (
-            debug "infering type of (recursive call) %s" (string_of_term v);
+            debug "infering type of (recursive call) %s" (string_of_plain_term v);
             debug "\twith context %s" (string_of_list" , " (function x,t -> x^":"^(string_of_type t)) context);
             print_newline()
         );
@@ -278,7 +278,7 @@ let infer_type (env:environment)
         let v = subst_type_term sigma v in
         if verbose 3
         then (
-            debug "infered type of %s : %s" (string_of_term v) (string_of_type t);
+            debug "infered type of %s : %s" (string_of_plain_term v) (string_of_type t);
             debug "\twith free variables: %s" (string_of_context context);
             debug "\tand types: %s" (string_of_type_substitution sigma);
             print_newline()
@@ -291,7 +291,7 @@ let infer_type (env:environment)
         (* debug "after:"; print_typed_subterms v; *)
 
         t,v,context,sigma
-    with UnificationError e -> error (fmt "unification error when typing %s: %s" (string_of_term v) e)
+    with UnificationError e -> error (fmt "unification error when typing %s: %s" (string_of_plain_term v) e)
 
 let infer_type_term (env:environment) (v:(empty,'p,'t) raw_term)
   : type_expression * (empty,'p,type_expression) raw_term * (var_name*type_expression) list
@@ -364,8 +364,8 @@ let infer_type_clause (env:environment)
 
 let infer_type_defs
     (env:environment)
-    (defs:(var_name * type_expression option * ('t pattern * 't term) list) list)
-    : (var_name * type_expression * (type_expression pattern * type_expression term) list) list
+    (defs:(var_name * type_expression option * ('t term * 't term) list) list)
+    : (var_name * type_expression * (type_expression term * type_expression term) list) list
   =
     reset_fresh_variable_generator [];
 

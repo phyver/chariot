@@ -41,12 +41,18 @@ open Env
 open Utils
 open State
 
-let string_of_priority p = match p with
-    (* | None ->  "⁽⁾" *)
-    (* | None ->  "⁻" *)
-    | None ->  if option "use_ansi_codes" then ansi_code "red" "⁼" else "⁼"
-    | Some p -> if option "use_ansi_codes" then ansi_code "green" (string_of_exp p) else (string_of_exp p)
+(* showing a priority *)
+let string_of_priority p
+  = if not (option "show_priorities")
+    then ""
+    else
+        match p with
+        (* | None ->  "⁽⁾" *)
+        (* | None ->  "⁻" *)
+        | None -> if option "use_ansi_codes" then ansi_code "red" "⁼" else "⁼"
+        | Some p -> if option "use_ansi_codes" then ansi_code "green" (string_of_exp p) else (string_of_exp p)
 
+(* check if a type is atomic in order to know where to put parenthesis *)
 let is_atomic_type = function
     | TVar _ -> true
     | Data(t,params) when (option "show_tuples") && (Str.string_match (Str.regexp "prod_\\(0\\|[1-9][0-9]*\\)") t 0) ->
@@ -55,6 +61,7 @@ let is_atomic_type = function
     | Data(t,params) -> true
     | Arrow _ -> false
 
+(* show a type *)
 let rec string_of_type = function
     | TVar(x) -> "'"^x
     | Data(t,[]) -> t
@@ -69,19 +76,65 @@ let rec string_of_type = function
         if is_atomic_type t1
         then (string_of_type t1) ^ " → " ^ (string_of_type t2)
         else ("(" ^ (string_of_type t1) ^ ")" ^ " → " ^ (string_of_type t2))
-(* abbreviation *)
-let s_o_t = string_of_type
 
-let rec print_type t = print_string (string_of_type t)
 
+(* check if a term is atomic in order to know where to put parenthesis *)
 let rec is_atomic_term (v:('a,'p,'t) raw_term) = match v with
     | Var _ | Angel _ | Daimon _ | Const _ | Proj _ -> true
     | App(Proj _, v) -> is_atomic_term v
     | App _ -> false
     | Sp _ -> true
 
+(* very generic function to show raw terms:
+ *   - we can give specific functions for showing priorities / types (arguments sp and st)
+ *   - we can give a specific function for showing special features (argument ss)
+ *   - we can give an additional parameter that is carried around and can be used the ss function
+ *     (typical use: keep an indentation level that is used, and modified by the ss function)
+ *)
 let rec
-  string_of_term_int (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,priority,'t) raw_term) =
+  string_of_raw_term
+        (o:'o)                          (* additional parameter *)
+        (ss:'o -> 'a -> string)         (* to process Sp(...) terms *)
+        (sp:'p -> string)               (* to process 'p parameters *)
+        (st:'t -> string)               (* to process 't parameters *)
+        (v:('a,priority,'t) raw_term)
+    : string
+  = try string_of_term_int o ss sp st false v   with Invalid_argument "string_of_term_int" ->
+    try string_of_term_list o ss sp st false v  with Invalid_argument "string_of_term_list" ->
+    try string_of_term_tuple o ss sp st v       with Invalid_argument "string_of_term_tuple" ->
+    begin
+    match v with
+        | Angel t -> "⊤" ^ (st t)
+        | Daimon t -> "⊥" ^ (st t)
+        | Var(x,t) -> (if (x.[0]='_' && not (verbose 1)) then "_" else x) ^ (st t)
+        | Const(c,p,t) -> c ^ (sp p) ^ (st t)
+        | Proj(d,p,t) -> "." ^ d ^ (sp p) ^ (st t)
+        | App(Proj _ as v1,v2) ->
+            let s2 = (string_of_raw_term_paren o ss sp st v2) in
+            let s1 =  (string_of_raw_term o ss sp st v1) in
+            fmt "%s%s" s2 s1
+        | App(App(Var("add",_),v1),v2) when (option "show_nats") ->
+            let s1 = (string_of_raw_term o ss sp st v1) in
+            let s2 =  (string_of_raw_term_paren o ss sp st v2) in
+            fmt "%s+%s" s1 s2
+        | App(v1,v2) ->
+            let s1 = (string_of_raw_term o ss sp st v1) in
+            let s2 =  (string_of_raw_term_paren o ss sp st v2) in
+            fmt "%s %s" s1 s2
+        | Sp(v,t) -> (ss o v) ^ (st t)
+    end
+and
+  (* same function as above, but adds parenthesis when the argument is not atomic *)
+  string_of_raw_term_paren (o:'o) (ss:'o -> 'a -> string) sp st (v:('a,priority,'t) raw_term) =
+    try string_of_term_int o ss sp st true v with Invalid_argument "string_of_term_int" ->
+    try string_of_term_list o ss sp st true v with Invalid_argument "string_of_term_list" ->
+    try string_of_term_tuple o ss sp st v with Invalid_argument "string_of_term_tuple" ->
+        if is_atomic_term v
+        then string_of_raw_term o ss sp st v
+        else ("(" ^ (string_of_raw_term o ss sp st v) ^ ")")
+and
+  (* try showing the term as an integer *)
+  string_of_term_int (o:'o) (ss:'o -> 'a -> string) sp st (p:bool) (v:('a,priority,'t) raw_term) =
     let rec aux n v =
         match v with
         | Const("Zero",_,_) -> n,None
@@ -91,15 +144,16 @@ let rec
         if not (option "show_nats")
         then raise (Invalid_argument "string_of_term_int")
         else
-            match aux 0 u with
+            match aux 0 v with
                 | n,None -> string_of_int n
                 | 0,Some v -> raise (Invalid_argument "string_of_term_int")
                 | n,Some v -> if p
-                              then "(" ^ (string_of_raw_term o sp v) ^ "+" ^ (string_of_int n) ^ ")"
-                              else (string_of_raw_term o sp v) ^ "+" ^ (string_of_int n)
+                              then "(" ^ (string_of_raw_term o ss sp st v) ^ "+" ^ (string_of_int n) ^ ")"
+                              else (string_of_raw_term o ss sp st v) ^ "+" ^ (string_of_int n)
 
 and
-  string_of_term_list (o:'o) (sp:'o -> 'a -> string) (p:bool) (u:('a,priority,'t) raw_term) =
+  (* try showing the term as a list *)
+  string_of_term_list (o:'o) (ss:'o -> 'a -> string) sp st (p:bool) (v:('a,priority,'t) raw_term) =
     let rec aux l v =
         match v with
         | Const("Nil",_,_) -> l,None
@@ -109,15 +163,15 @@ and
         if not (option "show_lists")
         then raise (Invalid_argument "string_of_term_list")
         else
-            match aux [] u with
-                | l,None -> "[" ^ (String.concat "; " (List.map (string_of_raw_term o sp) (List.rev l))) ^ "]"
+            match aux [] v with
+                | l,None -> "[" ^ (String.concat "; " (List.map (string_of_raw_term o ss sp st) (List.rev l))) ^ "]"
                 | [],Some v -> raise (Invalid_argument "string_of_term_list")
                 | l,Some v -> if p
-                              then "(" ^ (String.concat "::" (List.map (string_of_raw_term o sp) (List.rev l))) ^ "::" ^ (string_of_raw_term o sp v) ^ ")"
-                              else String.concat "::" (List.map (string_of_term_paren o sp) (List.rev l)) ^ "::" ^ (string_of_term_paren o sp v)
-
+                              then "(" ^ (String.concat "::" (List.map (string_of_raw_term o ss sp st) (List.rev l))) ^ "::" ^ (string_of_raw_term o ss sp st v) ^ ")"
+                              else String.concat "::" (List.map (string_of_raw_term_paren o ss sp st) (List.rev l)) ^ "::" ^ (string_of_raw_term_paren o ss sp st v)
 and
-  string_of_term_tuple (o:'o) (sp:'o -> 'a -> string) (u:('a,priority,'t) raw_term) =
+  (* try showing the term as a tuple *)
+  string_of_term_tuple (o:'o) (ss:'o -> 'a -> string) sp st (u:('a,priority,'t) raw_term) =
     if not (option "show_tuples")
     then raise (Invalid_argument "string_of_term_tuple")
     else
@@ -125,127 +179,46 @@ and
             | Const(c,p,_), args when Str.string_match (Str.regexp "Tuple_\\(0\\|[1-9][0-9]*\\)") c 0 ->
                     let n = int_of_string (String.sub c 6 ((String.length c) - 6)) in
                     if List.length args = n
-                    then ("(" ^ (string_of_list ", " (string_of_raw_term o sp) args) ^ ")")
+                    then ("(" ^ (string_of_list ", " (string_of_raw_term o ss sp st) args) ^ ")")
                     else raise (Invalid_argument "string_of_term_tuple")
             | _ -> raise (Invalid_argument "string_of_term_tuple")
 
-and
-  string_of_term_paren (o:'o) (sp:'o -> 'a -> string) (v:('a,priority,'t) raw_term) =
-    try string_of_term_int o sp true v with Invalid_argument "string_of_term_int" ->
-    try string_of_term_list o sp true v with Invalid_argument "string_of_term_list" ->
-    try string_of_term_tuple o sp v with Invalid_argument "string_of_term_tuple" ->
-        if is_atomic_term v
-        then string_of_raw_term o sp v
-        else ("(" ^ (string_of_raw_term o sp v) ^ ")")
 
-and
-  string_of_raw_term (o:'o) (sp:'o -> 'a -> string) (v:('a,priority,'t) raw_term) =
-    try string_of_term_int o sp false v with Invalid_argument "string_of_term_int" ->
-    try string_of_term_list o sp false v with Invalid_argument "string_of_term_list" ->
-    try string_of_term_tuple o sp v with Invalid_argument "string_of_term_tuple" ->
-        begin
-        match v with
-            | Angel _ -> "⊤"
-            | Daimon _ -> "⊥"
-            | Var(x,_) -> if (x.[0]='_' && not (verbose 1)) then "_" else x
-            | Const(c,p,_) -> c ^ (if not (option "show_priorities") then "" else string_of_priority p)
-            | Proj(d,p,_) -> "." ^ d ^  (if not (option "show_priorities") then "" else string_of_priority p)
-            | App(Proj _ as v1,v2) -> (string_of_term_paren o sp v2) ^ (string_of_raw_term o sp v1)
-            | App(App(Var("add",_),v1),v2) when (option "show_nats") -> (string_of_raw_term o sp v1) ^ "+" ^ (string_of_term_paren o sp v2)   (* TODO: don't show add as + in pattern *)
-            | App(v1,v2) -> (string_of_raw_term o sp v1) ^ " " ^ (string_of_term_paren o sp v2)
-            | Sp(v,_) -> sp o v
-        end
+(* generic printing function for terms with priorities *)
+let string_of_plain_term v = string_of_raw_term () (fun o s -> s.bot) (k "") (k "") v
+let string_of_term v = string_of_raw_term () (fun o s -> s.bot) string_of_priority (k "") v
 
-let string_of_term u = string_of_raw_term () (fun o s -> s.bot) u
-(* abbreviation *)
-let s_o_u = string_of_term
-
-let print_term t = print_string (string_of_term t)
-
-
-let string_of_weight w = match w with
-    | Infty -> "∞"
-    | Num n -> (string_of_int n)
-
+(* showing sct term with approximations *)
 let string_of_approx_term (v:approx_term) : string
   =
+    let string_of_weight w = match w with
+        | Infty -> "∞"
+        | Num n -> (string_of_int n)
+    in
+
     let string_of_approx_term_aux
       = string_of_raw_term ()
             (fun o u ->
                 match u with
+                    (* the only AppRes in such terms should come first and is
+                     * dealt with before calling string_of_approx_term_aux *)
                     | AppRes(p,w) -> assert false
                     | AppArg [] -> assert false
                     | AppArg l ->
-                        (string_of_list " + " (function p,w,x ->  "<" ^ (string_of_weight w) ^ ">" ^ (string_of_priority p) ^ " " ^ x) l)
-                        (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
+                        (string_of_list " + "
+                                        (function p,w,x ->  fmt "<%s>%s %s" (string_of_weight w) (string_of_priority p) x)
+                                        l)
             )
+            string_of_priority
+            (k "") (* don't show any type information *)
     in
+
     match v with
         | Sp(AppRes(p,w),_) ->
             ".<<" ^ (string_of_weight w) ^ ">>" ^ (string_of_priority p)
-            (* in if option "use_ansi_codes" then ansi_code "underline" s else s *)
         | v -> string_of_approx_term_aux v
 
-
-let show_data_type env tname params consts =
-    print_string "  ";
-    print_string tname;
-    print_list "(" "," ")" (fun x -> print_string ("'" ^ x)) params;
-    print_string " where";
-    print_list "\n    | " "\n    | " "\n"
-               (function c -> print_string c; print_string " : "; print_type (get_constant_type env c) ;)
-               consts
-
-let rec
-   string_of_explore_struct indent u =
-       let prefix = if indent > 0 then "\n" ^ String.make indent ' ' else ""
-       in
-       let new_indent = if indent > 0 then indent + 4 else 0
-       in
-
-       match u with
-       | Folded(n,v) ->
-            prefix ^ "{<" ^ (string_of_int n) ^ ">" ^
-            (if option "show_term_struct" then ("=" ^ string_of_term v) else "") ^
-            (if option "show_type_struct" then let t = type_of v in (":" ^ string_of_type t) else "") ^
-            "}"
-       | Unfolded fields ->
-            prefix ^ "{" ^
-            prefix ^ "  " ^ (String.concat (";"^prefix^"  ")
-                                    (List.map (function d,xs,v ->
-                                        fmt "%s%s = %s" d (if xs=[] then "" else " " ^ string_of_list " " identity xs) (string_of_explore_term new_indent v)) fields)) ^
-            "}"
-and
-  string_of_explore_term o v = string_of_raw_term o string_of_explore_struct v
-let string_of_explore_term v = string_of_explore_term 2 v
-
-let print_explore_term v = print_string (string_of_explore_term v)
-
-
-let rec
-    string_of_case_struct_tree indent s u =
-       let prefix = if indent > 0 then "\n" ^ String.make indent ' ' else ""
-       in
-       let new_indent = if indent > 0 then indent + 4 else 0
-       in
-
-        match u with
-        | CSFail -> "FAIL"
-        | CSCase(x,l) ->
-             prefix ^ (fmt "case %s of" x) ^
-             prefix ^ (String.concat prefix
-                                     (List.map (function c,(args,v) -> fmt "  %s%s  ->  %s" c (if args=[] then "" else " " ^ String.concat " " args) (string_of_case_struct_tree new_indent s v)) l))
-        | CSStruct fields -> 
-             prefix ^ "{" ^
-             prefix ^ "  " ^ (String.concat (" ;"^prefix^"  ")
-                                     (List.map (function d,(args,v) -> d ^ (if args=[] then "" else " " ^ (String.concat " " args)) ^ " = " ^ (string_of_case_struct_tree new_indent s v)) fields)) ^
-            " }"
-        | CSLeaf(v) -> s v
-
-let string_of_case_struct_term v = string_of_case_struct_tree 2 string_of_term v
-
-
-
+(* show an SCT pattern *)
 let string_of_sct_pattern ((f,ps):sct_pattern) : string =
     (* let f = Var(f,()) in *)
     (* let v = match implode (f::ps) with *)
@@ -257,10 +230,111 @@ let string_of_sct_pattern ((f,ps):sct_pattern) : string =
         f
         (string_of_list ", " string_of_approx_term ps)
 
+(* show an SCT clause *)
 let string_of_sct_clause (l,r:sct_clause) : string =
     fmt "%s => %s" (string_of_sct_pattern l) (string_of_sct_pattern r)
 
 
+(* show a term with unfolded parts, because the types unfolded_struct and
+ * unfolded_term are mutually recursive, the functions string_of_unfolded_struct
+ * and string_of_unfolded_term are mutually recursive as well *)
+let rec
+   string_of_unfolded_struct (indent:int) (v:('p,'t) fold_struct) =
+       let prefix = if indent > 0 then "\n" ^ String.make indent ' ' else ""
+       in
+       let new_indent = if indent > 0 then indent + 4 else 0
+       in
+
+       match v with
+       | Folded(n,v) ->
+            prefix ^ "{<" ^ (string_of_int n) ^ ">" ^
+            (if option "show_term_struct" then ("=" ^ string_of_plain_term v) else "") ^
+            (if option "show_type_struct" then let t = type_of v in (":" ^ string_of_type t) else "") ^
+            "}"
+       | Unfolded fields ->
+            prefix ^ "{" ^
+            prefix ^ "  " ^ (String.concat (";"^prefix^"  ")
+                                    (List.map (function d,xs,v ->
+                                                    fmt "%s%s = %s"
+                                                        d
+                                                        (if xs=[]
+                                                         then ""
+                                                         else " " ^ string_of_list " " id xs)
+                                                        (string_of_unfolded_term new_indent v))
+                                              fields)) ^
+            "}"
+and
+  string_of_unfolded_term indent v
+  = string_of_raw_term indent
+                       string_of_unfolded_struct
+                       string_of_priority
+                       (k "")
+                       v
+
+let string_of_unfolded_term v = string_of_unfolded_term 2 v
+
+
+(* show case / structures trees *)
+let rec
+    string_of_case_struct_tree (indent:int) (sv:'v->string) (v:'v case_struct_tree) =
+        let prefix = if indent > 0 then "\n" ^ String.make indent ' ' else ""
+        in
+        let new_indent = if indent > 0 then indent + 4 else 0
+        in
+        match v with
+        | CSFail -> "FAIL"
+        | CSCase(x,l) ->
+             prefix ^ (fmt "case %sv of" x) ^
+             prefix ^ (String.concat prefix
+                                     (List.map (function c,(args,v) -> fmt "  %sv%sv  ->  %sv" c (if args=[] then "" else " " ^ String.concat " " args) (string_of_case_struct_tree new_indent sv v)) l))
+        | CSStruct fields ->
+             prefix ^ "{" ^
+             prefix ^ "  " ^ (String.concat (" ;"^prefix^"  ")
+                                     (List.map (function d,(args,v) -> d ^ (if args=[] then "" else " " ^ (String.concat " " args)) ^ " = " ^ (string_of_case_struct_tree new_indent sv v)) fields)) ^
+            " }"
+        | CSLeaf(v) -> sv v
+let string_of_case_struct_term v = string_of_case_struct_tree 2 string_of_plain_term v
+
+
+(* show a typed terms with type annotations on all subterms *)
+let string_of_typed_term v
+  =
+    let i = ref 0 in
+    let new_i () = incr i ; !i in
+    let all_types = ref [] in
+
+    let show_type t =
+        let n = new_i() in
+        all_types := (n,t)::!all_types;
+        string_of_exp n
+    in
+
+    let s_term = string_of_raw_term () (fun o s -> s.bot) (k "") show_type v in
+    let s_types = string_of_list "\n" (function k,t -> fmt "  - %d: %s" k (string_of_type t)) (List.rev !all_types) in
+    fmt "%s\nwith:\n%s\n" s_term s_types
+
+(* misc utility function *)
+let string_of_type_substitution sigma = string_of_list " , " (function x,t -> fmt "'%s=%s" x (string_of_type t)) sigma
+let string_of_term_substitution sigma = string_of_list " , " (function x,t -> fmt "%s=%s" x (string_of_plain_term t)) sigma
+let string_of_context gamma = string_of_list " , " (function x,t -> fmt "%s:%s" x (string_of_type t)) gamma
+
+
+let rec string_of_struct _ (Struct fields)
+  = fmt "{ %s }" (string_of_list " ; " (function d,t -> fmt "%s = %s" d (string_of_struct_term t) ) fields)
+and
+  string_of_struct_term t = string_of_raw_term () string_of_struct (k "") (k "") t
+
+(***
+ * showing the environment
+ *)
+let show_data_type env tname params consts =
+    print_string "  ";
+    print_string tname;
+    print_list "(" "," ")" (fun x -> print_string ("'" ^ x)) params;
+    print_string " where";
+    print_list "\n    | " "\n    | " "\n"
+               (function c -> print_string (fmt "%s : %s" c (string_of_type (get_constant_type env c))) ;)
+               consts
 
 let show_type_bloc env types
   =
@@ -297,16 +371,13 @@ let show_types env =
 
 
 let show_function f t clauses (args,cst) =
-    print_string "   ";
-    print_string f;
-    print_string " : ";
-    print_type t;
+    print_string (fmt "   %s : %s" f (string_of_type t));
     print_list "\n    | " "\n    | " "\n"
-                (function pattern,term -> print_term pattern; print_string " = "; print_term term)
+                (function pattern,term -> print_string (fmt "%s = %s" (string_of_term pattern) (string_of_term term)))
                 clauses;
     if (verbose 2)
     then
-        let tmp = if args = [] then "" else (string_of_list " " identity args) ^ " -> " in
+        let tmp = if args = [] then "" else (string_of_list " " id args) ^ " -> " in
         msg "corresponding case and struct form:\n%s%s" tmp (string_of_case_struct_term cst)
 
 let show_function_bloc env funs
@@ -357,48 +428,5 @@ let show_environment env =
             | []::_,_ | _,[]::_ -> assert false
     in
     show_env_aux type_blocs fun_blocs
-
-
-(* integrate with string_of_term??? *)
-let print_typed_subterms (u:type_expression term) : unit
-  =
-    let i = ref 0 in
-    let new_i () = incr i ; !i in
-
-    let rec show_term u = match u with
-        | Angel(t) -> let n = new_i() in
-            print_string ("???"^(string_of_exp n)); [n,t]
-        | Daimon(t) -> let n = new_i() in
-            print_string ("!!!"^(string_of_exp n)); [n,t]
-        | Const(c,_,t) -> let n = new_i() in
-            print_string (c^(string_of_exp n)); [n,t]
-        | Var(x,t) -> let n = new_i() in
-            print_string (x^(string_of_exp n)); [n,t]
-        | App(Proj(d,_,t1),u2) ->
-            let n = new_i() in
-            print_string "(";
-            let types = show_term u2 in
-            print_string ("."^d^(string_of_exp n)^")"^(string_of_exp n));
-            (n,t1) ::  types
-        | App(u1,u2) ->
-            print_string "(";
-            let types1 = show_term u1 in
-            print_string " ";
-            let types2 = show_term u2 in
-            print_string ")";
-            types1@types2
-        | Proj(d,_,t) -> let n = new_i() in
-            print_string (d^(string_of_exp n)); [n,t]
-        | Sp(s,_) -> s.bot
-    in
-
-    let types = show_term u in
-    let types = List.sort compare types in
-    print_string (fmt "\nwith types:\n%s" (string_of_list "\n" (function n,t -> fmt "  - %d: %s" n (string_of_type t)) types));
-    print_newline()
-
-let string_of_type_substitution sigma = string_of_list " , " (function x,t -> fmt "'%s=%s" x (string_of_type t)) sigma
-let string_of_term_substitution sigma = string_of_list " , " (function x,t -> fmt "%s=%s" x (string_of_term t)) sigma
-let string_of_context gamma = string_of_list " , " (function x,t -> fmt "%s:%s" x (string_of_type t)) gamma
 
 

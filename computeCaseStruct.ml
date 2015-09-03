@@ -87,14 +87,14 @@ let rec reduce env (v:type_expression term) : type_expression term
                             let xs,cl = (try List.assoc c clauses with Not_found -> assert false) in
                             let tau,rest' = combine_suffix xs args in
                             rewrite_case_struct (tau@sigma) (rest'@rest) cl
-                        | _ -> error (fmt "typing error with %s" (s_o_u v))
+                        | _ -> error (fmt "typing error with %s" (string_of_plain_term v))
                 with Not_found -> assert false
     in
 
     let rec
     rewrite (v:type_expression term) : type_expression term
       =
-        (* debug "rewrite %s" (string_of_term v); *)
+        (* debug "rewrite %s" (string_of_plain_term v); *)
         try
             let result,n = Memo.find v !table
             in counter := !counter+n;

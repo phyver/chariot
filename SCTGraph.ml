@@ -131,7 +131,7 @@ let callgraph_from_definitions
             | Sp(s,_),_ -> s.bot
     in
 
-    let rec process_clause graph (lhs,rhs:type_expression pattern * type_expression term)
+    let rec process_clause graph (lhs,rhs:type_expression term * type_expression term)
       : call_graph
       =
         let params = extract_params lhs
@@ -160,7 +160,7 @@ let callgraph_from_definitions
                     begin
                         match type_of p with
                             | Data(tname,_) ->
-                                    collapse0 (map_raw_term (fun s->s.bot) identity (fun _->()) (App(d,u)))
+                                    collapse0 (map_raw_term (fun s->s.bot) id (fun _->()) (App(d,u)))
                             | _ -> Daimon()
                     end
                 | Proj _,[] -> assert false

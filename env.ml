@@ -62,37 +62,96 @@ type type_substitution = (type_name * type_expression) list
 (* type for expressions *)
 type const_name = string
 type var_name = string
-type priority = int option    (* priority of types and constants: odd for data and even for codata *)
-type ('s,'p,'t) raw_term =     (* 's is used to add features to the type, and 't is used to put types on all subterms *)
-    | Angel of 't                               (* generic meta variable, living in all types *)
-    | Daimon of 't
+type ('s,'p,'t) raw_term =      (* 's is used to add features to terms, 'p is used to add priorities and 't is used to put types on subterms *)
+    | Angel of 't                       (* generic meta variable, living in all types *)
+    | Daimon of 't                      (* generic "bad" (possibly looping) term, living in all types *)
     | Var of var_name*'t
-    | Const of const_name * 'p *'t   (* constructor, with a priority *)
-    | Proj of const_name * 'p *'t    (* destructor, with a priority *)
+    | Const of const_name * 'p *'t      (* constructor, with a priority *)
+    | Proj of const_name * 'p *'t       (* destructor, with a priority *)
     | App of ('s,'p,'t) raw_term * ('s,'p,'t) raw_term
-    | Sp of 's*'t
+    | Sp of 's*'t                       (* special terms for additionnal structure on terms *)
 
+(*************************************************************************
+ * the main kinds of terms used are
+ *   - parsed terms: 's is structure, 'p is unit, 't is unit
+ *   - plain terms: 's is empty, 'p is unit, 't is unit
+ *   - typed terms: 's is empty, 'p is unit, 't is type_expression
+ *   - terms: 's is empty, 'p is int, 't is type_expression
+ *   - unfolded terms: 's is explore_struct, 'p is int, 't is type_expression (TODO: or possibly 't is unit???)
+ *   - case / struct trees: trees with leafs in typed terms
+ *   - approximated term: 's is approximation, 'p is int, 't is unit
+ *
+ * TODO: define those types, and use them
+ **********************************************************************)
+
+type priority = int option      (* priority of types and constants: odd for data and even for codata *)
+                                (* NOTE: I need an "infinity" priority to deal with unknown approximation on results *)
 type empty = { bot: 'a .'a }
+
+(* terms with structures *)
+type ('p,'t) structure = Struct of (const_name * ('p,'t) struct_term) list
+ and ('p,'t) struct_term = (('p,'t) structure,'p,'t) raw_term
+
+(* term with possibly unfolded codata *)
+(* FIXME: once I have typed terms, I should remove the type expression from the unfolded_struct type *)
+type ('p,'t) fold_struct =
+    | Folded of int * (empty,'p,'t) raw_term
+    | Unfolded of (const_name * var_name list * ('p,'t) unfolded_term) list
+ and ('p,'t) unfolded_term = (('p,'t) fold_struct,'p,'t) raw_term
+
+(* term with case and structs *)
+type 't case_struct_tree =
+    | CSFail
+    | CSLeaf of 't
+    | CSCase of var_name * (const_name * (var_name list * 't case_struct_tree)) list
+    | CSStruct of (const_name * ((var_name list) * 't case_struct_tree)) list
+type case_struct_term = (empty,priority,type_expression) raw_term case_struct_tree
+
+
+(* SCT terms *)
+type weight = Num of int | Infty
+
+(* a call from f to g is represented by a rewriting rule
+ *   param_1 param_2 ... param_m  =>  arg_1 arg_2 ... arg_n
+ * where m is the arity of f and n is the arity of g.
+ *  - each param_i is either a constructor pattern or a destructor
+ *  - each arg_i i either a constructor pattern (with possible approximations) or a destructor
+ *)
+type approximation = AppRes of priority * weight | AppArg of (priority * weight * var_name) list
+type approx_term = (approximation,priority,unit) raw_term
+(* type sct_clause = approx_term * approx_term *)
+ type sct_pattern = (var_name * approx_term list)
+ type sct_clause = sct_pattern * sct_pattern
+(* TODO: use
+ * type approx_term = (approximation,type_expression) raw_term
+ * type sct_clause = (var_name * approx_term list) * (var_name * approx_term list)
+ * ??? *)
+
+
+
+
+(* terms from the parser *)
+type parsed_term = (priority,unit) struct_term      (* TODO: replace priority by unit *)
+
+(* terms after removal of structures *)
+type plain_term = (empty,priority,unit) raw_term  (* TODO: replace priority by unit *)
+
+(* terms after typing *)
+type typed_term = (empty,priority,type_expression) raw_term  (* TODO: replace priority by unit *)
+
+(* terms after priorities have been added *)
+type priority_term = (empty,priority,type_expression) raw_term
+
+
+
 type 't term = (empty,priority,'t) raw_term
 type 't term_substitution = (var_name * 't term) list
 
 type bloc_nb = int      (* number of the block of mutual function definitions *)
 
 (* TODO: use type 't pattern = var_name * 't term list *)
-type 't pattern = 't term                 (* a pattern (LHS of a clause in a definition) is just a special kind of term *)
-type 't function_clause = 't pattern * 't term     (* clause of a function definition *)
+type 't function_clause = 't term * 't term     (* clause of a function definition *)
 
-(* term with CASE and STRUCTS *)
-(* type 't case_struct_term = ('t case_struct,'t) raw_term *)
-(*  and 't case_struct = *)
-(*     | CSCase of var_name * (const_name * (var_name list * 't case_struct_term)) list *)
-(*     | CSStruct of (const_name * ((var_name list) * 't case_struct_term)) list *)
-(*     | CSFail *)
-type 't case_struct_tree =
-    | CSFail
-    | CSLeaf of 't
-    | CSCase of var_name * (const_name * (var_name list * 't case_struct_tree)) list
-    | CSStruct of (const_name * ((var_name list) * 't case_struct_tree)) list
 
 (* type for the environment *)
 type environment = {
@@ -114,33 +173,4 @@ type environment = {
                 type_expression function_clause list *
                 (var_name list * type_expression term case_struct_tree)) list
     }
-
-
-
-(* term with possibly unfolded codata *)
-(* FIXME: once I have typed terms, I should remove the type expression from the explore_struct type *)
-type explore_struct = Folded of int * type_expression term | Unfolded of (const_name * var_name list * explore_term) list
- and explore_term = (explore_struct,priority,type_expression) raw_term
-
-(* SCT *)
-type weight = Num of int | Infty
-
-
-(* a call from f to g is represented by a rewriting rule
- *   param_1 param_2 ... param_m  =>  arg_1 arg_2 ... arg_n
- * where m is the arity of f and n is the arity of g.
- *  - each param_i is either a constructor pattern or a destructor
- *  - each arg_i i either a constructor pattern (with possible approximations) or a destructor
- *)
-type approximation = AppRes of priority * weight | AppArg of (priority * weight * var_name) list
-type approx_term = (approximation,priority,unit) raw_term
-(* type sct_clause = approx_term * approx_term *)
- type sct_pattern = (var_name * approx_term list)
- type sct_clause = sct_pattern * sct_pattern
-(* TODO: use
- * type approx_term = (approximation,type_expression) raw_term
- * type sct_clause = (var_name * approx_term list) * (var_name * approx_term list)
- *)
-
-exception Impossible_case
 
