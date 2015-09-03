@@ -285,7 +285,7 @@ let test_collapse (p:parsed_term) =
 %}
 
 %token EQUAL COLON SEMICOLON BLANKLINE LPAR RPAR COMMA PIPE DOT DUMMY ANGEL DAIMON ARROW PLUS MINUS STAR GT
-%token LSQBRAC RSQBRAC LCBRAC RCBRAC DOUBLECOLON DOUBLEARROW
+%token LSQBRAC RSQBRAC LCBRAC RCBRAC DOUBLECOLON DOUBLEARROW SHARP
 %token DATA CODATA WHERE AND VAL
 %token CMDHELP CMDQUIT CMDSHOW CMDSET
 %token CMDUNFOLD CMDREDUCE CMDUNFOLD CMDECHO CMDSHOWTYPE
@@ -454,6 +454,7 @@ term:
     | term atomic_term          { App($1,$2) }
 
     | term PLUS atomic_term     { process_addition $1 $3 }
+    | SHARP IDU atomic_term     { Sp(Struct [$2,$3], ()) }
 
 atomic_term:
     | LPAR term RPAR                        { $2 }

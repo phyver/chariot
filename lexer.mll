@@ -91,6 +91,7 @@ rule tokenize = parse
     | "+"               { PLUS }
     | "-"               { MINUS }
     | "*"               { STAR }
+    | "#"               { SHARP }
     | "data"            { DATA }
     | "codata"          { CODATA }
     | "where"           { WHERE }
