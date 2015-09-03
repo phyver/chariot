@@ -213,6 +213,13 @@ let rec extract_term_variables (v:(empty,'p,'t) raw_term) : var_name list
         | App(v1,v2) -> merge_uniq (extract_term_variables v1) (extract_term_variables v2)
         | Sp(v,_) -> v.bot
 
+(* let rec extract_pattern_variables (v:pattern) : var_name list *)
+let rec extract_pattern_variables (v:(empty,'p,'t) raw_term) : var_name list
+  = match get_head v,get_args v with
+        | Var(f,_),args -> List.concat (List.map extract_term_variables args)
+        | Proj _,v::args -> (extract_pattern_variables v) @ (List.concat (List.map extract_term_variables args))
+        | _,_ -> assert false
+
 let rec map_raw_term (f:'a1 -> 'a2) (g:'p1 -> 'p2) (h:'t1 -> 't2) (v:('a1,'p1,'t1) raw_term) : ('a2,'p2,'t2) raw_term
   = match v with
         | Angel t -> Angel (h t)

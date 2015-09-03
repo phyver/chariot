@@ -318,7 +318,7 @@ let infer_type_clause (env:environment)
     *)
     let infered_type_lhs, lhs_pattern, context_lhs,sigma = infer_type { env with functions=[] } lhs_pattern context in
 
-    let variables = extract_term_variables lhs_pattern in
+    let variables = extract_pattern_variables lhs_pattern in
 
     (* print_typed_subterms lhs_pattern; *)
 
