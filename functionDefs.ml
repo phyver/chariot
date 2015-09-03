@@ -69,7 +69,7 @@ let check_new_funs_different_from_old (new_funs:var_name list) (old_funs:var_nam
         | Some f -> error (fmt "function %s already exists" f)
 
 (* check that all the constructors are fully applied in a pattern *)
-let rec check_constructor_arity env (v:'t term) : unit
+let rec check_constructor_arity env (v:(empty,'p,'t) raw_term) : unit
   = match get_head v,get_args v with
         | Var _,args -> List.iter (check_constructor_arity env) args
         | Proj _,v::args -> List.iter (check_constructor_arity env) (v::args)
@@ -83,10 +83,11 @@ let rec check_constructor_arity env (v:'t term) : unit
                     List.iter (check_constructor_arity env) args
                 with Not_found -> error (fmt "constructor %s doesn't exist in the environment" c)
             end
-        | Angel _,_ | Daimon _,_ | Sp _,_ -> ()
+        | Angel _,_ | Daimon _,_ -> ()
+        | Sp(s,_),_ -> s.bot
 
 (* check that a term has the shape of a lhs pattern *)
-let check_lhs (v:'t term) : unit
+let check_lhs (v:(empty,'p,'t) raw_term) : unit
   =
     let rec check_constructors v
       = match get_head v,get_args v with
@@ -108,7 +109,7 @@ let check_lhs (v:'t term) : unit
         | [] -> assert false
         | u::_ -> error (fmt "lhs of definition cannot start with %s" (string_of_plain_term u))
 
-let check_clause env (funs: var_name list) (f:var_name) (lhs:'t term) (rhs:'t term) : unit
+let check_clause env (funs: var_name list) (f:var_name) (lhs:(empty,'p,'t) raw_term) (rhs:(empty,'p,'t) raw_term) : unit
   =
     (* get function from LHS and check it is equal to f *)
     let _f = get_function_name lhs in
@@ -132,15 +133,13 @@ let check_clause env (funs: var_name list) (f:var_name) (lhs:'t term) (rhs:'t te
 
 
 let process_function_defs (env:environment)
-                          (* (defs:(var_name * type_expression option * ('t pattern * 't term) list) list) *)
-                          (* TODO: check types *)
-                          defs
+                          (defs:(var_name * type_expression option * (parsed_term * parsed_term) list) list)
   : environment
   =
 
     (* remove structures *)
-    let defs =
-        if option "allow_structs"
+    let (defs:(var_name * type_expression option * (plain_term * plain_term) list) list)
+      = if option "allow_structs"
         then remove_struct_defs defs
         else
             List.map
@@ -169,7 +168,9 @@ let process_function_defs (env:environment)
         clauses)
     defs;
 
-    let defs = infer_type_defs env defs in
+    (* infer type of definitions *)
+    let (defs:(var_name * type_expression * (typed_term * typed_term) list) list)
+      = infer_type_defs env defs in
     if (verbose 1)
     then msg "Typing for %s successful" (string_of_list ", " id new_functions);
 
@@ -182,11 +183,10 @@ let process_function_defs (env:environment)
         true
     );
 
-    let defs = if option "use_priorities"
-               then infer_priorities env defs
-               else defs
+    (* infer priorities for definitions *)
+    let (defs:(var_name * type_expression * (priority_term * priority_term) list) list)
+      = infer_priorities env defs
     in
-    (* TODO: check that all priorities are > 0 and remove the instance of option "use_priorities" *)
 
     (* List.iter (function f,t,cls -> *)
     (*     List.iter (function lhs,rhs -> *)
@@ -201,22 +201,23 @@ let process_function_defs (env:environment)
 
 
     (* check completeness of pattern matching *)
-    let defs = List.map
-        (function f,t,clauses ->
-            let f,clauses,args,cs = case_struct_of_clauses env f t clauses in
-            if is_exhaustive f args cs
-            then (if (verbose 1) then msg "the definition for %s is complete" f)
-            else
-                if option "allow_incomplete_defs"
-                then warning "the definition for %s is incomplete" f
-                else error (fmt "the definition for %s is incomplete" f);
-            f,t,clauses,(args,cs)
-        )
-        defs
+    let (defs:(var_name * type_expression * function_clause list * case_struct_def) list)
+      = List.map
+            (function f,t,clauses ->
+                let f,clauses,args,cs = case_struct_of_clauses env f t clauses in
+                if is_exhaustive f args cs
+                then (if (verbose 1) then msg "the definition for %s is complete" f)
+                else
+                    if option "allow_incomplete_defs"
+                    then warning "the definition for %s is incomplete" f
+                    else error (fmt "the definition for %s is incomplete" f);
+                f,t,clauses,(args,cs)
+            )
+            defs
     in
 
-    let defs =
-        if option "expand_clauses"
+    let (defs:(var_name * type_expression * function_clause list * case_struct_def) list)
+      = if option "expand_clauses"
         then
             let new_defs = List.map (function f,t,_,(xs,pat) -> f, Some t, convert_cs_to_clauses f xs pat) defs in
             let new_defs = infer_type_defs env new_defs in

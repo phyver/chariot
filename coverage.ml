@@ -44,9 +44,9 @@ open Misc
 
 
 
-type match_pattern = type_expression term list
+type 'p match_pattern = (empty,'p,type_expression) raw_term list
 
-let explode_pattern (v:type_expression term) : match_pattern
+let explode_pattern (v:(empty,'p,type_expression) raw_term) : 'p match_pattern
   =
     let rec explode_pattern_aux v = match get_head v, get_args v with
         | (Var _ as f), args -> f::args
@@ -61,8 +61,8 @@ let  is_var = function
       |  _::_ -> 2
       | [] -> 3
 
-let choose_constructor (c:const_name) (clauses:(int*match_pattern*'t term) list)
-  : (int*match_pattern*'t term) list
+let choose_constructor (c:const_name) (clauses:(int*'p match_pattern*(empty,'p,type_expression) raw_term) list)
+  : (int*'p match_pattern*(empty,'p,type_expression) raw_term) list
   = List.filter
         (fun (_,pat,def) ->
             match get_head (List.hd pat) with
@@ -82,9 +82,9 @@ let string_of_clause (pat,def) = fmt "[%s] -> %s" (string_of_list " " string_of_
 
 let rec
 convert_match env (xs:var_name list)
-                  (clauses:(int*match_pattern*type_expression term) list)
-                  (fail: (int*type_expression term) case_struct_tree)
-  : (int * type_expression term) case_struct_tree
+                  (clauses:(int*'p match_pattern*(empty,'p,type_expression) raw_term) list)
+                  (fail: (int*(empty,'p,type_expression) raw_term) case_struct_tree)
+  : (int * (empty,'p,type_expression) raw_term) case_struct_tree
   =
     (* debug "clauses: {%s}" (string_of_list "," string_of_clause clauses); *)
       match xs,clauses with
@@ -280,25 +280,24 @@ let extract_clause_numbers cs
             | CSLeaf(n,v) -> [n]
     in uniq (extract_clause_numbers_aux cs)
 
-let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:'t term case_struct_tree)
-  : (unit term * unit term) list
+let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:(empty,'p,type_expression) raw_term case_struct_tree)
+  (* :  (empty, 'p, unit) raw_term * (empty, 'p, unit) raw_term *)
   = 
-    let rec convert_cs_to_clauses_aux (pat:unit term) (cs:type_expression term case_struct_tree)
-      : (unit term * unit term) list
+    let rec convert_cs_to_clauses_aux pat (cs:(empty,'p,type_expression) raw_term case_struct_tree)
       = match cs with
         | CSFail -> []
         | CSLeaf(v) -> [pat,map_type_term (fun t->()) v]
         | CSCase(x,cases) ->
             List.concat (List.map (function c,(xs,cs) ->
                                 let xs = List.map (function x->Var(x,())) xs in
-                                let c = app (Const(c,None,())) xs in
+                                let c = app (Const(c,(),())) xs in
                                 let pat = subst_term [x,c] pat in
                                 convert_cs_to_clauses_aux pat cs)
                             cases)
         | CSStruct(fields) ->
             List.concat (List.map (function d,(xs,cs) ->
                                 let xs = List.map (function x->Var(x,())) xs in
-                                let d = Proj(d,None,()) in
+                                let d = Proj(d,(),()) in
                                 let pat = implode (pat::d::xs) in
                                 convert_cs_to_clauses_aux pat cs)
                             fields)
@@ -313,10 +312,24 @@ let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:'t term case_struc
     clauses
 
 
+let rec map_case_struct f v = match v with
+    | CSFail -> CSFail
+    | CSStruct fields -> CSStruct (List.map (function d,(xs,v) -> d,(xs,map_case_struct f v)) fields)
+    | CSCase(x,cases) -> CSCase(x,(List.map (function c,(xs,v) -> c,(xs,map_case_struct f v)) cases))
+    | CSLeaf v -> CSLeaf (f v)
+
 
 (* TODO: do something with types with 0 constructors  /  0 destructors *)
-let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_expression term*type_expression term) list)
-    : (var_name * (type_expression term*type_expression term) list * var_name list * type_expression term case_struct_tree)
+let case_struct_of_clauses
+        env
+        (f:var_name)
+        (t:type_expression)
+        (clauses:((empty,'p,type_expression) raw_term*(empty,'p,type_expression) raw_term) list)
+    : var_name *
+      ((empty,'p,type_expression) raw_term *
+      (empty,'p,type_expression) raw_term) list *
+      var_name list *
+      (empty,unit,type_expression) raw_term case_struct_tree
   =
     (* debug "case_struct_of_clauses for function %s" f; *)
     counter := 0;
@@ -352,5 +365,5 @@ let case_struct_of_clauses env (f:var_name) (t:type_expression) (clauses:(type_e
     let clauses = List.map (function _,lhs,rhs-> lhs,rhs) clauses in
     let cs = remove_clause_numbers cs in
 
-    f,clauses,args,cs
+    f,clauses,args,map_case_struct (fun v -> map_raw_term (fun s->s.bot) (k()) id v) cs
 

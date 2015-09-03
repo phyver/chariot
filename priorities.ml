@@ -170,7 +170,9 @@ let infer_priorities (env:environment)
 
     let rec put_priorities_term v
       = match v with
-            | Angel _ | Daimon _ | Var _ -> v
+            | Angel t -> Angel t
+            | Daimon t -> Daimon t
+            | Var(x,t) -> Var(x,t)
             | App(u1,u2) -> App(put_priorities_term u1, put_priorities_term u2)
             | Sp(s,_) -> s.bot
             | Const(c,_,t) ->

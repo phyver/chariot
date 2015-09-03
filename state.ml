@@ -50,8 +50,8 @@ type state =
         mutable depth: int                                  ;
         mutable bound: int                                  ;
 
-        mutable last_term: type_expression term option      ;
-        mutable last_explore: (priority,type_expression) unfolded_term option           ;  (* TODO: types??? *)
+        mutable last_term: typed_term option                ;
+        mutable last_explore: (unit,type_expression) unfolded_term option           ;  (* TODO: types??? *)
     }
 
 let current_state =

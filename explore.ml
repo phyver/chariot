@@ -45,7 +45,7 @@ open Typing
 open Rewrite
 open ComputeCaseStruct
 
-let rec head_to_explore (v:type_expression term) : ('p,'t) unfolded_term = match v with
+let rec head_to_explore (v:(empty,'p,type_expression) raw_term) : ('p,type_expression) unfolded_term = match v with
     | Angel t -> Angel t
     | Daimon t -> Daimon t
     | Var(x,t) -> Var(x,t)
@@ -56,7 +56,7 @@ let rec head_to_explore (v:type_expression term) : ('p,'t) unfolded_term = match
 
 let struct_nb = ref 0
 
-let rec term_to_explore_aux (env:environment) (v:type_expression term) : (priority,type_expression) unfolded_term
+let rec term_to_explore_aux (env:environment) (v:(empty,'p,type_expression) raw_term) : (unit,type_expression) unfolded_term
   = let t = type_of v in
     let hd,args = get_head v, get_args v in
      match t with
@@ -72,7 +72,7 @@ let rec term_to_explore_aux (env:environment) (v:type_expression term) : (priori
 let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (reduce env v)
 
 
-let rec unfold (env:environment) (p:int->bool) (v:(priority,type_expression) unfolded_term) : (priority,type_expression) unfolded_term
+let rec unfold (env:environment) (p:int->bool) (v:(unit,type_expression) unfolded_term) : (unit,type_expression) unfolded_term
  =  match v with
         | Angel _ | Daimon _ | Var _ | Proj _ | Const _ -> v
         | App(v1,v2) -> App(unfold env p v1, unfold env p v2)
@@ -81,7 +81,7 @@ let rec unfold (env:environment) (p:int->bool) (v:(priority,type_expression) unf
         | Sp(Folded(n,v),(Data(tname,_) as t)) when (p n) ->
                 let consts = get_type_constants env tname in
                 let fields = List.map (fun d ->
-                    let v = App(Proj(d,None,TVar "dummy"),v) in    (* FIXME: we can use dummy types because "rewrite_all" infers types again *)
+                    let v = App(Proj(d,(),TVar "dummy"),v) in    (* FIXME: we can use dummy types because "rewrite_all" infers types again *)
                     let arity = (get_constant_arity env d) - 1 in
                     let xs = List.map (fun n -> "x"^(string_of_sub n)) (range 1 arity) in
                     let v = app v (List.map (fun x -> Var(x,TVar "dummy")) xs) in

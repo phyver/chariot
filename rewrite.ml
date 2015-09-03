@@ -43,7 +43,7 @@ open State
 open Pretty
 open Typing
 
-let rec equal_term (v1:type_expression term) (v2:type_expression term) : bool
+let rec equal_term (v1:(empty,'p,'t) raw_term) (v2:(empty,'p,'t) raw_term) : bool
   = match v1,v2 with
     | Var(x,_),Var(y,_) -> x=y
     | Angel _,Angel _ -> true
@@ -51,15 +51,16 @@ let rec equal_term (v1:type_expression term) (v2:type_expression term) : bool
     | App(v11,v12),App(v21,v22) -> (equal_term v11 v21) && (equal_term v12 v22)
     | Proj(d1,_,_),Proj(d2,_,_) -> d1=d2
     | Const(c1,_,_),Const(c2,_,_) -> c1=c2
+    | Sp(s,_),_ | _,Sp(s,_) -> assert false
     | _,_ -> false
 
 (* NOTE: the types in substerms don't mean much as they are unchanged by substitutions *)
-let unify_pattern (pattern,def:type_expression term*type_expression term) (v:type_expression term) : type_expression term
+let unify_pattern (pattern,def:(empty,'p,'t) raw_term*(empty,'p,'t) raw_term) (v:(empty,'p,'t) raw_term) : (empty,'p,'t) raw_term
   = (* the function defined by the pattern: this variable cannot be instantiated! *)
     (* FIXME: ugly *)
     let f = get_function_name pattern in
 
-    let rec unify_aux (eqs:(type_expression term*type_expression term) list) acc =
+    let rec unify_aux (eqs:((empty,'p,'t) raw_term*(empty,'p,'t) raw_term) list) acc =
         match eqs with
             | [] -> acc
             | (s,t)::eqs when equal_term s t -> unify_aux eqs acc
@@ -77,7 +78,7 @@ let unify_pattern (pattern,def:type_expression term*type_expression term) (v:typ
     subst_term sigma def
 
 (* NOTE: very inefficient *)
-let rewrite_all (env:environment) (v:type_expression term) : type_expression term
+let rewrite_all (env:environment) (v:(empty,'p,'t) raw_term) : (empty,'p,'t) raw_term
   =
     (* NOTE: types aren't used during computation, but the type is infered
      * again once the normal form is reached.
@@ -88,7 +89,7 @@ let rewrite_all (env:environment) (v:type_expression term) : type_expression ter
 
     (* look for the first clause that can be used to rewrite u
      * the boolean in the result indicates if a reduction was made *)
-    let rec rewrite_first_clause (v:type_expression term) clauses : type_expression term =
+    let rec rewrite_first_clause (v:(empty,'p,'t) raw_term) clauses : (empty,'p,'t) raw_term =
         match clauses with
             | [] -> v
             | clause::clauses ->
@@ -100,7 +101,7 @@ let rewrite_all (env:environment) (v:type_expression term) : type_expression ter
                     with UnificationError _ -> rewrite_first_clause v clauses
                 end
     and
-      rewrite (v:type_expression term) : type_expression term
+      rewrite (v:(empty,'p,'t) raw_term) : (empty,'p,'t) raw_term
         = match v with
           | Var(f,_) -> (try rewrite_first_clause v (get_function_clauses env f)
                          with Not_found -> v)

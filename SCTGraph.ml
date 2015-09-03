@@ -102,7 +102,7 @@ let collapse_graph b d graph
  * in argument position... *)
 let callgraph_from_definitions
   (env:environment)
-  (functions : (var_name * type_expression * type_expression function_clause list * 'a) list)
+  (functions : (var_name * type_expression * function_clause list * 'a) list)
   : call_graph
   =
     let function_names = List.map (function f,_,_,_ -> f) functions
@@ -131,7 +131,7 @@ let callgraph_from_definitions
             | Sp(s,_),_ -> s.bot
     in
 
-    let rec process_clause graph (lhs,rhs:type_expression term * type_expression term)
+    let rec process_clause graph (lhs,rhs:priority_term * priority_term)
       : call_graph
       =
         let params = extract_params lhs
@@ -143,7 +143,7 @@ let callgraph_from_definitions
         let caller = fst lhs
         in
 
-        let rec process_arg (p:type_expression term)
+        let rec process_arg (p:priority_term)
           : approx_term
           = match get_head p,get_args p with
                 | Var(x,t),_ when List.mem x params -> Var(x,())
@@ -169,7 +169,7 @@ let callgraph_from_definitions
                 | App _,_ -> assert false
         in
 
-        let rec process_rhs (graph:call_graph) (rhs:type_expression term) (calling_context:approx_term list)
+        let rec process_rhs (graph:call_graph) (rhs:priority_term) (calling_context:approx_term list)
           : call_graph
           =
               match get_head rhs, get_args rhs with

@@ -97,7 +97,7 @@ let rec
         (ss:'o -> 'a -> string)         (* to process Sp(...) terms *)
         (sp:'p -> string)               (* to process 'p parameters *)
         (st:'t -> string)               (* to process 't parameters *)
-        (v:('a,priority,'t) raw_term)
+        (v:('a,'p,'t) raw_term)
     : string
   = try string_of_term_int o ss sp st false v   with Invalid_argument "string_of_term_int" ->
     try string_of_term_list o ss sp st false v  with Invalid_argument "string_of_term_list" ->
@@ -125,7 +125,7 @@ let rec
     end
 and
   (* same function as above, but adds parenthesis when the argument is not atomic *)
-  string_of_raw_term_paren (o:'o) (ss:'o -> 'a -> string) sp st (v:('a,priority,'t) raw_term) =
+  string_of_raw_term_paren (o:'o) (ss:'o -> 'a -> string) sp st (v:('a,'p,'t) raw_term) =
     try string_of_term_int o ss sp st true v with Invalid_argument "string_of_term_int" ->
     try string_of_term_list o ss sp st true v with Invalid_argument "string_of_term_list" ->
     try string_of_term_tuple o ss sp st v with Invalid_argument "string_of_term_tuple" ->
@@ -134,7 +134,7 @@ and
         else ("(" ^ (string_of_raw_term o ss sp st v) ^ ")")
 and
   (* try showing the term as an integer *)
-  string_of_term_int (o:'o) (ss:'o -> 'a -> string) sp st (p:bool) (v:('a,priority,'t) raw_term) =
+  string_of_term_int (o:'o) (ss:'o -> 'a -> string) sp st (p:bool) (v:('a,'p,'t) raw_term) =
     let rec aux n v =
         match v with
         | Const("Zero",_,_) -> n,None
@@ -153,7 +153,7 @@ and
 
 and
   (* try showing the term as a list *)
-  string_of_term_list (o:'o) (ss:'o -> 'a -> string) sp st (p:bool) (v:('a,priority,'t) raw_term) =
+  string_of_term_list (o:'o) (ss:'o -> 'a -> string) sp st (p:bool) (v:('a,'p,'t) raw_term) =
     let rec aux l v =
         match v with
         | Const("Nil",_,_) -> l,None
@@ -171,7 +171,7 @@ and
                               else String.concat "::" (List.map (string_of_raw_term_paren o ss sp st) (List.rev l)) ^ "::" ^ (string_of_raw_term_paren o ss sp st v)
 and
   (* try showing the term as a tuple *)
-  string_of_term_tuple (o:'o) (ss:'o -> 'a -> string) sp st (u:('a,priority,'t) raw_term) =
+  string_of_term_tuple (o:'o) (ss:'o -> 'a -> string) sp st (u:('a,'p,'t) raw_term) =
     if not (option "show_tuples")
     then raise (Invalid_argument "string_of_term_tuple")
     else
@@ -267,7 +267,7 @@ and
   string_of_unfolded_term indent v
   = string_of_raw_term indent
                        string_of_unfolded_struct
-                       string_of_priority
+                       (k "")
                        (k "")
                        v
 

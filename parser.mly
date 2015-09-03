@@ -53,8 +53,13 @@ open TypeDefs
 open StructPattern
 
 (* transform a struct_term without structs into a unit term *)
-let struct_to_term v
+let parsed_to_plain v
   = map_raw_term (fun _ -> error "no structure allowed for this command") id id v
+let parsed_to_sct v
+  = let v = parsed_to_plain v in
+    let v = map_raw_term (fun s->s.bot) (k None) id v in
+    let v = pattern_to_approx_term v in
+    term_to_sct_pattern v
 
 (* transform a list of types into the product *)
 let list_to_product (l:type_expression list) : type_expression
@@ -62,10 +67,10 @@ let list_to_product (l:type_expression list) : type_expression
     Data("prod_" ^ (string_of_int n), l)
 
 (* transforms an integer into a term by adding Succ constructors in front of u *)
-let rec int_to_term (n:int) (u:(priority,unit) struct_term) : (priority,unit) struct_term
+let rec int_to_term (n:int) (u:(unit,unit) struct_term) : (unit,unit) struct_term
   = if n=0
     then u
-    else int_to_term (n-1) (App(Const("Succ",None,()),u))
+    else int_to_term (n-1) (App(Const("Succ",(),()),u))
 
 (* transform an addition u+v into either an application of the "add" function or, when v is an natural number, into Succ(... Succ (u) *)
 let process_addition u v
@@ -79,15 +84,15 @@ let process_addition u v
     with Exit -> App(App(Var("add",()),u),v)
 
 (* tranform a list of terms into the corresponding list by adding Cons constructors in front of u *)
-let rec list_to_term (l:(priority,unit) struct_term list) (u:(priority,unit) struct_term) : (priority,unit) struct_term
+let rec list_to_term (l:(unit,unit) struct_term list) (u:(unit,unit) struct_term) : (unit,unit) struct_term
   = match l with
         | [] -> u
-        | v::l -> list_to_term l (App(App(Const("Cons",None,()),v),u))
+        | v::l -> list_to_term l (App(App(Const("Cons",(),()),v),u))
 
 (* tranform a list of terms into the corresponding tuple *)
-let tuple_term (l:(priority,unit) struct_term list) : (priority,unit) struct_term =
+let tuple_term (l:(unit,unit) struct_term list) : (unit,unit) struct_term =
     let n = List.length l in
-    app (Const("Tuple_" ^ (string_of_int n),None,())) l
+    app (Const("Tuple_" ^ (string_of_int n),(),())) l
 
 
 (* a reference to number dummy arguments in terms *) (*FIXME: necessary??? *)
@@ -158,16 +163,16 @@ let cmd_show_help ()
         "";
     ]
 
-let cmd_show_type (term:(priority,unit) struct_term) : unit
-  = let term = struct_to_term term in
+let cmd_show_type (term:(unit,unit) struct_term) : unit
+  = let term = parsed_to_plain term in
     let t,term,context = infer_type_term current_state.env term in
     msg "%s" (string_of_typed_term term);
     if not (context = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context)
 
 (* reduce a term and show the result *)
-let cmd_reduce (term:(priority,unit) struct_term) : unit
-  = let term = struct_to_term term in
+let cmd_reduce (term:(unit,unit) struct_term) : unit
+  = let term = parsed_to_plain term in
     let t,term,context = infer_type_term current_state.env term in
     msg "term: %s" (string_of_plain_term term);
     (* let term = rewrite_all current_state.env term in *)
@@ -187,8 +192,8 @@ let cmd_show_last ()
             msg "last result: %s" (string_of_plain_term t)
 
 (* unfold a term by expanding lazy subterms up-to a given depth, and show the result *)
-let cmd_unfold_initial (term:(priority,unit) struct_term) (depth:int) : unit
-  = let term = struct_to_term term in
+let cmd_unfold_initial (term:(unit,unit) struct_term) (depth:int) : unit
+  = let term = parsed_to_plain term in
     let t,term,context = infer_type_term current_state.env term in
     let term = unfold_to_depth current_state.env term depth in
     msg "%s" (string_of_unfolded_term term);
@@ -217,7 +222,6 @@ let cmd_unfold (l:int list) : unit
         in
         current_state.last_explore <- Some t;
         msg "%s" (string_of_unfolded_term t)
-
     with Exit -> errmsg "There is no term to unfold..."
 
 
@@ -237,9 +241,9 @@ let test_unify_type t1 t2 =
     msg "          via   %s" (string_of_list "  ;  " (function x,t -> "'"^x^" := "^(string_of_type t)) sigma);
     print_newline()
 
-let test_unify_term pattern term
-  = let term = struct_to_term term in
-    let pattern = struct_to_term pattern in
+let test_unify_term (pattern:parsed_term) (term:parsed_term) =
+    let term = parsed_to_plain term in
+    let pattern = parsed_to_plain pattern in
     let _,pattern,_ = infer_type_term current_state.env pattern in
     let _,term,_ = infer_type_term current_state.env term in
     msg "unifying pattern   %s" (string_of_plain_term pattern);
@@ -249,20 +253,20 @@ let test_unify_term pattern term
     print_newline()
 
 let test_compose l1 r1 l2 r2 =
-    let l1 = term_to_sct_pattern (pattern_to_approx_term (struct_to_term l1)) in
-    let r1 = term_to_sct_pattern (pattern_to_approx_term (struct_to_term r1)) in
-    let l2 = term_to_sct_pattern (pattern_to_approx_term (struct_to_term l2)) in
-    let r2 = term_to_sct_pattern (pattern_to_approx_term (struct_to_term r2)) in
+    let l1 = parsed_to_sct l1 in
+    let r1 = parsed_to_sct r1 in
+    let l2 = parsed_to_sct l2 in
+    let r2 = parsed_to_sct r2 in
     msg "  %s    o    %s" (string_of_sct_clause (l1,r1)) (string_of_sct_clause (l2,r2));
     let l,r = collapsed_compose current_state.bound current_state.depth (l1,r1) (l2,r2) in
     msg "          =  %s" (string_of_sct_clause (l,r));
     print_newline()
 
 let test_compare l1 r1 l2 r2 =
-    let l1 = term_to_sct_pattern (pattern_to_approx_term (struct_to_term l1)) in
-    let r1 = term_to_sct_pattern (pattern_to_approx_term (struct_to_term r1)) in
-    let l2 = term_to_sct_pattern (pattern_to_approx_term (struct_to_term l2)) in
-    let r2 = term_to_sct_pattern (pattern_to_approx_term (struct_to_term r2)) in
+    let l1 = parsed_to_sct l1 in
+    let r1 = parsed_to_sct r1 in
+    let l2 = parsed_to_sct l2 in
+    let r2 = parsed_to_sct r2 in
     let l1,r1 = collapse_clause current_state.bound current_state.depth (l1,r1) in
     let l2,r2 = collapse_clause current_state.bound current_state.depth (l2,r2) in
     msg "  %s    ≥    %s" (string_of_sct_clause (l1,r1)) (string_of_sct_clause (l2,r2));
@@ -271,8 +275,8 @@ let test_compare l1 r1 l2 r2 =
     else msg "        FALSE";
     print_newline()
 
-let test_collapse p =
-    let p = term_to_sct_pattern (pattern_to_approx_term (struct_to_term p)) in
+let test_collapse (p:parsed_term) =
+    let p = parsed_to_sct p in
     let q = collapse_pattern current_state.depth p in
     let q = collapse_weight_in_pattern current_state.bound q in
     msg "  collapse of   %s   is   %s" (string_of_sct_pattern p) (string_of_sct_pattern q);
@@ -305,8 +309,8 @@ let test_collapse p =
 %type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
 %type <type_name * (type_expression list) * (const_name * type_expression) list> type_def
 
-%type <var_name * type_expression option * ((priority,unit) struct_term * (priority,unit) struct_term) list> function_def
-%type <(var_name * type_expression option * ((priority,unit) struct_term * (priority,unit) struct_term) list ) list> function_defs
+%type <var_name * type_expression option * (parsed_term * parsed_term) list> function_def
+%type <(var_name * type_expression option * (parsed_term * parsed_term) list ) list> function_defs
 
 %%
 
@@ -344,9 +348,9 @@ command:
     | CMDUNFOLD term COMMA INT                          { fun () -> cmd_unfold_initial $2 $4 }
     | GT int_range                                      { fun () -> cmd_unfold $2 }
 
-    | TESTUNIFYTYPES type_expression AND type_expression                                 { fun () -> test_unify_type $2 $4 }
-    | TESTUNIFYTERMS term AND term                                                    { fun () -> test_unify_term $2 $4 }
-    | TESTCOLLAPSE term                                                                  { fun () -> test_collapse $2 }
+    | TESTUNIFYTYPES type_expression AND type_expression                 { fun () -> test_unify_type $2 $4 }
+    | TESTUNIFYTERMS term AND term                                       { fun () -> test_unify_term $2 $4 }
+    | TESTCOLLAPSE term                                                  { fun () -> test_collapse $2 }
     | TESTCOMPOSE term DOUBLEARROW term AND term DOUBLEARROW term        { fun () -> test_compose $2 $4 $6 $8 }
     | TESTCOMPARE term DOUBLEARROW term AND term DOUBLEARROW term        { fun () -> test_compare $2 $4 $6 $8 }
 
@@ -453,16 +457,16 @@ term:
 
 atomic_term:
     | LPAR term RPAR                        { $2 }
-    | atomic_term DOT IDU                   { App(Proj($3,None,()), $1) }
+    | atomic_term DOT IDU                   { App(Proj($3,(),()), $1) }
     | IDL                                   { Var($1,()) }
     | DUMMY                                 { dummy() }
-    | IDU                                   { Const($1,None,()) }
+    | IDU                                   { Const($1,(),()) }
     | ANGEL                                 { Angel() }
     | DAIMON                                { Daimon() }
 
-    | INT                                   { int_to_term $1 (Const("Zero",None,())) }
-    | term_list                             { list_to_term (List.rev $1) (Const("Nil",None,())) }
-    | atomic_term DOUBLECOLON atomic_term   { App(App(Const("Cons",None,()),$1),$3) }
+    | INT                                   { int_to_term $1 (Const("Zero",(),())) }
+    | term_list                             { list_to_term (List.rev $1) (Const("Nil",(),())) }
+    | atomic_term DOUBLECOLON atomic_term   { App(App(Const("Cons",(),()),$1),$3) }
     | tuple                                 { $1 }
     | LCBRAC struct_term RCBRAC             { Sp(Struct $2, ()) }
 

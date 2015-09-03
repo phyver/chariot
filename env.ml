@@ -105,7 +105,8 @@ type 't case_struct_tree =
     | CSLeaf of 't
     | CSCase of var_name * (const_name * (var_name list * 't case_struct_tree)) list
     | CSStruct of (const_name * ((var_name list) * 't case_struct_tree)) list
-type case_struct_term = (empty,priority,type_expression) raw_term case_struct_tree
+(* definitions of functions with cases and structs *)
+type case_struct_def = var_name list * (empty,unit,type_expression) raw_term case_struct_tree
 
 
 (* SCT terms *)
@@ -131,26 +132,25 @@ type approx_term = (approximation,priority,unit) raw_term
 
 
 (* terms from the parser *)
-type parsed_term = (priority,unit) struct_term      (* TODO: replace priority by unit *)
+type parsed_term = (unit,unit) struct_term
 
 (* terms after removal of structures *)
-type plain_term = (empty,priority,unit) raw_term  (* TODO: replace priority by unit *)
+type plain_term = (empty,unit,unit) raw_term
 
 (* terms after typing *)
-type typed_term = (empty,priority,type_expression) raw_term  (* TODO: replace priority by unit *)
+type typed_term = (empty,unit,type_expression) raw_term
 
 (* terms after priorities have been added *)
 type priority_term = (empty,priority,type_expression) raw_term
 
 
-
-type 't term = (empty,priority,'t) raw_term
-type 't term_substitution = (var_name * 't term) list
+(* type 't term = (empty,priority,'t) raw_term *)
+(* type 't term_substitution = (var_name * 't term) list *)
 
 type bloc_nb = int      (* number of the block of mutual function definitions *)
 
 (* TODO: use type 't pattern = var_name * 't term list *)
-type 't function_clause = 't term * 't term     (* clause of a function definition *)
+type function_clause = priority_term * priority_term     (* clause of a function definition *)
 
 
 (* type for the environment *)
@@ -170,7 +170,7 @@ type environment = {
     functions: (var_name *
                 bloc_nb *
                 type_expression *
-                type_expression function_clause list *
-                (var_name list * type_expression term case_struct_tree)) list
+                function_clause list *
+                case_struct_def) list
     }
 

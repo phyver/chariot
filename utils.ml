@@ -270,7 +270,7 @@ let pattern_to_approx_term (v:(empty,'p,'t) raw_term) : (approximation,'p,unit) 
 
 
 (* apply a substitution on a term *)
-let rec subst_term (sigma:'t term_substitution) (v:'t term) : 't term
+let rec subst_term sigma (v:('s,'p,'t) raw_term) : ('s,'p,'t) raw_term
   = match v with
     | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
     | Angel t -> Angel t
@@ -278,7 +278,7 @@ let rec subst_term (sigma:'t term_substitution) (v:'t term) : 't term
     | Const(c,p,t) -> Const(c,p,t)
     | Proj(d,p,t) -> Proj(d,p,t)
     | App(v1,v2) -> App(subst_term sigma v1, subst_term sigma v2)
-    | Sp(v,t) -> Sp(v,t)
+    | Sp(v,t) -> Sp(v,t)    (* TODO: Invalid_argument??? *)
 
 (* apply a substitution on a type *)
 let rec subst_type (sigma:type_substitution) (t:type_expression) : type_expression

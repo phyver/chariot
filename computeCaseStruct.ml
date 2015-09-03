@@ -44,9 +44,9 @@ open Pretty
 open Typing
 
 (* Map instance for meoizing computation *)
-module Memo = Map.Make (struct type t=type_expression term let compare=compare end)
+module Memo = Map.Make (struct type t=(empty,unit,type_expression) raw_term let compare=compare end)
 
-let rec reduce env (v:type_expression term) : type_expression term
+let rec reduce env (v:(empty,unit,type_expression) raw_term) : (empty,unit,type_expression) raw_term
   =
     let counter = ref 0 in
     let table = ref Memo.empty in
@@ -60,10 +60,10 @@ let rec reduce env (v:type_expression term) : type_expression term
 
     (* NOTE: sigma should only contain terms in normal form *)
     let rec rewrite_case_struct
-        (sigma:type_expression term_substitution)
-        (rest:type_expression term list)
-        (cs:type_expression term case_struct_tree)
-      : type_expression term case_struct_tree * type_expression term list
+        sigma
+        (rest:(empty,unit,type_expression) raw_term list)
+        (cs:(empty,unit,type_expression) raw_term case_struct_tree)
+      : (empty,unit,type_expression) raw_term case_struct_tree * (empty,unit,type_expression) raw_term list
       =
         match cs with
             | CSFail -> error "match failure"
@@ -92,7 +92,7 @@ let rec reduce env (v:type_expression term) : type_expression term
     in
 
     let rec
-    rewrite (v:type_expression term) : type_expression term
+    rewrite (v:(empty,unit,type_expression) raw_term) : (empty,unit,type_expression) raw_term
       =
         (* debug "rewrite %s" (string_of_plain_term v); *)
         try
@@ -129,7 +129,7 @@ let rec reduce env (v:type_expression term) : type_expression term
             result
     and
 
-    nf (v:type_expression term) : type_expression term
+    nf (v:(empty,unit,type_expression) raw_term) : (empty,unit,type_expression) raw_term
       =
         let n = !counter in
         let v = rewrite v in

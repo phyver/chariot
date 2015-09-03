@@ -364,8 +364,8 @@ let infer_type_clause (env:environment)
 
 let infer_type_defs
     (env:environment)
-    (defs:(var_name * type_expression option * ('t term * 't term) list) list)
-    : (var_name * type_expression * (type_expression term * type_expression term) list) list
+    (defs:(var_name * type_expression option * ((empty,'p,'t) raw_term * (empty,'p,'t) raw_term) list) list)
+    : (var_name * type_expression * ((empty,'p,type_expression) raw_term * (empty,'p,type_expression) raw_term) list) list
   =
     reset_fresh_variable_generator [];
 

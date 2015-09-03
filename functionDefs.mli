@@ -41,5 +41,5 @@ open StructPattern
 
 val process_function_defs :
     environment ->
-    (var_name * type_expression option * ((priority,unit) struct_term * (priority,unit) struct_term) list) list ->
+    (var_name * type_expression option * ((unit,unit) struct_term * (unit,unit) struct_term) list) list ->
         environment
