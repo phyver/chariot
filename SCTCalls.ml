@@ -224,8 +224,6 @@ let collapse_pattern (depth:int) (pattern:sct_pattern) : sct_pattern
             | Proj _,[] -> assert false
             | Sp(AppRes _,_),_ -> assert false
             | App _,_ -> assert false
-
-
     in
 
     (* collapse the pattern of a definition at a given depth *)
@@ -245,6 +243,8 @@ let collapse_pattern (depth:int) (pattern:sct_pattern) : sct_pattern
     let collapse dp (f,ps:sct_pattern) : sct_pattern
       = f,collapse_aux dp ps
     in
+
+    (* debug "collapse_pattern = %s" (string_of_sct_pattern pattern); *)
 
     collapse depth pattern
 

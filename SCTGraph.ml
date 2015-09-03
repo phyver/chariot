@@ -179,7 +179,7 @@ let callgraph_from_definitions
                             | Data _ | TVar _ ->
                                 let _args = List.map process_arg args
                                 in
-                                let call = lhs, (called,(_args@calling_context))
+                                let call = lhs, app_all (called,_args) calling_context
                                 in
                                 let graph = CallGraph.add (caller,called) (add_call_set call (try CallGraph.find (caller,called) graph with Not_found -> ClauseSet.empty)) graph
                                 in
