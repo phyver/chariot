@@ -35,6 +35,13 @@
 >> the definition for _aux₉ is complete
 >> the definitions _aux₉, _aux₈, _aux₇, _aux₁₀, s are provably correct
 
+>> coinductive type stream was succesfully defined
+>> Typing for _aux₁₂, _aux₁₁, map successful
+>> the definition for map is complete
+>> the definition for _aux₁₁ is complete
+>> the definition for _aux₁₂ is complete
+>> the definitions _aux₁₂, _aux₁₁, map are provably correct
+
 >> functions in environment:
 val
    s01 : struct_2(nat,nat)
@@ -94,4 +101,15 @@ and
    _aux₉ : 'a → 'b → 'c → struct_2(struct_2('a,'b),'c)
     | (_aux₉ x y z).Fst⁴ = _aux₁₀ x y
     | (_aux₉ x y z).Snd⁴ = z
+
+val
+   map : ('a → 'b) → stream('a) → stream('b)
+    | map x₁ x₂ = _aux₁₁ x₁ x₂.Head² x₂.Tail²
+and
+   _aux₁₁ : ('a → 'b) → 'a → stream('a) → stream('b)
+    | _aux₁₁ f x s = _aux₁₂ f s x
+and
+   _aux₁₂ : ('a → 'b) → stream('a) → 'a → stream('b)
+    | (_aux₁₂ f s x).Head² = f x
+    | (_aux₁₂ f s x).Tail² = map f s
 

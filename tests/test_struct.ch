@@ -23,5 +23,10 @@ val h { Fst = x ; Snd = { Fst = y ; Snd = z } } = Tuple_2 (Tuple_2 x y) z
 val s { Fst = x ; Snd = { Fst = y ; Snd = z } } = { Fst = { Fst = x ; Snd = y } ; Snd = z }
 
 
+codata stream('x) where Head : stream('x) -> 'x | Tail : stream('x) -> stream('x)
+
+val map f { Head = x ; Tail = s } = { Head = f x ; Tail = map f s }
+
+
 :show functions
 
