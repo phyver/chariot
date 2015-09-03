@@ -147,7 +147,7 @@ let remove_match_struct (clauses:((unit,'t) struct_term*(unit,'t) struct_term) l
                 cl::(process_clause cl')
     in
 
-    List.concat (List.map process_clause clauses)
+    uniq (List.concat (List.map process_clause clauses))
 
 
 
@@ -207,7 +207,7 @@ let remove_term_struct (clauses:(plain_term*(unit,'t) struct_term) list)
                 (lhs,rhs)::(List.concat (List.map process_clause new_clauses))
     in
 
-    List.concat (List.map process_clause clauses)
+    uniq (List.concat (List.map process_clause clauses))
 
 
 
