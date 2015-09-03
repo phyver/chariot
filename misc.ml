@@ -84,6 +84,14 @@ let rec merge_uniq (l1:'a list) (l2:'a list) : 'a list
         | x1::_,x2::l2 when x1>x2 -> x2::(merge_uniq l1 l2)
         | x1::l1,x2::l2 (* when x1=x2 *) -> x1::(merge_uniq l1 l2)
 
+(* intersection of two sorted uniq lists *)
+let rec inter_uniq (l1:'a list) (l2:'a list) : 'a list
+  = match l1,l2 with
+        | [],l | l,[] -> []
+        | x1::l1,x2::_ when x1<x2 -> (inter_uniq l1 l2)
+        | x1::_,x2::l2 when x1>x2 -> (inter_uniq l1 l2)
+        | x1::l1,x2::l2 (* when x1=x2 *) -> x1::(inter_uniq l1 l2)
+
 (* look for a value with at least two occurences *)
 let find_dup (l:'a list) : 'a option
   = let rec find_dup_aux l = match l with

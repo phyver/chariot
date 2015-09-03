@@ -155,25 +155,25 @@ let remove_match_struct (clauses:((unit,'t) struct_term*(unit,'t) struct_term) l
 
 
 
-let remove_term_struct (functions:var_name list) (clauses:(plain_term*(unit,'t) struct_term) list)
+let remove_term_struct (clauses:(plain_term*(unit,'t) struct_term) list)
   : (plain_term*plain_term) list
   =
 
     let rec extract_variables_from_struct (v:(unit,'t) struct_term) : var_name list
       =
         match v with
-            | Var(x,()) -> if List.mem x functions then [] else [x]
+            | Var(x,()) -> [x]
             | Angel _ | Daimon _ | Const _ | Proj _ -> []
             | Sp(Struct fields,_) ->
                     List.fold_left (fun r dv -> merge_uniq r (extract_variables_from_struct (snd dv))) [] fields
             | App(v1,v2) -> merge_uniq (extract_variables_from_struct v1) (extract_variables_from_struct v2)
     in
 
-    let rec process_term (v:(unit,'t) struct_term)
+    let rec process_term xs (v:(unit,'t) struct_term)
       : plain_term * (plain_term * (unit,'t) struct_term) list
       =
         let args,new_clauses =
-            let tmp = List.map process_term (get_args v) in
+            let tmp = List.map (process_term xs) (get_args v) in
             List.map fst tmp , List.concat (List.map snd tmp)
         in
 
@@ -182,7 +182,7 @@ let remove_term_struct (functions:var_name list) (clauses:(plain_term*(unit,'t) 
                 assert (args=[]);
                 let f_aux = new_aux () in
                 let params = extract_variables_from_struct v in
-                debug "params: %s" (string_of_list ", " id params);
+                let params = inter_uniq params xs in
                 let new_f = app f_aux (List.map (fun x -> Var(x,())) params) in
                 let new_clauses = List.map (function d,v -> App(  Proj(d,(),()) , new_f) , v) fields in
                 new_f , new_clauses
@@ -197,7 +197,8 @@ let remove_term_struct (functions:var_name list) (clauses:(plain_term*(unit,'t) 
 
     let rec process_clause (lhs,rhs:(plain_term*(unit,'t) struct_term))
       : (plain_term*plain_term) list
-      = match process_term rhs with
+      = let xs = extract_term_variables lhs in
+        match process_term xs rhs with
             | rhs,[] ->
                 debug "finished with %s => %s\n" (string_of_plain_term lhs) (string_of_plain_term rhs);
                 [lhs,rhs]
@@ -216,13 +217,10 @@ let remove_struct_defs (defs:(var_name * type_expression option * ((unit,'t) str
   : (var_name * type_expression option * (plain_term*plain_term) list) list
   =
     let types = List.map (function f,t,_ -> f,t) defs in
-    let functions = List.map (function f,_,_ -> f) defs in
-
-    debug "functions: %s" (string_of_list ", " id functions); 
 
     let clauses = List.concat (List.map (function f,_,clauses -> clauses) defs) in
     let new_clauses = remove_match_struct clauses in
-    let new_clauses = remove_term_struct functions new_clauses in
+    let new_clauses = remove_term_struct new_clauses in
 
     let new_defs = List.map (function lhs,rhs -> get_function_name lhs, (lhs,rhs)) new_clauses in
     let new_defs =

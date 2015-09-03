@@ -207,21 +207,11 @@ let rec extract_datatypes_from_typed_term (u:(empty,'p,type_expression) raw_term
         | Sp(s,_) -> s.bot
 
 let rec extract_term_variables (v:(empty,'p,'t) raw_term) : var_name list
-  = let rec extract_term_variables_aux v
-      = match v with
-            | Angel _ | Daimon _ | Const _ | Proj _ -> []
-            | Var(x,_) -> [x]
-            | App(v1,v2) -> (extract_term_variables_aux v1) @ (extract_term_variables_aux v2)
-            | Sp(v,_) -> v.bot
-    in uniq (extract_term_variables_aux v)
-
-(* TODO this function and the previous one could be merged... *)
-(* let rec extract_pattern_variables (v:pattern) : var_name list *)
-let rec extract_pattern_variables (v:(empty,'p,'t) raw_term) : var_name list
-  = match get_head v,get_args v with
-        | Var(f,_),args -> List.concat (List.map extract_term_variables args)
-        | Proj _,v::args -> (extract_pattern_variables v) @ (List.concat (List.map extract_term_variables args))
-        | _,_ -> assert false
+  = match v with
+        | Angel _ | Daimon _ | Const _ | Proj _ -> []
+        | Var(x,_) -> [x]
+        | App(v1,v2) -> merge_uniq (extract_term_variables v1) (extract_term_variables v2)
+        | Sp(v,_) -> v.bot
 
 let rec map_raw_term (f:'a1 -> 'a2) (g:'p1 -> 'p2) (h:'t1 -> 't2) (v:('a1,'p1,'t1) raw_term) : ('a2,'p2,'t2) raw_term
   = match v with

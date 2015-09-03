@@ -116,7 +116,7 @@ let check_clause env (funs: var_name list) (f:var_name) (lhs:(empty,'p,'t) raw_t
     if not (_f = f) then error (fmt "function names %s and %s do not match" f _f);
 
     (* get variables *)
-    let variables = extract_pattern_variables lhs in
+    let variables = extract_term_variables lhs in
     (match find_dup variables with
         | None -> ()
         | Some(x) -> error (fmt "pattern is not linear: variable %s appears more than once" x));
