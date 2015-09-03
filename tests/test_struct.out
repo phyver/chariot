@@ -12,35 +12,41 @@
 >> the definition for _aux₃ is complete
 >> the definitions _aux₃, _aux₂, s012 are provably correct
 
+>> Typing for _aux₄, s0101 successful
+>> the definition for s0101 is complete
+>> the definition for _aux₄ is complete
+>> the definitions _aux₄, s0101 are provably correct
+
+** error: pattern is not linear: variable x appears more than once
 >> Typing for f successful
 >> the definition for f is complete
 >> the definition f is provably correct
 
->> Typing for _aux₄, g successful
+>> Typing for _aux₆, g successful
 >> the definition for g is complete
->> the definition for _aux₄ is complete
->> the definitions _aux₄, g are provably correct
-
->> Typing for _aux₆, _aux₅, h successful
->> the definition for h is complete
->> the definition for _aux₅ is complete
 >> the definition for _aux₆ is complete
->> the definitions _aux₆, _aux₅, h are provably correct
+>> the definitions _aux₆, g are provably correct
 
->> Typing for _aux₉, _aux₈, _aux₇, _aux₁₀, s successful
->> the definition for s is complete
->> the definition for _aux₁₀ is complete
+>> Typing for _aux₈, _aux₇, h successful
+>> the definition for h is complete
 >> the definition for _aux₇ is complete
 >> the definition for _aux₈ is complete
->> the definition for _aux₉ is complete
->> the definitions _aux₉, _aux₈, _aux₇, _aux₁₀, s are provably correct
+>> the definitions _aux₈, _aux₇, h are provably correct
 
->> coinductive type stream was succesfully defined
->> Typing for _aux₁₂, _aux₁₁, map successful
->> the definition for map is complete
+>> Typing for _aux₉, _aux₁₂, _aux₁₁, _aux₁₀, s successful
+>> the definition for s is complete
+>> the definition for _aux₁₀ is complete
 >> the definition for _aux₁₁ is complete
 >> the definition for _aux₁₂ is complete
->> the definitions _aux₁₂, _aux₁₁, map are provably correct
+>> the definition for _aux₉ is complete
+>> the definitions _aux₉, _aux₁₂, _aux₁₁, _aux₁₀, s are provably correct
+
+>> coinductive type stream was succesfully defined
+>> Typing for _aux₁₄, _aux₁₃, map successful
+>> the definition for map is complete
+>> the definition for _aux₁₃ is complete
+>> the definition for _aux₁₄ is complete
+>> the definitions _aux₁₄, _aux₁₃, map are provably correct
 
 >> functions in environment:
 val
@@ -64,52 +70,60 @@ and
     | _aux₃.Snd² = 2
 
 val
+   s0101 : struct_2(struct_2(nat,nat),struct_2(nat,nat))
+    | s0101 = _aux₄
+and
+   _aux₄ : struct_2(struct_2(nat,nat),struct_2(nat,nat))
+    | _aux₄.Fst⁴ = s01
+    | _aux₄.Snd⁴ = s01
+
+val
    f : struct_2('a,'b) → prod_2('a,'b)
     | f p = Tuple_2¹ p.Fst² p.Snd²
 
 val
    g : struct_2('a,'b) → prod_2('a,'b)
-    | g x₁ = _aux₄ x₁.Fst² x₁.Snd²
+    | g x₁ = _aux₆ x₁.Fst² x₁.Snd²
 and
-   _aux₄ : 'a → 'b → prod_2('a,'b)
-    | _aux₄ x y = Tuple_2¹ x y
+   _aux₆ : 'a → 'b → prod_2('a,'b)
+    | _aux₆ x y = Tuple_2¹ x y
 
 val
    h : struct_2('a,struct_2('b,'c)) → prod_2(prod_2('a,'b),'c)
-    | h x₁ = _aux₅ x₁.Fst⁴ x₁.Snd⁴
+    | h x₁ = _aux₇ x₁.Fst⁴ x₁.Snd⁴
 and
-   _aux₅ : 'a → struct_2('b,'c) → prod_2(prod_2('a,'b),'c)
-    | _aux₅ x₁ x₂ = _aux₆ x₁ x₂.Fst² x₂.Snd²
+   _aux₇ : 'a → struct_2('b,'c) → prod_2(prod_2('a,'b),'c)
+    | _aux₇ x₁ x₂ = _aux₈ x₁ x₂.Fst² x₂.Snd²
 and
-   _aux₆ : 'a → 'b → 'c → prod_2(prod_2('a,'b),'c)
-    | _aux₆ x y z = Tuple_2³ (Tuple_2¹ x y) z
+   _aux₈ : 'a → 'b → 'c → prod_2(prod_2('a,'b),'c)
+    | _aux₈ x y z = Tuple_2³ (Tuple_2¹ x y) z
 
 val
    s : struct_2('a,struct_2('b,'c)) → struct_2(struct_2('a,'b),'c)
-    | s x₁ = _aux₇ x₁.Fst⁴ x₁.Snd⁴
+    | s x₁ = _aux₉ x₁.Fst⁴ x₁.Snd⁴
 and
-   _aux₁₀ : 'a → 'b → struct_2('a,'b)
-    | (_aux₁₀ x y).Fst² = x
-    | (_aux₁₀ x y).Snd² = y
+   _aux₁₀ : 'a → 'b → 'c → struct_2(struct_2('a,'b),'c)
+    | _aux₁₀ x y z = _aux₁₁ x y z
 and
-   _aux₇ : 'a → struct_2('b,'c) → struct_2(struct_2('a,'b),'c)
-    | _aux₇ x₁ x₂ = _aux₈ x₁ x₂.Fst² x₂.Snd²
+   _aux₁₁ : 'a → 'b → 'c → struct_2(struct_2('a,'b),'c)
+    | (_aux₁₁ x y z).Fst² = _aux₁₂ x y
+    | (_aux₁₁ x y z).Snd⁴ = z
 and
-   _aux₈ : 'a → 'b → 'c → struct_2(struct_2('a,'b),'c)
-    | _aux₈ x y z = _aux₉ x y z
+   _aux₁₂ : 'a → 'b → struct_2('a,'b)
+    | (_aux₁₂ x y).Fst² = x
+    | (_aux₁₂ x y).Snd² = y
 and
-   _aux₉ : 'a → 'b → 'c → struct_2(struct_2('a,'b),'c)
-    | (_aux₉ x y z).Fst⁴ = _aux₁₀ x y
-    | (_aux₉ x y z).Snd⁴ = z
+   _aux₉ : 'a → struct_2('b,'c) → struct_2(struct_2('a,'b),'c)
+    | _aux₉ x₁ x₂ = _aux₁₀ x₁ x₂.Fst² x₂.Snd²
 
 val
    map : ('a → 'b) → stream('a) → stream('b)
-    | map x₁ x₂ = _aux₁₁ x₁ x₂.Head² x₂.Tail²
+    | map x₁ x₂ = _aux₁₃ x₁ x₂.Head² x₂.Tail²
 and
-   _aux₁₁ : ('a → 'b) → 'a → stream('a) → stream('b)
-    | _aux₁₁ f x s = _aux₁₂ f s x
+   _aux₁₃ : ('a → 'b) → 'a → stream('a) → stream('b)
+    | _aux₁₃ f x s = _aux₁₄ f s x
 and
-   _aux₁₂ : ('a → 'b) → stream('a) → 'a → stream('b)
-    | (_aux₁₂ f s x).Head² = f x
-    | (_aux₁₂ f s x).Tail² = map f s
+   _aux₁₄ : ('a → 'b) → stream('a) → 'a → stream('b)
+    | (_aux₁₄ f s x).Head² = f x
+    | (_aux₁₄ f s x).Tail² = map f s
 

@@ -2,6 +2,8 @@
 :set verbose 1
 :set allow_structs true
 
+:set continue_on_error true
+
 data nat where Zero : nat | Succ : nat -> nat
 
 data prod_2('a,'b) where Tuple_2 : 'a -> 'b -> prod_2('a,'b)
@@ -10,7 +12,8 @@ codata struct_2('a,'b) where Fst : struct_2('a,'b) -> 'a | Snd : struct_2('a,'b)
 
 val s01 = { Fst =  0 ; Snd = 1}
 val s012 = { Fst =  0 ; Snd = { Fst = 1 ; Snd = 2 } }
-
+val s0101 = { Fst = s01 ; Snd = s01 }
+val bad { Fst = x ; Snd = x } = ???
 
 val f : struct_2('a,'b) -> prod_2('a,'b)
   | f p = Tuple_2 p.Fst p.Snd
