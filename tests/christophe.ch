@@ -24,8 +24,7 @@ codata nuY('x) where
 
 -- X  |-->  mu Y . (X + Y)
 data muY('x) where
-    | MuY0 : 'x -> muY('x)
-    | MuY1 : muY('x) -> muY('x)
+    | MuY : plus('x,muY('x)) -> muY('x)
 
 
 ------------------------
@@ -36,7 +35,7 @@ data list1 where
 
 ------------------------
 -- nu X . mu Y . (X + Y)
--- infinite streams, with only finitely many consecutive 1s (constructor MuY1)
+-- infinite streams, with only finitely many consecutive 1s
 codata stream2 where
     | Unfold2 : stream2 -> muY(stream2)
 
@@ -60,10 +59,10 @@ val
     convert2 : stream2 -> stream(nat)
   | convert2 s = convert2_aux s.Unfold2
 and
-  | (convert2_aux (MuY0 s)).Head = 0
-  | (convert2_aux (MuY0 s)).Tail = convert2 s
-  | (convert2_aux (MuY1 s)).Head = 1
-  | (convert2_aux (MuY1 s)).Tail = convert2_aux s
+  | (convert2_aux (MuY (Cons0 s))).Head = 0
+  | (convert2_aux (MuY (Cons0 s))).Tail = convert2 s
+  | (convert2_aux (MuY (Cons1 s))).Head = 1
+  | (convert2_aux (MuY (Cons1 s))).Tail = convert2_aux s
 
 
 val
@@ -94,8 +93,8 @@ and
 val stream2_to_4 : stream2 -> stream4
   | stream2_to_4 s = stream2_to_4_aux s.Unfold2
 and stream2_to_4_aux : muY(stream2) -> stream4
-  | (stream2_to_4_aux (MuY0 s)).Unfold4.DNuY = Cons0 (stream2_to_4 s)
-  | (stream2_to_4_aux (MuY1 s)).Unfold4.DNuY = Cons1 (stream2_to_4_aux s).Unfold4
+  | (stream2_to_4_aux (MuY (Cons0 s))).Unfold4.DNuY = Cons0 (stream2_to_4 s)
+  | (stream2_to_4_aux (MuY (Cons1 s))).Unfold4.DNuY = Cons1 (stream2_to_4_aux s).Unfold4
 
 
 -- from stream3 to stream4
@@ -113,8 +112,8 @@ val stream3_to_2_op : stream3 -> stream2
   | (stream3_to_2_op (Cons3 s)).Unfold2 = stream3_to_2_op_aux s.DNuY
 and
     stream3_to_2_op_aux : plus(stream3,nuY(stream3)) -> muY(stream2)
-  | stream3_to_2_op_aux (Cons0 s) = MuY1 (aux1 s)--:muY(stream2)     s:stream3
-  | stream3_to_2_op_aux (Cons1 s) = MuY0 (aux2 s)--:stream2          s:nuY(stream3)
+  | stream3_to_2_op_aux (Cons0 s) = MuY (Cons1 (aux1 s))--:muY(stream2)     s:stream3
+  | stream3_to_2_op_aux (Cons1 s) = MuY (Cons0 (aux2 s))--:stream2          s:nuY(stream3)
 and aux1 : stream3 -> muY(stream2)
   | aux1 (Cons3 s) = stream3_to_2_op_aux s.DNuY
 and aux2 : nuY(stream3) -> stream2
@@ -126,14 +125,14 @@ and aux2 : nuY(stream3) -> stream2
 
 -- only 0s
 val zeros2 : stream2
-  | zeros2.Unfold2 = MuY0 zeros2
+  | zeros2.Unfold2 = MuY (Cons0 zeros2)
 
 
 -- construct 1110 1110 1110 1110 ... where each block contains n 1s
 val
     ones_n2_aux : nat -> nat -> stream2
-  | (ones_n2_aux 0 n).Unfold2 = MuY0 (ones_n2_aux n n)
-  | (ones_n2_aux (k+1) n).Unfold2 = MuY1 (ones_n2_aux k n).Unfold2
+  | (ones_n2_aux 0 n).Unfold2 = MuY (Cons0 (ones_n2_aux n n))
+  | (ones_n2_aux (k+1) n).Unfold2 = MuY (Cons1 (ones_n2_aux k n).Unfold2)
 val ones_n2 : nat -> stream2
   | ones_n2 n = ones_n2_aux n n
 
@@ -141,8 +140,8 @@ val ones_n2 : nat -> stream2
 -- construct 01...1 01...1 01...1 ... where the i-th block of 1s contains (f i) 1s
 val
     ones_f2_aux : (nat->nat) -> nat -> nat -> stream2
-  | (ones_f2_aux f 0 i).Unfold2 = MuY0 (ones_f2_aux f (f i) (i+1))
-  | (ones_f2_aux f (k+1) i).Unfold2 = MuY1 (ones_f2_aux f k i).Unfold2
+  | (ones_f2_aux f 0 i).Unfold2 = MuY (Cons0 (ones_f2_aux f (f i) (i+1)))
+  | (ones_f2_aux f (k+1) i).Unfold2 = MuY (Cons1 (ones_f2_aux f k i).Unfold2)
 val ones_f2 : (nat -> nat) -> stream2
   | ones_f2 f = ones_f2_aux f 0 0
 
@@ -165,8 +164,8 @@ val get_n_ones3 : nat -> stream2 -> stream3
 and
     get_n_ones3_aux : nat -> muY(stream2) -> nuY(stream3)
   | get_n_ones3_aux 0 s = ones3_aux
-  | (get_n_ones3_aux (n+1) (MuY0 s)).DNuY = Cons0 (get_n_ones3 n s)
-  | (get_n_ones3_aux (n+1) (MuY1 s)).DNuY = Cons1 (get_n_ones3_aux n s)
+  | (get_n_ones3_aux (n+1) (MuY (Cons0 s))).DNuY = Cons0 (get_n_ones3 n s)
+  | (get_n_ones3_aux (n+1) (MuY (Cons1 s))).DNuY = Cons1 (get_n_ones3_aux n s)
 
 -- get the length of blocks of 1s
 val
@@ -174,9 +173,9 @@ val
   | map_length1 s = map_length1_aux s.Unfold2 0
 and
     map_length1_aux : muY(stream2) -> nat -> stream(nat)
-  | (map_length1_aux (MuY0 s) n).Head = n
-  | (map_length1_aux (MuY0 s) n).Tail = map_length1 s
-  | (map_length1_aux (MuY1 s) n) = map_length1_aux s (n+1)
+  | (map_length1_aux (MuY (Cons0 s)) n).Head = n
+  | (map_length1_aux (MuY (Cons0 s)) n).Tail = map_length1 s
+  | (map_length1_aux (MuY (Cons1 s)) n) = map_length1_aux s (n+1)
 
 
 -- tests
