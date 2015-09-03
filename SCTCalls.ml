@@ -175,14 +175,12 @@ let merge_approx v1 v2 =
 
 
 (* collapse all the constructors from a contructorn pattern with approximations *)
-(* TODO: make that function return an approx_term, ie a Sp(AppArg...), Angel or Daimon...
- *       also, add an argument to be added to the result *)
 let collapse0 ?(app=(Some 0,Num 0)) (p:approx_term) : approx_term =
     let rec collapse0_aux app p =
         match get_head p,get_args p with
             | Var(x,_),[] -> Sp(AppArg([ (fst app,snd app, x) ]),())
-            | Angel _,[] -> raise (Invalid_argument "collapse0_aux: Angel")     (* TODO: deal with that... *)
-            | Daimon _,[] -> raise (Invalid_argument "collapse0_aux: Daimon")   (* TODO: deal with that... *)
+            | Angel _,[] -> raise (Invalid_argument "collapse0_aux: Angel")
+            | Daimon _,[] -> raise (Invalid_argument "collapse0_aux: Daimon")
             | Sp (AppArg [],_),_ -> assert false
             | Sp (AppArg apps,_),[] -> Sp(AppArg(List.map (function p,w,x -> let p,w = add_approx app (p,w) in p,w,x ) apps),())
             | Const(_,prio,_),[] -> let p,w = add_approx app (prio,Num 1) in Sp(AppArg([ (p,w, "()") ]),())

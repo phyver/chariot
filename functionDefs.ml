@@ -184,7 +184,7 @@ let process_function_defs (env:environment)
     );
 
     (* infer priorities for definitions *)
-    let (defs:(var_name * type_expression * (priority_term * priority_term) list) list)
+    let (defs:(var_name * type_expression * (term * term) list) list)
       = infer_priorities env defs
     in
 
@@ -276,5 +276,4 @@ let process_function_defs (env:environment)
 
     current_state.current_bloc <- current_state.current_bloc + 1;
 
-    (* TODO: remove *)
     { env with functions = defs @ env.functions }

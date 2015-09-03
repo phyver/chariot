@@ -95,7 +95,7 @@ let tuple_term (l:(unit,unit) struct_term list) : (unit,unit) struct_term =
     app (Const("Tuple_" ^ (string_of_int n),(),())) l
 
 
-(* a reference to number dummy arguments in terms *) (*FIXME: necessary??? *)
+(* a reference to number dummy arguments in terms *)
 let dummy_nb = ref 0
 (* generate a fresh dummy variable *)
 let dummy () = incr dummy_nb; Var("_" ^ (string_of_sub !dummy_nb),())
@@ -486,7 +486,7 @@ tuple_aux:
 
 
 term_list:
-    | LSQBRAC term_list_inside RSQBRAC  { $2 } /* FIXME: check priorities... */
+    | LSQBRAC term_list_inside RSQBRAC  { $2 }
     | LSQBRAC RSQBRAC                   { [] }
 
 term_list_inside:

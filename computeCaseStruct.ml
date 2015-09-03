@@ -125,7 +125,7 @@ let rec reduce env (v:(empty,unit,type_expression) raw_term) : (empty,unit,type_
                                | Not_found -> implode (h::args) (* f was a free variable *)
                         end
             in
-            table := Memo.add v (result,!counter-counter0) !table;    (* TODO provokes a problem for pow 1 (pow 1 1) *)
+            table := Memo.add v (result,!counter-counter0) !table;
             result
     and
 

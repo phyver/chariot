@@ -131,7 +131,7 @@ let callgraph_from_definitions
             | Sp(s,_),_ -> s.bot
     in
 
-    let rec process_clause graph (lhs,rhs:priority_term * priority_term)
+    let rec process_clause graph (lhs,rhs:term * term)
       : call_graph
       =
         let params = extract_params lhs
@@ -143,7 +143,7 @@ let callgraph_from_definitions
         let caller = fst lhs
         in
 
-        let rec process_arg (p:priority_term)
+        let rec process_arg (p:term)
           : approx_term
           = match get_head p,get_args p with
                 | Var(x,t),_ when List.mem x params -> Var(x,())
@@ -169,7 +169,7 @@ let callgraph_from_definitions
                 | App _,_ -> assert false
         in
 
-        let rec process_rhs (graph:call_graph) (rhs:priority_term) (calling_context:approx_term list)
+        let rec process_rhs (graph:call_graph) (rhs:term) (calling_context:approx_term list)
           : call_graph
           =
               match get_head rhs, get_args rhs with
@@ -306,12 +306,6 @@ let transitive_closure initial_graph b d =
     end
   in
 
-  if option "show_initial_graph" && not (option "show_all_steps")
-  then begin
-      msg "initial callgraph:";
-      print_callgraph initial_graph
-   end;
-
   let graph_of_paths = closure initial_graph initial_graph in
 
   if option "show_final_graph" && not (option "show_all_steps")
@@ -337,6 +331,10 @@ let transitive_closure initial_graph b d =
 
 let size_change_termination_bounds graph b d =
   assert (d>=0 && b>0) ;
+  let graph = if option "collapse_graph"
+              then collapse_graph current_state.bound d graph
+              else graph
+  in
   let tc_graph = transitive_closure graph b d in
     CallGraph.for_all
       (fun fg s ->
@@ -374,14 +372,19 @@ let size_change_termination_bounds graph b d =
 let size_change_termination env defs =
     try
         let graph = callgraph_from_definitions env defs in
-        let graph = if option "collapse_graph"
-                    then collapse_graph current_state.bound current_state.depth graph
-                    else graph
-        in
+
+        if option "show_initial_graph"
+        then begin
+            msg "initial callgraph:";
+            print_callgraph graph
+         end;
+
 
         let rec test = function
             [] -> false
           | d::ds ->
+                if option "show_all_steps" || verbose 2
+                then msg "Incremental test at depth %d" d;
               (* ifDebug "show_summary_TC" *)
               (* begin fun _ -> *)
               (*   print_string "** Incremental test: using d = "; *)
@@ -402,14 +405,15 @@ let size_change_termination env defs =
               else
                 test ds
         in
-        (* FIXME: use this once it works *)
-        (* let rec ds n acc = *)
-        (*   if (current_state.depth <= n) *)
-        (*   then List.rev (current_state.depth::acc) *)
-        (*   else ds (2*n) (n::acc) *)
-        (* in *)
-        (* let t = test (ds 1 [0]) in *)
-        let t = test [current_state.depth] in
+        let rec ds n acc =
+          if (current_state.depth <= n)
+          then List.rev (current_state.depth::acc)
+          else ds (2*n) (n::acc)
+        in
+        let t = if option "incremental_SCT"
+                then test (ds 1 [0])
+                else test [current_state.depth]
+        in
         if t
         then true
         else (

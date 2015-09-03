@@ -41,17 +41,17 @@ open Env
 
 type state =
     {
-        mutable current_bloc: int                           ;  (* counter for blocs of function definitions and type definitions (odd for data and even for codata) *)
-        mutable env: environment                            ;
+        mutable current_bloc: int                                           ;  (* counter for blocs of function definitions and type definitions *)
+        mutable env: environment                                            ;
 
-        mutable prompt: string                              ;
-        mutable verbose: int                                ;
-        mutable boolean_options: (string*bool*string) list  ;
-        mutable depth: int                                  ;
-        mutable bound: int                                  ;
+        mutable prompt: string                                              ;
+        mutable verbose: int                                                ;
+        mutable boolean_options: (string*bool*string) list                  ;
+        mutable depth: int                                                  ;
+        mutable bound: int                                                  ;
 
-        mutable last_term: typed_term option                ;
-        mutable last_explore: (unit,type_expression) unfolded_term option           ;  (* TODO: types??? *)
+        mutable last_term: typed_term option                                ;
+        mutable last_explore: (unit,type_expression) unfolded_term option   ;
     }
 
 let current_state =
@@ -90,6 +90,7 @@ let current_state =
             "show_all_steps",          false    , "show all successive graphs when checking adequacy" ;
             "show_coherent_loops",     false    , "show coherent loops found in the final graph when checking adequacy" ;
             "show_bad_loops",          false    , "show the first non-decreasing coherent loop found when checking adequacy" ;
+            "incremental_SCT",         true     , "do not try the SCT at smaller depth";
         ]                                       ;
         depth = 2                               ;
         bound = 2                               ;

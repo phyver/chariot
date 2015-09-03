@@ -76,12 +76,10 @@ type ('s,'p,'t) raw_term =      (* 's is used to add features to terms, 'p is us
  *   - parsed terms: 's is structure, 'p is unit, 't is unit
  *   - plain terms: 's is empty, 'p is unit, 't is unit
  *   - typed terms: 's is empty, 'p is unit, 't is type_expression
- *   - terms: 's is empty, 'p is int, 't is type_expression
- *   - unfolded terms: 's is explore_struct, 'p is int, 't is type_expression (TODO: or possibly 't is unit???)
+ *   - terms: 's is empty, 'p is priority, 't is type_expression
+ *   - unfolded terms: 's is explore_struct, 'p is unit, 't is type_expression
  *   - case / struct trees: trees with leafs in typed terms
- *   - approximated term: 's is approximation, 'p is int, 't is unit
- *
- * TODO: define those types, and use them
+ *   - approximated term: 's is approximation, 'p is priority, 't is unit
  **********************************************************************)
 
 type priority = int option      (* priority of types and constants: odd for data and even for codata *)
@@ -93,7 +91,6 @@ type ('p,'t) structure = Struct of (const_name * ('p,'t) struct_term) list
  and ('p,'t) struct_term = (('p,'t) structure,'p,'t) raw_term
 
 (* term with possibly unfolded codata *)
-(* FIXME: once I have typed terms, I should remove the type expression from the unfolded_struct type *)
 type ('p,'t) fold_struct =
     | Folded of int * (empty,'p,'t) raw_term
     | Unfolded of (const_name * var_name list * ('p,'t) unfolded_term) list
@@ -123,12 +120,6 @@ type approx_term = (approximation,priority,unit) raw_term
 (* type sct_clause = approx_term * approx_term *)
  type sct_pattern = (var_name * approx_term list)
  type sct_clause = sct_pattern * sct_pattern
-(* TODO: use
- * type approx_term = (approximation,type_expression) raw_term
- * type sct_clause = (var_name * approx_term list) * (var_name * approx_term list)
- * ??? *)
-
-
 
 
 (* terms from the parser *)
@@ -141,28 +132,24 @@ type plain_term = (empty,unit,unit) raw_term
 type typed_term = (empty,unit,type_expression) raw_term
 
 (* terms after priorities have been added *)
-type priority_term = (empty,priority,type_expression) raw_term
+type term = (empty,priority,type_expression) raw_term
 
-
-(* type 't term = (empty,priority,'t) raw_term *)
-(* type 't term_substitution = (var_name * 't term) list *)
 
 type bloc_nb = int      (* number of the block of mutual function definitions *)
 
-(* TODO: use type 't pattern = var_name * 't term list *)
-type function_clause = priority_term * priority_term     (* clause of a function definition *)
+type function_clause = term * term     (* clause of a function definition *)
 
 
 (* type for the environment *)
 type environment = {
     (* we keep the names of type arguments of a definition in the environment,
      * together with its bloc number and the list of its constants
-     * (constructors/destrucors) *)
+     * (constructors/destructors)
+     * The bloc number is odd for inductive types and even for coinductive types *)
     types:     (type_name * bloc_nb * (type_name list) * const_name list) list         ;
 
     (* each constant (type constructor/destructor) has a type and a bloc number
      * the bloc number is odd for constructors and even for destructors *)
-    (* TODO: use separate lists ? *)
     constants: (const_name * bloc_nb * type_expression) list                           ;
 
     (* each function is defined inside a bloc of definitions and has a type and
