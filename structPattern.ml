@@ -139,11 +139,11 @@ let remove_match_struct (clauses:((unit,'t) struct_term*(unit,'t) struct_term) l
       =
         match process_clause_aux cl with
             | cl,None ->
-                debug "finished with %s => %s\n" (string_of_plain_term (fst cl)) (string_of_struct_term (snd cl));
+                (* debug "finished with %s => %s\n" (string_of_plain_term (fst cl)) (string_of_struct_term (snd cl)); *)
                 [cl]
             | cl,Some cl' ->
-                debug "new processed clause: %s => %s" (string_of_plain_term (fst cl)) (string_of_struct_term (snd cl));
-                debug "new clause to process: %s => %s\n" (string_of_struct_term (fst cl')) (string_of_struct_term (snd cl'));
+                (* debug "new processed clause: %s => %s" (string_of_plain_term (fst cl)) (string_of_struct_term (snd cl)); *)
+                (* debug "new clause to process: %s => %s\n" (string_of_struct_term (fst cl')) (string_of_struct_term (snd cl')); *)
                 cl::(process_clause cl')
     in
 
@@ -200,10 +200,10 @@ let remove_term_struct (clauses:(plain_term*(unit,'t) struct_term) list)
       = let xs = extract_term_variables lhs in
         match process_term xs rhs with
             | rhs,[] ->
-                debug "finished with %s => %s\n" (string_of_plain_term lhs) (string_of_plain_term rhs);
+                (* debug "finished with %s => %s\n" (string_of_plain_term lhs) (string_of_plain_term rhs); *)
                 [lhs,rhs]
             | rhs,new_clauses ->
-                debug "new processed clause: %s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs);
+                (* debug "new processed clause: %s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs); *)
                 (lhs,rhs)::(List.concat (List.map process_clause new_clauses))
     in
 
@@ -239,12 +239,12 @@ let remove_struct_defs (defs:(var_name * type_expression option * ((unit,'t) str
                     new_defs
     in
 
-    List.iter (function f,t,cls ->
-        List.iter (function lhs,rhs ->
-            debug "%s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs)
-        )
-        cls
-    ) new_defs;
+    (* List.iter (function f,t,cls -> *)
+    (*     List.iter (function lhs,rhs -> *)
+    (*         debug "%s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs) *)
+    (*     ) *)
+    (*     cls *)
+    (* ) new_defs; *)
 
     new_defs
 
