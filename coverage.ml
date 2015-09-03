@@ -341,29 +341,32 @@ let case_struct_of_clauses
 
     let clauses = List.map2 (fun n cl -> n,fst cl,snd cl) (range 1 (List.length clauses)) clauses in
 
-    let cs =
-        let fail = CSFail in
-        let clauses = List.map (function n,p,def -> n,List.tl (explode_pattern p),def) clauses in (* List.tl to remove function name *)
-        let clauses = add_args_clause term_args clauses in
-        convert_match env args clauses fail
-    in
+    match clauses with
+        | [] -> todo "deal with types without constructors / destructors"
+        | clauses ->
+            let cs =
+                let fail = CSFail in
+                let clauses = List.map (function n,p,def -> n,List.tl (explode_pattern p),def) clauses in (* List.tl to remove function name *)
+                let clauses = add_args_clause term_args clauses in
+                convert_match env args clauses fail
+            in
 
-    (* debug "obtained:\n    %s %s |--> %s" f (string_of_list " " id args) (string_of_case_struct_term cs); *)
-    let cs = simplify_case_struct cs in
-    (* debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " id args) (string_of_case_struct_term cs); *)
+            (* debug "obtained:\n    %s %s |--> %s" f (string_of_list " " id args) (string_of_case_struct_term cs); *)
+            let cs = simplify_case_struct cs in
+            (* debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " id args) (string_of_case_struct_term cs); *)
 
-    let ns = extract_clause_numbers cs in
-    let clauses = List.filter
-        (function n,pat,def ->
-            if not (List.mem n ns)
-            then (
-                warning "useless clause %d: %s = %s" n (string_of_plain_term pat) (string_of_plain_term def); option "keep_useless_clauses")
-            else true)
-        clauses
-    in
+            let ns = extract_clause_numbers cs in
+            let clauses = List.filter
+                (function n,pat,def ->
+                    if not (List.mem n ns)
+                    then (
+                        warning "useless clause %d: %s = %s" n (string_of_plain_term pat) (string_of_plain_term def); option "keep_useless_clauses")
+                    else true)
+                clauses
+            in
 
-    let clauses = List.map (function _,lhs,rhs-> lhs,rhs) clauses in
-    let cs = remove_clause_numbers cs in
+            let clauses = List.map (function _,lhs,rhs-> lhs,rhs) clauses in
+            let cs = remove_clause_numbers cs in
 
-    f,clauses,args,map_case_struct (fun v -> map_raw_term (fun s->s.bot) (k()) id v) cs
+            f,clauses,args,map_case_struct (fun v -> map_raw_term (fun s->s.bot) (k()) id v) cs
 
