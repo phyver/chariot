@@ -182,12 +182,8 @@ let remove_term_struct (functions:var_name list) (clauses:(plain_term*(unit,'t) 
                 assert (args=[]);
                 let f_aux = new_aux () in
                 let params = extract_variables_from_struct v in
-                debug "params: %s" (string_of_list ", " id params);
                 let params = inter_uniq params xs in
-                debug "params: %s" (string_of_list ", " id params);
                 let params = diff_uniq params functions in
-                debug "params: %s" (string_of_list ", " id params);
-
                 let new_f = app f_aux (List.map (fun x -> Var(x,())) params) in
                 let new_clauses = List.map (function d,v -> App(  Proj(d,(),()) , new_f) , v) fields in
                 new_f , new_clauses
