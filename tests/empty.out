@@ -43,16 +43,13 @@ val
 >> x₁ x₂ x₃ x₄ -> 
 >>   case x₄v of
 >>   
-
 val
    g : 'a → 'a → 'b → empty>> 
 >> corresponding case and struct form:
 >> x₁ x₂ x₃ -> FAIL
-
 val
    h : 'a → 'a → 'b → unit>> 
 >> corresponding case and struct form:
 >> x₁ x₂ x₃ -> 
 >>   {
 >>      }
-
