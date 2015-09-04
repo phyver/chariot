@@ -199,13 +199,12 @@ let string_of_plain_term v = string_of_raw_term () (fun o s -> s.bot) (k "") (k 
 let string_of_term v = string_of_raw_term () (fun o s -> s.bot) string_of_priority (k "") v
 
 (* showing sct term with approximations *)
+let string_of_weight w = match w with
+    | Infty -> "∞"
+    | Num n -> (string_of_int n)
+
 let string_of_approx_term (v:approx_term) : string
   =
-    let string_of_weight w = match w with
-        | Infty -> "∞"
-        | Num n -> (string_of_int n)
-    in
-
     let string_of_approx_term_aux
       = string_of_raw_term ()
             (fun o u ->

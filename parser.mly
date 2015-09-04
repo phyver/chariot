@@ -446,7 +446,7 @@ term:
 
     /* syntactic sugar */
     | term PLUS term            { process_addition $1 $3 }
-    | IDU SHARP term        { Sp(Struct [$1,$3], ()) }
+    | IDU SHARP term            { Sp(Struct [$1,$3], ()) }
     | term DOLLAR term          { App($1,$3) }
 
 app_term:
