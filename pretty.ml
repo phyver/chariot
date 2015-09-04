@@ -388,7 +388,7 @@ let show_function f t clauses (args,cst) =
     if (verbose 2)
     then
         let tmp = if args = [] then "" else (string_of_list " " id args) ^ " -> " in
-        msg "corresponding case and struct form:\n%s%s" tmp (string_of_case_struct_term cst)
+        msg "\ncorresponding case and struct form:\n%s%s" tmp (string_of_case_struct_term cst)
 
 let show_function_bloc env funs
   =
