@@ -82,7 +82,7 @@ let current_state =
             "collapse_graph",          true     , "collapse initial call-graph" ;
             "allow_inadequate_defs",   true     , "allow definition that do not pass the SCT" ;
             "expand_clauses",          false    , "use the case expansion of the clauses to regenerate the clauses";
-            "allow_structs",           false    , "allow structures inside terms";
+            "allow_structs",           true     , "allow structures inside terms";
 
 (* various debuging options *)
             "show_initial_graph",      false    , "show initial call graph when checking adequacy" ;
