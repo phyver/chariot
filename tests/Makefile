@@ -1,7 +1,7 @@
 INTERACTIVE="-i"
 
 FILES=$(sort $(wildcard *.ch))
-EXCLUDE=
+EXCLUDE=sct2.ch
 
 TESTS=$(filter-out $(EXCLUDE), $(FILES))
 

@@ -3,6 +3,8 @@
  *********************************************************************)
 
 :set verbose 1
+:set allow_structs true
+:set keep_useless_clauses true
 
 --------------
 -- basic types
@@ -31,7 +33,7 @@ data muY('x) where
 -- mu X . mu Y . (X + Y)
 -- this type is empty
 data list1 where
-    | C1 : muY(list1) -> list1
+    | Cons : muY(list1) -> list1
 
 ------------------------
 -- nu X . mu Y . (X + Y)
@@ -55,35 +57,19 @@ codata stream4 where
 -------------------------------------------------------
 -- converting the different kinds of streams to "usual"
 -- streams of natural numbers
-val
-    convert2 : stream2 -> stream(nat)
-  | convert2 s = convert2_aux s.D2
-and
-  | (convert2_aux (Mu (Cons0 s))).Head = 0
-  | (convert2_aux (Mu (Cons0 s))).Tail = convert2 s
-  | (convert2_aux (Mu (Cons1 s))).Head = 1
-  | (convert2_aux (Mu (Cons1 s))).Tail = convert2_aux s
+val convert2 : stream2 -> stream(nat)
+  | convert2 (#D2 $ Mu $ Cons0 s) = { Head = 0 ; Tail = convert2 s }
+  | convert2 (#D2 $ Mu $ Cons1 s) = { Head = 1 ; Tail = convert2 $ #D2 s }
 
-
-val
-    convert3 : stream3 -> stream(nat)
-  | convert3 (C3 s) = convert3_aux s.Nu        -- s:nuY(stream3)  s.Nu:plus(stream3, nuY(stream3))
-and
-   convert3_aux : plus(stream3, nuY(stream3)) -> stream(nat)
-  | (convert3_aux (Cons0 s)).Head = 0
-  | (convert3_aux (Cons0 s)).Tail = convert3 s     -- s:stream3
-  | (convert3_aux (Cons1 t)).Head = 1
-  | (convert3_aux (Cons1 s)).Tail = convert3_aux (s.Nu)       -- s:nuY(stream3)
+val convert3 : stream3 -> stream(nat)
+  | convert3 (C3 $ #Nu $ Cons0 s) = { Head = 0 ; Tail = convert3 s }
+  | convert3 (C3 $ #Nu $ Cons1 s) = { Head = 1 ; Tail = convert3 $ C3 s }
 
 
 val convert4 : stream4 -> stream(nat)
-  | convert4 s = convert4_aux s.D4.Nu
-and
-    convert4_aux : plus(stream4,nuY(stream4)) -> stream(nat)
-  | (convert4_aux (Cons0 s)).Head = 0
-  | (convert4_aux (Cons0 s)).Tail = convert4 s
-  | (convert4_aux (Cons1 s)).Head = 1
-  | (convert4_aux (Cons1 s)).Tail = convert4_aux s.Nu
+  | convert4 (#D4 $ #Nu $ Cons0 s) = { Head = 0 ; Tail = convert4 s }
+  | convert4 (#D4 $ #Nu $ Cons1 s) = { Head = 1 ; Tail = convert4 $ #D4 s }
+
 
 
 -------------------------------------------------------
@@ -91,33 +77,27 @@ and
 
 -- from stream2 to stream4
 val stream2_to_4 : stream2 -> stream4
-  | stream2_to_4 s = stream2_to_4_aux s.D2
-and stream2_to_4_aux : muY(stream2) -> stream4
-  | (stream2_to_4_aux (Mu (Cons0 s))).D4.Nu = Cons0 (stream2_to_4 s)
-  | (stream2_to_4_aux (Mu (Cons1 s))).D4.Nu = Cons1 (stream2_to_4_aux s).D4
-
+  | stream2_to_4 (#D2 $ Mu $ Cons0 s) = #D4 $ #Nu $ Cons0 $ stream2_to_4 s
+  | stream2_to_4 (#D2 $ Mu $ Cons1 s) = #D4 $ #Nu $ Cons1 (stream2_to_4 $ #D2 s).D4
 
 -- from stream3 to stream4
 val stream3_to_4 : stream3 -> stream4
-  | stream3_to_4 (C3 s) = stream3_to_4_aux s.Nu
-and stream3_to_4_aux : plus(stream3,nuY(stream3)) -> stream4
-  | (stream3_to_4_aux (Cons0 s)).D4.Nu = Cons0 (stream3_to_4 s)
-  | (stream3_to_4_aux (Cons1 s)).D4.Nu = Cons1 (map_aux s)
-and (map_aux s).Nu = map_aux2 s.Nu
-and map_aux2 (Cons0 a) = Cons0 (stream3_to_4 a)
-  | map_aux2 (Cons1 s) = Cons1 (map_aux s)
+  | stream3_to_4 (C3 $ #Nu $ Cons0 s) = #D4 $ #Nu $ Cons0 $ stream3_to_4 s
+  | stream3_to_4 (C3 $ #Nu $ Cons1 s) = #D4 $ #Nu $ Cons1 $ s34_map s
+and
+    s34_map : nuY(stream3) -> nuY(stream4)
+  | s34_map (#Nu $ Cons0 s) = #Nu $ Cons0 $ stream3_to_4 s
+  | s34_map (#Nu $ Cons1 s) = #Nu $ Cons1 $ s34_map s
+
+-- TODO: the SCT doesn't see that this version terminates (does it?)
+val stream3_to_4_bis : stream3 -> stream4
+  | stream3_to_4_bis (C3 $ #Nu $ Cons0 s) = #D4 $ #Nu $ Cons0 $ stream3_to_4_bis s
+  | stream3_to_4_bis (C3 $ #Nu $ Cons1 s) = #D4 $ #Nu $ Cons1 $ (stream3_to_4_bis $ C3 s).D4
 
 -- from stream3 to stream2, replacing 1s by 0s
 val stream3_to_2_op : stream3 -> stream2
-  | (stream3_to_2_op (C3 s)).D2 = stream3_to_2_op_aux s.Nu
-and
-    stream3_to_2_op_aux : plus(stream3,nuY(stream3)) -> muY(stream2)
-  | stream3_to_2_op_aux (Cons0 s) = Mu (Cons1 (aux1 s))--:muY(stream2)     s:stream3
-  | stream3_to_2_op_aux (Cons1 s) = Mu (Cons0 (aux2 s))--:stream2          s:nuY(stream3)
-and aux1 : stream3 -> muY(stream2)
-  | aux1 (C3 s) = stream3_to_2_op_aux s.Nu
-and aux2 : nuY(stream3) -> stream2
-  | (aux2 s).D2 = stream3_to_2_op_aux s.Nu
+  | stream3_to_2_op (C3 $ #Nu $ Cons0 s) = #D2 $ Mu $ Cons1 $ (stream3_to_2_op s).D2
+  | stream3_to_2_op (C3 $ #Nu $ Cons1 s) = #D2 $ Mu $ Cons0 $ stream3_to_2_op $ C3 s
 
 
 -------------------------------------------------------
@@ -125,14 +105,15 @@ and aux2 : nuY(stream3) -> stream2
 
 -- only 0s
 val zeros2 : stream2
-  | zeros2.D2 = Mu (Cons0 zeros2)
+  | zeros2 = #D2 $ Mu $ Cons0 zeros2
 
 
 -- construct 1110 1110 1110 1110 ... where each block contains n 1s
 val
     ones_n2_aux : nat -> nat -> stream2
-  | (ones_n2_aux 0 n).D2 = Mu (Cons0 (ones_n2_aux n n))
-  | (ones_n2_aux (k+1) n).D2 = Mu (Cons1 (ones_n2_aux k n).D2)
+  | ones_n2_aux 0 n = #D2 $ Mu $ Cons0 $ ones_n2_aux n n
+  | ones_n2_aux (k+1) n = #D2 $ Mu $ Cons1 (ones_n2_aux k n).D2
+
 val ones_n2 : nat -> stream2
   | ones_n2 n = ones_n2_aux n n
 
@@ -140,22 +121,26 @@ val ones_n2 : nat -> stream2
 -- construct 01...1 01...1 01...1 ... where the i-th block of 1s contains (f i) 1s
 val
     ones_f2_aux : (nat->nat) -> nat -> nat -> stream2
-  | (ones_f2_aux f 0 i).D2 = Mu (Cons0 (ones_f2_aux f (f i) (i+1)))
-  | (ones_f2_aux f (k+1) i).D2 = Mu (Cons1 (ones_f2_aux f k i).D2)
+  | ones_f2_aux f 0 i = #D2 $ Mu $ Cons0 $ ones_f2_aux f (f i) (i+1)
+  | ones_f2_aux f (k+1) i = #D2 $ Mu $Cons1 (ones_f2_aux f k i).D2
+
 val ones_f2 : (nat -> nat) -> stream2
   | ones_f2 f = ones_f2_aux f 0 0
 
 -- only 1s
 val ones3_aux : nuY(stream3)
-  | ones3_aux.Nu = Cons1 ones3_aux
+  | ones3_aux = #Nu $ Cons1 ones3_aux
+
 val ones3 : stream3
   | ones3 = C3 ones3_aux
+
 
 -- some 0s, then only 1s
 val n_zeros_ones3 : nat -> stream3
   | n_zeros_ones3 0 = ones3
   | n_zeros_ones3 (n+1) = C3 (n_zeros_ones3_aux n)
-and (n_zeros_ones3_aux n).Nu = Cons0 (n_zeros_ones3 n)
+and n_zeros_ones3_aux : nat -> nuY(stream3)
+  | n_zeros_ones3_aux n = #Nu $ Cons0 $ n_zeros_ones3 n
 
 
 -- start like a given stream2 for some time, then only ones
@@ -164,8 +149,8 @@ val get_n_ones3 : nat -> stream2 -> stream3
 and
     get_n_ones3_aux : nat -> muY(stream2) -> nuY(stream3)
   | get_n_ones3_aux 0 s = ones3_aux
-  | (get_n_ones3_aux (n+1) (Mu (Cons0 s))).Nu = Cons0 (get_n_ones3 n s)
-  | (get_n_ones3_aux (n+1) (Mu (Cons1 s))).Nu = Cons1 (get_n_ones3_aux n s)
+  | (get_n_ones3_aux (n+1) (Mu (Cons0 s))) = #Nu $ Cons0 $ get_n_ones3 n s
+  | (get_n_ones3_aux (n+1) (Mu (Cons1 s))) = #Nu $ Cons1 $ get_n_ones3_aux n s
 
 -- get the length of blocks of 1s
 val
@@ -173,8 +158,7 @@ val
   | map_length1 s = map_length1_aux s.D2 0
 and
     map_length1_aux : muY(stream2) -> nat -> stream(nat)
-  | (map_length1_aux (Mu (Cons0 s)) n).Head = n
-  | (map_length1_aux (Mu (Cons0 s)) n).Tail = map_length1 s
+  | (map_length1_aux (Mu (Cons0 s)) n) = { Head = n ; Tail = map_length1 s }
   | (map_length1_aux (Mu (Cons1 s)) n) = map_length1_aux s (n+1)
 
 
