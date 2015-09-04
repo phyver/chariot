@@ -35,13 +35,13 @@
 >> functions in environment:
 val
    add : nat → nat → nat
-    | n+0 = n
-    | n+(m+1) = n+m+1
+    | add n 0 = n
+    | add n (m+1) = add n m+1
 
 val
    mult : nat → nat → nat
     | mult n 0 = 0
-    | mult n (m+1) = n+(mult n m)
+    | mult n (m+1) = add n (mult n m)
 
 val
    pow : nat → nat → nat
@@ -75,13 +75,13 @@ val
 >> functions in environment:
 val
    add : nat → nat → nat
-    | n+0 = n
-    | n+(m+1) = n+m+1
+    | add n 0 = n
+    | add n (m+1) = add n m+1
 
 val
    mult : nat → nat → nat
     | mult n 0 = 0
-    | mult n (m+1) = n+(mult n m)
+    | mult n (m+1) = add n (mult n m)
 
 val
    pow : nat → nat → nat
