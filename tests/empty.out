@@ -1,0 +1,58 @@
+>> inductive type empty was succesfully defined
+>> coinductive type unit was succesfully defined
+>> Typing for f successful
+>> the definition for f is complete
+>> Incremental test at depth 0
+>> the definition f is provably correct
+
+>> Typing for g successful
+!! warning: match failures:
+!! warning:   g x₁ x₂ x₃
+!! warning: the definition for g is incomplete
+>> Incremental test at depth 0
+>> the definition g is provably correct
+
+>> Typing for h successful
+>> the definition for h is complete
+>> Incremental test at depth 0
+>> the definition h is provably correct
+
+>> functions in environment:
+val
+   f : 'a → 'a → 'b → empty → 'b>> 
+>> corresponding case and struct form:
+>> x₁ x₂ x₃ x₄ -> 
+>>   case x₄v of
+>>   
+
+val
+   g : 'a → 'a → 'b → empty>> 
+>> corresponding case and struct form:
+>> x₁ x₂ x₃ -> FAIL
+
+val
+   h : 'a → 'a → 'b → unit>> 
+>> corresponding case and struct form:
+>> x₁ x₂ x₃ -> 
+>>   {
+>>      }
+
+val
+   f : 'a → 'a → 'b → empty → 'b>> 
+>> corresponding case and struct form:
+>> x₁ x₂ x₃ x₄ -> 
+>>   case x₄v of
+>>   
+
+val
+   g : 'a → 'a → 'b → empty>> 
+>> corresponding case and struct form:
+>> x₁ x₂ x₃ -> FAIL
+
+val
+   h : 'a → 'a → 'b → unit>> 
+>> corresponding case and struct form:
+>> x₁ x₂ x₃ -> 
+>>   {
+>>      }
+
