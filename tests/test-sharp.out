@@ -1,0 +1,48 @@
+>> option verbose is set to 1
+>> option allow_structs is set to true
+>> coinductive type t was succesfully defined
+>> Typing for _aux₁, f successful
+>> the definition for f is complete
+>> the definition for _aux₁ is complete
+>> the definitions _aux₁, f are provably correct
+
+>> Typing for _aux₂, g successful
+>> the definition for g is complete
+>> the definition for _aux₂ is complete
+>> the definitions _aux₂, g are provably correct
+
+>> Typing for _aux₅, _aux₄, _aux₃, h successful
+>> the definition for h is complete
+>> the definition for _aux₃ is complete
+>> the definition for _aux₄ is complete
+>> the definition for _aux₅ is complete
+>> the definitions _aux₅, _aux₄, _aux₃, h are provably correct
+
+>> functions in environment:
+val
+   f : ('a → 'b → 'c → t) → 'a → 'b → 'c → t
+    | f a b c d = _aux₁ a b c d
+and
+   _aux₁ : ('a → 'b → 'c → t) → 'a → 'b → 'c → t
+    | (_aux₁ a b c d).D² = a b c d
+
+val
+   g : ('a → t) → ('b → 'a) → ('c → 'b) → 'c → t
+    | g a b c d = _aux₂ a b c d
+and
+   _aux₂ : ('a → t) → ('b → 'a) → ('c → 'b) → 'c → t
+    | (_aux₂ a b c d).D² = a (b (c d))
+
+val
+   h : t → t
+    | h a = _aux₃ a
+and
+   _aux₃ : t → t
+    | (_aux₃ a).D² = _aux₄ a
+and
+   _aux₄ : t → t
+    | (_aux₄ a).D² = _aux₅ a
+and
+   _aux₅ : t → t
+    | (_aux₅ a).D² = a
+

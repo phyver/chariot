@@ -287,7 +287,7 @@ let test_collapse (p:parsed_term) =
 %token <string> IDU IDL STR TVAR
 %token <int> INT
 
-%right ARROW DOUBLECOLON DOLLAR
+%right ARROW DOUBLECOLON DOLLAR SHARP
 %left DOT PLUS
 
 
@@ -446,8 +446,7 @@ term:
 
     /* syntactic sugar */
     | term PLUS term            { process_addition $1 $3 }
-    | SHARP IDU atomic_term     { Sp(Struct [$2,$3], ()) }
-    | SHARP IDU DOLLAR term     { Sp(Struct [$2,$4], ()) }
+    | IDU SHARP term        { Sp(Struct [$1,$3], ()) }
     | term DOLLAR term          { App($1,$3) }
 
 app_term:
