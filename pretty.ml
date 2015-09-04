@@ -85,6 +85,16 @@ let rec is_atomic_term (v:('a,'p,'t) raw_term) = match v with
     | App _ -> false
     | Sp _ -> true
 
+(* show a variables, taking care of the special cases *)
+let string_of_var s
+  =
+    let re_dummy = Str.regexp "_\\(₀\\|₁\\|₂\\|₃\\|₄\\|₅\\|₆\\|₇\\|₈\\|₉\\)*$" in
+    assert (s<>"");
+
+    if s = "()" then "()"
+    else if Str.string_match re_dummy s 0 then (if verbose 1 then s else "_")
+    else s
+
 (* very generic function to show raw terms:
  *   - we can give specific functions for showing priorities / types (arguments sp and st)
  *   - we can give a specific function for showing special features (argument ss)
@@ -106,7 +116,7 @@ let rec
     match v with
         | Angel t -> "⊤" ^ (st t)
         | Daimon t -> "⊥" ^ (st t)
-        | Var(x,t) -> (if (x.[0]='_' && not (verbose 1)) then "_" else x) ^ (st t)
+        | Var(x,t) -> (string_of_var x) ^ (st t)
         | Const(c,p,t) -> c ^ (sp p) ^ (st t)
         | Proj(d,p,t) -> "." ^ d ^ (sp p) ^ (st t)
         | App(Proj _ as v1,v2) ->
