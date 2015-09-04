@@ -307,7 +307,7 @@ let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:(empty,'p,type_exp
 
     let clauses = convert_cs_to_clauses_aux pat cs in
 
-    debug "new clauses:\n  %s" (string_of_list "\n  " (function p,d -> fmt "%s => %s" (string_of_plain_term p) (string_of_plain_term d)) clauses);
+    (* debug "new clauses:\n  %s" (string_of_list "\n  " (function p,d -> fmt "%s => %s" (string_of_plain_term p) (string_of_plain_term d)) clauses); *)
 
     clauses
 
@@ -318,8 +318,22 @@ let rec map_case_struct f v = match v with
     | CSCase(x,cases) -> CSCase(x,(List.map (function c,(xs,v) -> c,(xs,map_case_struct f v)) cases))
     | CSLeaf v -> CSLeaf (f v)
 
+let process_empty_clause env (args:(var_name*type_expression) list) (tres:type_expression)
+  : var_name list * (empty,unit,type_expression) raw_term case_struct_tree
+  = let xs = List.map fst args in
 
-(* TODO: do something with types with 0 constructors  /  0 destructors *)
+    let rec process_args args = match args with
+        | (x,Data(tname,_))::_ when is_inductive env tname && get_type_constants env tname = [] ->
+            xs, CSCase(x,[])
+        | _::args -> process_args args
+        | [] -> xs,CSFail
+    in
+
+    match tres with
+        | Data(tname,_) when not (is_inductive env tname) && get_type_constants env tname = [] ->
+            xs, CSStruct []
+        | _ -> process_args args
+
 let case_struct_of_clauses
         env
         (f:var_name)
@@ -342,7 +356,10 @@ let case_struct_of_clauses
     let clauses = List.map2 (fun n cl -> n,fst cl,snd cl) (range 1 (List.length clauses)) clauses in
 
     match clauses with
-        | [] -> todo "deal with types without constructors / destructors"
+        | [] ->
+            let t_res = get_result_type t in
+            let args,cs = process_empty_clause env (List.map (function Var(x,t) -> x,t | _ -> assert false) term_args) t_res in
+            f,[],args,cs
         | clauses ->
             let cs =
                 let fail = CSFail in

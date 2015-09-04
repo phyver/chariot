@@ -188,17 +188,6 @@ let process_function_defs (env:environment)
       = infer_priorities env defs
     in
 
-    (* List.iter (function f,t,cls -> *)
-    (*     List.iter (function lhs,rhs -> *)
-    (*         print_typed_subterms lhs; *)
-    (*         print_string "\n     ==>\n\n"; *)
-    (*         print_typed_subterms rhs; *)
-    (*         print_newline() *)
-    (*     ) *)
-    (*     cls *)
-    (* ) defs; *)
-
-
 
     (* check completeness of pattern matching *)
     let (defs:(var_name * type_expression * function_clause list * case_struct_def) list)
@@ -215,6 +204,15 @@ let process_function_defs (env:environment)
             )
             defs
     in
+
+    (* List.iter (function f,t,cls,(xs,cs) -> *)
+    (*     List.iter (function lhs,rhs -> *)
+    (*         debug " %s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs) *)
+    (*     ) *)
+    (*     cls; *)
+    (*     debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " id xs) (string_of_case_struct_term cs) *)
+    (* ) defs; *)
+
 
     let (defs:(var_name * type_expression * function_clause list * case_struct_def) list)
       = if option "expand_clauses"

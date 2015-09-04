@@ -443,24 +443,34 @@ let infer_type_defs
                     )
                     clauses in
 
+    let defs = List.map (function f,t,cls ->
+                            let new_clauses =
+                                try List.assoc f clauses
+                                with Not_found -> assert (clauses=[]);[]
+                            in f,new_clauses)
+                      defs in
 
     (* chooses appropriate type to show the user *)
     let choose_type f =
         try
             let tf = List.assoc f given_types in
             reset_fresh_variable_generator [tf];
-            let t = instantiate_type (List.assoc f context) in
-            if is_instance tf t
-            then tf
-            else error (fmt "function %s cannot be coerced to type %s" f (string_of_type tf))
-        with Not_found ->
+            try
+                let t = instantiate_type (List.assoc f context) in
+                if is_instance tf t
+                then tf
+                else error (fmt "function %s cannot be coerced to type %s" f (string_of_type tf))
+            with Not_found -> tf    (* if f is not in the context, it means there were no associated
+                                     * clause. The type was necessarily given by the user *)
+        with Not_found ->   (* if no type was given by the user *)
             try
                 let t = List.assoc f context in
                 reset_fresh_variable_generator [];
                 instantiate_type t
-            with Not_found -> assert false
+            with Not_found -> assert false  (* in this case, the function f must appear in the
+                                             * context as there is at least one corresponding clause *)
     in
 
-    let clauses = List.map (function f,cls -> f,choose_type f,cls) clauses in
+    let defs = List.map (function f,cls -> f,choose_type f,cls) defs in
 
-    clauses
+    defs
