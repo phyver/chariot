@@ -72,8 +72,9 @@ let rec term_to_explore_aux (env:environment) (v:(empty,'p,type_expression) raw_
 let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (reduce env v)
 
 
-let rec unfold (env:environment) (p:int->bool) (v:(unit,type_expression) unfolded_term) : (unit,type_expression) unfolded_term
- =  match v with
+let rec unfold (env:environment) (p:int->bool) (v:(unit,type_expression) unfolded_term)
+  : (unit,type_expression) unfolded_term
+  = match v with
         | Angel _ | Daimon _ | Var _ | Proj _ | Const _ -> v
         | App(v1,v2) -> App(unfold env p v1, unfold env p v2)
         | Sp(Unfolded fields,t) -> Sp (Unfolded (List.map (function d,xs,v -> d,xs,unfold env p v) fields),t)
@@ -94,7 +95,7 @@ let rec unfold (env:environment) (p:int->bool) (v:(unit,type_expression) unfolde
 let unfold env p v = struct_nb:=0; unfold env p v
 
 let rec unfold_to_depth env v depth
- =  if depth = 0
+  = if depth = 0
     then term_to_explore env v
     else
         let v = unfold_to_depth env v (depth-1) in

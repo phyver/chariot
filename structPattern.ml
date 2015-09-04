@@ -214,7 +214,7 @@ let remove_term_struct (functions:var_name list) (clauses:(plain_term*(unit,'t) 
 
 
 
-let remove_struct_defs (defs:(var_name * type_expression option * ((unit,'t) struct_term*(unit,'t) struct_term) list) list)
+let remove_struct_defs (defs:(var_name * type_expression option * (parsed_term*parsed_term) list) list)
   : (var_name * type_expression option * (plain_term*plain_term) list) list
   =
     let types = List.map (function f,t,_ -> f,t) defs in

@@ -281,7 +281,8 @@ let extract_clause_numbers cs
     in uniq (extract_clause_numbers_aux cs)
 
 let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:(empty,'p,type_expression) raw_term case_struct_tree)
-  (* :  (empty, 'p, unit) raw_term * (empty, 'p, unit) raw_term *)
+  : ((empty, unit, unit) raw_term * (empty, 'p, unit) raw_term) list
+  (* I need unit for priorities on the left because I need to invent priorities in the convert_cs_to_clauses_aux function *)
   = 
     let rec convert_cs_to_clauses_aux pat (cs:(empty,'p,type_expression) raw_term case_struct_tree)
       = match cs with
