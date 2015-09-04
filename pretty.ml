@@ -123,10 +123,10 @@ let rec
             let s2 = (string_of_raw_term_paren o ss sp st v2) in
             let s1 =  (string_of_raw_term o ss sp st v1) in
             fmt "%s%s" s2 s1
-        | App(App(Var("add",_),v1),v2) when (option "show_nats") ->
-            let s1 = (string_of_raw_term o ss sp st v1) in
-            let s2 =  (string_of_raw_term_paren o ss sp st v2) in
-            fmt "%s+%s" s1 s2
+        (* | App(App(Var("add",_),v1),v2) when (option "show_nats") -> *)
+        (*     let s1 = (string_of_raw_term o ss sp st v1) in *)
+        (*     let s2 =  (string_of_raw_term_paren o ss sp st v2) in *)
+        (*     fmt "%s+%s" s1 s2 *)
         | App(v1,v2) ->
             let s1 = (string_of_raw_term o ss sp st v1) in
             let s2 =  (string_of_raw_term_paren o ss sp st v2) in
