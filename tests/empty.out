@@ -1,3 +1,5 @@
+>> option verbose is set to 1
+>> option verbose is set to 2
 >> inductive type empty was succesfully defined
 >> coinductive type unit was succesfully defined
 >> Typing for f successful

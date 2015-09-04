@@ -1,3 +1,8 @@
+>> option verbose is set to 1
+>> option verbose is set to 2
+>> option depth is set to 2
+>> option bound is set to 3
+>> option show_nats is set to false
 >>   collapse of   f, Zero⁼   is   f, Zero⁼
 
 >>   collapse of   f, Succ⁼ Zero⁼   is   f, Succ⁼ Zero⁼

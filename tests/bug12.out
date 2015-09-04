@@ -1,3 +1,7 @@
+>> option verbose is set to 1
+>> option show_tuples is set to false
+>> option verbose is set to 1
+>> option allow_structs is set to true
 >> inductive type nat was succesfully defined
 >> Typing for d, c, b, a successful
 >> the definition for a is complete

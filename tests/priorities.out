@@ -1,3 +1,4 @@
+>> option verbose is set to 1
 >> inductive type nat was succesfully defined
 >> inductive type list was succesfully defined
 >> Typing for f successful
@@ -12,6 +13,8 @@
 >> the definition for g2 is complete
 >> the definition g2 is provably correct
 
+>> option show_lists is set to false
+>> option show_nats is set to false
 >> functions in environment:
 val
    f : list(list(list(list(nat)))) → nat
@@ -26,6 +29,7 @@ val
    g2 : nat → list(list(list(nat)))
     | g2 x = Nil⁷
 
+>> option squash_priorities is set to true
 >> Typing for f1 successful
 >> the definition for f1 is complete
 >> the definition f1 is provably correct

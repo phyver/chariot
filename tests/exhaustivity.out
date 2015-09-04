@@ -1,3 +1,6 @@
+>> option verbose is set to 1
+>> option continue_on_error is set to true
+>> option show_priorities is set to false
 >> inductive type nat was succesfully defined
 >> Typing for f successful
 !! warning: match failures:
@@ -6,12 +9,14 @@
 >> the definition f is provably correct
 
 >> inductive type list was succesfully defined
+>> option allow_incomplete_defs is set to true
 >> Typing for last successful
 !! warning: match failures:
 !! warning:   last []
 !! warning: the definition for last is incomplete
 >> the definition last is provably correct
 
+>> option allow_incomplete_defs is set to false
 >> Typing for last2 successful
 !! warning: match failures:
 !! warning:   last2 []
@@ -46,6 +51,7 @@ val
     | test3 ([]::xs) = ⊤
     | test3 (y::ys::xs) = ⊤
 
+>> option keep_useless_clauses is set to true
 >> Typing for test4 successful
 !! warning: useless clause 2: test4 [] = ⊤
 >> the definition for test4 is complete

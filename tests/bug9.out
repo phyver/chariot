@@ -1,4 +1,6 @@
+>> option verbose is set to 1
 >> coinductive type stream was succesfully defined
+>> option show_initial_graph is set to true
 >> Typing for f successful
 >> the definition for f is complete
 >> initial callgraph:

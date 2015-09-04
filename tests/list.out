@@ -1,3 +1,5 @@
+>> option verbose is set to 1
+>> option show_priorities is set to false
 >> inductive type list was succesfully defined
 >> inductive type nat was succesfully defined
 >> Typing for add successful
@@ -32,6 +34,7 @@
 >> the definition for rev is complete
 >> the definition rev is provably correct
 
+>> option show_lists is set to false
 >> functions in environment:
 val
    add : nat → nat → nat
@@ -72,6 +75,7 @@ val
    rev : list('a) → list('a)
     | rev l = rev_append Nil l
 
+>> option show_lists is set to true
 >> functions in environment:
 val
    add : nat → nat → nat

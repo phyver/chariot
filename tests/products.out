@@ -1,3 +1,6 @@
+>> option verbose is set to 1
+>> option show_lists is set to false
+>> option show_nats is set to false
 >> inductive type nat was succesfully defined
 >> inductive type unit was succesfully defined
 >> inductive type prod_2 was succesfully defined
@@ -52,7 +55,9 @@ val
    test : nat * nat * nat
     | test = (Succ¹ Zero¹, Succ¹ (Succ¹ Zero¹), Succ¹ (Succ¹ (Succ¹ Zero¹)))
 
+>> option continue_on_error is set to true
 ** error: cannot infer type of constant Tuple_4
+>> option show_tuples is set to false
 >> functions in environment:
 val
    fst : prod_2('a,'b) → 'a

@@ -1,2 +1,3 @@
+>> option verbose is set to 1
 >> inductive type nat was succesfully defined
 ** error: parse error line 23, column 6 (token <data>)

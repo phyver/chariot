@@ -1,3 +1,8 @@
+>> option verbose is set to 1
+>> option show_tuples is set to false
+>> option verbose is set to 1
+>> option allow_structs is set to true
+>> option continue_on_error is set to true
 >> inductive type nat was succesfully defined
 >> inductive type prod_2 was succesfully defined
 >> coinductive type struct_2 was succesfully defined

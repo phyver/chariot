@@ -1,3 +1,4 @@
+>> option verbose is set to 1
 >> f¹ x² x³ x⁴ x⁵ x⁶
 >> with:
 >>   - 1: 'a → 'a → 'a → 'a → 'a → 'l

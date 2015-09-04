@@ -1,3 +1,5 @@
+>> option verbose is set to 1
+>> option use_priorities is set to false
 >> TRUE means that the first pattern is an approximation of the second
 >> expect TRUE
 >>   f, x₁ => g, x₁    ≥    f, x₁ => g, x₁
@@ -19,6 +21,7 @@
 >>   f, x₁ => g, x₁    ≥    f, S⁼ x₁ => g, x₁
 >>         FALSE
 
+>> option depth is set to 0
 >> expect TRUE
 >>   f, x₁ => g, <0>⁼ x₁    ≥    f, x₁ => g, <0>⁼ x₁
 >>         TRUE
@@ -31,6 +34,7 @@
 >>   f, x₁ => g, <0>⁼ x₁    ≥    f, x₁ => g, <1>⁼ x₁
 >>         FALSE
 
+>> option depth is set to 1
 >> expect TRUE
 >>   f, S⁼ x₁ => g, S⁼ x₁    ≥    f, S⁼ x₁ => g, S⁼ x₁
 >>         TRUE
@@ -75,6 +79,7 @@
 >>   f, S⁼ x₁, x₂ => g, x₁, x₂    ≥    f, x₁, x₂ => g, x₁, x₂
 >>         FALSE
 
+>> option depth is set to 0
 >> expect FALSE
 >>   f, x₁, x₂ => g, x₁, x₂    ≥    f, x₁, x₂ => g, x₁, <1>⁼ x₂
 >>         FALSE

@@ -1,3 +1,5 @@
+>> option verbose is set to 1
+>> option show_lists is set to false
 >> inductive type list_aux was succesfully defined
 >> coinductive type colist was succesfully defined
 >> Typing for map_aux, map successful

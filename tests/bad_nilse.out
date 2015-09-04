@@ -1,3 +1,4 @@
+>> option verbose is set to 1
 >> coinductive type stream was succesfully defined
 >> inductive type tree was succesfully defined
 >> Typing for bad successful

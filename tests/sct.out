@@ -1,3 +1,10 @@
+>> option verbose is set to 1
+>> option depth is set to 2
+>> option bound is set to 1
+>> option allow_inadequate_defs is set to false
+>> option collapse_graph is set to true
+>> option use_subsumption is set to false
+>> option continue_on_error is set to true
 >> inductive type nat was succesfully defined
 >> inductive type list was succesfully defined
 >> Typing for id successful

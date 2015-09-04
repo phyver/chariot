@@ -1,3 +1,4 @@
+>> option verbose is set to 1
 >> coinductive type prod_2 was succesfully defined
 >> inductive type list was succesfully defined
 >> inductive type nat was succesfully defined

@@ -148,17 +148,19 @@ let set_option s v
             | (s',_,h)::options when s'=s -> (s',v,h)::options
             | x::options -> x::(set_option_aux options s v)
     in
+    let akn () = if verbose 1 then msg "option %s is set to %s" s v
+    in
     match s with
-        | "prompt" -> current_state.prompt <- v
-        | "verbose" -> (try current_state.verbose <- int_of_string v with Failure _ -> error "%s is not an integer")
+        | "prompt" -> current_state.prompt <- v; akn()
+        | "verbose" -> (try current_state.verbose <- int_of_string v; akn() with Failure _ -> error "%s is not an integer")
         | "depth" ->
             begin
                 try
                     let d = int_of_string v in
                     if d < 0
                     then error "depth cannot be strictly negative"
-                    else current_state.depth <- d
-                with Failure _ -> error "%s is not an integer"
+                    else (current_state.depth <- d; akn())
+                with Failure _ -> error (fmt "%s is not an integer" v)
             end
         | "bound" -> 
             begin
@@ -166,10 +168,16 @@ let set_option s v
                     let b = int_of_string v in
                     if b <= 0
                     then error "bound must be strictly positive"
-                    else current_state.bound <- b
-                with Failure _ -> error "%s is not an integer"
+                    else (current_state.bound <- b; akn())
+                with Failure _ -> error (fmt "%s is not an integer" v)
             end
         | "" -> show_options ()
-        | s -> current_state.boolean_options <- set_option_aux current_state.boolean_options s (bool_of_string v)
+        | s ->
+            begin
+                try
+                    current_state.boolean_options <- set_option_aux current_state.boolean_options s (bool_of_string v);
+                    akn()
+                with Invalid_argument _ -> error (fmt "%s is not a boolean" v)
+            end
 
 

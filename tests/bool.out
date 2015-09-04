@@ -1,3 +1,4 @@
+>> option verbose is set to 1
 >> inductive type bool was succesfully defined
 >> Typing for f successful
 >> the definition for f is complete
@@ -7,6 +8,7 @@
 >> the definition for g is complete
 !! warning: the definition g is NOT provably correct (weight_bound: 2, depth_bound: 2)
 
+>> option expand_clauses is set to true
 >> Typing for h successful
 >> the definition for h is complete
 >> the definition h is provably correct

@@ -1,3 +1,5 @@
+>> option verbose is set to 1
+>> option show_lists is set to false
 >> inductive type list was succesfully defined
 >> Typing for test successful
 >> the definition for test is complete

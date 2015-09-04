@@ -1,3 +1,5 @@
+>> option verbose is set to 1
+>> option continue_on_error is set to true
 >> inductive type nat was succesfully defined
 >> inductive type list was succesfully defined
 >> Typing for map_2, map_1 successful
