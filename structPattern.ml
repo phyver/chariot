@@ -155,7 +155,7 @@ let remove_match_struct (clauses:((unit,'t) struct_term*(unit,'t) struct_term) l
 
 
 
-let remove_term_struct (clauses:(plain_term*(unit,'t) struct_term) list)
+let remove_term_struct (functions:var_name list) (clauses:(plain_term*(unit,'t) struct_term) list)
   : (plain_term*plain_term) list
   =
 
@@ -182,7 +182,12 @@ let remove_term_struct (clauses:(plain_term*(unit,'t) struct_term) list)
                 assert (args=[]);
                 let f_aux = new_aux () in
                 let params = extract_variables_from_struct v in
+                debug "params: %s" (string_of_list ", " id params);
                 let params = inter_uniq params xs in
+                debug "params: %s" (string_of_list ", " id params);
+                let params = diff_uniq params functions in
+                debug "params: %s" (string_of_list ", " id params);
+
                 let new_f = app f_aux (List.map (fun x -> Var(x,())) params) in
                 let new_clauses = List.map (function d,v -> App(  Proj(d,(),()) , new_f) , v) fields in
                 new_f , new_clauses
@@ -217,10 +222,11 @@ let remove_struct_defs (defs:(var_name * type_expression option * ((unit,'t) str
   : (var_name * type_expression option * (plain_term*plain_term) list) list
   =
     let types = List.map (function f,t,_ -> f,t) defs in
+    let functions = List.map (function f,_,_ -> f) defs in
 
     let clauses = List.concat (List.map (function f,_,clauses -> clauses) defs) in
     let new_clauses = remove_match_struct clauses in
-    let new_clauses = remove_term_struct new_clauses in
+    let new_clauses = remove_term_struct functions new_clauses in
 
     let new_defs = List.map (function lhs,rhs -> get_function_name lhs, (lhs,rhs)) new_clauses in
     let new_defs =
