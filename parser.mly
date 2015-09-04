@@ -285,9 +285,8 @@ let test_collapse (p:parsed_term) =
 %token <string> IDU IDL STR TVAR
 %token <int> INT
 
-%right ARROW DOUBLECOLON
-%left DOT
-%left PLUS
+%right ARROW DOUBLECOLON DOLLAR
+%left DOT PLUS
 
 
 %start single_statement
@@ -441,13 +440,17 @@ function_clause:
     | term EQUAL term        { dummy_nb := 0; ($1,$3) }
 
 term:
-    | atomic_term               { $1 }
-    | term atomic_term          { App($1,$2) }
-    | atomic_term DOLLAR term   { App($1,$3) }
+    | app_term                  { $1 }
 
-    | term PLUS atomic_term     { process_addition $1 $3 }
+    /* syntactic sugar */
+    | term PLUS term            { process_addition $1 $3 }
     | SHARP IDU atomic_term     { Sp(Struct [$2,$3], ()) }
     | SHARP IDU DOLLAR term     { Sp(Struct [$2,$4], ()) }
+    | term DOLLAR term          { App($1,$3) }
+
+app_term:
+    | app_term atomic_term      { App($1,$2) }
+    | atomic_term               { $1 }
 
 atomic_term:
     | LPAR term RPAR                        { $2 }
@@ -458,6 +461,7 @@ atomic_term:
     | ANGEL                                 { Angel() }
     | DAIMON                                { Daimon() }
 
+    /* syntactic sugar */
     | INT                                   { int_to_term $1 (Const("Zero",(),())) }
     | term_list                             { list_to_term (List.rev $1) (Const("Nil",(),())) }
     | atomic_term DOUBLECOLON atomic_term   { App(App(Const("Cons",(),()),$1),$3) }
