@@ -140,8 +140,8 @@ let infer_priorities (env:environment)
             List.fold_left
                 (fun ds lhsrhs ->
                     let lhs,rhs = lhsrhs in
-                    let ds = merge_uniq ds (extract_datatypes_from_typed_term lhs) in
-                    let ds = merge_uniq ds (extract_datatypes_from_typed_term rhs) in
+                    let ds = union_uniq ds (extract_datatypes_from_typed_term lhs) in
+                    let ds = union_uniq ds (extract_datatypes_from_typed_term rhs) in
                     ds
                 )
                 ds

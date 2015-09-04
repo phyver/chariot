@@ -58,31 +58,41 @@ let rec print_list (b1:string) (sep:string) (b2:string) (p:'a -> unit) (l:'a lis
         | x::xs -> print_string b1; p x; List.iter (fun x -> print_string sep; p x) xs; print_string b2
 
 (* remove duplicates *)
-(* not as efficient as the sorting version, but it keeps the order of the first occurences of the list *)
-let uniq (l:'a list) : 'a list
-  = let rec uniq_aux acc l
+(* stable allows to keep the order of the first occurences... *)
+let uniq ?(stable=false) (l:'a list) : 'a list
+  = let rec uniq_stable acc l
       = match l with
             | [] -> List.rev acc
-            | x::xs when List.mem x acc -> uniq_aux acc xs
-            | x::xs -> uniq_aux (x::acc) xs
+            | x::xs when List.mem x acc -> uniq_stable acc xs
+            | x::xs -> uniq_stable (x::acc) xs
   in
-  uniq_aux [] l
+    let rec uniq_sort l
+      = match l with
+            | [] -> []
+            | [a] -> [a]
+            | a::(b::_ as l) when a=b -> uniq_sort l
+            | a::(b::_ as l) when a<b -> a::(uniq_sort l)
+            | a::b::_ (*when a>b*) -> assert false
+    in
+    if stable
+    then uniq_stable [] l
+    else uniq_sort (List.sort compare l)
 
 (* insert in a sorted uniq list *)
-let rec insert (x:'a) (l:'a list) : 'a list
+let rec insert_uniq (x:'a) (l:'a list) : 'a list
   = match l with
         | [] -> [x]
         | y::l when x<y -> x::y::l
-        | y::l when x>y -> y::(insert x l)
+        | y::l when x>y -> y::(insert_uniq x l)
         | y::l (* when x=y *) -> y::l
 
 (* merge two sorted uniq lists *)
-let rec merge_uniq (l1:'a list) (l2:'a list) : 'a list
+let rec union_uniq (l1:'a list) (l2:'a list) : 'a list
   = match l1,l2 with
         | [],l | l,[] -> l
-        | x1::l1,x2::_ when x1<x2 -> x1::(merge_uniq l1 l2)
-        | x1::_,x2::l2 when x1>x2 -> x2::(merge_uniq l1 l2)
-        | x1::l1,x2::l2 (* when x1=x2 *) -> x1::(merge_uniq l1 l2)
+        | x1::l1,x2::_ when x1<x2 -> x1::(union_uniq l1 l2)
+        | x1::_,x2::l2 when x1>x2 -> x2::(union_uniq l1 l2)
+        | x1::l1,x2::l2 (* when x1=x2 *) -> x1::(union_uniq l1 l2)
 
 (* intersection of two sorted uniq lists *)
 let rec inter_uniq (l1:'a list) (l2:'a list) : 'a list
@@ -91,6 +101,15 @@ let rec inter_uniq (l1:'a list) (l2:'a list) : 'a list
         | x1::l1,x2::_ when x1<x2 -> (inter_uniq l1 l2)
         | x1::_,x2::l2 when x1>x2 -> (inter_uniq l1 l2)
         | x1::l1,x2::l2 (* when x1=x2 *) -> x1::(inter_uniq l1 l2)
+
+(* difference of two uniq lists *)
+let rec diff_uniq (l1:'a list) (l2:'a list) : 'a list
+  = match l1,l2 with
+        | [],l -> []
+        | l,[] -> l
+        | x1::l1,x2::_ when x1<x2 -> x1::(diff_uniq l1 l2)
+        | x1::_,x2::l2 when x1>x2 -> (diff_uniq l1 l2)
+        | x1::l1,x2::l2 (* when x1=x2 *) -> (diff_uniq l1 l2)
 
 (* look for a value with at least two occurences *)
 let find_dup (l:'a list) : 'a option
@@ -104,26 +123,15 @@ let find_dup (l:'a list) : 'a option
 
 (* look for a value that appears in the two lists *)
 let find_common (l1:'a list) (l2:'a list) : 'a option
-  = let rec find_common_aux l1 l2
-      = match l1,l2 with
-            | [],_ | _,[] -> None
-            | x1::_,x2::_ when x1=x2 -> Some x1
-            | x1::l1,x2::_ when x1<x2 -> find_common_aux l1 l2
-            | x1::_,x2::l2 (*when x1>x2*) -> find_common_aux l1 l2
-    in
-    find_common_aux (List.sort compare l1) (List.sort compare l2)
+  = match inter_uniq (uniq l1) (uniq l2) with
+        | [] -> None
+        | a::_ -> Some a
 
 (* find a value that appears in l1 but not in l2 *)
 let find_in_difference (l1:'a list) (l2:'a list) : 'a option
-  = let rec find_in_difference_aux l1 l2
-      = match l1,l2 with
-            | [],_ -> None
-            | x::_,[] -> Some x
-            | x1::_,x2::_ when x1<x2 -> Some x1
-            | x1::_,x2::l2 when x1>x2 -> find_in_difference_aux l1 l2
-            | x1::l1,x2::l2 (*when x1=x2*) -> find_in_difference_aux l1 l2
-    in
-    find_in_difference_aux (List.sort compare l1) (List.sort compare l2)
+  = match diff_uniq (uniq l1) (uniq l2) with
+        | [] -> None
+        | a::_ -> Some a
 
 (* transforms a positive integer into a UTF-8 string of superscripts *)
 let string_of_exp (n:int) : string

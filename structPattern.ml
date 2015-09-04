@@ -147,7 +147,7 @@ let remove_match_struct (clauses:((unit,'t) struct_term*(unit,'t) struct_term) l
                 cl::(process_clause cl')
     in
 
-    uniq (List.concat (List.map process_clause clauses))
+    uniq ~stable:true (List.concat (List.map process_clause clauses))
 
 
 
@@ -165,8 +165,8 @@ let remove_term_struct (clauses:(plain_term*(unit,'t) struct_term) list)
             | Var(x,()) -> [x]
             | Angel _ | Daimon _ | Const _ | Proj _ -> []
             | Sp(Struct fields,_) ->
-                    List.fold_left (fun r dv -> merge_uniq r (extract_variables_from_struct (snd dv))) [] fields
-            | App(v1,v2) -> merge_uniq (extract_variables_from_struct v1) (extract_variables_from_struct v2)
+                    List.fold_left (fun r dv -> union_uniq r (extract_variables_from_struct (snd dv))) [] fields
+            | App(v1,v2) -> union_uniq (extract_variables_from_struct v1) (extract_variables_from_struct v2)
     in
 
     let rec process_term xs (v:(unit,'t) struct_term)
@@ -207,7 +207,7 @@ let remove_term_struct (clauses:(plain_term*(unit,'t) struct_term) list)
                 (lhs,rhs)::(List.concat (List.map process_clause new_clauses))
     in
 
-    uniq (List.concat (List.map process_clause clauses))
+    uniq ~stable:true (List.concat (List.map process_clause clauses))
 
 
 

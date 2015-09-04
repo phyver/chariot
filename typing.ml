@@ -427,7 +427,7 @@ let infer_type_defs
     (* ) clauses; *)
 
     (* simplify type variables *)
-    let tvars = uniq (List.concat (List.map (function _,t -> extract_type_variables t) context)) in
+    let tvars = uniq ~stable:true (List.concat (List.map (function _,t -> extract_type_variables t) context)) in
     reset_fresh_variable_generator [];
     let sigma = List.map (fun x -> x,instantiate_type (TVar x)) tvars in
     let clauses = List.map (function f,lhs,rhs -> (f,subst_type_term sigma lhs,subst_type_term sigma rhs)) clauses in

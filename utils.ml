@@ -189,7 +189,7 @@ let extract_type_variables (t:type_expression) : type_name list
         | Data(_, params) -> List.concat (List.map extract_type_variables_aux params)
         | Arrow(t1,t2) -> (extract_type_variables_aux t1) @ (extract_type_variables_aux t2)
     in
-    uniq (extract_type_variables_aux t)
+    uniq ~stable:true (extract_type_variables_aux t)
 
 
 let rec extract_datatypes (t:type_expression) : type_expression list
@@ -201,7 +201,7 @@ let rec extract_datatypes (t:type_expression) : type_expression list
 let rec extract_datatypes_from_typed_term (u:(empty,'p,type_expression) raw_term) : type_expression list
   = match u with
         | Daimon _ | Angel _ | Var _ -> []
-        | App(u1,u2) -> merge_uniq (extract_datatypes_from_typed_term u1) (extract_datatypes_from_typed_term u2)
+        | App(u1,u2) -> union_uniq (extract_datatypes_from_typed_term u1) (extract_datatypes_from_typed_term u2)
         | Const(_,_,t) -> extract_datatypes (get_result_type t)
         | Proj(_,_,t) -> extract_datatypes (get_first_arg_type t)
         | Sp(s,_) -> s.bot
@@ -210,7 +210,7 @@ let rec extract_term_variables (v:(empty,'p,'t) raw_term) : var_name list
   = match v with
         | Angel _ | Daimon _ | Const _ | Proj _ -> []
         | Var(x,_) -> [x]
-        | App(v1,v2) -> merge_uniq (extract_term_variables v1) (extract_term_variables v2)
+        | App(v1,v2) -> union_uniq (extract_term_variables v1) (extract_term_variables v2)
         | Sp(v,_) -> v.bot
 
 (* let rec extract_pattern_variables (v:pattern) : var_name list *)
