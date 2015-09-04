@@ -43,6 +43,8 @@ open State
 open Pretty
 open Typing
 
+exception DaimonRes
+
 (* Map instance for meoizing computation *)
 module Memo = Map.Make (struct type t=(empty,unit,type_expression) raw_term let compare=compare end)
 
@@ -74,8 +76,9 @@ let rec reduce env (v:(empty,unit,type_expression) raw_term) : (empty,unit,type_
                             let xs,cl = (try List.assoc d fields with Not_found -> assert false) in
                             let tau,rest = combine_suffix xs rest in
                             rewrite_case_struct (tau@sigma) rest cl
-                        | _ -> raise Exit
+                        | _ -> raise Exit   (* structure that is not projected, we stop evaluation *)
                 end
+            | CSLeaf(Daimon _) -> raise DaimonRes
             | CSLeaf v ->
                     incr counter;
                     CSLeaf (subst_term sigma v),rest
@@ -87,6 +90,8 @@ let rec reduce env (v:(empty,unit,type_expression) raw_term) : (empty,unit,type_
                             let xs,cl = (try List.assoc c clauses with Not_found -> assert false) in
                             let tau,rest' = combine_suffix xs args in
                             rewrite_case_struct (tau@sigma) (rest'@rest) cl
+                        | Angel t, _ -> CSLeaf(Angel t), []     (* NOTE: t will be infered again at the end... *)
+                        | Daimon t,_ -> raise DaimonRes
                         | _ -> error (fmt "typing error with %s" (string_of_plain_term v))
                 with Not_found -> assert false
     in
@@ -106,7 +111,8 @@ let rec reduce env (v:(empty,unit,type_expression) raw_term) : (empty,unit,type_
                 let h,args = (try List.hd args,List.tl args with _ -> assert false) in
                 let args = List.map nf args in
                 match h with
-                    | Const _ | Angel _ | Daimon _ -> implode (h::args)
+                    | Const _ | Angel _ -> implode (h::args)
+                    | Daimon _ -> raise DaimonRes
 
                     | App _ -> assert false
                     | Sp(s,_) -> s.bot
@@ -129,6 +135,7 @@ let rec reduce env (v:(empty,unit,type_expression) raw_term) : (empty,unit,type_
             result
     and
 
+    (* TODO: deal with Angel and Daimon *)
     nf (v:(empty,unit,type_expression) raw_term) : (empty,unit,type_expression) raw_term
       =
         let n = !counter in
@@ -138,6 +145,12 @@ let rec reduce env (v:(empty,unit,type_expression) raw_term) : (empty,unit,type_
         else nf v
     in
 
-    let _,result,_ = infer_type_term env (nf v) in
-    if verbose 2 then msg "%d reduction%s made" !counter (if !counter > 1 then "s" else "");
-    result
+    try
+        let v = nf v in
+        let _,result,_ = infer_type_term env v in
+        if verbose 2 then msg "%d reduction%s made" !counter (if !counter > 1 then "s" else "");
+        result
+    with DaimonRes -> 
+        let _,result,_ = infer_type_term env (Daimon()) in
+        if verbose 2 then msg "%d reduction%s made" !counter (if !counter > 1 then "s" else "");
+        result
