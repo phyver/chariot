@@ -134,24 +134,15 @@ let cmd_show s =
     else
     if s = "all" || s = "env" then show_environment current_state.env
     else
-
-    (* FIXME: ugly *)
-    let rec show_type_aux = function
-        | [] -> raise Exit
-        | (tname,params,n,consts)::_ when s=tname ->
-            show_type_bloc current_state.env [(tname,params,n,consts)]
-        | _::types -> show_type_aux types
-    in
-    let rec show_function_aux = function
-        | [] -> raise Exit
-        | (f,m,t,clauses,cs)::_ when s=f ->
-            show_function_bloc current_state.env [(f,m,t,clauses,cs)]
-        | _::defs -> show_function_aux defs
-    in
-    try show_type_aux current_state.env.types
-    with Exit ->
-        try show_function_aux current_state.env.functions
-        with Exit -> errmsg "no type or function %s in environment" s
+    try
+        let _,params,consts = env_type_assoc current_state.env s in
+        show_data_type current_state.env s params consts
+    with Not_found ->
+        try
+            let _,t,clauses,cst = env_fun_assoc current_state.env s in
+            print_endline "val";
+            show_function s t clauses cst
+        with Not_found -> errmsg "no type or function %s in environment" s
 
 
 let cmd_show_help ()
