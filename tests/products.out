@@ -51,6 +51,7 @@ val
 val
    test : nat * nat * nat
     | test = (Succ¹ Zero¹, Succ¹ (Succ¹ Zero¹), Succ¹ (Succ¹ (Succ¹ Zero¹)))
+
 ** error: cannot infer type of constant Tuple_4
 >> functions in environment:
 val

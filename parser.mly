@@ -136,12 +136,14 @@ let cmd_show s =
     else
     try
         let _,params,consts = env_type_assoc current_state.env s in
-        show_data_type current_state.env s params consts
+        show_data_type current_state.env s params consts;
+        print_newline()
     with Not_found ->
         try
             let _,t,clauses,cst = env_fun_assoc current_state.env s in
             print_endline "val";
-            show_function s t clauses cst
+            show_function s t clauses cst;
+            print_newline()
         with Not_found -> errmsg "no type or function %s in environment" s
 
 

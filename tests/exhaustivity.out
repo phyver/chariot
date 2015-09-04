@@ -34,6 +34,7 @@
 val
    test2 : list('a) → 'b
     | test2 x = ⊤
+
 >> Typing for test3 successful
 !! warning: useless clause 4: test3 _₁ = ⊤
 >> the definition for test3 is complete
@@ -44,6 +45,7 @@ val
     | test3 [] = ⊤
     | test3 ([]::xs) = ⊤
     | test3 (y::ys::xs) = ⊤
+
 >> Typing for test4 successful
 !! warning: useless clause 2: test4 [] = ⊤
 >> the definition for test4 is complete
@@ -53,6 +55,7 @@ val
    test4 : list('a) → 'b
     | test4 x = ⊤
     | test4 [] = ⊤
+
 >> Typing for test5 successful
 !! warning: useless clause 4: test5 _₁ = ⊤
 >> the definition for test5 is complete
@@ -64,3 +67,4 @@ val
     | test5 ([]::xs) = ⊤
     | test5 (y::ys::xs) = ⊤
     | test5 _₁ = ⊤
+

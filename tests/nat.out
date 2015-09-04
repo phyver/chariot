@@ -64,3 +64,4 @@ val
     | ack Zero n = Succ n
     | ack (Succ m) Zero = ack m (Succ Zero)
     | ack (Succ m) (Succ n) = ack m (ack (Succ m) n)
+
