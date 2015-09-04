@@ -155,7 +155,7 @@ let process_function_defs (env:environment)
     in
 
     (* check that the functions are all different *)
-    let new_functions = List.rev_map (function f,_,_ -> f) defs in
+    let new_functions = List.map (function f,_,_ -> f) defs in
     check_uniqueness_functions new_functions;
 
     (* check that new function are different from old ones *)
