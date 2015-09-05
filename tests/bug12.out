@@ -3,19 +3,19 @@
 >> option verbose is set to 1
 >> option allow_structs is set to true
 >> inductive type nat was succesfully defined
->> Typing for d, c, b, a successful
+>> Typing for a, b, c, d successful
 >> the definition for a is complete
 >> the definition for b is complete
 >> the definition for c is complete
 >> the definition for d is complete
->> the definitions d, c, b, a are provably correct
+>> the definitions a, b, c, d are provably correct
 
->> Typing for h, g, f, e successful
+>> Typing for e, f, g, h successful
 >> the definition for e is complete
 >> the definition for f is complete
 >> the definition for g is complete
 >> the definition for h is complete
->> the definitions h, g, f, e are provably correct
+>> the definitions e, f, g, h are provably correct
 
 >> functions in environment:
 val

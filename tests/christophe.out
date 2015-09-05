@@ -9,39 +9,39 @@
 >> coinductive type stream2 was succesfully defined
 >> inductive type stream3 was succesfully defined
 >> coinductive type stream4 was succesfully defined
->> Typing for convert2_aux, convert2 successful
+>> Typing for convert2, convert2_aux successful
 >> the definition for convert2 is complete
 >> the definition for convert2_aux is complete
->> the definitions convert2_aux, convert2 are provably correct
+>> the definitions convert2, convert2_aux are provably correct
 
->> Typing for convert3_aux, convert3 successful
+>> Typing for convert3, convert3_aux successful
 >> the definition for convert3 is complete
 >> the definition for convert3_aux is complete
->> the definitions convert3_aux, convert3 are provably correct
+>> the definitions convert3, convert3_aux are provably correct
 
->> Typing for convert4_aux, convert4 successful
+>> Typing for convert4, convert4_aux successful
 >> the definition for convert4 is complete
 >> the definition for convert4_aux is complete
->> the definitions convert4_aux, convert4 are provably correct
+>> the definitions convert4, convert4_aux are provably correct
 
->> Typing for stream2_to_4_aux, stream2_to_4 successful
+>> Typing for stream2_to_4, stream2_to_4_aux successful
 >> the definition for stream2_to_4 is complete
 >> the definition for stream2_to_4_aux is complete
->> the definitions stream2_to_4_aux, stream2_to_4 are provably correct
+>> the definitions stream2_to_4, stream2_to_4_aux are provably correct
 
->> Typing for map_aux2, map_aux, stream3_to_4_aux, stream3_to_4 successful
+>> Typing for stream3_to_4, stream3_to_4_aux, map_aux, map_aux2 successful
 >> the definition for stream3_to_4 is complete
 >> the definition for stream3_to_4_aux is complete
 >> the definition for map_aux is complete
 >> the definition for map_aux2 is complete
->> the definitions map_aux2, map_aux, stream3_to_4_aux, stream3_to_4 are provably correct
+>> the definitions stream3_to_4, stream3_to_4_aux, map_aux, map_aux2 are provably correct
 
->> Typing for aux2, aux1, stream3_to_2_op_aux, stream3_to_2_op successful
+>> Typing for stream3_to_2_op, stream3_to_2_op_aux, aux1, aux2 successful
 >> the definition for stream3_to_2_op is complete
 >> the definition for stream3_to_2_op_aux is complete
 >> the definition for aux1 is complete
 >> the definition for aux2 is complete
->> the definitions aux2, aux1, stream3_to_2_op_aux, stream3_to_2_op are provably correct
+>> the definitions stream3_to_2_op, stream3_to_2_op_aux, aux1, aux2 are provably correct
 
 >> Typing for zeros2 successful
 >> the definition for zeros2 is complete
@@ -71,20 +71,20 @@
 >> the definition for ones3 is complete
 >> the definition ones3 is provably correct
 
->> Typing for n_zeros_ones3_aux, n_zeros_ones3 successful
+>> Typing for n_zeros_ones3, n_zeros_ones3_aux successful
 >> the definition for n_zeros_ones3 is complete
 >> the definition for n_zeros_ones3_aux is complete
->> the definitions n_zeros_ones3_aux, n_zeros_ones3 are provably correct
+>> the definitions n_zeros_ones3, n_zeros_ones3_aux are provably correct
 
->> Typing for get_n_ones3_aux, get_n_ones3 successful
+>> Typing for get_n_ones3, get_n_ones3_aux successful
 >> the definition for get_n_ones3 is complete
 >> the definition for get_n_ones3_aux is complete
->> the definitions get_n_ones3_aux, get_n_ones3 are provably correct
+>> the definitions get_n_ones3, get_n_ones3_aux are provably correct
 
->> Typing for map_length1_aux, map_length1 successful
+>> Typing for map_length1, map_length1_aux successful
 >> the definition for map_length1 is complete
 >> the definition for map_length1_aux is complete
->> the definitions map_length1_aux, map_length1 are provably correct
+>> the definitions map_length1, map_length1_aux are provably correct
 
 >> Typing for test1 successful
 >> the definition for test1 is complete

@@ -2,10 +2,10 @@
 >> option show_lists is set to false
 >> inductive type list_aux was succesfully defined
 >> coinductive type colist was succesfully defined
->> Typing for map_aux, map successful
+>> Typing for map, map_aux successful
 >> the definition for map is complete
 >> the definition for map_aux is complete
->> the definitions map_aux, map are provably correct
+>> the definitions map, map_aux are provably correct
 
 >> functions in environment:
 val

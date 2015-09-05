@@ -1,22 +1,22 @@
 >> option verbose is set to 1
 >> option allow_structs is set to true
 >> coinductive type t was succesfully defined
->> Typing for _aux₁, f successful
+>> Typing for f, _aux₁ successful
 >> the definition for f is complete
 >> the definition for _aux₁ is complete
->> the definitions _aux₁, f are provably correct
+>> the definitions f, _aux₁ are provably correct
 
->> Typing for _aux₂, g successful
+>> Typing for g, _aux₂ successful
 >> the definition for g is complete
 >> the definition for _aux₂ is complete
->> the definitions _aux₂, g are provably correct
+>> the definitions g, _aux₂ are provably correct
 
->> Typing for _aux₅, _aux₄, _aux₃, h successful
+>> Typing for h, _aux₃, _aux₄, _aux₅ successful
 >> the definition for h is complete
 >> the definition for _aux₃ is complete
 >> the definition for _aux₄ is complete
 >> the definition for _aux₅ is complete
->> the definitions _aux₅, _aux₄, _aux₃, h are provably correct
+>> the definitions h, _aux₃, _aux₄, _aux₅ are provably correct
 
 >> functions in environment:
 val

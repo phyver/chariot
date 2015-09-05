@@ -2,20 +2,20 @@
 >> option continue_on_error is set to true
 >> inductive type nat was succesfully defined
 >> inductive type list was succesfully defined
->> Typing for map_2, map_1 successful
+>> Typing for map_1, map_2 successful
 >> the definition for map_1 is complete
 >> the definition for map_2 is complete
->> the definitions map_2, map_1 are provably correct
+>> the definitions map_1, map_2 are provably correct
 
->> Typing for map1_2, map1_1 successful
+>> Typing for map1_1, map1_2 successful
 >> the definition for map1_1 is complete
 >> the definition for map1_2 is complete
->> the definitions map1_2, map1_1 are provably correct
+>> the definitions map1_1, map1_2 are provably correct
 
->> Typing for map2_2, map2_1 successful
+>> Typing for map2_1, map2_2 successful
 >> the definition for map2_1 is complete
 >> the definition for map2_2 is complete
->> the definitions map2_2, map2_1 are provably correct
+>> the definitions map2_1, map2_2 are provably correct
 
 ** error: function map3_1 cannot be coerced to type ('a → 'b) → list('a) → list('b)
 ** error: function map4_2 cannot be coerced to type ('a → 'b) → list('a) → list('b)

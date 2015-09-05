@@ -11,31 +11,31 @@
 >> coinductive type stream2 was succesfully defined
 >> inductive type stream3 was succesfully defined
 >> coinductive type stream4 was succesfully defined
->> Typing for _aux₄, _aux₃, _aux₂, _aux₁, convert2 successful
+>> Typing for convert2, _aux₁, _aux₂, _aux₃, _aux₄ successful
 >> the definition for convert2 is complete
 >> the definition for _aux₁ is complete
 >> the definition for _aux₂ is complete
 >> the definition for _aux₃ is complete
 >> the definition for _aux₄ is complete
->> the definitions _aux₄, _aux₃, _aux₂, _aux₁, convert2 are provably correct
+>> the definitions convert2, _aux₁, _aux₂, _aux₃, _aux₄ are provably correct
 
->> Typing for _aux₇, _aux₆, _aux₅, convert3 successful
+>> Typing for convert3, _aux₅, _aux₆, _aux₇ successful
 >> the definition for convert3 is complete
 >> the definition for _aux₅ is complete
 >> the definition for _aux₆ is complete
 >> the definition for _aux₇ is complete
->> the definitions _aux₇, _aux₆, _aux₅, convert3 are provably correct
+>> the definitions convert3, _aux₅, _aux₆, _aux₇ are provably correct
 
->> Typing for _aux₉, _aux₈, _aux₁₂, _aux₁₁, _aux₁₀, convert4 successful
+>> Typing for convert4, _aux₁₀, _aux₁₁, _aux₁₂, _aux₈, _aux₉ successful
 >> the definition for convert4 is complete
 >> the definition for _aux₁₀ is complete
 >> the definition for _aux₁₁ is complete
 >> the definition for _aux₁₂ is complete
 >> the definition for _aux₈ is complete
 >> the definition for _aux₉ is complete
->> the definitions _aux₉, _aux₈, _aux₁₂, _aux₁₁, _aux₁₀, convert4 are provably correct
+>> the definitions convert4, _aux₁₀, _aux₁₁, _aux₁₂, _aux₈, _aux₉ are provably correct
 
->> Typing for _aux₁₈, _aux₁₇, _aux₁₆, _aux₁₅, _aux₁₄, _aux₁₃, stream2_to_4 successful
+>> Typing for stream2_to_4, _aux₁₃, _aux₁₄, _aux₁₅, _aux₁₆, _aux₁₇, _aux₁₈ successful
 >> the definition for stream2_to_4 is complete
 >> the definition for _aux₁₃ is complete
 >> the definition for _aux₁₄ is complete
@@ -43,9 +43,9 @@
 >> the definition for _aux₁₆ is complete
 >> the definition for _aux₁₇ is complete
 >> the definition for _aux₁₈ is complete
->> the definitions _aux₁₈, _aux₁₇, _aux₁₆, _aux₁₅, _aux₁₄, _aux₁₃, stream2_to_4 are provably correct
+>> the definitions stream2_to_4, _aux₁₃, _aux₁₄, _aux₁₅, _aux₁₆, _aux₁₇, _aux₁₈ are provably correct
 
->> Typing for _aux₂₆, _aux₂₅, _aux₂₄, _aux₂₃, _aux₂₂, _aux₂₁, _aux₂₀, _aux₁₉, s34_map, stream3_to_4 successful
+>> Typing for stream3_to_4, s34_map, _aux₁₉, _aux₂₀, _aux₂₁, _aux₂₂, _aux₂₃, _aux₂₄, _aux₂₅, _aux₂₆ successful
 >> the definition for stream3_to_4 is complete
 >> the definition for s34_map is complete
 >> the definition for _aux₁₉ is complete
@@ -56,76 +56,76 @@
 >> the definition for _aux₂₄ is complete
 >> the definition for _aux₂₅ is complete
 >> the definition for _aux₂₆ is complete
->> the definitions _aux₂₆, _aux₂₅, _aux₂₄, _aux₂₃, _aux₂₂, _aux₂₁, _aux₂₀, _aux₁₉, s34_map, stream3_to_4 are provably correct
+>> the definitions stream3_to_4, s34_map, _aux₁₉, _aux₂₀, _aux₂₁, _aux₂₂, _aux₂₃, _aux₂₄, _aux₂₅, _aux₂₆ are provably correct
 
->> Typing for _aux₃₁, _aux₃₀, _aux₂₉, _aux₂₈, _aux₂₇, stream3_to_4_bis successful
+>> Typing for stream3_to_4_bis, _aux₂₇, _aux₂₈, _aux₂₉, _aux₃₀, _aux₃₁ successful
 >> the definition for stream3_to_4_bis is complete
 >> the definition for _aux₂₇ is complete
 >> the definition for _aux₂₈ is complete
 >> the definition for _aux₂₉ is complete
 >> the definition for _aux₃₀ is complete
 >> the definition for _aux₃₁ is complete
-!! warning: the definitions _aux₃₁, _aux₃₀, _aux₂₉, _aux₂₈, _aux₂₇, stream3_to_4_bis are NOT provably correct (weight_bound: 2, depth_bound: 2)
+!! warning: the definitions stream3_to_4_bis, _aux₂₇, _aux₂₈, _aux₂₉, _aux₃₀, _aux₃₁ are NOT provably correct (weight_bound: 2, depth_bound: 2)
 
->> Typing for _aux₃₄, _aux₃₃, _aux₃₂, stream3_to_2_op successful
+>> Typing for stream3_to_2_op, _aux₃₂, _aux₃₃, _aux₃₄ successful
 >> the definition for stream3_to_2_op is complete
 >> the definition for _aux₃₂ is complete
 >> the definition for _aux₃₃ is complete
 >> the definition for _aux₃₄ is complete
->> the definitions _aux₃₄, _aux₃₃, _aux₃₂, stream3_to_2_op are provably correct
+>> the definitions stream3_to_2_op, _aux₃₂, _aux₃₃, _aux₃₄ are provably correct
 
->> Typing for _aux₃₅, zeros2 successful
+>> Typing for zeros2, _aux₃₅ successful
 >> the definition for zeros2 is complete
 >> the definition for _aux₃₅ is complete
->> the definitions _aux₃₅, zeros2 are provably correct
+>> the definitions zeros2, _aux₃₅ are provably correct
 
->> Typing for _aux₃₇, _aux₃₆, ones_n2_aux successful
+>> Typing for ones_n2_aux, _aux₃₆, _aux₃₇ successful
 >> the definition for ones_n2_aux is complete
 >> the definition for _aux₃₆ is complete
 >> the definition for _aux₃₇ is complete
->> the definitions _aux₃₇, _aux₃₆, ones_n2_aux are provably correct
+>> the definitions ones_n2_aux, _aux₃₆, _aux₃₇ are provably correct
 
 >> Typing for ones_n2 successful
 >> the definition for ones_n2 is complete
 >> the definition ones_n2 is provably correct
 
->> Typing for _aux₃₉, _aux₃₈, ones_f2_aux successful
+>> Typing for ones_f2_aux, _aux₃₈, _aux₃₉ successful
 >> the definition for ones_f2_aux is complete
 >> the definition for _aux₃₈ is complete
 >> the definition for _aux₃₉ is complete
->> the definitions _aux₃₉, _aux₃₈, ones_f2_aux are provably correct
+>> the definitions ones_f2_aux, _aux₃₈, _aux₃₉ are provably correct
 
 >> Typing for ones_f2 successful
 >> the definition for ones_f2 is complete
 >> the definition ones_f2 is provably correct
 
->> Typing for _aux₄₀, ones3_aux successful
+>> Typing for ones3_aux, _aux₄₀ successful
 >> the definition for ones3_aux is complete
 >> the definition for _aux₄₀ is complete
->> the definitions _aux₄₀, ones3_aux are provably correct
+>> the definitions ones3_aux, _aux₄₀ are provably correct
 
 >> Typing for ones3 successful
 >> the definition for ones3 is complete
 >> the definition ones3 is provably correct
 
->> Typing for _aux₄₁, n_zeros_ones3_aux, n_zeros_ones3 successful
+>> Typing for n_zeros_ones3, n_zeros_ones3_aux, _aux₄₁ successful
 >> the definition for n_zeros_ones3 is complete
 >> the definition for n_zeros_ones3_aux is complete
 >> the definition for _aux₄₁ is complete
->> the definitions _aux₄₁, n_zeros_ones3_aux, n_zeros_ones3 are provably correct
+>> the definitions n_zeros_ones3, n_zeros_ones3_aux, _aux₄₁ are provably correct
 
->> Typing for _aux₄₃, _aux₄₂, get_n_ones3_aux, get_n_ones3 successful
+>> Typing for get_n_ones3, get_n_ones3_aux, _aux₄₂, _aux₄₃ successful
 >> the definition for get_n_ones3 is complete
 >> the definition for get_n_ones3_aux is complete
 >> the definition for _aux₄₂ is complete
 >> the definition for _aux₄₃ is complete
->> the definitions _aux₄₃, _aux₄₂, get_n_ones3_aux, get_n_ones3 are provably correct
+>> the definitions get_n_ones3, get_n_ones3_aux, _aux₄₂, _aux₄₃ are provably correct
 
->> Typing for _aux₄₄, map_length1_aux, map_length1 successful
+>> Typing for map_length1, map_length1_aux, _aux₄₄ successful
 >> the definition for map_length1 is complete
 >> the definition for map_length1_aux is complete
 >> the definition for _aux₄₄ is complete
->> the definitions _aux₄₄, map_length1_aux, map_length1 are provably correct
+>> the definitions map_length1, map_length1_aux, _aux₄₄ are provably correct
 
 >> Typing for test1 successful
 >> the definition for test1 is complete
