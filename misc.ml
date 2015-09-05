@@ -204,6 +204,15 @@ let rec partition (f:'a -> 'b) (l:'a list) : ('a list list)
                 (match partition f l with l1::ls -> (x::l1)::ls | _ -> assert false)
         | x::l -> [x]::(partition f l)
 
+let unflatten (f:'a->'b*'c) (la:'a list) : ('b*'c list) list
+  = let lbc = List.map f la in
+    let lbcs = partition fst lbc in
+    let lbcs = List.map
+                (function [] -> assert false
+                        | (b,c)::_ as lbc -> b,List.map snd lbc) lbcs
+    in
+    lbcs
+
 
 let bool_of_string (s:string) : bool
   = match s with
@@ -255,6 +264,6 @@ let k x _ = x
 
 let plural (l:'a list) (sing:string) (plur:string) : string
   = match l with
-        | [] -> assert false
+        | [] -> sing
         | [_] -> sing
         | _ -> plur

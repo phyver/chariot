@@ -213,32 +213,27 @@ let remove_term_struct (functions:var_name list) (clauses:(plain_term*(unit,'t) 
 
 
 
-
 let remove_struct_defs (defs:(var_name * type_expression option * (parsed_term*parsed_term) list) list)
   : (var_name * type_expression option * (plain_term*plain_term) list) list
   =
-    let types = List.map (function f,t,_ -> f,t) defs in
     let functions = List.map (function f,_,_ -> f) defs in
 
     let clauses = List.concat (List.map (function f,_,clauses -> clauses) defs) in
     let new_clauses = remove_match_struct clauses in
     let new_clauses = remove_term_struct functions new_clauses in
 
-    let new_defs = List.map (function lhs,rhs -> get_function_name lhs, (lhs,rhs)) new_clauses in
-    let new_defs =
-        let aux_funs,old_funs = List.partition (function f,_ -> f.[0] = '_') new_defs in
-        let aux_funs = List.stable_sort (fun cl1 cl2 -> compare (fst cl1) (fst cl2)) aux_funs in
-        old_funs @ aux_funs
-    in
+    let new_clauses = List.map (function lhs,rhs -> get_function_name lhs, (lhs,rhs)) new_clauses in
 
-    let new_defs = partition (function f,_ -> f) new_defs in
+    let aux_clauses,new_clauses = List.partition (function f,_ -> f.[0] = '_') new_clauses in
+
+    let aux_defs = List.stable_sort (fun cl1 cl2 -> compare (fst cl1) (fst cl2)) aux_clauses in
+    let aux_defs = unflatten id aux_defs in
+    let aux_defs = List.map (function f,cls -> f,None,cls) aux_defs in
+
+    let new_defs = unflatten id new_clauses in
     let new_defs = List.map
-                    (function
-                        | [] -> assert false
-                        | ((f,_)::_) as clauses ->
-                            let t = (try List.assoc f types with Not_found -> None) in
-                            f,t,List.map (function _,cl -> cl) clauses)
-                    new_defs
+                    (function f,t,cls -> f,t,(try List.assoc f new_defs with Not_found -> assert (cls=[]); []))
+                    defs
     in
 
     (* List.iter (function f,t,cls -> *)
@@ -248,6 +243,6 @@ let remove_struct_defs (defs:(var_name * type_expression option * (parsed_term*p
     (*     cls *)
     (* ) new_defs; *)
 
-    new_defs
+    new_defs @ aux_defs
 
 

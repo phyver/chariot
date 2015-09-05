@@ -182,6 +182,13 @@ let process_function_defs (env:environment)
                   ) defs;
         true
     );
+    (* List.iter (function f,t,cls,(xs,cs) -> *)
+    (*     List.iter (function lhs,rhs -> *)
+    (*         debug " %s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs) *)
+    (*     ) *)
+    (*     cls; *)
+    (*     debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " id xs) (string_of_case_struct_term cs) *)
+    (* ) defs; *)
 
     (* infer priorities for definitions *)
     let (defs:(var_name * type_expression * (term * term) list) list)

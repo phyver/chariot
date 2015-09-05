@@ -433,20 +433,12 @@ let infer_type_defs
     let clauses = List.map (function f,lhs,rhs -> (f,subst_type_term sigma lhs,subst_type_term sigma rhs)) clauses in
 
     (* putting everything back together *)
-    let clauses = partition (function f,lhs,rhs -> f) clauses in
-    let clauses = List.map
-                    (fun cls ->
-                        try
-                            let f,_,_ = List.hd cls in
-                            f,List.map (function _,lhs,rhs -> lhs,rhs) cls
-                        with Failure "hd" -> assert false
-                    )
-                    clauses in
+    let typed_defs = unflatten (function f,lhs,rhs -> f,(lhs,rhs)) clauses in
 
     let defs = List.map (function f,t,cls ->
                             let new_clauses =
-                                try List.assoc f clauses
-                                with Not_found -> assert (clauses=[]);[]
+                                try List.assoc f typed_defs
+                                with Not_found -> assert (cls=[]);[]
                             in f,new_clauses)
                       defs in
 

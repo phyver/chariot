@@ -121,6 +121,7 @@ let find_types_priorities env ts
                                     type_consts
                     in
                     if is_inductive env tname = odd n
+                    (* TODO: I **need** to squash priorities, otherwise, the test might be unsound (see tests/bug-priorities.ch) *)
                     then if option "squash_priorities" then (n, (t,n)::acc) else (n+2, (t,n+2)::acc)
                     else (n+1, (t,n+1)::acc)
                 | _ -> assert false
@@ -151,9 +152,9 @@ let infer_priorities (env:environment)
         defs
     in
 
-    (* debug "datatypes: %s\n  " (string_of_list ",\n  " string_of_type datatypes); *)
     let local_types = find_types_priorities env datatypes in
-    (* debug "priorities: %s\n  " (string_of_list ",\n  " (function t,p -> (string_of_type t) ^ ":" ^ (string_of_int p)) local_types); *)
+    let local_types = List.sort (fun x y -> compare (snd x) (snd y)) local_types in
+    debug "priorities:\n    %s" (string_of_list "\n    " (function t,p -> (string_of_type t) ^ ":" ^ (string_of_int p)) local_types);
 
     let get_priority t =
         let rec aux = function
