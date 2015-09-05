@@ -4,5 +4,5 @@ main.byte
 chariot
 .vimrc
 _build
-tmp
+tmp*
 *.tmpout
