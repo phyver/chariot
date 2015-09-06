@@ -89,8 +89,7 @@ and
   | s34_map (Nu # Cons0 s) = Nu # Cons0 $ stream3_to_4 s
   | s34_map (Nu # Cons1 s) = Nu # Cons1 $ s34_map s
 
--- TODO: the SCT doesn't see that this version terminates
--- it seems to be correct because the second rule cannot be applied infinitely often...
+-- other version
 val stream3_to_4_bis : stream3 -> stream4
   | stream3_to_4_bis (C3 $ Nu # Cons0 s) = D4 # Nu # Cons0 $ stream3_to_4_bis s
   | stream3_to_4_bis (C3 $ Nu # Cons1 s) = D4 # Nu # Cons1 $ (stream3_to_4_bis $ C3 s).D4

@@ -237,9 +237,6 @@ let add_weight (w1:weight) (w2:weight) : weight
     | Infty,_ | _,Infty -> Infty
     | Num a,Num b -> Num (a+b)
 
-
-
-
 let add_weight_int (w:weight) (n:int) : weight
   = add_weight w (Num n)
 
@@ -248,11 +245,21 @@ let sup_weight (w1:weight) (w2:weight) : weight
         | Infty,_ | _,Infty -> Infty
         | Num w1,Num w2 -> Num (max w1 w2)
 
-
 let op_weight (w:weight) : weight
   = match w with
         | Infty -> raise (Invalid_argument "op_weight")
         | Num n -> Num (-n)
+
+let less_weight w1 w2
+  = match w1,w2 with
+        | _,Infty -> true
+        | Infty,_ -> false
+        | Num w1,Num w2 -> w1 <= w2
+
+let negative_weight w
+  = match w with
+        | Infty -> false
+        | Num w -> w < 0
 
 let collapse_weight (bound:int) (w:weight) : weight
   = match w with
@@ -321,3 +328,22 @@ let implode (args:('a,'p,'t) raw_term list) : ('a,'p,'t) raw_term
     match args with
         | [] -> assert false
         | v::args -> implode_aux args v
+
+
+
+let term_to_sct_pattern (t:approx_term) : sct_pattern =
+    let rec explode_approx v
+      = let h,args = get_head v,get_args v in
+        match h,args with
+            | Var _,args | Const _,args | Angel _,args | Daimon _,args | Sp((AppArg _),_),args-> h::args
+            | Proj _,v::args -> (explode_approx v)@(h::args)
+            | Sp(AppRes _,_),[v] -> (explode_approx v)@[h]
+            | Sp(AppRes _,_),_ -> assert false
+            | Proj _,[] -> assert false
+            | App _,_ -> assert false
+    in
+    match explode_approx t with
+        | (Var(f,_))::args -> f,args
+        | _ -> assert false
+
+

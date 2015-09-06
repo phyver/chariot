@@ -92,7 +92,7 @@ let new_call_set clause s =
 let collapse_graph b d graph
   = CallGraph.map (fun s ->
                 ClauseSet.fold (fun clause2 s ->
-                  add_call_set (collapse_clause b d clause2) s)
+                  add_call_set (collapse_sct_clause b d clause2) s)
                   s ClauseSet.empty)
                   graph
 
@@ -179,29 +179,29 @@ let callgraph_from_definitions
                             | Data _ | TVar _ ->
                                 let _args = List.map process_arg args
                                 in
-                                let call = lhs, app_all (called,_args) calling_context
+                                let call = lhs, add_pattern_args (called,_args) calling_context
                                 in
                                 let graph = CallGraph.add (caller,called) (add_call_set call (try CallGraph.find (caller,called) graph with Not_found -> ClauseSet.empty)) graph
                                 in
-                                List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes(None,Infty),())]) graph args
+                                List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes([None,Infty]),())]) graph args
                             | t ->
                                     if verbose 1 then warning "the function %s appears not fully applied!" called; raise Non_terminating (* FIXME change exception *)
                     end
 
                 | Var _, args ->
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes(None,Infty),())]) graph args
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes([None,Infty]),())]) graph args
                 | Angel _,[] | Daimon _,[] -> graph
                 | Angel _,_ | Daimon _,_ -> graph       (* we already removed all the arguments to Angel / Daimon *)
 
                 | Const(c,p,t),args ->
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs ((Sp(AppRes(p,Num 1),()))::calling_context)) graph args
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs ((Sp(AppRes([p,Num 1]),()))::calling_context)) graph args
 
                 | Proj(d,p,t),u::args ->
                     let _args = List.map process_arg args
                     in
                     let graph = process_rhs graph u (Proj(d,p,())::_args@calling_context)
                     in
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes(None,Infty),())]) graph args
+                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes([None,Infty]),())]) graph args
 
                 | Sp(s,_), _ -> s.bot
 
@@ -344,7 +344,7 @@ let size_change_termination_bounds graph b d =
           (fun clause1 ->
             try
               let clause11 = collapsed_compose b d clause1 clause1 in
-              not (compatible clause1 clause11) ||
+              not (coherent clause1 clause11) ||
               begin
                 if option "show_coherent_loops"
                 then begin

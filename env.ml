@@ -109,13 +109,15 @@ type case_struct_def = var_name list * (empty,unit,type_expression) raw_term cas
 (* SCT terms *)
 type weight = Num of int | Infty
 
+type coeff = (priority*weight) list
+
 (* a call from f to g is represented by a rewriting rule
  *   param_1 param_2 ... param_m  =>  arg_1 arg_2 ... arg_n
  * where m is the arity of f and n is the arity of g.
  *  - each param_i is either a constructor pattern or a destructor
  *  - each arg_i i either a constructor pattern (with possible approximations) or a destructor
  *)
-type approximation = AppRes of priority * weight | AppArg of (priority * weight * var_name) list
+type approximation = AppRes of coeff | AppArg of (var_name*coeff) list
 type approx_term = (approximation,priority,unit) raw_term
 (* type sct_clause = approx_term * approx_term *)
  type sct_pattern = (var_name * approx_term list)

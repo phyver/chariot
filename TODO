@@ -1,4 +1,10 @@
-  - deal with types with 0 destructors / 0 constructors in coverage.ml
+  - flags
+      --colors
+      --utf8
+      --fancy / --plain
+      --minimal -> unary, no structs
+      --verbose
+
 
   - better exceptions than "Not_found" for utils.ml functions
 

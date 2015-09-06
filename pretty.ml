@@ -203,6 +203,9 @@ let string_of_weight w = match w with
     | Infty -> "∞"
     | Num n -> (string_of_int n)
 
+let string_of_coeff (c:coeff) : string
+  = fmt "<%s>" (string_of_list "," (function p,w -> (string_of_weight w)^(string_of_priority p)) c)
+
 let string_of_approx_term (v:approx_term) : string
   =
     let string_of_approx_term_aux
@@ -211,11 +214,11 @@ let string_of_approx_term (v:approx_term) : string
                 match u with
                     (* the only AppRes in such terms should come first and is
                      * dealt with before calling string_of_approx_term_aux *)
-                    | AppRes(p,w) -> assert false
+                    | AppRes c -> assert false
                     | AppArg [] -> assert false
                     | AppArg l ->
                         (string_of_list " + "
-                                        (function p,w,x ->  fmt "<%s>%s %s" (string_of_weight w) (string_of_priority p) x)
+                                        (function x,c ->  fmt "%s%s" (string_of_coeff c) x)
                                         l)
             )
             string_of_priority
@@ -223,8 +226,8 @@ let string_of_approx_term (v:approx_term) : string
     in
 
     match v with
-        | Sp(AppRes(p,w),_) ->
-            ".<<" ^ (string_of_weight w) ^ ">>" ^ (string_of_priority p)
+        | Sp(AppRes c,_) ->
+           fmt ".<%s>" (string_of_coeff c)
         | v -> string_of_approx_term_aux v
 
 (* show an SCT pattern *)

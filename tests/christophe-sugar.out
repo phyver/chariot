@@ -65,7 +65,7 @@
 >> the definition for _aux₂₉ is complete
 >> the definition for _aux₃₀ is complete
 >> the definition for _aux₃₁ is complete
-!! warning: the definitions stream3_to_4_bis, _aux₂₇, _aux₂₈, _aux₂₉, _aux₃₀, _aux₃₁ are NOT provably correct (weight_bound: 2, depth_bound: 2)
+>> the definitions stream3_to_4_bis, _aux₂₇, _aux₂₈, _aux₂₉, _aux₃₀, _aux₃₁ are provably correct
 
 >> Typing for stream3_to_2_op, _aux₃₂, _aux₃₃, _aux₃₄ successful
 >> the definition for stream3_to_2_op is complete

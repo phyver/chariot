@@ -154,7 +154,7 @@ let infer_priorities (env:environment)
 
     let local_types = find_types_priorities env datatypes in
     let local_types = List.sort (fun x y -> compare (snd x) (snd y)) local_types in
-    debug "priorities:\n    %s" (string_of_list "\n    " (function t,p -> (string_of_type t) ^ ":" ^ (string_of_int p)) local_types);
+    (* debug "priorities:\n    %s" (string_of_list "\n    " (function t,p -> (string_of_type t) ^ ":" ^ (string_of_int p)) local_types); *)
 
     let get_priority t =
         let rec aux = function

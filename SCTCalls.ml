@@ -45,171 +45,201 @@ open Pretty
 exception Impossible_case
 
 
-let term_to_sct_pattern (t:approx_term) : sct_pattern =
-    let rec explode_approx v
-      = let h,args = get_head v,get_args v in
-        match h,args with
-            | Var _,args | Const _,args | Angel _,args | Daimon _,args | Sp((AppArg _),_),args-> h::args
-            | Proj _,v::args -> (explode_approx v)@(h::args)
-            | Sp(AppRes _,_),[v] -> (explode_approx v)@[h]
-            | Sp(AppRes _,_),_ -> assert false
-            | Proj _,[] -> assert false
-            | App _,_ -> assert false
-    in
-    match explode_approx t with
-        | (Var(f,_))::args -> f,args
-        | _ -> assert false
+(* operation on coefficients *)
+let op_coeff c = List.map (function (p,w) -> p, op_weight w) c
+
+let collapse_weight_in_coeff b c = List.map (function p,w -> p,collapse_weight b w) c
+
+(* misc operations on approximations *)
+let rec add_coeff c1 c2
+  = match c1,c2 with
+        | [],c | c,[] -> c
+        | (p1,w1)::c1,(p2,w2)::c2 when p1=p2 ->
+            begin
+                match add_weight w1 w2 with
+                    | Num 0 -> add_coeff c1 c2
+                    | w -> (p1,w)::add_coeff c1 c2
+            end
+        | (p1,w1)::c1,(p2,w2)::_ when p1<p2 -> (p1,w1)::add_coeff c1 c2
+        | (p1,w1)::_,(p2,w2)::c2 when p1>p2 -> (p2,w2)::add_coeff c1 c2
+        | _,_ -> assert false
+(* let add_coeff c1 c2 = *)
+(*     debug "add"; *)
+(*     debug "c1: %s" (string_of_coeff c1); *)
+(*     debug "c2: %s" (string_of_coeff c2); *)
+(*     let r = add_coeff c1 c2 in *)
+(*     debug "result: %s" (string_of_coeff r); *)
+(*     r *)
 
 
-(* collapsing the weights inside a term *)
-let rec collapse_weight_in_term b u
-  = match u with
-        | Var _ | Const _ | Proj _ | Angel _ | Daimon _ -> u
+let rec sup_coeff c1 c2
+  = match c1,c2 with
+        | [],c | c,[] -> c
+        | (p1,w1)::c1,(p2,w2)::c2 when p1=p2 -> (p1,sup_weight w1 w2)::sup_coeff c1 c2
+        | (p1,w1)::c1,(p2,w2)::_ when p1<p2 -> (p1,w1)::sup_coeff c1 c2
+        | (p1,w1)::_,(p2,w2)::c2 when p1>p2 -> (p2,w2)::sup_coeff c1 c2
+        | _,_ -> assert false
+(* let sup_coeff c1 c2 = *)
+(*     debug "sup"; *)
+(*     debug "c1: %s" (string_of_coeff c1); *)
+(*     debug "c2: %s" (string_of_coeff c2); *)
+(*     let r = sup_coeff c1 c2 in *)
+(*     debug "result: %s" (string_of_coeff r); *)
+(*     r *)
+
+let rec approx_coeff c1 c2  (* check if c1 is an approximation for c2 *)
+  = match c1,c2 with
+        | [],c2 -> List.for_all (function (_,w2) -> less_weight w2 (Num 0)) c2
+        | c1,[] -> List.for_all (function (_,w1) -> less_weight (Num 0) w1) c1
+        | (p1,w1)::c1,(p2,w2)::c2 when p1=p2 -> less_weight w2 w1 && approx_coeff c1 c2
+        | (p1,w1)::c1,(p2,w2)::_ when p1<p2 -> less_weight (Num 0) w1 && approx_coeff c1 c2
+        | (p1,w1)::_,(p2,w2)::c2 when p1>p2 -> less_weight w2 (Num 0) && approx_coeff c1 c2
+        | _,_ -> assert false
+(* let approx_coeff c1 c2 = *)
+(*     debug "approx"; *)
+(*     debug "c1: %s" (string_of_coeff c1); *)
+(*     debug "c2: %s" (string_of_coeff c2); *)
+(*     approx_coeff c1 c2 *)
+
+
+
+let rec collapse_weight_in_term (b:int) (v:approx_term)
+  = match v with
+        | Var _ | Const _ | Proj _ | Angel _ | Daimon _ -> v
         | App(u1,u2) -> App(collapse_weight_in_term b u1, collapse_weight_in_term b u2)
-        | Sp(AppRes(p,w),t) -> Sp(AppRes(p, collapse_weight b w),t)
+        | Sp(AppRes(c),t) -> Sp(AppRes(collapse_weight_in_coeff b c),t)
         | Sp(AppArg [],_) -> assert false
-        | Sp(AppArg apps,t) -> Sp(AppArg(List.map (function p,w,x -> p, collapse_weight b w,x) apps),t)
+        | Sp(AppArg xcs,t) -> Sp(AppArg(List.map (function x,c -> x, collapse_weight_in_coeff b c) xcs),t)
+
 let collapse_weight_in_pattern b (f,ps) =
     (f,List.map (collapse_weight_in_term b) ps)
 
 
-(* misc operations on approximations *)
 
-(* comparing two approximations *)
-let compare_approx a1 a2     (* check if a1 is an approximation of a2, ie if a2 is more informative *)
-  = match a1,a2 with
-        | (Some 0,w1),(Some 0,w2) -> assert ((w1=Num 0) && (w2=Num 0)); true
-        | (Some 0,w1),_ -> assert (w1=Num 0); false
-        | (_,Infty), (Some 0,w2) -> assert (w2=Num 0); true
-        | (_,Num w), (Some 0,w2) -> assert (w2=Num 0); w>=0
-
-        | (None,w) , (Some _,_) -> true
-        | (Some _,_),(None,w) -> false
-        | (Some p1, w1) , (Some p2, w2) when p1<p2 -> true
-        | (Some p1, w1) , (Some p2, w2) when p1>p2 -> false
-
-        | (p1, Infty) , (p2, _) (*when p1=p2*) -> true
-        | (p1, _) , (p2, Infty) (*when p1=p2*) -> false
-        | (p1, Num w1) , (p2, Num w2) (*when p1=p2*) -> w2 <= w1
-
-(* composing two approximations, for constructors *)
-let sup_approx a1 a2
-  = match a1,a2 with
-        | (None,w1) , (None,w2) -> (None, sup_weight w1 w2)
-        | (Some p1, w1) , (Some p2, w2) when p1<p2 -> (Some p2, w2)
-        | (Some p1, w1) , (Some p2, w2) when p1>p2 -> (Some p1, w1)
-        | (Some p1, w1) , (Some p2, w2) (*when p1=p2*) -> (Some p1, sup_weight w1 w2)
-        | (None,w) , (Some _,_) | (Some _,_),(None,w) -> (None, w)
-
-(* composing two approximations, for destructors *)
-let add_approx a1 a2
-  = match a1,a2 with
-        | (None,w1) , (None,w2) -> (None, add_weight w1 w2)
-        | (Some p1, w1) , (Some p2, w2) when p1<p2 -> (Some p2, w2)
-        | (Some p1, w1) , (Some p2, w2) when p1>p2 -> (Some p1, w1)
-        | (Some p1, w1) , (Some p2, w2) (*when p1=p2*) -> (Some p1, add_weight w1 w2)
-        | (None,w) , (Some _,_) | (Some _,_),(None,w) -> (None, w)
-
-let collapse_apps_proj args
+(* collapse all projections in a list of pattern arguments *)
+let collapse_proj (args:approx_term list) : coeff
   =
-    let rec collapse_apps_proj_aux args acc
+    let rec collapse_proj_aux args acc
       = match args with
-            | Sp(AppRes(p1,w1),_)::args ->
-                collapse_apps_proj_aux args (add_approx acc (p1,w1))
-            | Proj(_,p,_)::args -> collapse_apps_proj_aux args (add_approx acc (p,Num 1))
-            | _::args -> collapse_apps_proj_aux args acc
+            | Sp(AppRes(c),_)::args ->
+                collapse_proj_aux args (add_coeff acc c)
+            | Proj(_,p,_)::args -> collapse_proj_aux args (add_coeff acc [p,Num 1])
+            | _::args -> collapse_proj_aux args acc
             | [] -> acc
-    in collapse_apps_proj_aux args (Some 0,Num 0)
+    in collapse_proj_aux args []
 
-let app_all (f,args1:sct_pattern) (args2:approx_term list) : sct_pattern =
+(* add some pattern arguments to an existing pattern, simplifying when an AppRes is found *)
+let add_pattern_args (f,args1:sct_pattern) (args2:approx_term list) : sct_pattern =
     let rec aux args = match args with
         | [] -> []
         | (Sp(AppRes _,t))::_ ->
-                let p,w = collapse_apps_proj args in
-                [Sp(AppRes(p,w),t)]
+                let c = collapse_proj args in
+                [Sp(AppRes c,t)]
         | u::args -> u::(aux args)
     in f,aux(args1@args2)
-(* let app_all (f,ps) qs = *)
+(* let add_pattern_args (f,ps) qs = *)
 (*     debug "before: %s" (string_of_sct_pattern (f,ps@qs)); *)
-(*     let r = app_all (f,ps) qs in *)
+(*     let r = add_pattern_args (f,ps) qs in *)
 (*     debug "after: %s" (string_of_sct_pattern r); *)
 (*     r *)
 
 
-(* simplify a sum of approximations *)
-let simplify_approx v =
+(* simplify a sum of approximations
+ * NOTE: the argument is given as an approx_term because it can be an Angel of a Daimon *)
+let simplify_coeffs (v:approx_term) : approx_term =
     let rec simplify_aux = function
         | [] -> []
         | [x] -> [x]
-        | (p1,w1,x1)::(((_,_,x2)::_) as aps) when x1<x2 -> (p1,w1,x1)::(simplify_aux aps)
-        | (p1,w1,x1)::(p2,w2,x2)::aps (*when x1<x2*) ->
+        | (x1,c1)::((x2,_)::_ as xcs) when x1<x2 -> (x1,c1)::(simplify_aux xcs)
+        | (x1,c1)::(x2,c2)::xcs ->
                 assert (x1=x2);
-                let p,w = sup_approx (p1,w1) (p2,w2) in
-                simplify_aux ((p,w,x1)::aps)
+                let c = sup_coeff c1 c2 in
+                simplify_aux ((x1,c)::xcs)
     in
     match v with
         | Angel() | Daimon() -> v
-        | Sp(AppArg(aps),()) ->
-            let aps = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) aps in
-            Sp(AppArg(simplify_aux aps),())
+        | Sp(AppArg(xcs),()) ->
+            let xcs = List.sort (fun xc1 xc2 -> compare (fst xc1) (fst xc2)) xcs in
+            Sp(AppArg(simplify_aux xcs),())
         | _ -> assert false
+(* let simplify_coeffs v = *)
+(*     let r = simplify_coeffs v in *)
+(*     debug "simplify_coeffs"; *)
+(*     debug "v: %s" (string_of_approx_term v); *)
+(*     debug "result: %s" (string_of_approx_term r); *)
+(*     r *)
+
 
 (* merge two sums of approximations *)
 let merge_approx v1 v2 =
-    let rec merge_aux as1 as2 = match as1,as2 with
-        | as1 , [] | [] , as1 -> as1
-        | (p1,w1,x1)::as1 , (_,_,x2)::_ when x1<x2 -> (p1,w1,x1)::(merge_aux as1 as2)
-        | (_,_,x1)::_ , (p2,w2,x2)::as2 when x1>x2 -> (p2,w2,x2)::(merge_aux as1 as2)
-        | (p1,w1,x1)::as1 , (p2,w2,x2)::as2 (*when x1=x2*) ->
-                let (p,w) = sup_approx (p1,w1) (p2,w2) in
-                (p,w,x1)::(merge_aux as1 as2)
+    let rec merge_aux xcs1 xcs2 = match xcs1,xcs2 with
+        | xcs1 , [] | [] , xcs1 -> xcs1
+        | (x1,c1)::xcs1 , (x2,_)::_ when x1<x2 -> (x1,c1)::(merge_aux xcs1 xcs2)
+        | (x1,_)::_ , (x2,c2)::xcs2 when x1>x2 -> (x2,c2)::(merge_aux xcs1 xcs2)
+        | (x1,c1)::xcs1 , (x2,c2)::xcs2 (*when x1=x2*) ->
+                let c = sup_coeff c1 c2 in
+                (x1,c)::(merge_aux xcs1 xcs2)
     in
     match v1,v2 with
         | Angel(),v | v,Angel() -> v
         | Daimon(),_ | _,Daimon() -> Daimon()
-        | Sp(AppArg(as1),()) , Sp(AppArg(as2),()) ->
-            let as1 = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) as1 in
-            let as2 = List.sort (fun t1 t2 -> let _,_,x1 = t1 and _,_,x2 = t2 in compare x1 x2) as2 in
-            Sp(AppArg(merge_aux as1 as2),())
+        | Sp(AppArg(xcs1),()) , Sp(AppArg(xcs2),()) ->
+            let xcs1 = List.sort (fun xc1 xc2 -> compare (fst xc1) (fst xc2)) xcs1 in
+            let xcs2 = List.sort (fun xc1 xc2 -> compare (fst xc1) (fst xc2)) xcs2 in
+            Sp(AppArg(merge_aux xcs1 xcs2),())
         | _,_ -> raise (Invalid_argument "merge_approx")
+(* let merge_approx v1 v2 = *)
+(*     let r = merge_approx v1 v2 in *)
+(*     debug "merge_approx"; *)
+(*     debug "v1: %s" (string_of_approx_term v1); *)
+(*     debug "v2: %s" (string_of_approx_term v2); *)
+(*     debug "result: %s" (string_of_approx_term r); *)
+(*     r *)
+
 
 
 (* collapse all the constructors from a contructorn pattern with approximations *)
-let collapse0 ?(app=(Some 0,Num 0)) (p:approx_term) : approx_term =
-    let rec collapse0_aux app p =
+let collapse0 ?(coeff=[]) (p:approx_term) : approx_term =
+    let rec collapse0_aux coeff p =
         match get_head p,get_args p with
-            | Var(x,_),[] -> Sp(AppArg([ (fst app,snd app, x) ]),())
+            | Var(x,_),[] -> Sp(AppArg([ x,coeff ]),())
             | Angel _,[] -> raise (Invalid_argument "collapse0_aux: Angel")
             | Daimon _,[] -> raise (Invalid_argument "collapse0_aux: Daimon")
-            | Sp (AppArg [],_),_ -> assert false
-            | Sp (AppArg apps,_),[] -> Sp(AppArg(List.map (function p,w,x -> let p,w = add_approx app (p,w) in p,w,x ) apps),())
-            | Const(_,prio,_),[] -> let p,w = add_approx app (prio,Num 1) in Sp(AppArg([ (p,w, "()") ]),())
+            | Sp (AppArg xcs,_),[] -> Sp(AppArg(List.map (function x,c -> x,add_coeff coeff c) xcs),())
+            | Const(_,prio,_),[] -> let c = add_coeff coeff [prio,Num 1] in Sp(AppArg([ "()",c ]),())
             | Const(_,prio,_),ps ->
                 begin
-                    let app = add_approx app (prio,Num 1) in
-                    let approx_s = List.map (collapse0_aux app) ps in
+                    let coeff = add_coeff coeff [prio,Num 1] in
+                    let approx_s = List.map (collapse0_aux coeff) ps in
                     List.fold_left
-                        (fun v1 v2 -> merge_approx v1 (simplify_approx v2))
+                        (fun v1 v2 -> merge_approx v1 (simplify_coeffs v2))
                         (Angel())
                         approx_s  (* NOTE: not necessary to simplify v1: it is the recursive call and is simplified *)
 
                 end
-            | Proj(_,prio,_),p::ps ->
-                begin
-                    let app = add_approx app (prio,Num 1) in
-                    collapse0_aux app p
-                end
+            | Proj(_,prio,_),p::ps ->       (* TODO: there shouldn't be any
+            projection inside pattern arguments when doing the SCT, but there
+            can be when constructing the initial call graph or during testing from parser.mly...
+            ==> add argument to allow / disallow projections... *)
+                let coeff = add_coeff coeff [prio,Num 1] in
+                collapse0_aux coeff p
 
             | Proj(_,prio,_),[] -> assert false
-            | Sp (AppRes _,_),[] -> debug "OOPS: %s" (string_of_approx_term p); assert false
-            | _,_ -> assert false
+            | Sp (AppArg [],_),_ -> assert false
+            | Sp (AppRes _,_),[] -> assert false
+            | Sp (AppArg _,_),_::_ -> assert false
+            | Sp (AppRes _,_),_::_ -> assert false
+            | Var _,_::_ -> assert false
+            | Daimon _,_ -> assert false
+            | Angel _,_ -> assert false
+            | App _,_ -> assert false
     in
     try
-        collapse0_aux app p
+        collapse0_aux coeff p
     with Invalid_argument "collapse0_aux: Angel" -> Angel()
        | Invalid_argument "collapse0_aux: Daimon" -> Daimon()
 
-let collapse_pattern (depth:int) (pattern:sct_pattern) : sct_pattern
+let collapse_sct_pattern (depth:int) (f,ps:sct_pattern) : sct_pattern
   =
     (* collapse the constructors at given depth from a constructor pattern with approximations *)
     let rec collapse_const d p =
@@ -227,26 +257,22 @@ let collapse_pattern (depth:int) (pattern:sct_pattern) : sct_pattern
     in
 
     (* collapse the pattern of a definition at a given depth *)
-    let rec collapse_aux dp ps
+    let rec collapse_depth dp ps
       = match ps with
         | [] -> []
         | (Proj _ as d)::ps when dp>0 ->
-            d::(collapse_aux (dp-1) ps)
+            d::(collapse_depth (dp-1) ps)
         | (Proj(_,prio,t))::ps (*when dp=0*) ->
-            let p,w = collapse_apps_proj ((Sp(AppRes(prio,Num 1),t))::ps) in
-            [Sp(AppRes(p,w),t)]
+            let c = collapse_proj ((Sp(AppRes([prio,Num 1]),t))::ps) in
+            [Sp(AppRes(c),t)]
         | [Sp(AppRes _,_)] as ps -> ps
         | (Sp(AppRes _,_))::_ -> assert false
-        | p::ps -> (collapse_const depth p)::(collapse_aux dp ps)
+        | p::ps -> (collapse_const depth p)::(collapse_depth dp ps)
     in
 
-    let collapse dp (f,ps:sct_pattern) : sct_pattern
-      = f,collapse_aux dp ps
-    in
+    (* debug "collapse_sct_pattern = %s" (string_of_sct_pattern pattern); *)
 
-    (* debug "collapse_pattern = %s" (string_of_sct_pattern pattern); *)
-
-    collapse depth pattern
+    f,collapse_depth depth ps
 
 
 
@@ -262,26 +288,26 @@ let collapse_pattern (depth:int) (pattern:sct_pattern) : sct_pattern
  * p1 => <-1> x + <1> y  o  t => d2[t1:=<-1>t, t2:=<-1>t]   =   ...
  *)
 
-let rec subst_approx_term sigma v
+let rec subst_sct_term sigma v
   = match v with
         | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
         | (Angel _|Daimon _|Const _|Proj _|Sp(AppRes _,_)) as v -> v
-        | App(v1,v2) -> App(subst_approx_term sigma v1, subst_approx_term sigma v2)
+        | App(v1,v2) -> App(subst_sct_term sigma v1, subst_sct_term sigma v2)
         | Sp(AppArg [],_) -> assert false
-        | Sp(AppArg apps,_) ->
+        | Sp(AppArg xcs,_) ->
                 List.fold_left
-                    (fun v app ->
-                        let p,w,x = app in
-                        let u = try collapse0 ~app:(p,w) (List.assoc x sigma)
-                                with Not_found -> Sp(AppArg([p,w,x]),()) in
+                    (fun v xc ->
+                        let x,c = xc in
+                        let u = try collapse0 ~coeff:c (List.assoc x sigma)
+                                with Not_found -> Sp(AppArg([x,c]),()) in
                         merge_approx v u
                     )
                     (Angel())
-                    apps
-(* let subst_approx_term sigma v = *)
+                    xcs
+(* let subst_sct_term sigma v = *)
 (*     debug "sigma = %s" (string_of_list " , " (function x,v -> fmt "%s:=%s" x (string_of_approx_term v)) sigma); *)
 (*     debug "before %s" (string_of_approx_term v); *)
-(*     let v = subst_approx_term sigma v in *)
+(*     let v = subst_sct_term sigma v in *)
 (*     debug "after %s" (string_of_approx_term v); *)
 (*     v *)
 
@@ -295,7 +321,6 @@ let rec subst_approx_term sigma v
 let normalize_sct_clause (lhs,rhs : sct_clause)
   : sct_clause
   =
-
     let f_l,patterns_l = lhs in
     let f_r,patterns_r = rhs in
 
@@ -329,9 +354,9 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
                 (app (Const(c,p,t)) args , sigma)
 
             | Sp(AppArg [],_),_ -> assert false
-            | Sp(AppArg apps,_),[] ->
+            | Sp(AppArg xcs,_),[] ->
                 let x = new_var() in
-                (Var(x,()), List.map (function (p,w,y) -> (y,Sp(AppArg [p, op_weight w,x],()))) apps)
+                (Var(x,()), List.map (function (y,c) -> (y,Sp(AppArg [x, op_coeff c],()))) xcs)
 
             | _ -> assert false
     in
@@ -345,9 +370,9 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
         match l_patterns with
             | [] -> [] , [] , None
 
-            | [(Sp(AppRes(p,w),t))] ->
-                    [], [] , Some (Sp(AppRes(p,op_weight w),t))
-            | (Sp(AppRes(p,w),_))::_ -> assert false
+            | [(Sp(AppRes(c),t))] ->
+                    [], [] , Some (Sp(AppRes(op_coeff c),t))
+            | (Sp(AppRes(_),_))::_ -> assert false
 
             | (Proj _ as p)::l_patterns ->
                 let l_patterns,sigma,app_res = process_lhs l_patterns in
@@ -366,10 +391,10 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
     let patterns_l,sigma,app_res = process_lhs patterns_l
     in
 
-    let patterns_r = List.map (subst_approx_term sigma) patterns_r in
+    let patterns_r = List.map (subst_sct_term sigma) patterns_r in
 
     let cl_r = match app_res with None -> (f_r,patterns_r)
-                                | Some app -> app_all (f_r,patterns_r) [app]
+                                | Some app -> add_pattern_args (f_r,patterns_r) [app]
     in
 
     (*   (1* debug "obtained %s" (string_of_sct_clause (lhs,rhs)) *1) *)
@@ -384,7 +409,7 @@ let rec rename_var x v
         | App(v1,v2) -> App(rename_var x v1, rename_var x v2)
         | Const _ | Proj _ | Angel _ | Daimon _ -> v
         | Sp(AppArg [],_) -> assert false
-        | Sp(AppArg apps,t) -> Sp(AppArg (List.map (function p,w,y -> if y="()" then p,w,y else p,w,y^x) apps),t)
+        | Sp(AppArg xcs,t) -> Sp(AppArg (List.map (function y,c -> if y="()" then y,c else y^x,c) xcs),t)
         | Sp(AppRes _,_) -> v
         (* | _ -> assert false *)
 
@@ -411,13 +436,13 @@ let unify ?(allow_approx=false) (f_r,patterns_r:sct_pattern) (f_l,patterns_l:sct
 
             | Sp(AppArg [],_)::_,_ -> assert false
 
-            | Sp(AppArg apps_r,_)::ps_r,u_l::ps_l ->
+            | Sp(AppArg xcs_r,_)::ps_r,u_l::ps_l ->
                 if allow_approx
                 then
                     match collapse0 u_l with
-                        | Sp(AppArg(apps_l),()) ->
-                            let tau = List.map (function p,w,x -> (x,Sp(AppArg(List.map (function _p,_w,_x -> let p,w = add_approx (_p,_w) (p, op_weight w) in p,w,_x) apps_r),())) ) apps_l in
-                            unify_aux ps_r ps_l (tau @ (List.map (second (subst_approx_term sigma)) sigma))
+                        | Sp(AppArg(xcs_l),()) ->
+                            let tau = List.map (function x,c -> (x,Sp(AppArg(List.map (function _x,_c -> _x,add_coeff _c (op_coeff c)) xcs_r),())) ) xcs_l in
+                            unify_aux ps_r ps_l (tau @ (List.map (second (subst_sct_term sigma)) sigma))
                         | _ -> assert false
                 else
                     assert false
@@ -425,32 +450,32 @@ let unify ?(allow_approx=false) (f_r,patterns_r:sct_pattern) (f_l,patterns_l:sct
             | u_r::ps_r,Sp(AppArg apps_l,_)::ps_l ->
                     assert false (*raise (UnificationError "approximation on the right not allowed during unification")*)
 
-            | [Sp(AppRes(p,w),_)],ps_l ->
+            | [Sp(AppRes(c),_)],ps_l ->
                 if allow_approx
                 then
                     let tmp = List.filter (function Proj _ | Sp(AppRes _,_) -> true | _ -> false) ps_l in
-                    let tmp = List.map (function Proj(_,p,_) -> (p,Num 1) | Sp(AppRes(p,w),_) -> (p,w) | _ -> assert false) tmp in
-                    let p,w = List.fold_left (fun ap1 ap2 -> add_approx ap1 (fst ap2, op_weight (snd ap2))) (p,w) tmp in
+                    let tmp = List.map (function Proj(_,p,_) -> [p,Num 1] | Sp(AppRes(c),_) -> c | _ -> assert false) tmp in
+                    let c = List.fold_left (fun c1 c2 -> add_coeff c1 (op_coeff c2)) c tmp in
                     (* sigma,[],[Sp(AppRes(p,w))] *)
-                    sigma,[Sp(AppRes(p,w),())],[]
+                    sigma,[Sp(AppRes(c),())],[]
                 else
                     assert false
 
-            | ps_r,[Sp(AppRes(p,w),_)] ->
+            | ps_r,[Sp(AppRes(c),_)] ->
                     assert false (*raise (UnificationError "approximation on the right not allowed during unification")*)
 
-            | Var(x_r,_)::ps_r,u_l::ps_l -> unify_aux (List.map (subst_approx_term [x_r,u_l]) ps_r) ps_l ((x_r,u_l)::(List.map (second (subst_approx_term [x_r,u_l])) sigma))
-            | u_r::ps_r,Var(x_l,_)::ps_l -> unify_aux ps_r (List.map (subst_approx_term [x_l,u_r]) ps_l) ((x_l,u_r)::(List.map (second (subst_approx_term [x_l,u_r])) sigma))
+            | Var(x_r,_)::ps_r,u_l::ps_l -> unify_aux (List.map (subst_sct_term [x_r,u_l]) ps_r) ps_l ((x_r,u_l)::(List.map (second (subst_sct_term [x_r,u_l])) sigma))
+            | u_r::ps_r,Var(x_l,_)::ps_l -> unify_aux ps_r (List.map (subst_sct_term [x_l,u_r]) ps_l) ((x_l,u_r)::(List.map (second (subst_sct_term [x_l,u_r])) sigma))
 
             | ps_r,[] -> sigma,ps_r,[]
             | [],ps_l -> sigma,[],ps_l
 
 
-            | Sp(AppRes(p,w),_)::_,_
-            | _,Sp(AppRes(p,w),_)::_ ->
-                    debug "OOPS";
-                    debug "ps_l = %s" (string_of_list " " string_of_approx_term ps_l);
-                    debug "ps_r = %s" (string_of_list " " string_of_approx_term ps_r);
+            | Sp(AppRes(c),_)::_,_
+            | _,Sp(AppRes(c),_)::_ ->
+                    (* debug "OOPS"; *)
+                    (* debug "ps_l = %s" (string_of_list " " string_of_approx_term ps_l); *)
+                    (* debug "ps_r = %s" (string_of_list " " string_of_approx_term ps_r); *)
                     assert false
 
             | _,_ -> raise (UnificationError ("cannot unify " ^ (string_of_list " " string_of_approx_term ps_r) ^ " and " ^ (string_of_list " " string_of_approx_term ps_l)))
@@ -475,21 +500,21 @@ let compose (l1,r1:sct_clause) (l2,r2:sct_clause)
 (* debug "sigma: %s" (string_of_list " , " (function x,t -> x ^ ":=" ^ (string_of_approx_term t)) sigma); *)
 (* debug "context1: %s" (string_of_list " , " string_of_approx_term context1); *)
 (* debug "context2: %s" (string_of_list " , " string_of_approx_term context2); *)
-        let subst (f,pats) = (f,List.map (subst_approx_term sigma) pats) in
+        let subst (f,pats) = (f,List.map (subst_sct_term sigma) pats) in
         let l = subst l1 in
         let r = subst r2 in
 (* debug "obtained %s" (string_of_sct_clause (l,r)); *)
-        let r = normalize_sct_clause (app_all l context2 , app_all r context1) in
+        let r = normalize_sct_clause (add_pattern_args l context2 , add_pattern_args r context1) in
 (* debug "after renormalization %s" (string_of_sct_clause r); *)
         r
     with
         UnificationError err -> raise Impossible_case
 
 
-let collapse_clause b d (l,r:sct_clause) : sct_clause
+let collapse_sct_clause b d (l,r:sct_clause) : sct_clause
   =
-    let l = collapse_pattern d l in
-    let r = collapse_pattern d r in
+    let l = collapse_sct_pattern d l in
+    let r = collapse_sct_pattern d r in
     let l,r = normalize_sct_clause (l,r) in
     let r = collapse_weight_in_pattern b r in
     l,r
@@ -501,27 +526,11 @@ let collapsed_compose (b:int) (d:int) (c1:sct_clause) (c2:sct_clause) : sct_clau
     let l,r = compose c1 c2
     in
     (* debug "   l,r:  %s " (string_of_sct_clause (l,r)); *)
-    let result = collapse_clause b d (l,r)
+    let result = collapse_sct_clause b d (l,r)
     in
     (* debug "   result:  %s " (string_of_sct_clause result); *)
     result
 
-
-
-(* order *)
-let approx_approx (p1,w1) (p2,w2) =
-    match p1,p2 with
-        | None,_ -> true
-        | Some p1,Some p2 when p1 > p2 -> true
-        | _,None -> false
-        | Some p1,Some p2 when p1 < p2 -> false
-        | Some p1,Some p2 (*when p1=p2*) ->
-            begin
-                match w1,w2 with
-                    | Infty,_ -> true
-                    | _,Infty -> false
-                    | Num w1,Num w2 -> w1 >= w2
-            end
 
 (* check if p1 approximates p2 *)
 let approximates p1 p2 =
@@ -578,10 +587,10 @@ let approximates p1 p2 =
                     (* debug "left: %s, right: %s" *)
                     (*     (string_of_approx_term (Sp(AppArg apps1,t1))) *)
                     (*     (string_of_approx_term (Sp(AppArg apps2,t2))); *)
-                let b = List.for_all (function p2,w2,x2 ->
-                        List.exists  (function p1,w1,x1 ->
+                let b = List.for_all (function x2,c2 ->
+                        List.exists  (function x1,c1 ->
                             (* debug "x1=%s, x2=%s, p1=%s, p2=%s, w1=%s, w2=%s" x1 x2 (string_of_priority p1) (string_of_priority p2) (string_of_weight w1) (string_of_weight w2); *)
-                                x1=x2 && (compare_approx (p1,w1) (p2,w2))
+                                x1=x2 && (approx_coeff c1 c2)
                             )
                             apps1)
                             apps2
@@ -591,21 +600,37 @@ let approximates p1 p2 =
             | Sp(AppArg _,_)::_,[] -> false
             | [],Sp(AppArg _,_)::_ -> false
 
-            | [Sp(AppRes(p,w),_)],pats2 ->
+            | [Sp(AppRes(c),_)],pats2 ->
                     begin
-                        let projs = List.filter (function Sp(AppRes _,_) -> true | _ -> false) pats2 in
-                        let p2,w2 = List.fold_left (fun r a2 ->
-                                        match a2 with Sp(AppRes(_p,_w),_) -> add_approx r (_p,_w)
+                        let projs = List.filter (function Sp(AppRes _,_)|Proj(_,_,_) -> true | _ -> false) pats2 in
+                        let c2 = List.fold_left (fun r a2 ->
+                                        match a2 with Sp(AppRes(_c),_) -> add_coeff r _c
+                                                    | Proj(_,p,_) -> add_coeff r [(p,Num 1)]
                                                     | _ -> assert false
                                     )
-                                    (Some 0, Num 0)
+                                    []
                                     projs
                         in
-                        approx_approx (p,w) (p2,w2)
+                        approx_coeff c c2
+                    end
+            | pats1,[Sp(AppRes(c),_)] ->
+                    begin
+                        let projs = List.filter (function Sp(AppRes _,_)|Proj(_,_,_) -> true | _ -> false) pats1 in
+                        match projs with
+                            | [] -> false       (* exact pattern on the left *)
+                            | projs ->
+                                let c1 = List.fold_left (fun r a1 ->
+                                                match a1 with Sp(AppRes(_c),_) -> add_coeff r _c
+                                                            | Proj(_,p,_) -> add_coeff r [(p,Num 1)]
+                                                            | _ -> assert false
+                                            )
+                                            []
+                                            projs
+                                in
+                                approx_coeff c1 c
                     end
             | Sp(AppRes _,_)::_,_ ->
                     debug "OOPS: %s" (string_of_sct_pattern ("pat1:",pats1)); assert false
-            | _,[Sp(AppRes _,_)] -> false
             | _,(Sp(AppRes _,_))::_ ->
                     debug "OOPS: %s" (string_of_sct_pattern ("pat2:",pats2)); assert false
 
@@ -619,109 +644,119 @@ let approximates p1 p2 =
         let l2,r2 = rename "₂" l2, rename "₂" r2 in
         let sigma,context1,context2 = unify l1 l2 in
 
-        let subst (f,pats) = (f,List.map (subst_approx_term sigma) pats) in
+        let subst (f,pats) = (f,List.map (subst_sct_term sigma) pats) in
 
         let r1 = subst r1 in
-        let f1,pats1 = app_all r1 context2 in
+        let f1,pats1 = add_pattern_args r1 context2 in
         let r2 = subst r2 in
-        let f2,pats2 = app_all r2 context1 in
+        let f2,pats2 = add_pattern_args r2 context1 in
         (* debug "r1=%s  and  r2=%s" (string_of_sct_pattern (f1,pats1)) (string_of_sct_pattern (f2,pats2)); *)
 
         f1 = f2 && approximates_aux pats1 pats2
 
     with UnificationError _ -> false
 
+(* let approximates p1 p2 = *)
+(*     let r = approximates p1 p2 in *)
+(*     debug "approximates %s AND %s" (string_of_sct_clause p1) (string_of_sct_clause p2); *)
+(*     if r then debug "TRUE" else debug "FALSE"; r *)
 
-let rec repeat x n =
-    if n = 0
-    then []
-    else x::(repeat x (n-1))
 
 (* compatibility *)
 (* similar to approximates *)
-let compatible (p1:sct_clause) (p2:sct_clause) : bool =
+let coherent (p1:sct_clause) (p2:sct_clause) : bool =
 
-    let rec compatible_aux pats1 pats2 =
+    let rec coherent_aux pats1 pats2 =
         (* debug "pats1 = %s" (string_of_list " , " string_of_approx_term pats1); *)
         (* debug "pats2 = %s" (string_of_list " , " string_of_approx_term pats2); *)
         match pats1,pats2 with
             | [],[] -> true
 
             | (Angel _)::pats1,_::pats2
-            | _::pats1,(Angel _)::pats2 -> compatible_aux pats1 pats2
+            | _::pats1,(Angel _)::pats2 -> coherent_aux pats1 pats2
 
             | (Daimon _)::pats1,_::pats2
-            | _::pats1,(Daimon _)::pats2 -> compatible_aux pats1 pats2
+            | _::pats1,(Daimon _)::pats2 -> coherent_aux pats1 pats2
 
-            | Proj(d1,_,_)::pats1,Proj(d2,_,_)::pats2 when d1=d2 -> compatible_aux pats1 pats2
+            | Proj(d1,_,_)::pats1,Proj(d2,_,_)::pats2 when d1=d2 -> coherent_aux pats1 pats2
             | Proj(d1,_,_)::pats1,Proj(d2,_,_)::pats2 (*d1<>d2*) -> false
 
-            | Var(x1,_)::pats1,Var(x2,_)::pats2 when x1=x2 -> compatible_aux pats1 pats2
+            | Var(x1,_)::pats1,Var(x2,_)::pats2 when x1=x2 -> coherent_aux pats1 pats2
             | Var(x1,_)::_,_ -> approximates p2 p1
             | _,Var(x2,_)::_-> approximates p1 p2
 
-            | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 when c1=c2 -> compatible_aux pats1 pats2
+            | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 when c1=c2 -> coherent_aux pats1 pats2
             | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 (*when c1<>c2*) -> false
 
             | ((App _) as u1)::_pats1,((App _) as u2)::_pats2 ->
-                    compatible_aux ((get_head u1)::(get_args u1)@_pats1) ((get_head u2)::(get_args u2)@_pats2)
+                    coherent_aux ((get_head u1)::(get_args u1)@_pats1) ((get_head u2)::(get_args u2)@_pats2)
 
             | Sp(AppArg [],_)::_,_
             | _,Sp(AppArg [],_)::_ -> assert false
-            | Sp(AppArg apps1,_)::pats1,Sp(AppArg apps2,_)::pats2 ->
-                    List.exists (function _,_,x2 ->
-                    List.exists (function _,_,x1 ->
+            | Sp(AppArg xcs1,_)::pats1,Sp(AppArg xcs2,_)::pats2 ->
+                    List.exists (function x2,_ ->
+                    List.exists (function x1,_ ->
                             x1=x2
-                        ) apps1
-                        ) apps2
+                        ) xcs1
+                        ) xcs2 && coherent_aux pats1 pats2
                     (* FIXME: or simply "true" because both are approximations of the empty approximation?
                      * Note that the empty approximation doesn't have any decreasing argument... *)
 
-            (* FIXME: too lax:
+            (* FIXME: too lax:      TODO: isn't it done?
             *     f x => f x
-            * isn't compatible with
+            * isn't coherent with
             *     f x => f <-1>x
             * note that this is sound: it may add some loops to check that aren't necessary... *)
             | (Sp(AppArg _,_) as a)::pats1,u2::pats2 ->
                 begin
                     match get_head u2,get_args u2 with
-                        | Const(_,p,_),args -> compatible_aux ((repeat a (List.length args))@pats1) (args@pats2)
+                        | Const(_,p,_),args -> coherent_aux ((repeat a (List.length args))@pats1) (args@pats2)
 
                         | _ -> assert false
                 end
             | u1::_pats1,Sp(AppArg _,_)::_ ->
-                    compatible_aux ((collapse0 u1)::_pats1) pats2
+                    coherent_aux ((collapse0 u1)::_pats1) pats2
 
-            (* FIXME: is that right? *)
-            | [Sp(AppRes _,_)],_
-            | _,[Sp(AppRes _,_)] ->
-                    true
+            | pats1,[Sp(AppRes _,_)] -> 
+                    if List.exists (function Sp(AppRes _,_) -> true | _ -> false) pats1
+                    then true
+                    else  approximates p2 p1
+            | [Sp(AppRes _,_)],pats2 -> 
+                    if List.exists (function Sp(AppRes _,_) -> true | _ -> false) pats2
+                    then true
+                    else approximates p1 p2
 
-            | _,_ -> false
             (* TODO remove joker pattern to make sure I am not forgetting anything *)
+            | _,_ -> false
     in
 
     try
         let l1,r1 = p1 in
         let l2,r2 = p2 in
-        (* debug "          check if %s\nis compatible with %s" (string_of_sct_clause p1) (string_of_sct_clause p2); *)
+        let rename s (f,pats) = (f,List.map (rename_var s) pats) in
+        let l1,r1 = rename "₁" l1, rename "₁" r1 in
+        let l2,r2 = rename "₂" l2, rename "₂" r2 in
+        (* debug "        check if %s\nis coherent with %s" (string_of_sct_clause p1) (string_of_sct_clause p2); *)
         let sigma,context1,context2 = unify l1 l2 in
 
-        let subst (f,pats) = (f,List.map (subst_approx_term sigma) pats) in
+        (* debug "SIGMA: %s" (string_of_list ", " (function x,v -> fmt "%s=%s" x (string_of_approx_term v)) sigma); *)
+        let subst (f,pats) = (f,List.map (subst_sct_term sigma) pats) in
 
         let r1 = subst r1 in
-        let f1,pats1 = app_all r1 context2 in
+        let f1,pats1 = add_pattern_args r1 context2 in
         let r2 = subst r2 in
-        let f2,pats2 = app_all r2 context1 in
+        let f2,pats2 = add_pattern_args r2 context1 in
 
         (* debug "  got %s and %s" (string_of_sct_pattern (f1,pats1))(string_of_sct_pattern (f2,pats2)); *)
 
-        let r = f1 = f2 && compatible_aux pats1 pats2 in
+        let r = f1 = f2 && coherent_aux pats1 pats2 in
         (* debug "%s" (string_of_bool r); *)
         r
-
-
     with UnificationError _ -> false
+(* let coherent p1 p2 = *)
+(*     let r = coherent p1 p2 in *)
+(*     debug "coherent %s AND %s" (string_of_sct_clause p1) (string_of_sct_clause p2); *)
+(*     if r then debug "TRUE" else debug "FALSE"; r *)
 
 (* decreasing arguments *)
 let decreasing (l,r : sct_clause)
@@ -730,54 +765,78 @@ let decreasing (l,r : sct_clause)
     (* TODO check outside AppRes *)
     let rec decreasing_aux pats1 pats2 acc
       = match pats1,pats2 with
-            | [],[] -> (match acc with (Some p, Num w) when even p && w<0 -> true | _ -> false)
+            | [],[] ->
+                begin
+                    let tmp = List.filter (function p,w -> w <> (Num 0)) acc in
+                    try
+                        match last tmp with
+                            | (Some p,w) when even p -> negative_weight w
+                            | _ -> false
+                    with Invalid_argument "last" -> false
+                end
 
             | _,[] -> assert false
 
-            | pats1, (Sp(AppRes(prio2,w2),_))::pats2 ->
+            | pats1, (Sp(AppRes(c2),_))::pats2 ->
                 begin
                     assert (pats2 = []);
-                    let app = add_approx
+                    let c = add_coeff
                                 acc
-                                (collapse_apps_proj (List.map snd pats1)) in
-                    match app with
-                        | _,Infty -> assert false
-                        | p,w ->
-                            match add_approx (prio2,w2) (p,op_weight w) with
-                                | (None,Num w) -> w<0
-                                | (Some p, Num w) when even p -> w<0
-                                | _ -> false
+                                (op_coeff (collapse_proj (List.map snd pats1))) in
+                    let c = add_coeff c c2 in
+                    let tmp = List.filter (function p,w -> w <> (Num 0)) c in
+                    try
+                        match last tmp with
+                            | (Some p,w) when even p -> negative_weight w
+                            | _ -> false
+                    with Invalid_argument "last" -> false
                 end
+
             | [],pats2 -> assert false
 
-            | (app1,u1)::pats1, u2::pats2 ->
+            | (coeff1,u1)::pats1, u2::pats2 ->
                 begin
                     match get_head u1, get_args u1, get_head u2, get_args u2 with
 
                         | Proj(d1,p1,_),[],Proj(d2,p2,_),[] ->
                             assert (d1=d2);
                             assert (p1=p2);
-                            decreasing_aux pats1 pats2 (add_approx (p1,Num 0) acc)
+                            decreasing_aux pats1 pats2 (add_coeff [p1,Num 0] acc)
 
                         | Proj _,_,Proj _,_ -> assert false
 
                         | Var(x1,_),[],_,_ ->
                             begin
                                 match collapse0 u2 with
-                                    | Sp(AppArg([(p,w,x)]),()) when x1=x ->
-                                            (match add_approx (p,w) acc with (Some p, Num w) when odd p && w<0 -> true
-                                                                            | _ -> decreasing_aux pats1 pats2 acc)
+                                    | Sp(AppArg([(x,c)]),()) when x1=x ->
+                                        begin
+                                            let tmp = List.filter (function p,w -> w <> (Num 0)) (add_coeff c acc) in
+                                            try
+                                                match last tmp with
+                                                    | (Some p,w) when odd p -> negative_weight w || decreasing_aux pats1 pats2 acc
+                                                    | _ -> decreasing_aux pats1 pats2 acc
+                                            with Invalid_argument "last" -> decreasing_aux pats1 pats2 acc
+                                        end
                                     | Sp(AppArg(_),()) -> decreasing_aux pats1 pats2 acc
                                     | Daimon() -> decreasing_aux pats1 pats2 acc
                                     | Angel() -> true
                                     | _ -> assert false
                             end
+
                         | _,_,Var(x2,_),[] ->
                             begin
                                 match collapse0 u1 with
-                                    | Sp(AppArg([(p,w,x)]),()) when x2=x ->
-                                            (match add_approx (p,w) acc with (Some p, Num w) when odd p && w>0 -> true
-                                                                            | _ -> decreasing_aux pats1 pats2 acc)
+                                    | Sp(AppArg([(x,c)]),()) when x2=x ->
+                                        begin
+                                            let tmp = List.filter (function p,w -> w <> (Num 0)) (add_coeff (op_coeff c) acc) in
+                                            try
+                                                match last tmp with
+                                                    | (Some p,w) when odd p -> negative_weight w || decreasing_aux pats1 pats2 acc
+                                                    | _ -> decreasing_aux pats1 pats2 acc
+                                            with Invalid_argument "last" -> false
+                                        end
+                                            (* (match add_coeff c acc with [Some p, Num w] when odd p && w>0 -> todo "do something"; true   (1* TODO: do better *1) *)
+                                            (*                                 | _ -> decreasing_aux pats1 pats2 acc) *)
                                     | Sp(AppArg(_),()) -> decreasing_aux pats1 pats2 acc  (* TODO: check *)
                                     | Daimon() -> assert false
                                     | Angel() -> assert false
@@ -787,15 +846,15 @@ let decreasing (l,r : sct_clause)
                         | Const(c1,p1,_),args1,Const(c2,p2,_),args2 ->
                             assert (c1=c2);
                             assert (p1=p2);
-                            let app = add_approx app1 (p1,Num 0) in
-                            let args1 = List.map (fun x -> app,x) args1 in
+                            let c= add_coeff coeff1 [p1,Num 0] in
+                            let args1 = List.map (fun x -> c,x) args1 in
                             decreasing_aux (args1@pats1) (args2@pats2) acc
 
 
                         | _,_,Sp(AppArg [],_),_ -> assert false
 
                         | Const(_,p,_),args1,((Sp(AppArg apps,_)) as u2),[] ->
-                            let app = add_approx app1 (p,Num (-1)) in
+                            let app = add_coeff coeff1 [p,Num (-1)] in
                             let args1 = List.map (fun x -> app,x) args1 in
                             let args2 = repeat u2 (List.length args1) in
                             decreasing_aux (args1@pats1) (args2@pats2) acc
@@ -819,9 +878,8 @@ let decreasing (l,r : sct_clause)
     let f1,pats1 = l in
     let f2,pats2 = r in
     assert (f1=f2);
-    decreasing_aux (List.map (fun p -> (Some 0,Num 0),p) pats1) pats2 (Some 0, Num 0)
+    decreasing_aux (List.map (fun p -> [],p) pats1) pats2 []
 
-
-let decreasing cl =
-    try decreasing cl
-    with _ -> debug "OOPS %s" (string_of_sct_clause cl); assert false
+(* let decreasing cl = *)
+(*     try decreasing cl *)
+(*     with _ -> debug "OOPS %s" (string_of_sct_clause cl); assert false *)

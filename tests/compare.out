@@ -23,15 +23,15 @@
 
 >> option depth is set to 0
 >> expect TRUE
->>   f, x₁ => g, <0>⁼ x₁    ≥    f, x₁ => g, <0>⁼ x₁
+>>   f, x₁ => g, <>x₁    ≥    f, x₁ => g, <>x₁
 >>         TRUE
 
 >> expect TRUE
->>   f, x₁ => g, <1>⁼ x₁    ≥    f, x₁ => g, <0>⁼ x₁
+>>   f, x₁ => g, <1⁼>x₁    ≥    f, x₁ => g, <>x₁
 >>         TRUE
 
 >> expect FALSE
->>   f, x₁ => g, <0>⁼ x₁    ≥    f, x₁ => g, <1>⁼ x₁
+>>   f, x₁ => g, <>x₁    ≥    f, x₁ => g, <1⁼>x₁
 >>         FALSE
 
 >> option depth is set to 1
@@ -40,11 +40,11 @@
 >>         TRUE
 
 >> expect TRUE
->>   f, S⁼ x₁ => g, S⁼ <1>⁼ x₁    ≥    f, S⁼ x₁ => g, S⁼ x₁
+>>   f, S⁼ x₁ => g, S⁼ <1⁼>x₁    ≥    f, S⁼ x₁ => g, S⁼ x₁
 >>         TRUE
 
 >> expect FALSE
->>   f, S⁼ x₁ => g, S⁼ x₁    ≥    f, S⁼ x₁ => g, S⁼ <1>⁼ x₁
+>>   f, S⁼ x₁ => g, S⁼ x₁    ≥    f, S⁼ x₁ => g, S⁼ <1⁼>x₁
 >>         FALSE
 
 >> expect TRUE
@@ -81,34 +81,34 @@
 
 >> option depth is set to 0
 >> expect FALSE
->>   f, x₁, x₂ => g, x₁, x₂    ≥    f, x₁, x₂ => g, x₁, <1>⁼ x₂
+>>   f, x₁, x₂ => g, x₁, x₂    ≥    f, x₁, x₂ => g, x₁, <1⁼>x₂
 >>         FALSE
 
 >> expect FALSE
->>   f, x₁, x₂ => g, <-1>⁼ x₁, x₂    ≥    f, x₁, x₂ => g, x₁, x₂
+>>   f, x₁, x₂ => g, <-1⁼>x₁, x₂    ≥    f, x₁, x₂ => g, x₁, x₂
 >>         FALSE
 
 >> expect TRUE
->>   f, x₁, x₂ => g, <1>⁼ x₁, x₂    ≥    f, x₁, x₂ => g, x₁, x₂
+>>   f, x₁, x₂ => g, <1⁼>x₁, x₂    ≥    f, x₁, x₂ => g, x₁, x₂
 >>         TRUE
 
 >> expect FALSE
->>   f, x₁, x₂ => g, x₁, x₂    ≥    f, x₁, x₂ => g, x₁, <-1>⁼ x₂
+>>   f, x₁, x₂ => g, x₁, x₂    ≥    f, x₁, x₂ => g, x₁, <-1⁼>x₂
 >>         FALSE
 
 >> expect TRUE
->>   f, x₁, x₂ => g, <1>⁼ x₁, x₂    ≥    f, x₁, x₂ => g, <-1>⁼ x₁, x₂
+>>   f, x₁, x₂ => g, <1⁼>x₁, x₂    ≥    f, x₁, x₂ => g, <-1⁼>x₁, x₂
 >>         TRUE
 
 >> expect FALSE
->>   f, x₁, x₂ => g, x₂, <-1>⁼ x₁    ≥    f, x₁, x₂ => g, <1>⁼ x₁, x₂
+>>   f, x₁, x₂ => g, x₂, <-1⁼>x₁    ≥    f, x₁, x₂ => g, <1⁼>x₁, x₂
 >>         FALSE
 
 >> expect FALSE
->>   f, x₁ => g, <-1>⁼ x₁    ≥    f, x₁ => g, x₁
+>>   f, x₁ => g, <-1⁼>x₁    ≥    f, x₁ => g, x₁
 >>         FALSE
 
 >> expect TRUE
->>   f, x₁ => g, <1>⁼ x₁    ≥    f, x₁ => g, x₁
+>>   f, x₁ => g, <1⁼>x₁    ≥    f, x₁ => g, x₁
 >>         TRUE
 

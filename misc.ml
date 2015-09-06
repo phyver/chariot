@@ -57,6 +57,12 @@ let rec print_list (b1:string) (sep:string) (b2:string) (p:'a -> unit) (l:'a lis
         | [x] -> print_string b1; p x; print_string b2
         | x::xs -> print_string b1; p x; List.iter (fun x -> print_string sep; p x) xs; print_string b2
 
+let rec last (l:'a list) : 'a
+  = match l with
+        | [] -> raise (Invalid_argument "last")
+        | [x] -> x
+        | _::l -> last l
+
 (* remove duplicates *)
 (* stable allows to keep the order of the first occurences... *)
 let uniq ?(stable=false) (l:'a list) : 'a list
@@ -267,3 +273,4 @@ let plural (l:'a list) (sing:string) (plur:string) : string
         | [] -> sing
         | [_] -> sing
         | _ -> plur
+

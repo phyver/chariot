@@ -4,32 +4,32 @@
 >>           =  f, x₁, x₂ => h, x₁, x₂
 
 >>   f, x, y => g, S⁼ x, S⁼ (S⁼ (S⁼ (S⁼ x)))    o    g, a, b => h, a, T⁼ b
->>           =  f, x₁, x₂ => h, S⁼ x₁, T⁼ (S⁼ <∞>⁼ x₁)
+>>           =  f, x₁, x₂ => h, S⁼ x₁, T⁼ (S⁼ <∞⁼>x₁)
 
 >>   f, S⁼ (S⁼ x) => f, x    o    f, S⁼ x => f, x
->>           =  f, S⁼ (S⁼ x₁) => f, <-1>⁼ x₁
+>>           =  f, S⁼ (S⁼ x₁) => f, <-1⁼>x₁
 
 >>   nats, .P⁼ => nats,     o    nats, .P⁼ => nats, 
 >>           =  nats, .P⁼, .P⁼ => nats, 
 
 >>   nats, .P⁼, .P⁼ => nats,     o    nats, .P⁼ => nats, 
->>           =  nats, .P⁼, .P⁼ => nats, .<<-1>>⁼
+>>           =  nats, .P⁼, .P⁼ => nats, .<<-1⁼>>
 
 >>   nats, .P⁼, .P⁼ => nats,     o    nats, .P⁼, .P⁼, .P⁼ => nats, 
->>           =  nats, .P⁼, .P⁼ => nats, .<<-2>>⁼
+>>           =  nats, .P⁼, .P⁼ => nats, .<<-2⁼>>
 
 >>   nats,  => nats, .P⁼    o    nats,  => nats, .P⁼
 >>           =  nats,  => nats, .P⁼, .P⁼
 
 >>   nats,  => nats, .P⁼, .P⁼    o    nats,  => nats, .P⁼
->>           =  nats,  => nats, .P⁼, .P⁼, .<<1>>⁼
+>>           =  nats,  => nats, .P⁼, .P⁼, .<<1⁼>>
 
 >>   nats,  => nats, .P⁼, .P⁼    o    nats,  => nats, .P⁼, .P⁼
->>           =  nats,  => nats, .P⁼, .P⁼, .<<∞>>⁼
+>>           =  nats,  => nats, .P⁼, .P⁼, .<<∞⁼>>
 
 >>   f, x, .P⁼, y => g, x    o    g, x, .Q⁼, y => f, y
 >>           =  f, x₁, .P⁼, x₂, .Q⁼, x₃ => f, x₃
 
 >>   f, x, .P⁼, y, .P⁼, z => g, x    o    g, x, .Q⁼, y, .Q⁼, z => f, y
->>           =  f, x₁, .P⁼, x₂, .P⁼, x₃ => f, x₄, .<<-2>>⁼
+>>           =  f, x₁, .P⁼, x₂, .P⁼, x₃ => f, x₄, .<<-2⁼>>
 
