@@ -52,14 +52,16 @@ open FunctionDefs
 open TypeDefs
 open StructPattern
 
-(* transform a struct_term without structs into a unit term *)
+
 let parsed_to_plain v
   = map_raw_term (fun _ -> error "no structure allowed for this command") id id v
+
 let parsed_to_sct v
   = let v = parsed_to_plain v in
-    let v = map_raw_term (fun s->s.bot) (k None) id v in
-    let v = pattern_to_approx_term v in
-    term_to_sct_pattern v
+    let v = map_raw_term (fun s->s.bot) (k None) (k ()) v in
+    match explode v with
+        | (Var(f,_))::args -> f,args
+        | _ -> assert false
 
 (* transform a list of types into the product *)
 let list_to_product (l:type_expression list) : type_expression

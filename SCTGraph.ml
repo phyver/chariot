@@ -120,7 +120,9 @@ let callgraph_from_definitions
         let params = extract_pattern_variables lhs
         in
 
-        let lhs = term_to_sct_pattern (pattern_to_approx_term lhs)
+        let lhs = match explode (map_raw_term (fun s -> s.bot) id (fun _ -> ()) lhs) with
+                        | (Var(f,_))::args -> f,args
+                        | _ -> assert false
         in
 
         let caller = fst lhs
@@ -164,7 +166,7 @@ let callgraph_from_definitions
                             | Data _ | TVar _ ->
                                 let _args = List.map process_arg args
                                 in
-                                let call = lhs, add_pattern_args (called,_args) calling_context
+                                let call = lhs, sct_pattern_add_args (called,_args) calling_context
                                 in
                                 let graph = CallGraph.add (caller,called) (add_call_set call (try CallGraph.find (caller,called) graph with Not_found -> ClauseSet.empty)) graph
                                 in
