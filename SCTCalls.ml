@@ -891,7 +891,6 @@ let decreasing (l,r : sct_clause)
                             assert (p1=p2);
                             decreasing_aux (args1@pats1) (args2@pats2)
 
-
                         | _,_,Sp(AppArg [],_),_ -> assert false
 
                         | Const(_,p,_),args1,Sp(AppArg xcs,_),[] ->
@@ -909,7 +908,15 @@ let decreasing (l,r : sct_clause)
                         | App _,_,_,_ | _,_,App _,_ -> assert false
                         | Sp _,_,_,_ -> assert false
 
-                        | _,_,_,_ -> debug "OOPS, u1=%s and u2=%s" (string_of_approx_term u1) (string_of_approx_term u2); assert false
+                        | Const _,_,(Proj _ | Var _),_
+                        | Proj _,_,(Const _ | Var _),_
+                        | Var _,_,(Const _ | Proj _),_
+                        | Var _,_::_, _,_
+                        | Proj _, _, Sp (AppRes _, _), _
+                        | Const _, _, Sp (AppRes _, _), _
+                            -> assert false
+
+                        (* | _,_,_,_ -> debug "OOPS, u1=%s and u2=%s" (string_of_approx_term u1) (string_of_approx_term u2); assert false *)
             (* TODO remove joker pattern to make sure I am not forgetting anything *)
                 end
     in
