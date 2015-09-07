@@ -827,7 +827,7 @@ let decreasing (l,r : sct_clause)
             | pats1, (Sp(AppRes(c2),_))::pats2 ->
                 begin
                     assert (pats2 = []);
-                    let c = op_coeff (collapse_proj (List.map snd pats1)) in
+                    let c = op_coeff (collapse_proj pats1) in
                     let c = add_coeff c c2 in
                     let tmp = List.filter (function p,w -> w <> (Num 0)) c in
                     try
@@ -839,7 +839,7 @@ let decreasing (l,r : sct_clause)
 
             | [],pats2 -> assert false
 
-            | (coeff1,u1)::pats1, u2::pats2 ->
+            | u1::pats1, u2::pats2 ->
                 begin
                     match get_head u1, get_args u1, get_head u2, get_args u2 with
 
@@ -889,17 +889,14 @@ let decreasing (l,r : sct_clause)
                         | Const(c1,p1,_),args1,Const(c2,p2,_),args2 ->
                             assert (c1=c2);
                             assert (p1=p2);
-                            let c= add_coeff coeff1 [p1,Num 0] in
-                            let args1 = List.map (fun x -> c,x) args1 in
                             decreasing_aux (args1@pats1) (args2@pats2)
 
 
                         | _,_,Sp(AppArg [],_),_ -> assert false
 
-                        | Const(_,p,_),args1,((Sp(AppArg apps,_)) as u2),[] ->
-                            let app = add_coeff coeff1 [p,Num (-1)] in
-                            let args1 = List.map (fun x -> app,x) args1 in
-                            let args2 = repeat u2 (List.length args1) in
+                        | Const(_,p,_),args1,Sp(AppArg xcs,_),[] ->
+                            let xcs = List.map (function x,c -> x,add_coeff c [p,Num (-1)]) xcs in
+                            let args2 = repeat (Sp(AppArg xcs,())) (List.length args1) in
                             decreasing_aux (args1@pats1) (args2@pats2)
 
                         | _,_,Sp(AppArg _,_),_ -> assert false
@@ -921,7 +918,7 @@ let decreasing (l,r : sct_clause)
     let f1,pats1 = l in
     let f2,pats2 = r in
     assert (f1=f2);
-    decreasing_aux (List.map (fun p -> [],p) pats1) pats2
+    decreasing_aux pats1 pats2
 
 (* let decreasing cl = *)
 (*     try decreasing cl *)
