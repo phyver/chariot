@@ -114,27 +114,10 @@ let callgraph_from_definitions
     let graph = CallGraph.empty
     in
 
-    let rec extract_params_aux d
-      = match d with
-            | Var(x,_) -> [x]
-            | App(u1,u2) -> (extract_params_aux u1) @ (extract_params_aux u2)
-            | Const _ -> []
-            | Proj _ | Angel _ | Daimon _ -> assert false
-            | Sp(s,_) -> s.bot
-    in
-
-    let rec extract_params d
-      = match get_head d,get_args d with
-            | Var(f,_),args -> List.concat (List.map extract_params_aux args)
-            | Proj _,u::args -> (extract_params u) @ (List.concat (List.map extract_params_aux args))
-            | Proj _,[] | Const _,_ | Angel _,_ | Daimon _,_ | App _,_ -> assert false
-            | Sp(s,_),_ -> s.bot
-    in
-
     let rec process_clause graph (lhs,rhs:term * term)
       : call_graph
       =
-        let params = extract_params lhs
+        let params = extract_pattern_variables lhs
         in
 
         let lhs = term_to_sct_pattern (pattern_to_approx_term lhs)
@@ -143,6 +126,7 @@ let callgraph_from_definitions
         let caller = fst lhs
         in
 
+        (* TODO: extract this function to term_to_sct_clause??? *)
         let rec process_arg (p:term)
           : approx_term
           = match get_head p,get_args p with
@@ -163,7 +147,7 @@ let callgraph_from_definitions
                                     collapse0 (map_raw_term (fun s->s.bot) id (fun _->()) (App(d,u)))
                             | _ -> Daimon()
                     end
-                | Proj _,[] -> assert false
+                | Proj(d,p,t),[] -> Proj(d,p,())
 
                 | Sp(s,_),_ -> s.bot
                 | App _,_ -> assert false
@@ -172,8 +156,9 @@ let callgraph_from_definitions
         let rec process_rhs (graph:call_graph) (rhs:term) (calling_context:approx_term list)
           : call_graph
           =
-              match get_head rhs, get_args rhs with
-                | Var(called,t), args when List.mem called function_names ->
+              match explode rhs with
+                | [] -> assert false
+                | Var(called,t)::args when List.mem called function_names ->
                     begin
                         match type_of rhs with
                             | Data _ | TVar _ ->
@@ -187,26 +172,16 @@ let callgraph_from_definitions
                             | t ->
                                     if verbose 1 then warning "the function %s appears not fully applied!" called; raise Non_terminating (* FIXME change exception *)
                     end
-
-                | Var _, args ->
+                | Var _::args ->
                     List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes([None,Infty]),())]) graph args
-                | Angel _,[] | Daimon _,[] -> graph
-                | Angel _,_ | Daimon _,_ -> graph       (* we already removed all the arguments to Angel / Daimon *)
-
-                | Const(c,p,t),args ->
+                | [Angel _] | [Daimon _] -> graph
+                | Angel _::_ | Daimon _::_ -> assert false       (* we already removed all the arguments to Angel / Daimon *)
+                | Const(c,p,t)::args ->
                     List.fold_left (fun graph rhs -> process_rhs graph rhs ((Sp(AppRes([p,Num 1]),()))::calling_context)) graph args
-
-                | Proj(d,p,t),u::args ->
-                    let _args = List.map process_arg args
-                    in
-                    let graph = process_rhs graph u (Proj(d,p,())::_args@calling_context)
-                    in
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes([None,Infty]),())]) graph args
-
-                | Sp(s,_), _ -> s.bot
-
-                | App _, _ -> assert false
-                | Proj _,[] -> assert false
+                | [Proj(d,p,t)] ->
+                        graph
+                | Sp(s,_):: _ -> s.bot
+                | _ -> debug "OOPS, rhs is %s" (string_of_plain_term rhs);assert false
         in
         process_rhs graph rhs []
     in
