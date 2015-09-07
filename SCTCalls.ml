@@ -817,26 +817,17 @@ let decreasing (l,r : sct_clause)
   : bool
   =
     (* TODO check outside AppRes *)
-    let rec decreasing_aux pats1 pats2 acc
+    (* TODO simplify by removing acc parameter and not adding coefficient to left patterns *)
+    let rec decreasing_aux pats1 pats2
       = match pats1,pats2 with
-            | [],[] ->
-                begin
-                    let tmp = List.filter (function p,w -> w <> (Num 0)) acc in
-                    try
-                        match last tmp with
-                            | (Some p,w) when even p -> negative_weight w
-                            | _ -> false
-                    with Invalid_argument "last" -> false
-                end
+            | [],[] -> false
 
             | _,[] -> assert false
 
             | pats1, (Sp(AppRes(c2),_))::pats2 ->
                 begin
                     assert (pats2 = []);
-                    let c = add_coeff
-                                acc
-                                (op_coeff (collapse_proj (List.map snd pats1))) in
+                    let c = op_coeff (collapse_proj (List.map snd pats1)) in
                     let c = add_coeff c c2 in
                     let tmp = List.filter (function p,w -> w <> (Num 0)) c in
                     try
@@ -855,7 +846,7 @@ let decreasing (l,r : sct_clause)
                         | Proj(d1,p1,_),[],Proj(d2,p2,_),[] ->
                             assert (d1=d2);
                             assert (p1=p2);
-                            decreasing_aux pats1 pats2 (add_coeff [p1,Num 0] acc)
+                            decreasing_aux pats1 pats2
 
                         | Proj _,_,Proj _,_ -> assert false
 
@@ -864,15 +855,15 @@ let decreasing (l,r : sct_clause)
                                 match collapse0 u2 with
                                     | Sp(AppArg([(x,c)]),()) when x1=x ->
                                         begin
-                                            let tmp = List.filter (function p,w -> w <> (Num 0)) (add_coeff c acc) in
+                                            let tmp = List.filter (function p,w -> w <> (Num 0)) c in
                                             try
                                                 match last tmp with
-                                                    | (Some p,w) when odd p -> negative_weight w || decreasing_aux pats1 pats2 acc
-                                                    | _ -> decreasing_aux pats1 pats2 acc
-                                            with Invalid_argument "last" -> decreasing_aux pats1 pats2 acc
+                                                    | (Some p,w) when odd p -> negative_weight w || decreasing_aux pats1 pats2
+                                                    | _ -> decreasing_aux pats1 pats2
+                                            with Invalid_argument "last" -> decreasing_aux pats1 pats2
                                         end
-                                    | Sp(AppArg(_),()) -> decreasing_aux pats1 pats2 acc
-                                    | Daimon() -> decreasing_aux pats1 pats2 acc
+                                    | Sp(AppArg(_),()) -> decreasing_aux pats1 pats2
+                                    | Daimon() -> decreasing_aux pats1 pats2
                                     | Angel() -> true
                                     | _ -> assert false
                             end
@@ -882,16 +873,14 @@ let decreasing (l,r : sct_clause)
                                 match collapse0 u1 with
                                     | Sp(AppArg([(x,c)]),()) when x2=x ->
                                         begin
-                                            let tmp = List.filter (function p,w -> w <> (Num 0)) (add_coeff (op_coeff c) acc) in
+                                            let tmp = List.filter (function p,w -> w <> (Num 0)) (op_coeff c) in
                                             try
                                                 match last tmp with
-                                                    | (Some p,w) when odd p -> negative_weight w || decreasing_aux pats1 pats2 acc
-                                                    | _ -> decreasing_aux pats1 pats2 acc
+                                                    | (Some p,w) when odd p -> negative_weight w || decreasing_aux pats1 pats2
+                                                    | _ -> decreasing_aux pats1 pats2
                                             with Invalid_argument "last" -> false
                                         end
-                                            (* (match add_coeff c acc with [Some p, Num w] when odd p && w>0 -> todo "do something"; true   (1* TODO: do better *1) *)
-                                            (*                                 | _ -> decreasing_aux pats1 pats2 acc) *)
-                                    | Sp(AppArg(_),()) -> decreasing_aux pats1 pats2 acc  (* TODO: check *)
+                                    | Sp(AppArg(_),()) -> decreasing_aux pats1 pats2  (* TODO: check *)
                                     | Daimon() -> assert false
                                     | Angel() -> assert false
                                     | _ -> assert false
@@ -902,7 +891,7 @@ let decreasing (l,r : sct_clause)
                             assert (p1=p2);
                             let c= add_coeff coeff1 [p1,Num 0] in
                             let args1 = List.map (fun x -> c,x) args1 in
-                            decreasing_aux (args1@pats1) (args2@pats2) acc
+                            decreasing_aux (args1@pats1) (args2@pats2)
 
 
                         | _,_,Sp(AppArg [],_),_ -> assert false
@@ -911,7 +900,7 @@ let decreasing (l,r : sct_clause)
                             let app = add_coeff coeff1 [p,Num (-1)] in
                             let args1 = List.map (fun x -> app,x) args1 in
                             let args2 = repeat u2 (List.length args1) in
-                            decreasing_aux (args1@pats1) (args2@pats2) acc
+                            decreasing_aux (args1@pats1) (args2@pats2)
 
                         | _,_,Sp(AppArg _,_),_ -> assert false
 
@@ -932,7 +921,7 @@ let decreasing (l,r : sct_clause)
     let f1,pats1 = l in
     let f2,pats2 = r in
     assert (f1=f2);
-    decreasing_aux (List.map (fun p -> [],p) pats1) pats2 []
+    decreasing_aux (List.map (fun p -> [],p) pats1) pats2
 
 (* let decreasing cl = *)
 (*     try decreasing cl *)
