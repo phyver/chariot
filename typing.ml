@@ -388,7 +388,7 @@ let infer_type_defs
             clauses)
     in
 
-    (* debug "contexts:\n  %s" (string_of_list "\n  " string_of_context all_context); *)
+    debug "contexts:\n  %s" (string_of_list "\n  " string_of_context all_context);
 
     let context,sigma =
         List.fold_left
@@ -399,16 +399,16 @@ let infer_type_defs
     (* debug "result:  %s" (string_of_context context); *)
     (* debug "with sigma: %s" (string_of_type_substitution sigma); *)
     (* debug "sigma': %s" (string_of_type_substitution sigma'); *)
-                let sigma = compose_type_substitution sigma sigma' in
+                let sigma = compose_type_substitution sigma' sigma in
     (* debug "new sigma: %s" (string_of_type_substitution sigma); *)
                 context,sigma
                 )
             ([],[])
             all_context
     in
-    (* debug "final context:  %s" (string_of_context context); *)
+    debug "final context:  %s" (string_of_context context);
 
-    (* debug "SIGMA: %s" (string_of_type_substitution sigma); *)
+    debug "SIGMA: %s" (string_of_type_substitution sigma);
     (* debug "BEFORE"; *)
         (* List.iter (function f,lhs,rhs -> *)
         (*     print_typed_subterms lhs; *)
