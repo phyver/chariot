@@ -143,11 +143,11 @@ let callgraph_from_definitions
                 | Daimon _,_ -> Daimon()
                 | Const(c,prio,t),args -> app (Const(c,prio,())) (List.map process_arg args)
                 | Proj(_,prio,t) as d, u::args ->
-                    begin
-                        match type_of p with
-                            | Data(tname,_) ->
+                    begin      (* TODO: do I need to keep track of all projections, or only those that give a value in a datatype ? *)
+                        (* match type_of p with *)
+                        (*     | Data(tname,_) -> *)
                                     collapse0 (map_raw_term (fun s->s.bot) id (fun _->()) (App(d,u)))
-                            | _ -> Daimon()
+                        (*     | _ -> Daimon() *)
                     end
                 | Proj(d,p,t),[] -> Proj(d,p,())
 

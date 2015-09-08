@@ -153,6 +153,12 @@ let process_function_defs (env:environment)
                     f,t,clauses)
                 defs
     in
+    (* List.iter (function f,_,cls -> *)
+    (*     List.iter (function lhs,rhs -> *)
+    (*         debug " %s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs) *)
+    (*     ) *)
+    (*     cls; *)
+    (* ) defs; *)
 
     (* check that the functions are all different *)
     let new_functions = List.map (function f,_,_ -> f) defs in
@@ -195,6 +201,13 @@ let process_function_defs (env:environment)
       = infer_priorities env defs
     in
 
+    (* List.iter (function f,t,cls -> *)
+    (*     List.iter (function lhs,rhs -> *)
+    (*         debug " %s => %s" (string_of_term lhs) (string_of_term rhs) *)
+    (*     ) *)
+    (*     cls; *)
+    (*     debug ""; *)
+    (* ) defs; *)
 
     (* check completeness of pattern matching *)
     let (defs:(var_name * type_expression * function_clause list * case_struct_def) list)

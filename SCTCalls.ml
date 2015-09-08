@@ -712,7 +712,7 @@ let coherent (p1:sct_clause) (p2:sct_clause) : bool =
 
             | Proj(d1,_,_)::pats1,Proj(d2,_,_)::pats2 when d1=d2 -> coherent_aux pats1 pats2
             | Proj(d1,_,_)::pats1,Proj(d2,_,_)::pats2 (*d1<>d2*) -> false
-            | Proj _::_,[] | [],Proj _::_ -> assert false
+            | Proj _::_,[] | [],Proj _::_ -> false
 
             | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 when c1=c2 -> coherent_aux pats1 pats2
             | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 (*when c1<>c2*) -> false
