@@ -283,13 +283,13 @@ let test_collapse (p:parsed_term) =
 %token LSQBRAC RSQBRAC LCBRAC RCBRAC DOUBLECOLON DOUBLEARROW SHARP DOLLAR
 %token DATA CODATA WHERE AND VAL
 %token CMDHELP CMDQUIT CMDSHOW CMDSET
-%token CMDUNFOLD CMDREDUCE CMDUNFOLD CMDECHO CMDSHOWTYPE
+%token CMDREDUCE CMDUNFOLD CMDECHO CMDSHOWTYPE
 %token TESTUNIFYTYPES TESTUNIFYTERMS TESTCOMPOSE TESTCOMPARE TESTCOLLAPSE
 %token EOF
 %token <string> IDU IDL STR TVAR
 %token <int> INT
 
-%right ARROW DOUBLECOLON DOLLAR SHARP
+%right DOUBLECOLON DOLLAR SHARP
 %left DOT PLUS
 
 
@@ -309,7 +309,7 @@ let test_collapse (p:parsed_term) =
 %%
 
 statements:
-    | done_statement statements      { $1;$2 }
+    | done_statement statements      { ignore $1; $2 }
     | eos statements                 { $2 }
     | EOF                            { () }
 

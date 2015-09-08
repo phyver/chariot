@@ -1,3 +1,4 @@
+OCAMLBUILD=ocamlbuild -libs str,unix
 # all: noninteractive-tests
 
 all: native
@@ -6,18 +7,18 @@ tags:
 	ctags *.ml
 
 debug:
-	ocamlbuild -libs str,unix -tag profile -tag debug main.native
+	$(OCAMLBUILD) -tag profile -tag debug main.native
 
 native:
-	ocamlbuild -libs str,unix main.native
+	$(OCAMLBUILD) main.native
 	@ln -sf ./main.native ./chariot
 
 byte:
-	ocamlbuild -libs str,unix main.byte
+	$(OCAMLBUILD) main.byte
 	@ln -sf ./main.byte ./chariot
 
 release:
-	ocamlbuild -libs str,unix main.native -cflag "-noassert"
+	$(OCAMLBUILD) main.native -cflag "-noassert"
 	@ln -sf ./main.native ./chariot
 
 tests: native
