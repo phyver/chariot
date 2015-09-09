@@ -43,14 +43,12 @@ open Utils
 open State
 open Typing
 open Pretty
-open Rewrite
 open ComputeCaseStruct
 open Explore
 open SCTCalls
 open Coverage
 open FunctionDefs
 open TypeDefs
-open StructPattern
 
 
 let parsed_to_plain v
@@ -69,7 +67,7 @@ let list_to_product (l:type_expression list) : type_expression
     Data("prod_" ^ (string_of_int n), l)
 
 (* transforms an integer into a term by adding Succ constructors in front of u *)
-let rec int_to_term (n:int) (u:(unit,unit) struct_term) : (unit,unit) struct_term
+let rec int_to_term (n:int) (u:parsed_term) : parsed_term
   = if n=0
     then u
     else int_to_term (n-1) (App(Const("Succ",(),()),u))
@@ -86,13 +84,13 @@ let process_addition u v
     with Exit -> App(App(Var("add",()),u),v)
 
 (* tranform a list of terms into the corresponding list by adding Cons constructors in front of u *)
-let rec list_to_term (l:(unit,unit) struct_term list) (u:(unit,unit) struct_term) : (unit,unit) struct_term
+let rec list_to_term (l:parsed_term list) (u:parsed_term) : parsed_term
   = match l with
         | [] -> u
         | v::l -> list_to_term l (App(App(Const("Cons",(),()),v),u))
 
 (* tranform a list of terms into the corresponding tuple *)
-let tuple_term (l:(unit,unit) struct_term list) : (unit,unit) struct_term =
+let tuple_term (l:parsed_term list) : parsed_term =
     let n = List.length l in
     app (Const("Tuple_" ^ (string_of_int n),(),())) l
 
@@ -119,13 +117,11 @@ let cmd_process_type_defs n defs
             else current_state.current_bloc+1
     in
     current_state.env <- process_type_defs current_state.env n defs;
-    current_state.last_term <- None;
     current_state.last_explore <- None
 
 (* process some functions definitions and add them to the environment *)
 let cmd_process_function_defs defs
   = current_state.env <- process_function_defs current_state.env defs;
-    current_state.last_term <- None;
     current_state.last_explore <- None
 
 (* show (some part of) the environment *)
@@ -158,7 +154,7 @@ let cmd_show_help ()
         "";
     ]
 
-let cmd_show_type (term:(unit,unit) struct_term) : unit
+let cmd_show_type (term:parsed_term) : unit
   = let term = parsed_to_plain term in
     let t,term,context = infer_type_term current_state.env term in
     msg "%s" (string_of_typed_term term);
@@ -166,31 +162,30 @@ let cmd_show_type (term:(unit,unit) struct_term) : unit
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context)
 
 (* reduce a term and show the result *)
-let cmd_reduce (term:(unit,unit) struct_term) : unit
+let cmd_reduce (term:parsed_term) : unit
   = let term = parsed_to_plain term in
     let t,term,context = infer_type_term current_state.env term in
     msg "term: %s" (string_of_plain_term term);
-    (* let term = rewrite_all current_state.env term in *)
     let term = reduce current_state.env term in
-    current_state.last_term <- Some term;
-    current_state.last_explore <- None;
-    msg "result: %s" (string_of_plain_term term);
+    current_state.last_explore <- Some (to_unfold term);
+    msg "result: %s" (string_of_unfolded_term (to_unfold term));
     msg "of type: %s" (string_of_type t);
     if not (context = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
     print_newline()
 
 let cmd_show_last ()
-  = match current_state.last_term with
+  = match current_state.last_explore with
         | None -> ()
         | Some t ->
-            msg "last result: %s" (string_of_plain_term t)
+            msg "last result: %s" (string_of_unfolded_term t)
 
 (* unfold a term by expanding lazy subterms up-to a given depth, and show the result *)
-let cmd_unfold_initial (term:(unit,unit) struct_term) (depth:int) : unit
+let cmd_unfold_initial (term:parsed_term) (depth:int) : unit
   = let term = parsed_to_plain term in
     let t,term,context = infer_type_term current_state.env term in
-    let term = unfold_to_depth current_state.env term depth in
+    let term = reduce current_state.env term in
+    let term = unfold_to_depth current_state.env (to_unfold term) depth in
     msg "%s" (string_of_unfolded_term term);
     msg "of type: %s" (string_of_type t);
     if not (context = [])
@@ -202,14 +197,7 @@ let cmd_unfold (l:int list) : unit
   = try
         let t = match current_state.last_explore with
                     | Some t -> t
-                    | None ->
-                        begin
-                            match current_state.last_term with
-                                | Some t ->
-                                    let t =  unfold_to_depth current_state.env t 0 in
-                                    t
-                                | None -> raise Exit 
-                        end
+                    | None -> raise Exit 
         in
         let t = match l with
                     | [] -> unfold current_state.env (fun _ -> true) t
@@ -234,17 +222,6 @@ let test_unify_type t1 t2 =
     assert (t1s = t2s);
     msg "       result   %s" (string_of_type t1s);
     msg "          via   %s" (string_of_list "  ;  " (function x,t -> "'"^x^" := "^(string_of_type t)) sigma);
-    print_newline()
-
-let test_unify_term (pattern:parsed_term) (term:parsed_term) =
-    let term = parsed_to_plain term in
-    let pattern = parsed_to_plain pattern in
-    let _,pattern,_ = infer_type_term current_state.env pattern in
-    let _,term,_ = infer_type_term current_state.env term in
-    msg "unifying pattern   %s" (string_of_plain_term pattern);
-    msg "        and term   %s" (string_of_plain_term term);
-    let new_term = unify_pattern (pattern,pattern) term in
-    msg "          result   %s" (string_of_plain_term new_term);
     print_newline()
 
 let test_compose l1 r1 l2 r2 =
@@ -284,7 +261,7 @@ let test_collapse (p:parsed_term) =
 %token DATA CODATA WHERE AND VAL
 %token CMDHELP CMDQUIT CMDSHOW CMDSET
 %token CMDREDUCE CMDUNFOLD CMDECHO CMDSHOWTYPE
-%token TESTUNIFYTYPES TESTUNIFYTERMS TESTCOMPOSE TESTCOMPARE TESTCOLLAPSE
+%token TESTUNIFYTYPES TESTCOMPOSE TESTCOMPARE TESTCOLLAPSE
 %token EOF
 %token <string> IDU IDL STR TVAR
 %token <int> INT
@@ -343,7 +320,6 @@ command:
     | GT int_range                                      { fun () -> cmd_unfold $2 }
 
     | TESTUNIFYTYPES type_expression AND type_expression                 { fun () -> test_unify_type $2 $4 }
-    | TESTUNIFYTERMS term AND term                                       { fun () -> test_unify_term $2 $4 }
     | TESTCOLLAPSE term                                                  { fun () -> test_collapse $2 }
     | TESTCOMPOSE term DOUBLEARROW term AND term DOUBLEARROW term        { fun () -> test_compose $2 $4 $6 $8 }
     | TESTCOMPARE term DOUBLEARROW term AND term DOUBLEARROW term        { fun () -> test_compare $2 $4 $6 $8 }
@@ -448,7 +424,7 @@ term:
 
     /* syntactic sugar */
     | term PLUS term            { process_addition $1 $3 }
-    | IDU SHARP term            { Sp(Struct [$1,$3], ()) }
+    | IDU SHARP term            { Struct([$1,$3], (), ()) }
     | term DOLLAR term          { App($1,$3) }
 
 app_term:
@@ -469,7 +445,7 @@ atomic_term:
     | term_list                             { list_to_term (List.rev $1) (Const("Nil",(),())) }
     | atomic_term DOUBLECOLON atomic_term   { App(App(Const("Cons",(),()),$1),$3) }
     | tuple                                 { $1 }
-    | LCBRAC struct_term RCBRAC             { Sp(Struct $2, ()) }
+    | LCBRAC struct_term RCBRAC             { Struct($2,(),()) }
 
 struct_term:
     | /*nothing*/                               { [] }

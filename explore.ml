@@ -42,61 +42,35 @@ open Utils
 open State
 open Pretty
 open Typing
-open Rewrite
 open ComputeCaseStruct
-
-let rec head_to_explore (v:(empty,'p,type_expression) raw_term) : ('p,type_expression) unfolded_term = match v with
-    | Angel t -> Angel t
-    | Daimon t -> Daimon t
-    | Var(x,t) -> Var(x,t)
-    | Proj(d,p,t) -> Proj(d,p,t)
-    | Const(c,p,t) -> Const(c,p,t)
-    | Sp(v,t) -> v.bot
-    | App(v1,v2) -> assert false
 
 let struct_nb = ref 0
 
-let rec term_to_explore_aux (env:environment) (v:(empty,'p,type_expression) raw_term) : (unit,type_expression) unfolded_term
-  = let t = type_of v in
-    let hd,args = get_head v, get_args v in
-     match t with
-        | Data(tname,_) as t ->
-            if (is_inductive env tname)
-            then
-                app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
-            else
-                (incr struct_nb; Sp (Folded(!struct_nb,v),t))
-        | Arrow _ | TVar _ ->
-            app (head_to_explore hd) (List.map (term_to_explore_aux env) args)
+let rec term_to_explore (v:(empty,'p,'t) raw_term) : plain_term frozen_term
+  = map_raw_term (fun s -> s.bot) (k()) (k()) v
 
-let term_to_explore env v = struct_nb := 0; term_to_explore_aux env (reduce env v)
+let add_number (v:plain_term frozen_term) : (int*plain_term) frozen_term
+  = map_raw_term (function Frozen v -> incr struct_nb; Frozen(!struct_nb,v)) id id v
 
-
-let rec unfold (env:environment) (p:int->bool) (v:(unit,type_expression) unfolded_term)
-  : (unit,type_expression) unfolded_term
+let rec unfold (env:environment) (p:int->bool) (v:(int*plain_term) frozen_term)
+  : (int*plain_term) frozen_term
   = match v with
         | Angel _ | Daimon _ | Var _ | Proj _ | Const _ -> v
         | App(v1,v2) -> App(unfold env p v1, unfold env p v2)
-        | Sp(Unfolded fields,t) -> Sp (Unfolded (List.map (function d,xs,v -> d,xs,unfold env p v) fields),t)
-        | Sp(Folded(n,v),t) when not (p n) -> incr struct_nb; Sp(Folded(!struct_nb,v),t)
-        | Sp(Folded(n,v),(Data(tname,_) as t)) when (p n) ->
-                let consts = get_type_constants env tname in
-                let fields = List.map (fun d ->
-                    let v = App(Proj(d,(),TVar "dummy"),v) in    (* FIXME: we can use dummy types because "rewrite_all" infers types again *)
-                    let arity = (get_constant_arity env d) - 1 in
-                    let xs = List.map (fun n -> "x"^(string_of_sub n)) (range 1 arity) in
-                    let v = app v (List.map (fun x -> Var(x,TVar "dummy")) xs) in
-                    let v = reduce env v in
-                    (d, xs, term_to_explore_aux env v)) consts
-                in
-                Sp(Unfolded fields,t)
-        | Sp _ -> assert false
+        | Struct(fields,(),()) -> Struct(List.map (function d,v -> d,unfold env p v) fields,(),())
+        | Sp(Frozen(n,v),t) when not (p n) -> incr struct_nb; Sp(Frozen(!struct_nb,v),t)
+        | Sp(Frozen(n,v),t) (*when (p n)*) ->
+                let v = reduce env v in
+                add_number v
 
-let unfold env p v = struct_nb:=0; unfold env p v
+let to_unfold v = struct_nb := 0; add_number v
+
+let unfold env p v =
+    struct_nb:=0; unfold env p v
 
 let rec unfold_to_depth env v depth
   = if depth = 0
-    then term_to_explore env v
+    then v
     else
         let v = unfold_to_depth env v (depth-1) in
         unfold env (k true) v

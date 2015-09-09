@@ -41,6 +41,7 @@ open Utils
 open State
 open Pretty
 open Misc
+open Typing
 
 
 
@@ -80,8 +81,26 @@ let new_var () =
 
 let string_of_clause (pat,def) = fmt "[%s] -> %s" (string_of_list " " string_of_plain_term pat) (string_of_plain_term def)
 
+let rec add_type_projs (env:environment) (t:type_expression) (x:var_name) (ds:const_name list)
+  : (empty,unit,type_expression) raw_term
+  = match ds with
+        | [] -> Var(x,t)
+        | d::ds ->
+            begin
+                reset_fresh_variable_generator [t];
+                let td = instantiate_type (get_constant_type env d) in
+                match td with
+                    | Arrow(t1,t2) ->
+                        let sigma = unify_type_mgu (instantiate_type t2) t in
+                        let t1 = subst_type sigma t1 in
+                        let t2 = subst_type sigma t2 in
+                        let xds = add_type_projs env t1 x ds in
+                        App(Proj(d,(),Arrow(t1,t2)),xds)
+                    | _ -> assert false
+            end
+
 let rec
-convert_match env (xs:var_name list)
+convert_match env (xs:(var_name * const_name list) list)
                   (clauses:(int*'p match_pattern*(empty,'p,type_expression) raw_term) list)
                   (fail: (int*(empty,'p,type_expression) raw_term) case_struct_tree)
   : (int * (empty,'p,type_expression) raw_term) case_struct_tree
@@ -89,7 +108,7 @@ convert_match env (xs:var_name list)
     (* debug "clauses: {%s}" (string_of_list "," string_of_clause clauses); *)
       match xs,clauses with
         | [],[] -> fail
-        | x::xs,[] -> fail  (* TODO: keep types and check that x is not in a type with 0 constructor *)
+        | (x,ds)::xs,[] -> fail  (* TODO: keep types and check that x is not in a type with 0 constructor *)
         | [],[(n,[],v)] -> CSLeaf(n,map_raw_term (fun s->s.bot) id id v)
         | [],(n,[],v)::clauses ->  CSLeaf(n,map_raw_term (fun s->s.bot) id id v)
         (* | [],_ -> assert false *)
@@ -109,12 +128,16 @@ convert_match_aux env xs clauses fail
         | [],[] -> assert false
 
         (* variable case *)
-        | x::xs,(_,Var _::_,_)::_ ->
+        | (x,ds)::xs,(_,Var _::_,_)::_ ->
             begin
-                let clauses = List.map (fun cl -> match cl with
-                                            | (n,Var(y,t)::ps,def) -> (n,ps,subst_term [y,Var(x,t)] def)
-                                            | _ -> assert false)
-                                        clauses
+                let clauses
+                  = List.map
+                        (fun cl -> match cl with
+                            | (n,Var(y,t)::ps,def) ->
+                                    let xds = add_type_projs env t x ds in
+                                    (n,ps,subst_term [y,xds] def)
+                            | _ -> assert false)
+                        clauses
                 in
                 convert_match env xs clauses fail
             end
@@ -122,7 +145,7 @@ convert_match_aux env xs clauses fail
         (* projection case *)
         | xs,(_,Proj(d,_,t)::_,_)::_ ->
             begin
-                let constants = get_other_constants env d in
+                let projs = get_other_constants env d in
                 let struct_fields = List.map
                     (fun d' ->
                         let arity = (get_constant_arity env d') - 1 in
@@ -135,17 +158,41 @@ convert_match_aux env xs clauses fail
                                     )
                                     (choose_constructor d' clauses)
                         in
-                        d', (new_xs, convert_match env (new_xs@xs) clauses fail)
+                        d', (convert_match env ((List.map (fun x -> x,[]) new_xs)@xs) clauses fail)
                     )
-                    constants
+                    projs
                 in
                 CSStruct(struct_fields)
             end
 
-        (* constructor case *)
-        | x::xs,(_,pattern::_,_)::_ ->
+        (* structure case *)
+        | (x,ds)::xs,(_,Struct([],_,_)::_,_)::_ ->
             begin
-                let c,t = (match get_head pattern with Const(c,_,t) -> c,t | _ -> assert false) in
+                todo "deal with empty structures"
+            end
+        | (x,ds)::xs,(_,Struct((d,_)::_,_,_)::_,_)::_ ->
+            begin
+                let projs = get_other_constants env d in
+                let new_xs = List.map (fun d -> x,d::ds) projs in
+                let new_xs = new_xs@xs in
+
+                let new_clauses
+                  = List.map
+                        (function n,(Struct(fields,_,_))::ps,cl ->
+                                let new_ps = List.map (fun d ->
+                                                try List.assoc d fields with Not_found -> error (fmt "field %s missing from pattern" d)
+                                                ) projs in
+                                n,new_ps @ ps , cl
+                            | _ -> assert false
+                        )
+                        clauses
+                in convert_match_aux env new_xs new_clauses fail
+            end
+
+        (* constructor case *)
+        | (x,ds)::xs,(_,pattern::_,_)::_ ->
+            begin
+                let c,_ = (match get_head pattern with Const(c,_,t) -> c,t | _ -> assert false) in
                 let constants = get_other_constants env c in
                 let case_clauses = List.map
                     (fun c' ->
@@ -158,10 +205,10 @@ convert_match_aux env xs clauses fail
                                     )
                                     (choose_constructor c' clauses)
                         in
-                        c', (new_xs, convert_match env (new_xs@xs) clauses fail)
+                        c', (new_xs, convert_match env ((List.map (fun x -> x,[]) new_xs)@xs) clauses fail)
                     )
                     constants in
-                CSCase(x,case_clauses)
+                CSCase(x,ds,case_clauses)
             end
 
         | _ -> assert false
@@ -170,7 +217,7 @@ convert_match_aux env xs clauses fail
 let simplify_case_struct v =
     let rec rename_var_term sigma v = match v with
         | Var(x,t) -> (try Var(List.assoc x sigma,t) with Not_found -> v)
-        | Angel _ | Daimon _ | Proj _ | Const _ -> v
+        | Angel _ | Daimon _ | Proj _ | Const _ | Struct _ -> v
         | Sp(s,_) -> s.bot
         | App(v1,v2) -> App(rename_var_term sigma v1,rename_var_term sigma v2)
     in
@@ -181,13 +228,13 @@ let simplify_case_struct v =
             (* | Var(x,t) -> (try Var(List.assoc x sigma,t) with Not_found -> v) *)
             (* | Const _ | Proj _ | Angel _ | Sp(CSFail,_)-> v *)
             (* | App(v1,v2) -> App(rename sigma v1, rename sigma v2) *)
-            | CSCase(x,cases) ->
+            | CSCase(x,ds,cases) ->
                 let x = (try List.assoc x sigma with Not_found -> x) in
                 let cases = List.map (function c,(xs,v) -> c,(xs,rename sigma v)) cases in
                 (* NOTE: I assume a kind of Barendregt condition is satisfied by the terms... *)
-                CSCase(x,cases)
+                CSCase(x,ds,cases)
             | CSStruct(fields) ->
-                let fields = List.map (function d,(xs,v) -> d,(xs,rename sigma v)) fields in
+                let fields = List.map (function d,v -> d,(rename sigma v)) fields in
                 (* NOTE: I assume a kind of Barendregt condition is satisfied by the terms... *)
                 CSStruct(fields)
             | CSLeaf(n,v) -> CSLeaf(n,rename_var_term sigma v)
@@ -196,7 +243,7 @@ let simplify_case_struct v =
     let rec simplify_aux branch v
       = match v with
             | CSFail -> CSFail
-            | CSCase(x,cases) ->
+            | CSCase(x,ds,cases) ->
                 begin try
                     let c,xs = List.assoc x branch in
                     let ys,v = List.assoc c cases in
@@ -204,10 +251,10 @@ let simplify_case_struct v =
                     simplify_aux branch v
                 with Not_found ->
                     let cases = List.map (function c,(xs,v) -> c,(xs,simplify_aux ((x,(c,xs))::branch) v)) cases in
-                    CSCase(x,cases)
+                    CSCase(x,ds,cases)
                 end
             | CSStruct(fields) ->
-                CSStruct(List.map (function d,(xs,v) -> d,(xs,simplify_aux branch v)) fields)
+                CSStruct(List.map (function d,v -> d,simplify_aux branch v) fields)
             | CSLeaf v -> CSLeaf v
     in
     simplify_aux [] v
@@ -218,10 +265,10 @@ let is_exhaustive f args v =
       = match v with
             | CSLeaf _ -> []
             | CSFail -> [branch]
-            | CSCase(x,cases) ->
+            | CSCase(x,ds,cases) ->
                 List.concat (List.map (function c,(xs,v) -> get_failure ((x,(c,xs))::branch) v) cases)
             | CSStruct(fields) ->
-                List.concat (List.map (function d,(xs,v) -> get_failure ((".",(d,xs))::branch) v) fields)
+                    List.concat (List.map (function d,v -> get_failure ((".",(d,[]))::branch) v) fields)
     in
 
     let string_of_failure branch =
@@ -267,15 +314,16 @@ let add_args_clause args clauses =
 
 let rec remove_clause_numbers cs
   = match cs with
-            | CSCase(x,cases) -> CSCase(x,List.map (function c,(xs,cs) -> c,(xs,remove_clause_numbers cs)) cases)
-            | CSStruct(fields) -> CSStruct(List.map (function d,(xs,cs) -> d,(xs,remove_clause_numbers cs)) fields)
+            | CSCase(x,ds,cases) -> CSCase(x,ds,List.map (function c,(xs,cs) -> c,(xs,remove_clause_numbers cs)) cases)
+            | CSStruct(fields) -> CSStruct(List.map (function d,cs -> d,remove_clause_numbers cs) fields)
             | CSFail -> CSFail
             | CSLeaf(n,v) -> CSLeaf(v)
 
 let extract_clause_numbers cs
   = let rec extract_clause_numbers_aux cs
       = match cs with
-            | CSCase(_,cases) | CSStruct(cases) -> List.concat (List.map (function _,(_,cs) -> extract_clause_numbers_aux cs) cases)
+            | CSCase(_,_,cases) -> List.concat (List.map (function _,(_,cs) -> extract_clause_numbers_aux cs) cases)
+            | CSStruct(cases) -> List.concat (List.map (function _,cs -> extract_clause_numbers_aux cs) cases)
             | CSFail -> []
             | CSLeaf(n,v) -> [n]
     in uniq (extract_clause_numbers_aux cs)
@@ -283,41 +331,41 @@ let extract_clause_numbers cs
 let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:(empty,'p,type_expression) raw_term case_struct_tree)
   : ((empty, unit, unit) raw_term * (empty, 'p, unit) raw_term) list
   (* I need unit for priorities on the left because I need to invent priorities in the convert_cs_to_clauses_aux function *)
-  = 
-    let rec convert_cs_to_clauses_aux pat (cs:(empty,'p,type_expression) raw_term case_struct_tree)
+  =
+
+    let process_pats xs sigma pat =
+        let xs = List.map (fun x -> Var(x,())) xs in
+        let xs = List.fold_left (fun xs xv -> List.map (subst_term [fst xv,snd xv]) xs) xs sigma in
+        pat@xs
+    in
+
+    let rec convert_cs_to_clauses_aux (xs:var_name list) sigma pat (cs:(empty,'p,type_expression) raw_term case_struct_tree)
       = match cs with
         | CSFail -> []
-        | CSLeaf(v) -> [pat,map_type_term (fun t->()) v]
-        | CSCase(x,cases) ->
-            List.concat (List.map (function c,(xs,cs) ->
-                                let xs = List.map (function x->Var(x,())) xs in
-                                let c = app (Const(c,(),())) xs in
-                                let pat = subst_term [x,c] pat in
-                                convert_cs_to_clauses_aux pat cs)
+        | CSLeaf(v) -> [implode (process_pats xs sigma pat),map_type_term (fun t->()) v]
+        | CSCase(x,ds,cases) ->
+            List.concat (
+                List.map (function c,(xs',cs) ->
+                                let xs' = List.map (function x->Var(x,())) xs' in
+                                let c = app (Const(c,(),())) xs' in
+                                let sigma = List.map (second (subst_term [x,c])) sigma in
+                                convert_cs_to_clauses_aux xs sigma pat cs)
                             cases)
         | CSStruct(fields) ->
-            List.concat (List.map (function d,(xs,cs) ->
-                                let xs = List.map (function x->Var(x,())) xs in
+            let pat = process_pats xs sigma pat in
+            List.concat (List.map (function d,cs ->
                                 let d = Proj(d,(),()) in
-                                let pat = implode (pat::d::xs) in
-                                convert_cs_to_clauses_aux pat cs)
+                                let pat = pat@[d] in
+                                convert_cs_to_clauses_aux xs (List.map (fun x -> x,Var(x,())) xs) pat cs)
                             fields)
     in
 
-    let pat = app (Var(f,())) (List.map (fun x -> Var(x,())) xs) in
-
-    let clauses = convert_cs_to_clauses_aux pat cs in
+    let clauses = convert_cs_to_clauses_aux xs (List.map (fun x -> x,Var(x,())) xs) [Var(f,())] cs in
 
     (* debug "new clauses:\n  %s" (string_of_list "\n  " (function p,d -> fmt "%s => %s" (string_of_plain_term p) (string_of_plain_term d)) clauses); *)
 
     clauses
 
-
-let rec map_case_struct f v = match v with
-    | CSFail -> CSFail
-    | CSStruct fields -> CSStruct (List.map (function d,(xs,v) -> d,(xs,map_case_struct f v)) fields)
-    | CSCase(x,cases) -> CSCase(x,(List.map (function c,(xs,v) -> c,(xs,map_case_struct f v)) cases))
-    | CSLeaf v -> CSLeaf (f v)
 
 let process_empty_clause env (args:(var_name*type_expression) list) (tres:type_expression)
   : var_name list * (empty,unit,type_expression) raw_term case_struct_tree
@@ -325,7 +373,7 @@ let process_empty_clause env (args:(var_name*type_expression) list) (tres:type_e
 
     let rec process_args args = match args with
         | (x,Data(tname,_))::_ when is_inductive env tname && get_type_constants env tname = [] ->
-            xs, CSCase(x,[])
+                xs, CSCase(x,[],[])
         | _::args -> process_args args
         | [] -> xs,CSFail
     in
@@ -366,12 +414,12 @@ let case_struct_of_clauses
                 let fail = CSFail in
                 let clauses = List.map (function n,p,def -> n,List.tl (explode_pattern p),def) clauses in (* List.tl to remove function name *)
                 let clauses = add_args_clause term_args clauses in
-                convert_match env args clauses fail
+                convert_match env (List.map (fun x -> x,[]) args) clauses fail
             in
 
-            (* debug "obtained:\n    %s %s |--> %s" f (string_of_list " " id args) (string_of_case_struct_term cs); *)
+            (* debug "obtained:\n    %s %s |--> %s" f (string_of_list " " id args) (string_of_case_struct_term (remove_clause_numbers cs)); *)
             let cs = simplify_case_struct cs in
-            (* debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " id args) (string_of_case_struct_term cs); *)
+            (* debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " id args) (string_of_case_struct_term (remove_clause_numbers cs)); *)
 
             let ns = extract_clause_numbers cs in
             let clauses = List.filter

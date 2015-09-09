@@ -239,6 +239,50 @@ let infer_type (env:environment)
                         (t, Proj(d,p,t) , context, [])
                     with Not_found -> error (fmt "typing problem: cannot infer type of constant %s" d)
                 end
+            | Struct(fields,p,_) ->
+                begin
+                    match fields with [] -> error "cannot infer type of empty structure" | (d,_)::_ ->
+                    let t = instantiate_type (get_first_arg_type (get_constant_type env d)) in
+
+                    let t,fields,context,sigma
+                      = List.fold_left
+                            (fun r dv ->
+                                let d,v = dv in
+                                let t,fields,context,sigma = r in
+                                let t',v',context,sigma2 = infer_type_aux v context in
+                    (* debug ~indent:6 "%s is of type %s in context %s" (string_of_plain_term v) (string_of_type t') (string_of_context context); *)
+                    (* debug ~indent:6 "sigma2: %s" (string_of_type_substitution sigma2); *)
+                                let sigma = compose_type_substitution sigma sigma2 in
+                    (* debug ~indent:6 "sigma: %s" (string_of_type_substitution sigma); *)
+                                let t = subst_type sigma t in
+
+                                let sigma3 = match instantiate_type (get_constant_type env d) with
+                                                | Arrow(t1,t2) ->
+                                                    let tau1 = unify_type_mgu t1 t in
+                    (* debug "tau1: %s" (string_of_type_substitution tau1); *)
+                                                    let tau2 = unify_type_mgu t2 t' in
+                    (* debug "tau2: %s" (string_of_type_substitution tau2); *)
+                                                    compose_type_substitution tau1 tau2
+                                                | _ -> assert false
+                                in
+                                let context = List.map (second (subst_type sigma3)) context in
+                                let t = subst_type sigma3 t in
+
+                    (* debug "sigma3: %s" (string_of_type_substitution sigma3); *)
+                                let sigma = compose_type_substitution sigma sigma3 in
+                    (* debug "sigma final: %s" (string_of_type_substitution sigma); *)
+
+                                t,(d,v')::fields , context , sigma
+                                )
+                            (t,[],context,[])
+                            fields
+                    in
+
+                    (* debug "context %s" (string_of_context context); *)
+                    let t = subst_type sigma t in
+
+                    (t,Struct(List.rev fields,p,t) , context, sigma)
+                end
             | App(v1,v2) ->
                 begin
                     (* do not interchange the order of the next two lines! *)
@@ -459,6 +503,7 @@ let infer_type_defs
                 let t = List.assoc f context in
                 reset_fresh_variable_generator [];
                 instantiate_type t
+                (* t *)
             with Not_found -> assert false  (* in this case, the function f must appear in the
                                              * context as there is at least one corresponding clause *)
     in

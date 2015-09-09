@@ -68,6 +68,7 @@ type ('s,'p,'t) raw_term =      (* 's is used to add features to terms, 'p is us
     | Var of var_name*'t
     | Const of const_name * 'p *'t      (* constructor, with a priority *)
     | Proj of const_name * 'p *'t       (* destructor, with a priority *)
+    | Struct of (const_name * ('s,'p,'t) raw_term) list * 'p * 't
     | App of ('s,'p,'t) raw_term * ('s,'p,'t) raw_term
     | Sp of 's*'t                       (* special terms for additionnal structure on terms *)
 
@@ -86,22 +87,18 @@ type priority = int option      (* priority of types and constants: odd for data
                                 (* NOTE: I need an "infinity" priority to deal with unknown approximation on results *)
 type empty = { bot: 'a .'a }
 
-(* terms with structures *)
-type ('p,'t) structure = Struct of (const_name * ('p,'t) struct_term) list
- and ('p,'t) struct_term = (('p,'t) structure,'p,'t) raw_term
-
 (* term with possibly unfolded codata *)
-type ('p,'t) fold_struct =
-    | Folded of int * (empty,'p,'t) raw_term
-    | Unfolded of (const_name * var_name list * ('p,'t) unfolded_term) list
- and ('p,'t) unfolded_term = (('p,'t) fold_struct,'p,'t) raw_term
+(* TODO: use *)
+(* type ('p,'t)frozen_term = int * ((empty,unit,unit) raw_term,unit,unit)raw_term *)
+type 'x frozen = Frozen of 'x
+type 'x frozen_term = ('x frozen,unit,unit) raw_term
 
 (* term with case and structs *)
-type 't case_struct_tree =
+type 'v case_struct_tree =
     | CSFail
-    | CSLeaf of 't
-    | CSCase of var_name * (const_name * (var_name list * 't case_struct_tree)) list
-    | CSStruct of (const_name * ((var_name list) * 't case_struct_tree)) list
+    | CSLeaf of 'v
+    | CSCase of var_name * const_name list * (const_name * (var_name list * 'v case_struct_tree)) list
+    | CSStruct of (const_name * 'v case_struct_tree) list
 (* definitions of functions with cases and structs *)
 type case_struct_def = var_name list * (empty,unit,type_expression) raw_term case_struct_tree
 
@@ -125,7 +122,7 @@ type approx_term = (approximation,priority,unit) raw_term
 
 
 (* terms from the parser *)
-type parsed_term = (unit,unit) struct_term
+type parsed_term = (empty,unit,unit) raw_term
 
 (* terms after removal of structures *)
 type plain_term = (empty,unit,unit) raw_term

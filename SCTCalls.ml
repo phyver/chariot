@@ -144,6 +144,7 @@ let rec collapse_weight_in_term (b:int) (v:approx_term) : approx_term
   = match v with
         | Var _ | Const _ | Proj _ | Angel _ | Daimon _ -> v
         | App(u1,u2) -> App(collapse_weight_in_term b u1, collapse_weight_in_term b u2)
+        | Struct(fields,p,t) -> Struct(List.map (second (collapse_weight_in_term b)) fields,p,t)
         | Sp(AppRes(c),t) -> Sp(AppRes(collapse_weight_in_coeff b c),t)
         | Sp(AppArg [],_) -> assert false
         | Sp(AppArg xcs,t) -> Sp(AppArg(List.map (function x,c -> x, collapse_weight_in_coeff b c) xcs),t)
@@ -243,6 +244,17 @@ let collapse0 ?(coeff=[]) (p:approx_term) : approx_term =
                         xcss     (* NOTE: not necessary to simplify v1: it is the recursive call and is simplified *)
 
                 end
+            | Struct(fields,prio,t),[] -> 
+                begin
+                    let coeff = add_coeff coeff [prio,Num (-1)] in
+                    let xcss = List.map (function _,v -> collapse0_aux coeff v) fields in
+                    List.fold_left
+                        (fun v1 v2 -> merge_coeffs v1 (simplify_coeffs v2))
+                        []
+                        xcss     (* NOTE: not necessary to simplify v1: it is the recursive call and is simplified *)
+                end
+            | Struct _,_ -> assert false
+
             | Proj(_,prio,_),p::ps ->       (* TODO: there shouldn't be any
             projection inside pattern arguments when doing the SCT, but there
             can be when constructing the initial call graph or during testing from parser.mly...
@@ -278,6 +290,11 @@ let collapse_sct_pattern (depth:int) (f,ps:sct_pattern) : sct_pattern
             | Const _,_ (* when d=0*) -> collapse0 p
             | Proj(x,prio,_),p::ps when d>0 -> app (Proj(x,prio,())) (List.map (collapse_const (d-1)) (p::ps))
             | Proj _,_::_ (*when d=0*) -> collapse0 p
+            | Struct(fields,prio,_),[] when d>0 ->
+                let fields = List.map (second (collapse_const (d-1))) fields in
+                Struct (fields,prio,())
+            | Struct _,[] (*when d=0*) -> collapse0 p
+            | Struct _,_ -> assert false
             | Proj _,[] -> assert false
             | Sp(AppRes _,_),_ -> assert false
             | App _,_ -> assert false
@@ -321,6 +338,7 @@ let rec subst_sct_term (sigma:(var_name*approx_term) list) (v:approx_term) : app
         | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
         | (Angel _|Daimon _|Const _|Proj _|Sp(AppRes _,_)) as v -> v
         | App(v1,v2) -> App(subst_sct_term sigma v1, subst_sct_term sigma v2)
+        | Struct(fields,p,t) -> Struct(List.map (second (subst_sct_term sigma)) fields,p,t)
         | Sp(AppArg [],_) -> assert false
         | Sp(AppArg xcs,_) ->
             try
@@ -390,6 +408,13 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
                 let args = List.map fst tmp in
                 (app (Const(c,p,t)) args , sigma)
 
+            | Struct(fields,p,t), [] ->
+                let tmp = List.map (function d,v -> d,process_const_pattern v) fields in
+                let sigma = List.concat (List.map (function d,(_,sigma) -> sigma) tmp) in
+                let fields = List.map (function d,(v,_) -> d,v) tmp in
+                (Struct(fields,p,t) , sigma)
+            | Struct _,_ -> assert false
+
             | Sp(AppArg [],_),_ -> assert false
             | Sp(AppArg xcs,_),[] ->
                 let x = new_var() in
@@ -451,6 +476,7 @@ let rec rename_var suffix v
         | Var("()",_) -> v          (* do not rename the dummy variable used for nullary constructors *)
         | Var(x,t) -> Var(x^suffix,t)
         | App(v1,v2) -> App(rename_var suffix v1, rename_var suffix v2)
+        | Struct(fields,p,t) -> Struct(List.map (second (rename_var suffix)) fields,p,t)
         | Const _ | Proj _ | Angel _ | Daimon _ -> v
         | Sp(AppArg [],_) -> assert false
         | Sp(AppArg xcs,t) -> Sp(AppArg (List.map (function x,c -> if x="()" then x,c else x^suffix,c) xcs),t)
@@ -475,6 +501,15 @@ let unify ?(allow_approx=false) (f_r,patterns_r:sct_pattern) (f_l,patterns_l:sct
             | [],[] -> sigma,[],[]
             | ps_r,[] -> sigma,ps_r,[]
             | [],ps_l -> sigma,[],ps_l
+
+            | Struct(fields1,p1,_)::ps_r,Struct(fields2,p2,_)::ps_l ->
+                assert (p1=p2);
+                let fields1 = List.sort compare fields1 in
+                let fields2 = List.sort compare fields2 in
+                let ds1 = List.map fst fields1 in
+                let ds2 = List.map fst fields2 in
+                if ds1 <> ds2 then  raise (UnificationError "cannot unify structures with different labels")
+                else unify_aux ((List.map snd fields1)@ps_r) ((List.map snd fields2)@ps_l) sigma
 
             | Const(c1,p1,_)::ps_r,Const(c2,p2,_)::ps_l when c1=c2 -> assert (p1=p2); unify_aux ps_r ps_l sigma
             | Const _::_,Const _::_ -> raise (UnificationError ("cannot unify " ^ (string_of_list " " string_of_approx_term ps_r) ^ " and " ^ (string_of_list " " string_of_approx_term ps_l)))
@@ -519,11 +554,12 @@ let unify ?(allow_approx=false) (f_r,patterns_r:sct_pattern) (f_l,patterns_l:sct
 
             | Sp(AppRes(c),_)::_,_ -> assert false    (* AppRes should only appear at the end *)
 
-            | Const _::_,(Proj _ | Angel _ | Daimon _ | App _)::_
-            | Proj _::_,(Const _ | Angel _ | Daimon _ | App _)::_
-            | Angel _::_,(Const _ | Proj _ | Daimon _ | App _)::_
-            | Daimon _::_,(Const _ | Proj _ | Angel _ | App _)::_
-            | App _::_,(Const _ | Proj _ | Angel _ | Daimon _)::_
+            | Const _::_,(Proj _ | Angel _ | Daimon _ | App _ | Struct _)::_
+            | Proj _::_,(Const _ | Angel _ | Daimon _ | App _ | Struct _)::_
+            | Angel _::_,(Const _ | Proj _ | Daimon _ | App _ | Struct _)::_
+            | Daimon _::_,(Const _ | Proj _ | Angel _ | App _ | Struct _)::_
+            | App _::_,(Const _ | Proj _ | Angel _ | Daimon _ | Struct _)::_
+            | Struct _::_,(Const _ | Proj _ | Angel _ | Daimon _ | App _)::_
                 -> raise (UnificationError "oops")
     in
     try
@@ -588,32 +624,37 @@ let approximates p1 p2 =
             | Proj(d1,_,_)::pats1,Proj(d2,_,_)::pats2 when d1=d2 -> approximates_aux pats1 pats2
             | Proj(d1,_,_)::_,Proj(d2,_,_)::_ (* when d1<>d2*) -> false
             | Proj _::_,[] | [],Proj _::_-> false
-            | Proj _::_ , Sp(AppRes _,_)::_ -> false
-            | Proj _::_,(Const _ | Var _ | App _)::_ -> assert false
+            | Proj _::_ , (Var _ | Sp(AppRes _,_))::_ -> false
+            | Proj _::_,(Const _ | App _ | Struct _)::_ -> assert false
             | Proj _::_ , Sp(AppArg _,_)::_ -> assert false
 
             | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 when c1=c2 -> approximates_aux pats1 pats2
             | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 (*c1<>c2*) -> false
-            | Const _::_,[] | [],Const _::_-> false
-            | Const _::_,(Var _ | App _)::_ -> false
-            | Const _::_ , Sp(AppArg _,_)::_ -> false
-            | Const _::_,Proj _::_ -> assert false
-            | Const _::_ , Sp(AppRes _,_)::_ -> assert false
+            | Const _::_,[] | [],Const _::_-> assert false
+            | Const _::_,(Var _ | Sp(AppArg _,_))::_ -> false
+            | Const _::_,(Proj _ | Struct _ | App _ | Sp(AppRes _,_))::_ -> assert false
+
+            | Struct(fields1,_,_)::pats1,Struct(fields2,_,_)::pats2 ->
+                let fields1 = List.sort compare fields1 in
+                let fields2 = List.sort compare fields2 in
+                let ds1 = List.map fst fields1 in
+                let ds2 = List.map fst fields2 in
+                ds1 = ds2 && approximates_aux ((List.map snd fields1)@pats1) ((List.map snd fields2@ pats2))
+            | Struct _::_,[] | [],Struct _::_ -> false
+            | Struct _::_,(Var _ | Sp(AppArg _,_))::_ -> false
+            | Struct _::_,(Const _ | Proj _ | App _ | Sp(AppRes _,_))::_ -> assert false
 
             | Var(x1,_)::pats1,Var(x2,_)::pats2 when x1=x2 -> approximates_aux pats1 pats2
             | Var(x1,_)::pats1,Var(x2,_)::pats2 (*x1<>x2*) -> false
             | Var _::_,[] | [],Var _::_-> false
-            | Var _::_,(Const _ | Proj _ | App _)::_ -> false
-            | Var _::_ , Sp(AppArg _,_)::_ -> false
+            | Var _::_,(Const _ | Proj _ | App _ | Struct _ | Sp(AppArg _,_))::_ -> false
             | Var _::_ , Sp(AppRes _,_)::_ -> assert false
 
             | (App _ as u1)::_pats1,(App _ as u2)::_pats2 ->
                     approximates_aux ((get_head u1)::(get_args u1)@_pats1) ((get_head u2)::(get_args u2)@_pats2)
             | App _::_,[] | [],App _::_-> false
-            | App _::_,(Var _ | Const _)::_ -> false
-            | App _::_,Proj _::_ -> assert false
-            | App _::_ , Sp(AppRes _,_)::_ -> assert false
-            | App _::_ , Sp(AppArg _,_)::_ -> false
+            | App _::_,(Const _ | Struct _ | Proj _ | Sp(AppRes _,_))::_ -> assert false
+            | App _::_,(Var _ | Sp(AppArg _,_))::_ -> false
 
             | Sp(AppArg [],_)::_,_
             | _,Sp(AppArg [],_)::_ -> assert false
@@ -718,13 +759,21 @@ let coherent (p1:sct_clause) (p2:sct_clause) : bool =
             | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 (*when c1<>c2*) -> false
             | Const _::_,[] | [],Const _::_ -> assert false
 
+            | Struct(fields1,_,_)::pats1,Struct(fields2,_,_)::pats2 ->
+                let fields1 = List.sort compare fields1 in
+                let fields2 = List.sort compare fields2 in
+                (List.map fst fields1) = (List.map fst fields2) && coherent_aux ((List.map snd fields1)@pats1) ((List.map snd fields2)@pats2)
+            | Struct _::_,[] | [],Struct _::_ -> assert false
+
             | (App _ as u1)::_pats1,(App _ as u2)::_pats2 ->
                     coherent_aux ((get_head u1)::(get_args u1)@_pats1) ((get_head u2)::(get_args u2)@_pats2)
             | App _::_,[] | [],App _::_ -> assert false
 
-            | Const _::_,(Proj _ | App _)::_
-            | Proj _::_,(Const _ | App _)::_
-            | App _::_,(Const _ | Proj _)::_ -> false
+            | Const _::_,(Proj _ | App _ | Struct _)::_
+            | Proj _::_,(Const _ | App _ | Struct _)::_
+            | App _::_,(Const _ | Proj _ | Struct _)::_
+            | Struct _::_,(Const _ | Proj _ | App _)::_
+                -> false
 
             | Var(x1,_)::pats1,Var(x2,_)::pats2 when x1=x2 -> coherent_aux pats1 pats2
             | Var(x1,_)::_,_ -> approximates p2 p1
@@ -772,6 +821,7 @@ let coherent (p1:sct_clause) (p2:sct_clause) : bool =
                     else approximates p1 p2
 
             (* TODO check all the cases *)
+            | Struct _::_, Sp(AppRes _,_)::_ -> false
             | Proj _::_, Sp(AppRes _,_)::_ -> false
             | Const _::_, Sp(AppRes _,_)::_ -> false
             | App _::_, Sp(AppRes _,_)::_ -> false
@@ -813,7 +863,9 @@ let decreasing (l,r : sct_clause)
   : bool
   =
     let rec decreasing_aux pats1 pats2
-      = match pats1,pats2 with
+      =
+        (* debug "decreasing_aux with %s AND %s" (string_of_list ", " string_of_approx_term pats1) (string_of_list ", " string_of_approx_term pats2); *)
+        match pats1,pats2 with
             | [],[] -> false
 
             | pats1, (Sp(AppRes(c2),_))::pats2 ->
@@ -830,7 +882,7 @@ let decreasing (l,r : sct_clause)
                 end
 
             | _,[] -> assert false
-            | [],_ -> assert false (* do not move: the LHS pattern can be an AppRes *)
+            | [],pats2 -> let c = collapse_proj pats2 in decreasing_aux [] [(Sp(AppRes(c),()))]
 
             | u1::pats1, u2::pats2 ->
                 begin
@@ -842,6 +894,14 @@ let decreasing (l,r : sct_clause)
                             decreasing_aux pats1 pats2
 
                         | Proj _,_,Proj _,_ -> assert false
+
+                        | Struct(fields1,p1,_),[],Struct(fields2,p2,_),[] ->
+                            let fields1 = List.sort compare fields1 in
+                            let fields2 = List.sort compare fields2 in
+                            assert (List.map fst fields1 = List.map fst fields2);
+                            decreasing_aux ((List.map snd fields1)@pats1) ((List.map snd fields2)@pats2)
+
+                        | Struct _,_,Struct _,_ -> assert false
 
                         | Var(x1,_),[],_,_ ->
                             begin
@@ -891,6 +951,11 @@ let decreasing (l,r : sct_clause)
                             let args2 = repeat (Sp(AppArg xcs,())) (List.length args1) in
                             decreasing_aux (args1@pats1) (args2@pats2)
 
+                        | Struct(fields1,p,_),[],Sp(AppArg xcs,_),[] ->
+                            let xcs = List.map (function x,c -> x,add_coeff c [p,Num 1]) xcs in
+                            let args2 = repeat (Sp(AppArg xcs,())) (List.length fields1) in
+                            decreasing_aux ((List.map snd fields1)@pats1) (args2@pats2)
+
                         | _,_,Sp(AppArg _,_),_ -> assert false
 
                         | _,_,Angel _,_ -> true
@@ -901,17 +966,19 @@ let decreasing (l,r : sct_clause)
                         | App _,_,_,_ | _,_,App _,_ -> assert false
                         | Sp _,_,_,_ -> assert false
 
-                        | Const _,_,(Proj _ | Var _),_
-                        | Proj _,_,(Const _ | Var _),_
-                        | Var _,_,(Const _ | Proj _),_
+                        | Const _,_,(Proj _ | Var _ | Struct _),_
+                        | Proj _,_,(Const _ | Var _ | Struct _),_
+                        | Var _,_,(Const _ | Proj _ | Struct _ ),_
+                        | Struct _,_,(Var _ | Const _ | Proj _),_
                         | Var _,_::_, _,_
                         | Proj _, _, Sp (AppRes _, _), _
                         | Const _, _, Sp (AppRes _, _), _
+                        | Struct _, _, Sp (AppRes _, _), _
                             -> assert false
                 end
     in
 
-    (* debug "check in %s and %s" (string_of_approx_term l) (string_of_approx_term (remove_result_constants r)); *)
+    (* debug "check decreasing in %s" (string_of_sct_clause (l,r)); *)
     let f1,pats1 = l in
     let f2,pats2 = r in
     assert (f1=f2);

@@ -68,7 +68,6 @@ rule tokenize = parse
     | ":quit"           { CMDQUIT }
 
     | ":test" [' ' '\t']+ "unifytypes" { TESTUNIFYTYPES }
-    | ":test" [' ' '\t']+ "unifyterms" { TESTUNIFYTERMS }
     | ":test" [' ' '\t']+ "compose"    { TESTCOMPOSE }
     | ":test" [' ' '\t']+ "compare"    { TESTCOMPARE }
     | ":test" [' ' '\t']+ "collapse"   { TESTCOLLAPSE }

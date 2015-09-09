@@ -41,7 +41,6 @@ open Utils
 open Misc
 open State
 open Pretty
-open StructPattern
 open Typing
 open Coverage
 open Priorities
@@ -75,6 +74,8 @@ let rec check_constructor_arity env (v:(empty,'p,'t) raw_term) : unit
         | Proj _,v::args -> List.iter (check_constructor_arity env) (v::args)
         | Proj _,[] -> assert false
         | App _,_ -> assert false
+        | Struct(fields,_,_),[] -> List.iter (function _,v -> check_constructor_arity env v) fields
+        | Struct(_,_,_),_ -> assert false
         | Const(c,_,_), args ->
             begin
                 try
@@ -96,6 +97,8 @@ let check_lhs (v:(empty,'p,'t) raw_term) : unit
             | Proj _,[] -> ()
             | Proj _,_ -> error "no projection is allowed inside constructor patterns"
             | App _,_ -> assert false
+            | Struct(fields,_,_),[] -> List.iter (function _,v -> check_constructors v) fields
+            | Struct(fields,_,_),_ -> assert false
             | Const _, args -> List.iter check_constructors args
             | Angel _,_ -> error "no angel is allowed inside constructor patterns"
             | Daimon _,_ -> error "no daimon is allowed inside constructor patterns"
@@ -137,29 +140,6 @@ let process_function_defs (env:environment)
   : environment
   =
 
-    (* remove structures *)
-    let (defs:(var_name * type_expression option * (plain_term * plain_term) list) list)
-      = if option "allow_structs"
-        then remove_struct_defs defs
-        else
-            List.map
-                (function f,t,clauses ->
-                    let clauses = List.map
-                                    (function lhs,rhs ->
-                                        map_raw_term (fun _ -> error "no structure allowed") id id lhs ,
-                                        map_raw_term (fun _ -> error "no structure allowed") id id rhs
-                                    )
-                                    clauses in
-                    f,t,clauses)
-                defs
-    in
-    (* List.iter (function f,_,cls -> *)
-    (*     List.iter (function lhs,rhs -> *)
-    (*         debug " %s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs) *)
-    (*     ) *)
-    (*     cls; *)
-    (* ) defs; *)
-
     (* check that the functions are all different *)
     let new_functions = List.map (function f,_,_ -> f) defs in
     check_uniqueness_functions new_functions;
@@ -180,6 +160,14 @@ let process_function_defs (env:environment)
     if (verbose 1)
     then msg "Typing for %s successful" (string_of_list ", " id new_functions);
 
+    (* List.iter (function f,t,cls -> *)
+    (*     List.iter (function lhs,rhs -> *)
+    (*         debug " %s => %s" (string_of_typed_term lhs) (string_of_typed_term rhs) *)
+    (*     ) *)
+    (*     cls; *)
+    (*     debug ""; *)
+    (* ) defs; *)
+
     (* check that the types of all subterms are consistant *)
     assert (
         List.iter (function f,t,clauses ->
@@ -188,18 +176,6 @@ let process_function_defs (env:environment)
                   ) defs;
         true
     );
-    (* List.iter (function f,t,cls,(xs,cs) -> *)
-    (*     List.iter (function lhs,rhs -> *)
-    (*         debug " %s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs) *)
-    (*     ) *)
-    (*     cls; *)
-    (*     debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " id xs) (string_of_case_struct_term cs) *)
-    (* ) defs; *)
-
-    (* infer priorities for definitions *)
-    let (defs:(var_name * type_expression * (term * term) list) list)
-      = infer_priorities env defs
-    in
 
     (* List.iter (function f,t,cls -> *)
     (*     List.iter (function lhs,rhs -> *)
@@ -209,8 +185,9 @@ let process_function_defs (env:environment)
     (*     debug ""; *)
     (* ) defs; *)
 
-    (* check completeness of pattern matching *)
-    let (defs:(var_name * type_expression * function_clause list * case_struct_def) list)
+    (* check completeness of pattern matching and compute CASE form of the definition *)
+    (* let (defs:(var_name * type_expression * function_clause list * case_struct_def) list) *)
+    let defs
       = List.map
             (function f,t,clauses ->
                 let f,clauses,args,cs = case_struct_of_clauses env f t clauses in
@@ -225,21 +202,13 @@ let process_function_defs (env:environment)
             defs
     in
 
-    (* List.iter (function f,t,cls,(xs,cs) -> *)
-    (*     List.iter (function lhs,rhs -> *)
-    (*         debug " %s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs) *)
-    (*     ) *)
-    (*     cls; *)
-    (*     debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " id xs) (string_of_case_struct_term cs) *)
-    (* ) defs; *)
 
-
-    let (defs:(var_name * type_expression * function_clause list * case_struct_def) list)
+    (* let (defs:(var_name * type_expression * function_clause list * case_struct_def) list) *)
+    let defs
       = if option "expand_clauses"
         then
             let new_defs = List.map (function f,t,_,(xs,pat) -> f, Some t, convert_cs_to_clauses f xs pat) defs in
             let new_defs = infer_type_defs env new_defs in
-            let new_defs = infer_priorities env new_defs in
             List.map2 (fun f_orig f_new ->
                             let f,t,_,cs = f_orig in
                             let f',t',cls = f_new in
@@ -248,6 +217,27 @@ let process_function_defs (env:environment)
                             f,t,cls,cs) defs new_defs
         else defs
     in
+    (* List.iter (function f,t,cls,(xs,cs) -> *)
+    (*     List.iter (function lhs,rhs -> *)
+    (*         debug " %s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs) *)
+    (*     ) *)
+    (*     cls; *)
+    (*     debug "CASE form %s" (string_of_case_struct_term cs); *)
+    (* ) defs; *)
+
+    (* infer priorities for definitions *)
+    (* let (defs:(var_name * type_expression * (term * term) list) list) *)
+    let defs
+      = infer_priorities env defs
+    in
+
+    (* List.iter (function f,t,cls,(xs,cs) -> *)
+    (*     List.iter (function lhs,rhs -> *)
+    (*         debug " %s => %s" (string_of_plain_term lhs) (string_of_plain_term rhs) *)
+    (*     ) *)
+    (*     cls; *)
+    (*     debug "after simplification:\n    %s %s |--> %s" f (string_of_list " " id xs) (string_of_case_struct_term cs) *)
+    (* ) defs; *)
 
 
     (* SCT *)

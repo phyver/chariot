@@ -80,7 +80,7 @@ let rec string_of_type = function
 
 (* check if a term is atomic in order to know where to put parenthesis *)
 let rec is_atomic_term (v:('a,'p,'t) raw_term) = match v with
-    | Var _ | Angel _ | Daimon _ | Const _ | Proj _ -> true
+    | Var _ | Angel _ | Daimon _ | Const _ | Proj _ | Struct _ -> true
     | App(Proj _, v) -> is_atomic_term v
     | App _ -> false
     | Sp _ -> true
@@ -131,6 +131,8 @@ let rec
             let s1 = (string_of_raw_term o ss sp st v1) in
             let s2 =  (string_of_raw_term_paren o ss sp st v2) in
             fmt "%s %s" s1 s2
+        | Struct(fields,p,t) ->
+            fmt "{ %s }%s%s" (string_of_list " ; " (function d,v -> fmt "%s = %s" d (string_of_raw_term o ss sp st v) ) fields) (sp p) (st t)
         | Sp(v,t) -> (ss o v) ^ (st t)
     end
 and
@@ -250,41 +252,46 @@ let string_of_sct_clause (l,r:sct_clause) : string =
 (* show a term with unfolded parts, because the types unfolded_struct and
  * unfolded_term are mutually recursive, the functions string_of_unfolded_struct
  * and string_of_unfolded_term are mutually recursive as well *)
-let rec
-   string_of_unfolded_struct (indent:int) (v:('p,'t) fold_struct) =
-       let prefix = if indent > 0 then "\n" ^ String.make indent ' ' else ""
-       in
-       let new_indent = if indent > 0 then indent + 4 else 0
-       in
+(* let rec *)
+(*    string_of_unfolded_struct (indent:int) (v:('p,'t) frozen_struct) = *)
+(*        let prefix = if indent > 0 then "\n" ^ String.make indent ' ' else "" *)
+(*        in *)
+(*        (1* let new_indent = if indent > 0 then indent + 4 else 0 *1) *)
+(*        (1* in *1) *)
 
-       match v with
-       | Folded(n,v) ->
-            prefix ^ "{<" ^ (string_of_int n) ^ ">" ^
-            (if option "show_term_struct" then ("=" ^ string_of_plain_term v) else "") ^
-            (if option "show_type_struct" then let t = type_of v in (":" ^ string_of_type t) else "") ^
-            "}"
-       | Unfolded fields ->
-            prefix ^ "{" ^
-            prefix ^ "  " ^ (String.concat (";"^prefix^"  ")
-                                    (List.map (function d,xs,v ->
-                                                    fmt "%s%s = %s"
-                                                        d
-                                                        (if xs=[]
-                                                         then ""
-                                                         else " " ^ string_of_list " " id xs)
-                                                        (string_of_unfolded_term new_indent v))
-                                              fields)) ^
-            "}"
-and
-  string_of_unfolded_term indent v
+(*        match v with *)
+(*        | Frozen(n,fields) -> *)
+(*             prefix ^ "{<" ^ (string_of_int n) ^ ">" ^ *)
+(*             (1* (if option "show_term_struct" then ("=" ^ string_of_plain_term v) else "") ^ *1) *)
+(*             (1* (if option "show_type_struct" then let t = type_of v in (":" ^ string_of_type t) else "") ^ *1) *)
+(*             (string_of_list " ; " (function d,t -> fmt "%s = %s" d (string_of_plain_term t)) fields) ^ *) 
+(*             "}" *)
+(*        (1* | Unfolded fields -> *1) *)
+(*        (1*      prefix ^ "{" ^ *1) *)
+(*        (1*      prefix ^ "  " ^ (String.concat (";"^prefix^"  ") *1) *)
+(*        (1*                              (List.map (function d,v -> *1) *)
+(*        (1*                                              fmt "%s = %s" *1) *)
+(*        (1*                                                  d *1) *)
+(*        (1*                                                  (string_of_unfolded_term new_indent v)) *1) *)
+(*        (1*                                        fields)) ^ *1) *)
+(*        (1*      "}" *1) *)
+(* and *)
+let  string_of_unfolded_term indent v
   = string_of_raw_term indent
-                       string_of_unfolded_struct
+                       (fun indent t -> match t with Frozen(n,v) -> fmt "<%d:%s>" n (string_of_plain_term v))
                        (k "")
                        (k "")
                        v
 
 let string_of_unfolded_term v = string_of_unfolded_term 2 v
 
+let  string_of_frozen_term indent v
+  = string_of_raw_term indent
+                       (fun indent t -> match t with Frozen(v) -> fmt "<%s>" (string_of_plain_term v))
+                       (k "")
+                       (k "")
+                       v
+let string_of_frozen_term v = string_of_frozen_term 2 v
 
 (* show case / structures trees *)
 let rec
@@ -295,14 +302,14 @@ let rec
         in
         match v with
         | CSFail -> "FAIL"
-        | CSCase(x,l) ->
-             prefix ^ (fmt "case %sv of" x) ^
+        | CSCase(x,ds,l) ->
+             prefix ^ (fmt "case %s%s of" x (string_of_list "" (fun d -> "."^d)ds)) ^
              prefix ^ (String.concat prefix
-                                     (List.map (function c,(args,v) -> fmt "  %sv%sv  ->  %sv" c (if args=[] then "" else " " ^ String.concat " " args) (string_of_case_struct_tree new_indent sv v)) l))
+                                     (List.map (function c,(args,v) -> fmt "  %s%s  ->  %s" c (if args=[] then "" else " " ^ String.concat " " args) (string_of_case_struct_tree new_indent sv v)) l))
         | CSStruct fields ->
              prefix ^ "{" ^
              prefix ^ "  " ^ (String.concat (" ;"^prefix^"  ")
-                                     (List.map (function d,(args,v) -> d ^ (if args=[] then "" else " " ^ (String.concat " " args)) ^ " = " ^ (string_of_case_struct_tree new_indent sv v)) fields)) ^
+                                     (List.map (function d,v -> d ^ " = " ^ (string_of_case_struct_tree new_indent sv v)) fields)) ^
             " }"
         | CSLeaf(v) -> sv v
 let string_of_case_struct_term v = string_of_case_struct_tree 2 string_of_plain_term v
@@ -330,11 +337,6 @@ let string_of_type_substitution sigma = string_of_list " , " (function x,t -> fm
 let string_of_term_substitution sigma = string_of_list " , " (function x,t -> fmt "%s=%s" x (string_of_plain_term t)) sigma
 let string_of_context gamma = string_of_list " , " (function x,t -> fmt "%s:%s" x (string_of_type t)) gamma
 
-
-let rec string_of_struct _ (Struct fields)
-  = fmt "{ %s }" (string_of_list " ; " (function d,t -> fmt "%s = %s" d (string_of_struct_term t) ) fields)
-and
-  string_of_struct_term t = string_of_raw_term () string_of_struct (k "") (k "") t
 
 (***
  * showing the environment

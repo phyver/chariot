@@ -50,8 +50,7 @@ type state =
         mutable depth: int                                                  ;
         mutable bound: int                                                  ;
 
-        mutable last_term: typed_term option                                ;
-        mutable last_explore: (unit,type_expression) unfolded_term option   ;
+        mutable last_explore: (int*plain_term) frozen_term option           ;
     }
 
 let current_state =
@@ -65,8 +64,8 @@ let current_state =
         prompt = "# "                           ;
         verbose = 0                             ;
         boolean_options = [
-            "show_type_struct",        false    , "show type of lazy structures in explore mode" ;
-            "show_term_struct",        false    , "show lazy terms in explore mode" ;
+            (* "show_type_struct",        false    , "show type of lazy structures in explore mode" ; *)
+            (* "show_term_struct",        false    , "show lazy terms in explore mode" ; *)
             "show_nats",               true     , "use decimal notation for displaying natural numbers" ;
             "show_lists",              true     , "use standard notations for displaying lists" ;
             "show_tuples",             true     , "use standard notations for displaying tuples" ;
@@ -94,7 +93,6 @@ let current_state =
         ]                                       ;
         depth = 2                               ;
         bound = 2                               ;
-        last_term = None                        ;
         last_explore = None                     ;
     }
 

@@ -150,7 +150,10 @@ let callgraph_from_definitions
                         (*     | _ -> Daimon() *)
                     end
                 | Proj(d,p,t),[] -> Proj(d,p,())
-
+                | Struct(fields,prio,t),[] ->
+                    let fields = List.map (function d,v -> d,process_arg v) fields in
+                    Struct(fields,prio,())
+                | Struct _,_ -> assert false
                 | Sp(s,_),_ -> s.bot
                 | App _,_ -> assert false
         in
@@ -182,8 +185,14 @@ let callgraph_from_definitions
                     List.fold_left (fun graph rhs -> process_rhs graph rhs ((Sp(AppRes([p,Num 1]),()))::calling_context)) graph args
                 | [Proj(d,p,t)] ->
                         graph
-                | Sp(s,_):: _ -> s.bot
-                | _ -> debug "OOPS, rhs is %s" (string_of_plain_term rhs);assert false
+                | [Struct(fields,p,t)] ->
+                    List.fold_left (fun graph drhs ->
+                        let d,rhs = drhs in
+                        process_rhs graph rhs ((Sp(AppRes([p,Num (-1)]),()))::calling_context)) graph fields
+                | Struct _::_ -> assert false
+                | Sp(s,_)::_ -> s.bot
+                | App _::_ -> assert false
+                | Proj _::_ -> assert false
         in
         process_rhs graph rhs []
     in

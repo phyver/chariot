@@ -131,13 +131,13 @@ let find_types_priorities env ts
     List.fold_left (fun acc t -> let n,acc = order t acc [] in acc) [] datatypes
 
 let infer_priorities (env:environment)
-                     (defs:(var_name * type_expression * (typed_term*typed_term) list) list)
-  : (var_name * type_expression * (term*term) list) list
+                     (defs:(var_name * type_expression * (typed_term*typed_term) list * 'x) list)
+  : (var_name * type_expression * (term*term) list * 'x) list
   =
 
     let datatypes = List.fold_left
         (fun ds ftcls ->
-            let _,_,cls = ftcls in
+            let _,_,cls,_ = ftcls in
             List.fold_left
                 (fun ds lhsrhs ->
                     let lhs,rhs = lhsrhs in
@@ -176,9 +176,13 @@ let infer_priorities (env:environment)
             | Var(x,t) -> Var(x,t)
             | App(u1,u2) -> App(put_priorities_term u1, put_priorities_term u2)
             | Sp(s,_) -> s.bot
+            | Struct(fields,_,t) ->
+                let p = get_priority t in
+                let fields = List.map (second put_priorities_term) fields in
+                Struct(fields,Some p,t)
             | Const(c,_,t) ->
-                let dt = get_result_type t in
-                let p = get_priority dt in
+                let ct = get_result_type t in
+                let p = get_priority ct in
                 Const(c,Some p,t)
             | Proj(d,_,t) ->
                 let dt = get_first_arg_type t in
@@ -188,5 +192,5 @@ let infer_priorities (env:environment)
     in
     let put_priorities_single_clause (lhs,rhs) = (put_priorities_term lhs,put_priorities_term rhs)
     in
-    List.map (function f,t,clauses -> f,t,List.map put_priorities_single_clause clauses) defs
+    List.map (function f,t,clauses,x -> f,t,List.map put_priorities_single_clause clauses,x) defs
 
