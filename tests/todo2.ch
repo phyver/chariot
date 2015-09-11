@@ -30,13 +30,23 @@ data list('x) where Nil : list('x)
 
 -- this doesn't pass the SCT, but it should!!!
 -- the problem is that the call to test1_aux2 hides important information
+-- val test1 s = test1_aux s.Head s.Tail
+-- and
+--     (test1_aux [] s).Head = 0
+--   | (test1_aux [] s).Tail = test1 s
+--   | (test1_aux [n] s).Head = n
+--   | (test1_aux [n] s).Tail = test1 s
+--   | test1_aux (a::b::l) s = test1 (test1_aux2 (add a b) l s)
+-- and
+--     (test1_aux2 c l s).Head = c::l
+--   | (test1_aux2 c l s).Tail = s
+
+
+
 val test1 s = test1_aux s.Head s.Tail
 and
-    (test1_aux [] s).Head = 0
-  | (test1_aux [] s).Tail = test1 s
-  | (test1_aux [n] s).Head = n
-  | (test1_aux [n] s).Tail = test1 s
-  | test1_aux (a::b::l) s = test1 (test1_aux2 (add a b) l s)
-and
-    (test1_aux2 c l s).Head = c::l
-  | (test1_aux2 c l s).Tail = s
+    (test1_aux [] s) = { Head = 0 ; Tail = test1 s }
+  | (test1_aux [n] s) = { Head = n ; Tail = test1 s }
+  | test1_aux (a::b::l) s = test1 { Head = (add a b)::l ; Tail = s }
+
+-- test1_aux a::b::l s  ==>  test1 (<-1>!!!::l + <-1>s)

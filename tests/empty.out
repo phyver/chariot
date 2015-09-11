@@ -24,7 +24,7 @@ val
    f : 'a → 'a → 'b → empty → 'b>> 
 >> corresponding case and struct form:
 >> x₁ x₂ x₃ x₄ -> 
->>   case x₄v of
+>>   case x₄ of
 >>   
 
 val
@@ -43,7 +43,7 @@ val
    f : 'a → 'a → 'b → empty → 'b>> 
 >> corresponding case and struct form:
 >> x₁ x₂ x₃ x₄ -> 
->>   case x₄v of
+>>   case x₄ of
 >>   
 
 val

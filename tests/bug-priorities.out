@@ -4,10 +4,7 @@
 >> inductive type nat was succesfully defined
 >> coinductive type stream was succesfully defined
 >> coinductive type prod was succesfully defined
->> Typing for f, _aux₁, _aux₂, _aux₃ successful
+>> Typing for f successful
 >> the definition for f is complete
->> the definition for _aux₁ is complete
->> the definition for _aux₂ is complete
->> the definition for _aux₃ is complete
->> the definitions f, _aux₁, _aux₂, _aux₃ are provably correct
+>> the definition f is provably correct
 
