@@ -120,7 +120,7 @@ let callgraph_from_definitions
         let params = extract_pattern_variables lhs
         in
 
-        let lhs = match explode (map_raw_term (fun s -> s.bot) id (fun _ -> ()) lhs) with
+        let lhs = match explode (map_raw_term bot id (fun _ -> ()) lhs) with
                         | (Var(f,_))::args -> f,args
                         | _ -> assert false
         in
@@ -146,7 +146,7 @@ let callgraph_from_definitions
                     begin      (* TODO: do I need to keep track of all projections, or only those that give a value in a datatype ? *)
                         (* match type_of p with *)
                         (*     | Data(tname,_) -> *)
-                                    collapse0 (map_raw_term (fun s->s.bot) id (fun _->()) (App(d,u)))
+                                    collapse0 (map_raw_term bot id (k()) (App(d,u)))
                         (*     | _ -> Daimon() *)
                     end
                 | Proj(d,p,t),[] -> Proj(d,p,())

@@ -42,15 +42,13 @@ open Utils
 open State
 open Pretty
 open Typing
-open ComputeCaseStruct
+open Compute
 
 let struct_nb = ref 0
 
-let rec term_to_explore (v:(empty,'p,'t) raw_term) : plain_term frozen_term
-  = map_raw_term (fun s -> s.bot) (k()) (k()) v
-
-let add_number (v:plain_term frozen_term) : (int*plain_term) frozen_term
-  = map_raw_term (function Frozen v -> incr struct_nb; Frozen(!struct_nb,v)) id id v
+let add_frozen_nb ?(reset=true) (v:plain_term frozen_term) : (int*plain_term) frozen_term
+  = if reset then struct_nb := 0;
+    map_raw_term (function Frozen v -> incr struct_nb; Frozen(!struct_nb,v)) id id v
 
 let rec unfold (env:environment) (p:int->bool) (v:(int*plain_term) frozen_term)
   : (int*plain_term) frozen_term
@@ -61,9 +59,7 @@ let rec unfold (env:environment) (p:int->bool) (v:(int*plain_term) frozen_term)
         | Sp(Frozen(n,v),t) when not (p n) -> incr struct_nb; Sp(Frozen(!struct_nb,v),t)
         | Sp(Frozen(n,v),t) (*when (p n)*) ->
                 let v = reduce env v in
-                add_number v
-
-let to_unfold v = struct_nb := 0; add_number v
+                add_frozen_nb ~reset:false v
 
 let unfold env p v =
     struct_nb:=0; unfold env p v

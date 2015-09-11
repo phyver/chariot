@@ -43,7 +43,7 @@ open Utils
 open State
 open Typing
 open Pretty
-open ComputeCaseStruct
+open Compute
 open Explore
 open SCTCalls
 open Coverage
@@ -56,7 +56,7 @@ let parsed_to_plain v
 
 let parsed_to_sct v
   = let v = parsed_to_plain v in
-    let v = map_raw_term (fun s->s.bot) (k None) (k ()) v in
+    let v = map_raw_term bot (k None) (k()) v in
     match explode v with
         | (Var(f,_))::args -> f,args
         | _ -> assert false
@@ -167,8 +167,8 @@ let cmd_reduce (term:parsed_term) : unit
     let t,term,context = infer_type_term current_state.env term in
     msg "term: %s" (string_of_plain_term term);
     let term = reduce current_state.env term in
-    current_state.last_explore <- Some (to_unfold term);
-    msg "result: %s" (string_of_unfolded_term (to_unfold term));
+    current_state.last_explore <- Some (add_frozen_nb term);
+    msg "result: %s" (string_of_unfolded_term (add_frozen_nb term));
     msg "of type: %s" (string_of_type t);
     if not (context = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
@@ -185,7 +185,7 @@ let cmd_unfold_initial (term:parsed_term) (depth:int) : unit
   = let term = parsed_to_plain term in
     let t,term,context = infer_type_term current_state.env term in
     let term = reduce current_state.env term in
-    let term = unfold_to_depth current_state.env (to_unfold term) depth in
+    let term = unfold_to_depth current_state.env (add_frozen_nb term) depth in
     msg "%s" (string_of_unfolded_term term);
     msg "of type: %s" (string_of_type t);
     if not (context = [])

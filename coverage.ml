@@ -109,8 +109,8 @@ convert_match env (xs:(var_name * const_name list) list)
       match xs,clauses with
         | [],[] -> fail
         | (x,ds)::xs,[] -> fail  (* TODO: keep types and check that x is not in a type with 0 constructor *)
-        | [],[(n,[],v)] -> CSLeaf(n,map_raw_term (fun s->s.bot) id id v)
-        | [],(n,[],v)::clauses ->  CSLeaf(n,map_raw_term (fun s->s.bot) id id v)
+        | [],[(n,[],v)] -> CSLeaf(n,map_raw_term bot id id v)
+        | [],(n,[],v)::clauses ->  CSLeaf(n,map_raw_term bot id id v)
         (* | [],_ -> assert false *)
 
         | xs,clauses ->
@@ -434,5 +434,5 @@ let case_struct_of_clauses
             let clauses = List.map (function _,lhs,rhs-> lhs,rhs) clauses in
             let cs = remove_clause_numbers cs in
 
-            f,clauses,args,map_case_struct (fun v -> map_raw_term (fun s->s.bot) (k()) id v) cs
+            f,clauses,args,map_case_struct (fun v -> map_raw_term bot (k()) id v) cs
 

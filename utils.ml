@@ -316,3 +316,4 @@ let rec map_case_struct f v = match v with
     | CSCase(x,ds,cases) -> CSCase(x,ds,(List.map (function c,(xs,v) -> c,(xs,map_case_struct f v)) cases))
     | CSLeaf v -> CSLeaf (f v)
 
+let bot s = s.bot
