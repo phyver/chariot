@@ -42,10 +42,15 @@ open Utils
 open State
 open Pretty
 
+(* Map instance for meoizing computation *)
+module Memo = Map.Make (struct type t=computed_term let compare=compare end)
+
+
 let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
   =
 
     let counter = ref 0 in
+    let table = ref Memo.empty in
 
     (* remove Frozen constructors *)
     let rec unfreeze (v:computed_term) : plain_term
@@ -90,6 +95,7 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
     normal_form (v:computed_term) : computed_term
       =
         (* debug "nf %s (counter:%d)" (string_of_frozen_term v) !counter ; *)
+        (* debug "(counter:%d)" !counter ; *)
         let n = !counter in
         let v = rewrite v in
         if n = !counter
@@ -98,48 +104,60 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
 
     and
     rewrite (v:computed_term) : computed_term
-      = let args = get_args v in
-        let args = List.map normal_form args in
-        let h = get_head v in
-        (* debug "h = %s ; args = %s" (string_of_explore_term h) (string_of_list ", " string_of_explore_term args); *)
-        (* let h = normal_form h in *)
-        match h with
-            | Angel _ -> Angel()
-            | Daimon _ -> raise Exit
-            | Const _ -> app h args
-            | Sp(Frozen _,_) -> app h args
-            | Struct(fields,_,_) -> assert (args=[]); Struct(List.map (second rewrite) fields,(),())
-            | App _ -> assert false
-            | Proj(d,_,_) ->
-                begin
-                    let st = try List.hd args with Failure "hd" -> assert false in
-                    match st with
-                        | Struct(fields,_,_) ->
-                            begin
-                                let v = try List.assoc d fields with Not_found -> debug "OOPS d=%s (nb fields %d) -- %s" d (List.length fields) (string_of_frozen_term v); assert false in
-                                (* let v = unfreeze v in *)
-                                match v with
-                                    | Sp(Frozen(v),()) -> normal_form (map_raw_term bot id id v)
-                                    | v -> normal_form v
-                            (* | Sp(Frozen v,_) -> *)
-                            (*     let v = remove_struct v in *)
-                            (*     rewrite (app h (v::(List.tl args))) *)
-                            end
-                        | _ -> assert false
-                end
-            | Var(f,_) ->
-                begin
-                    try
-                        let xs,ct = get_function_case_struct env f in
-                        let sigma,rest_args = combine_suffix xs args in
-                        let ct = map_case_struct (map_raw_term id id (k())) ct in
-                        incr counter;
-                        let v = subst_case sigma ct in
-                        app v rest_args
-                    with
-                        | Not_found -> app h args       (* f is free *)
-                        | Invalid_argument "combine_suffix" -> app h args (* f is not fully applied *)
-                end
+      = 
+        try
+            let result,n = Memo.find v !table
+            in counter := !counter+n;
+            result
+        with Not_found ->
+            let counter0 = !counter in
+            let result =
+
+                let args = get_args v in
+                let args = List.map normal_form args in
+                let h = get_head v in
+                (* debug "h = %s ; args = %s" (string_of_explore_term h) (string_of_list ", " string_of_explore_term args); *)
+                (* let h = normal_form h in *)
+                match h with
+                    | Angel _ -> Angel()
+                    | Daimon _ -> raise Exit
+                    | Const _ -> app h args
+                    | Sp(Frozen _,_) -> app h args
+                    | Struct(fields,_,_) -> assert (args=[]); Struct(List.map (second rewrite) fields,(),())
+                    | App _ -> assert false
+                    | Proj(d,_,_) ->
+                        begin
+                            let st = try List.hd args with Failure "hd" -> assert false in
+                            match st with
+                                | Struct(fields,_,_) ->
+                                    begin
+                                        let v = try List.assoc d fields with Not_found -> debug "OOPS d=%s (nb fields %d) -- %s" d (List.length fields) (string_of_frozen_term v); assert false in
+                                        (* let v = unfreeze v in *)
+                                        match v with
+                                            | Sp(Frozen(v),()) -> normal_form (map_raw_term bot id id v)
+                                            | v -> normal_form v
+                                    (* | Sp(Frozen v,_) -> *)
+                                    (*     let v = remove_struct v in *)
+                                    (*     rewrite (app h (v::(List.tl args))) *)
+                                    end
+                                | _ -> assert false
+                        end
+                    | Var(f,_) ->
+                        begin
+                            try
+                                let xs,ct = get_function_case_struct env f in
+                                let sigma,rest_args = combine_suffix xs args in
+                                let ct = map_case_struct (map_raw_term id id (k())) ct in
+                                incr counter;
+                                let v = subst_case sigma ct in
+                                app v rest_args
+                            with
+                                | Not_found -> app h args       (* f is free *)
+                                | Invalid_argument "combine_suffix" -> app h args (* f is not fully applied *)
+                        end
+            in
+            table := Memo.add v (result,!counter-counter0) !table;
+            result
 
     and
     subst_case (sigma:(var_name * computed_term) list) ct
