@@ -35,8 +35,6 @@ The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 ========================================================================*)
 
-let map = List.map
-
 open Misc
 open Env
 open Utils
@@ -59,7 +57,7 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
         | Proj(d,(),()) -> Proj(d,(),())
         | Var(x,()) -> Var(x,())
         | App(v1,v2) -> App(unfreeze v1,unfreeze v2)
-        | Struct(fields,(),()) -> Struct(map (second unfreeze) fields,(),())
+        | Struct(fields,(),()) -> Struct(List.map (second unfreeze) fields,(),())
         | Sp(Frozen(v),()) -> v
     in
 
@@ -72,7 +70,7 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
         | Proj(d,(),()) -> Proj(d,(),())
         | Var(x,()) -> Var(x,())
         | App(v1,v2) -> App(freeze v1,freeze v2)
-        | Struct(fields,(),()) -> Struct(map (function d,v -> d,Sp(Frozen v,())) fields,(),())
+        | Struct(fields,(),()) -> Struct(List.map (function d,v -> d,Sp(Frozen v,())) fields,(),())
         | Sp(s,_) -> s.bot
     in
 
@@ -85,25 +83,25 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
         | Const(c,p,t) -> Const(c,p,t)
         | Proj(d,p,t) -> Proj(d,p,t)
         | App(v1,v2) -> App(subst_frozen_term sigma v1, subst_frozen_term sigma v2)
-        | Struct(fields,p,t) -> Struct(map (second (subst_frozen_term sigma)) fields,p,t)
-        | Sp(Frozen(v),t) -> Sp(Frozen(subst_term (map (second unfreeze) sigma) v),t)      (* we need to unfreeze below the first Frozen constructor *)
+        | Struct(fields,p,t) -> Struct(List.map (second (subst_frozen_term sigma)) fields,p,t)
+        | Sp(Frozen(v),t) -> Sp(Frozen(subst_term (List.map (second unfreeze) sigma) v),t)      (* we need to unfreeze below the first Frozen constructor *)
     in
 
     let rec
+    (* normal_form (v:computed_term) : computed_term *)
+    (*   = *)
+    (*     (1* debug "nf %s (counter:%d)" (string_of_frozen_term ~indent:(-1) v) !counter ; *1) *)
+    (*     let n = !counter in *)
+    (*     let v = normal_form v in *)
+    (*     if n = !counter *)
+    (*     then v *)
+    (*     else normal_form v *)
+
+    (* and *)
     normal_form (v:computed_term) : computed_term
       =
-        (* debug "nf %s (counter:%d)" (string_of_frozen_term ~indent:(-1) v) !counter ; *)
-        let n = !counter in
-        let v = rewrite v in
-        if n = !counter
-        then v
-        else normal_form v
-
-    and
-    rewrite (v:computed_term) : computed_term
-      = 
         let args = get_args v in
-        let args = map normal_form args in
+        let args = List.map normal_form args in
         let h = get_head v in
         (* debug "h = %s ; args = %s" (string_of_explore_term h) (string_of_list ", " string_of_explore_term args); *)
         (* let h = normal_form h in *)
@@ -112,7 +110,7 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
             | Daimon _ -> raise Exit
             | Const _ -> app h args
             | Sp(Frozen _,_) -> app h args
-            | Struct(fields,_,_) -> assert (args=[]); Struct(map (second rewrite) fields,(),())
+            | Struct(fields,_,_) -> assert (args=[]); Struct(List.map (second normal_form) fields,(),())
             | App _ -> assert false
             | Proj(d,_,_) ->
                 begin
@@ -127,7 +125,7 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
                                     | v -> normal_form v
                             (* | Sp(Frozen v,_) -> *)
                             (*     let v = remove_struct v in *)
-                            (*     rewrite (app h (v::(List.tl args))) *)
+                            (*     normal_form (app h (v::(List.tl args))) *)
                             end
                         | _ -> assert false
                 end
@@ -139,7 +137,7 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
                         let ct = map_case_struct (map_raw_term id id (k())) ct in
                         incr counter;
                         let v = subst_case sigma ct in
-                        app v rest_args
+                        normal_form (app v rest_args)
                     with
                         | Not_found -> app h args       (* f is free *)
                         | Invalid_argument "combine_suffix" -> app h args (* f is not fully applied *)
@@ -157,14 +155,12 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
                 subst_frozen_term sigma v
             | CSStruct(fields) ->
                 (* debug "fields1 = %s" (string_of_list " ; " (function d,t -> fmt "%s=%s" d (string_of_explore_term t)) sigma); *)
-                let fields = map (second (subst_case sigma)) fields in
-                let fields = map (second unfreeze) fields in
-                let fields = map (function d,v -> d,Sp(Frozen(v),())) fields in
+                let fields = List.map (function d,v -> d,Sp(Frozen(unfreeze (subst_case sigma v)),())) fields in
                 (* debug "fields2 = %s" (string_of_list " ; " (function d,t -> fmt "%s=%s" d (string_of_explore_term t)) sigma); *)
                 Struct(fields,(),())
             | CSCase(x,ds,cases) ->
                 let v = try List.assoc x sigma with Not_found -> assert false in
-                let v = implode (v::(map (fun d -> Proj(d,(),())) ds)) in
+                let v = implode (v::(List.map (fun d -> Proj(d,(),())) ds)) in
                 let v = normal_form v in
                 match get_head v,get_args v with
                     | Const(c,_,_),args ->
@@ -198,7 +194,7 @@ let unfold env p v =
       = match v with
             | Angel _ | Daimon _ | Var _ | Proj _ | Const _ -> v
             | App(v1,v2) -> App(unfold_aux env p v1, unfold_aux env p v2)
-            | Struct(fields,(),()) -> Struct(map (function d,v -> d,unfold_aux env p v) fields,(),())
+            | Struct(fields,(),()) -> Struct(List.map (function d,v -> d,unfold_aux env p v) fields,(),())
             | Sp(Frozen(n,v),t) when not (p n) -> incr struct_nb; Sp(Frozen(!struct_nb,v),t)
             | Sp(Frozen(n,v),t) (*when (p n)*) ->
                     let v = reduce env v in
