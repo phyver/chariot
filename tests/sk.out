@@ -91,22 +91,22 @@ val
 
 >> inductive type nat was succesfully defined
 >> term: one Succ 0
->> result: 1
 >> of type: nat
+>> result: 1
 
 >> term: two Succ 0
->> result: 2
 >> of type: nat
+>> result: 2
 
 >> term: three Succ 0
->> result: 3
 >> of type: nat
+>> result: 3
 
 >> term: four Succ 0
->> result: 4
 >> of type: nat
+>> result: 4
 
 >> term: nine Succ 0
->> result: 9
 >> of type: nat
+>> result: 9
 

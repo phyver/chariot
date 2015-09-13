@@ -31,20 +31,20 @@
 >> the definition double is provably correct
 
 >> term: map double (arith 3 3)
+>> of type: stream(nat)
 >> result: { 
 >>   Head = <1> ; 
 >>   Tail = <2> }
->> of type: stream(nat)
 
 >> term: get_nth (mult 3 3) (map double (arith 3 3))
->> result: 60
 >> of type: nat
+>> result: 60
 
 >> Typing for fib successful
 >> the definition for fib is complete
 >> the definition fib is provably correct
 
 >> term: get_nth 11 (map double (fib 0 1))
->> result: 178
 >> of type: nat
+>> result: 178
 

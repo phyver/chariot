@@ -38,16 +38,17 @@
 >> the definition decr is provably correct
 
 >> term: incr 10
+>> of type: colist(nat)
 >> result: { 
 >>   Unfreeze = <1> }
->> of type: colist(nat)
 
 >> term: decr 10
+>> of type: colist(nat)
 >> result: { 
 >>   Unfreeze = <1> }
->> of type: colist(nat)
 
 >> term: incr 10
+>> of type: colist(nat)
 >> result: { 
 >>   Unfreeze = Cons 10 { 
 >>     Unfreeze = Cons 11 { 
@@ -55,9 +56,9 @@
 >>         Unfreeze = Cons 13 { 
 >>           Unfreeze = Cons 14 { 
 >>             Unfreeze = <1> } } } } } }
->> of type: colist(nat)
 
 >> term: incr 10
+>> of type: colist(nat)
 >> result: { 
 >>   Unfreeze = Cons 10 { 
 >>     Unfreeze = Cons 11 { 
@@ -72,9 +73,9 @@
 >>                       Unfreeze = Cons 20 { 
 >>                         Unfreeze = Cons 21 { 
 >>                           Unfreeze = <1> } } } } } } } } } } } } }
->> of type: colist(nat)
 
 >> term: decr 10
+>> of type: colist(nat)
 >> result: { 
 >>   Unfreeze = Cons 9 { 
 >>     Unfreeze = Cons 8 { 
@@ -82,9 +83,9 @@
 >>         Unfreeze = Cons 6 { 
 >>           Unfreeze = Cons 5 { 
 >>             Unfreeze = <1> } } } } } }
->> of type: colist(nat)
 
 >> term: decr 10
+>> of type: colist(nat)
 >> result: { 
 >>   Unfreeze = Cons 9 { 
 >>     Unfreeze = Cons 8 { 
@@ -97,9 +98,9 @@
 >>                   Unfreeze = Cons 1 { 
 >>                     Unfreeze = Cons 0 { 
 >>                       Unfreeze = <1> } } } } } } } } } } }
->> of type: colist(nat)
 
 >> term: decr 10
+>> of type: colist(nat)
 >> result: { 
 >>   Unfreeze = Cons 9 { 
 >>     Unfreeze = Cons 8 { 
@@ -112,5 +113,4 @@
 >>                   Unfreeze = Cons 1 { 
 >>                     Unfreeze = Cons 0 { 
 >>                       Unfreeze = Nil } } } } } } } } } } }
->> of type: colist(nat)
 

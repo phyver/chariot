@@ -91,6 +91,7 @@
 >> the definition test1 is provably correct
 
 >> term: test1
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 0 ; 
 >>   Tail = { 
@@ -100,13 +101,13 @@
 >>       Tail = { 
 >>         Head = <1> ; 
 >>         Tail = <2> } } } }
->> of type: stream(nat)
 
 >> Typing for test2 successful
 >> the definition for test2 is complete
 >> the definition test2 is provably correct
 
 >> term: test2
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 1 ; 
 >>   Tail = { 
@@ -128,7 +129,6 @@
 >>                   Tail = { 
 >>                     Head = <1> ; 
 >>                     Tail = <2> } } } } } } } } } }
->> of type: stream(nat)
 
 >> Typing for k3 successful
 >> the definition for k3 is complete
@@ -139,6 +139,7 @@
 >> the definition test3 is provably correct
 
 >> term: test3
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 0 ; 
 >>   Tail = { 
@@ -160,7 +161,6 @@
 >>                   Tail = { 
 >>                     Head = <1> ; 
 >>                     Tail = <2> } } } } } } } } } }
->> of type: stream(nat)
 
 >> Typing for id successful
 >> the definition for id is complete
@@ -171,6 +171,7 @@
 >> the definition test4 is provably correct
 
 >> term: test4
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 0 ; 
 >>   Tail = { 
@@ -206,13 +207,13 @@
 >>                                 Tail = { 
 >>                                   Head = <1> ; 
 >>                                   Tail = <2> } } } } } } } } } } } } } } } } }
->> of type: stream(nat)
 
 >> Typing for test5 successful
 >> the definition for test5 is complete
 >> the definition test5 is provably correct
 
 >> term: test5
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 1 ; 
 >>   Tail = { 
@@ -228,13 +229,13 @@
 >>             Tail = { 
 >>               Head = <1> ; 
 >>               Tail = <2> } } } } } } }
->> of type: stream(nat)
 
 >> Typing for test6 successful
 >> the definition for test6 is complete
 >> the definition test6 is provably correct
 
 >> term: test6
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 0 ; 
 >>   Tail = { 
@@ -256,13 +257,13 @@
 >>                   Tail = { 
 >>                     Head = <1> ; 
 >>                     Tail = <2> } } } } } } } } } }
->> of type: stream(nat)
 
 >> Typing for test7 successful
 >> the definition for test7 is complete
 >> the definition test7 is provably correct
 
 >> term: test7
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 0 ; 
 >>   Tail = { 
@@ -306,13 +307,13 @@
 >>                                         Tail = { 
 >>                                           Head = <1> ; 
 >>                                           Tail = <2> } } } } } } } } } } } } } } } } } } } } }
->> of type: stream(nat)
 
 >> Typing for test8 successful
 >> the definition for test8 is complete
 >> the definition test8 is provably correct
 
 >> term: test8
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 3 ; 
 >>   Tail = { 
@@ -336,13 +337,13 @@
 >>                     Tail = { 
 >>                       Head = <1> ; 
 >>                       Tail = <2> } } } } } } } } } } }
->> of type: stream(nat)
 
 >> Typing for test9 successful
 >> the definition for test9 is complete
 >> the definition test9 is provably correct
 
 >> term: test9
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 0 ; 
 >>   Tail = { 
@@ -366,13 +367,13 @@
 >>                     Tail = { 
 >>                       Head = <1> ; 
 >>                       Tail = <2> } } } } } } } } } } }
->> of type: stream(nat)
 
 >> Typing for test10 successful
 >> the definition for test10 is complete
 >> the definition test10 is provably correct
 
 >> term: test10
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 0 ; 
 >>   Tail = { 
@@ -396,13 +397,13 @@
 >>                     Tail = { 
 >>                       Head = <1> ; 
 >>                       Tail = <2> } } } } } } } } } } }
->> of type: stream(nat)
 
 >> Typing for test12 successful
 >> the definition for test12 is complete
 >> the definition test12 is provably correct
 
 >> term: test12
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 0 ; 
 >>   Tail = { 
@@ -438,13 +439,13 @@
 >>                                 Tail = { 
 >>                                   Head = <1> ; 
 >>                                   Tail = <2> } } } } } } } } } } } } } } } } }
->> of type: stream(nat)
 
 >> Typing for test13 successful
 >> the definition for test13 is complete
 >> the definition test13 is provably correct
 
 >> term: test13
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 0 ; 
 >>   Tail = { 
@@ -488,13 +489,13 @@
 >>                                         Tail = { 
 >>                                           Head = <1> ; 
 >>                                           Tail = <2> } } } } } } } } } } } } } } } } } } } } }
->> of type: stream(nat)
 
 >> Typing for test14 successful
 >> the definition for test14 is complete
 >> the definition test14 is provably correct
 
 >> term: test14
+>> of type: stream(nat)
 >> result: { 
 >>   Head = 1 ; 
 >>   Tail = { 
@@ -522,5 +523,4 @@
 >>                         Tail = { 
 >>                           Head = <1> ; 
 >>                           Tail = <2> } } } } } } } } } } } } }
->> of type: stream(nat)
 
