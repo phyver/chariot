@@ -242,7 +242,7 @@ let infer_type (env:environment)
             | Struct(fields,p,_) ->
                 begin
                     match fields with [] -> error "cannot infer type of empty structure" | (d,_)::_ ->
-                    let t = instantiate_type (get_first_arg_type (get_constant_type env d)) in
+                    let t = instantiate_type (get_first_arg_type (try get_constant_type env d with Not_found -> error (fmt "cannot infer type of constant %s" d))) in
 
                     let t,fields,context,sigma
                       = List.fold_left
@@ -256,7 +256,7 @@ let infer_type (env:environment)
                     (* debug ~indent:6 "sigma: %s" (string_of_type_substitution sigma); *)
                                 let t = subst_type sigma t in
 
-                                let sigma3 = match instantiate_type (get_constant_type env d) with
+                                let sigma3 = match instantiate_type (try get_constant_type env d with Not_found -> error (fmt "cannot infer type of constant %s" d)) with
                                                 | Arrow(t1,t2) ->
                                                     let tau1 = unify_type_mgu t1 t in
                     (* debug "tau1: %s" (string_of_type_substitution tau1); *)
