@@ -186,8 +186,7 @@ let process_function_defs (env:environment)
     (* ) defs; *)
 
     (* check completeness of pattern matching and compute CASE form of the definition *)
-    (* let (defs:(var_name * type_expression * function_clause list * case_struct_def) list) *)
-    let defs
+    let (defs:(var_name * type_expression * (typed_term * typed_term) list * case_struct_def) list)
       = List.map
             (function f,t,clauses ->
                 let f,clauses,args,cs = case_struct_of_clauses env f t clauses in
@@ -203,8 +202,8 @@ let process_function_defs (env:environment)
     in
 
 
-    (* let (defs:(var_name * type_expression * function_clause list * case_struct_def) list) *)
-    let defs
+    (* expand case_struct_def to clauses if relevant *)
+    let (defs:(var_name * type_expression * (typed_term * typed_term) list * case_struct_def) list)
       = if option "expand_clauses"
         then
             let new_defs = List.map (function f,t,_,(xs,pat) -> f, Some t, convert_cs_to_clauses f xs pat) defs in
@@ -226,8 +225,7 @@ let process_function_defs (env:environment)
     (* ) defs; *)
 
     (* infer priorities for definitions *)
-    (* let (defs:(var_name * type_expression * (term * term) list) list) *)
-    let defs
+    let (defs:(var_name * type_expression * function_clause list * case_struct_def) list)
       = infer_priorities env defs
     in
 
@@ -269,8 +267,9 @@ let process_function_defs (env:environment)
 
 
 
-    let defs =
-        List.fold_left (fun functions f ->
+    (* add the bloc number *)
+    let (defs:(var_name * bloc_nb * type_expression * function_clause list * case_struct_def) list)
+      = List.fold_left (fun functions f ->
             let f,_,clauses,cs = f in
             let t = List.assoc f (List.map (function f,t,_,_ -> f,t) defs) in
             (f,current_state.current_bloc+1,t,clauses,cs)::functions
