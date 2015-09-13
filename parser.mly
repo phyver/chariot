@@ -170,14 +170,17 @@ let cmd_show_last ()
 let cmd_unfold_initial (term:plain_term) (depth:int) : unit
   = let term = parsed_to_plain term in
     let t,term,context = infer_type_term current_state.env term in
-    (* let term = reduce current_state.env term in *)
-    let term = unfold_to_depth current_state.env term depth in
-    msg "term %s" (string_of_explore_term term);
+    msg "term: %s" (string_of_plain_term term);
     msg "of type: %s" (string_of_type t);
-    if not (context = [])
-    then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
-    current_state.last_explore <- Some term;
-    print_newline()
+    match context with
+        | _::_ -> msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context)
+        | [] ->
+            begin
+                let term = unfold_to_depth current_state.env term depth in
+                msg "result: %s" (string_of_explore_term term);
+                current_state.last_explore <- Some term;
+                print_newline()
+            end
 
 let cmd_unfold (l:int list) : unit
   = try
@@ -301,7 +304,6 @@ command:
     | CMDHELP                                           { fun () -> cmd_show_help () }
     | CMDECHO string                                    { fun () -> msg "%s" $2 }
 
-    | CMDUNFOLD term                                    { fun () -> cmd_unfold_initial $2 0 }
     | CMDUNFOLD term COMMA INT                          { fun () -> cmd_unfold_initial $2 $4 }
     | GT int_range                                      { fun () -> cmd_unfold $2 }
 
