@@ -107,7 +107,8 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
             | Angel _ -> Angel()
             | Daimon _ -> raise Exit
             | Const _ -> app h args
-            | Sp(Frozen _,_) | Struct _ -> app h args
+            | Sp(Frozen _,_) -> app h args
+            | Struct(fields,_,_) -> assert (args=[]); Struct(List.map (second rewrite) fields,(),())
             | App _ -> assert false
             | Proj(d,_,_) ->
                 begin
@@ -115,7 +116,7 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
                     match st with
                         | Struct(fields,_,_) ->
                             begin
-                                let v = try List.assoc d fields with Not_found -> assert false in
+                                let v = try List.assoc d fields with Not_found -> debug "OOPS d=%s (nb fields %d) -- %s" d (List.length fields) (string_of_frozen_term v); assert false in
                                 (* let v = unfreeze v in *)
                                 match v with
                                     | Sp(Frozen(v),()) -> normal_form (map_raw_term bot id id v)
