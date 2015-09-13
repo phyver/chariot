@@ -160,8 +160,8 @@ and
                 | n,None -> string_of_int n
                 | 0,Some v -> raise (Invalid_argument "string_of_term_int")
                 | n,Some v -> if p
-                              then "(" ^ (string_of_raw_term indent ss sp st v) ^ "+" ^ (string_of_int n) ^ ")"
-                              else (string_of_raw_term indent ss sp st v) ^ "+" ^ (string_of_int n)
+                              then "(" ^ (string_of_raw_term_paren indent ss sp st v) ^ "+" ^ (string_of_int n) ^ ")"
+                              else (string_of_raw_term_paren indent ss sp st v) ^ " + " ^ (string_of_int n)
 
 and
   (* try showing the term as a list *)
