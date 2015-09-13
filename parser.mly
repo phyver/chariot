@@ -44,7 +44,6 @@ open State
 open Typing
 open Pretty
 open Compute
-open Explore
 open SCTCalls
 open Coverage
 open FunctionDefs
@@ -161,19 +160,6 @@ let cmd_show_type (term:plain_term) : unit
     if not (context = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context)
 
-(* reduce a term and show the result *)
-let cmd_reduce (term:plain_term) : unit
-  = let term = parsed_to_plain term in
-    let t,term,context = infer_type_term current_state.env term in
-    msg "term: %s" (string_of_plain_term term);
-    let term = reduce current_state.env term in
-    current_state.last_explore <- Some (add_frozen_nb term);
-    msg "result: %s" (string_of_explore_term (add_frozen_nb term));
-    msg "of type: %s" (string_of_type t);
-    if not (context = [])
-    then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
-    print_newline()
-
 let cmd_show_last ()
   = match current_state.last_explore with
         | None -> ()
@@ -184,9 +170,9 @@ let cmd_show_last ()
 let cmd_unfold_initial (term:plain_term) (depth:int) : unit
   = let term = parsed_to_plain term in
     let t,term,context = infer_type_term current_state.env term in
-    let term = reduce current_state.env term in
-    let term = unfold_to_depth current_state.env (add_frozen_nb term) depth in
-    msg "%s" (string_of_explore_term term);
+    (* let term = reduce current_state.env term in *)
+    let term = unfold_to_depth current_state.env term depth in
+    msg "term %s" (string_of_explore_term term);
     msg "of type: %s" (string_of_type t);
     if not (context = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
@@ -297,7 +283,7 @@ single_statement:
     | statement eos     { exec_cmd $1}
     | eos               { exec_cmd cmd_show_last }
     | EOF               { raise Exit }
-    | term eos          { exec_cmd (fun () -> cmd_reduce $1) }
+    | term eos          { exec_cmd (fun () -> cmd_unfold_initial $1 0) }
 
 statement:
     | new_types       { fun () -> let n,defs = $1 in cmd_process_type_defs n defs }
@@ -306,7 +292,7 @@ statement:
 
 command:
     | CMDSHOWTYPE term                                  { fun () -> cmd_show_type $2 }
-    | CMDREDUCE term                                    { fun () -> cmd_reduce $2 }
+    | CMDREDUCE term                                    { fun () -> cmd_unfold_initial $2 0 }
     | CMDQUIT                                           { fun () -> raise Exit }
     | CMDSHOW string                                    { fun () -> cmd_show $2 }
     | CMDSET string string                              { fun () -> set_option $2 $3 }

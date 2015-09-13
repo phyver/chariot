@@ -178,3 +178,38 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
         if verbose 2 then msg "%d reduction%s made" !counter (if !counter > 1 then "s" else "");
         Daimon()
 
+
+(* unfolding a term interactively *)
+
+let struct_nb = ref 0
+
+let add_frozen_nb ?(reset=true) (v:computed_term) : explore_term
+  = if reset then struct_nb := 0;
+    map_raw_term (function Frozen v -> incr struct_nb; Frozen(!struct_nb,v)) id id v
+
+let unfold env p v =
+    let rec unfold_aux (env:environment) (p:int->bool) (v:explore_term)
+      : explore_term
+      = match v with
+            | Angel _ | Daimon _ | Var _ | Proj _ | Const _ -> v
+            | App(v1,v2) -> App(unfold_aux env p v1, unfold_aux env p v2)
+            | Struct(fields,(),()) -> Struct(List.map (function d,v -> d,unfold_aux env p v) fields,(),())
+            | Sp(Frozen(n,v),t) when not (p n) -> incr struct_nb; Sp(Frozen(!struct_nb,v),t)
+            | Sp(Frozen(n,v),t) (*when (p n)*) ->
+                    let v = reduce env v in
+                    add_frozen_nb ~reset:false v
+    in
+    struct_nb:=0;
+    unfold_aux env p v
+
+let unfold_to_depth env v depth
+  = let rec unfold_to_depth_aux v depth
+      = if depth = 0
+        then v
+        else
+            let v = unfold_to_depth_aux v (depth-1) in
+            unfold env (k true) v
+  in
+  let v = add_frozen_nb (reduce env v) in
+  unfold_to_depth_aux v depth
+

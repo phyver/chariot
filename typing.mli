@@ -1,12 +1,22 @@
 open Env
 
-val reset_fresh_variable_generator : type_expression list -> unit
+val reset_fresh_variable_generator :
+  type_expression list ->
+    unit
 
-val instantiate_type : type_expression -> type_expression
+val instantiate_type :
+  type_expression ->
+    type_expression
 
-val unify_type_mgu : type_expression -> type_expression -> type_substitution
+val unify_type_mgu :
+  type_expression ->
+  type_expression ->
+    type_substitution
 
-val equal_type : type_expression -> type_expression -> bool
+val equal_type :
+  type_expression ->
+  type_expression ->
+    bool
 
 val infer_type_term :
   environment ->
