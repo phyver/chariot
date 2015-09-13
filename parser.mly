@@ -43,7 +43,7 @@ open Utils
 open State
 open Typing
 open Pretty
-open Compute
+open Reduce
 open SCTCalls
 open Coverage
 open FunctionDefs

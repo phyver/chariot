@@ -39,7 +39,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
 open Env
 open Misc
 open State
-open Explore
 open Parser
 
 let parse_error lexbuf
