@@ -173,7 +173,7 @@ convert_match_aux env xs clauses fail
         | (x,ds)::xs,(_,Struct((d,_)::_,_,_)::_,_)::_ ->
             begin
                 let projs = get_other_constants env d in
-                let new_xs = List.map (fun d -> x,d::ds) projs in
+                let new_xs = List.map (fun d -> x,ds@[d]) projs in
                 let new_xs = new_xs@xs in
 
                 let new_clauses

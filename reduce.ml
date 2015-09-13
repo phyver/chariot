@@ -89,7 +89,7 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
     let rec
     normal_form (v:computed_term) : computed_term
       =
-        (* debug "nf %s (counter:%d)" (string_of_explore_term v) !counter ; *)
+        (* debug "nf %s (counter:%d)" (string_of_frozen_term v) !counter ; *)
         let n = !counter in
         let v = rewrite v in
         if n = !counter
