@@ -1,0 +1,40 @@
+>> option verbose is set to 1
+>> inductive type nat was succesfully defined
+>> inductive type c was succesfully defined
+>> coinductive type nuY was succesfully defined
+>> coinductive type stream4 was succesfully defined
+>> Typing for zeros4 successful
+>> the definition for zeros4 is complete
+>> the definition zeros4 is provably correct
+
+>> Typing for convert4 successful
+>> the definition for convert4 is complete
+>> the definition convert4 is provably correct
+
+>> option verbose is set to 10
+>> functions in environment:
+val
+   zeros4 : stream4
+    | zeros4 = { D4 = { Nu = C¹ zeros4 }² }⁴
+>> 
+>> corresponding case and struct form:
+>> { D4 = { Nu = C zeros4 } }
+
+val
+   convert4 : stream4 → nat
+    | convert4 { D4 = { Nu = C¹ s }² }⁴ = 0
+>> 
+>> corresponding case and struct form:
+>> x₁ -> 
+>>   case x₁.D4.Nu of
+>>     C x₂  ->  0
+
+>> option verbose is set to 1
+>> Typing for test12 successful
+>> the definition for test12 is complete
+>> the definition test12 is provably correct
+
+>> term: test12
+>> of type: nat
+>> result: 0
+

@@ -39,7 +39,7 @@
 val
    add : nat → nat → nat
     | add n 0 = n
-    | add n (m+1) = add n m+1
+    | add n (m+1) = (add n m) + 1
 
 val
    mult : nat → nat → nat
@@ -54,7 +54,7 @@ val
 val
    length : list('x) → nat
     | length Nil = 0
-    | length (Cons x xs) = length xs+1
+    | length (Cons x xs) = (length xs) + 1
 
 val
    map : ('a → 'b) → list('a) → list('b)
@@ -80,7 +80,7 @@ val
 val
    add : nat → nat → nat
     | add n 0 = n
-    | add n (m+1) = add n m+1
+    | add n (m+1) = (add n m) + 1
 
 val
    mult : nat → nat → nat
@@ -95,7 +95,7 @@ val
 val
    length : list('x) → nat
     | length [] = 0
-    | length (x::xs) = length xs+1
+    | length (x::xs) = (length xs) + 1
 
 val
    map : ('a → 'b) → list('a) → list('b)

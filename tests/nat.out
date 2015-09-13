@@ -35,7 +35,7 @@ val
 val
    add : nat → nat → nat
     | add n 0 = n
-    | add n (m+1) = add n m+1
+    | add n (m+1) = (add n m) + 1
 
 val
    mult : nat → nat → nat
