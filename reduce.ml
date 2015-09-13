@@ -136,8 +136,8 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
                         let v = subst_case sigma ct in
                         app v rest_args
                     with
-                        | Not_found -> debug "OOPS f=%s" f; assert false
-                        | Invalid_argument "combine_suffix" -> app h args
+                        | Not_found -> app h args       (* f is free *)
+                        | Invalid_argument "combine_suffix" -> app h args (* f is not fully applied *)
                 end
 
     and

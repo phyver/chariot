@@ -173,7 +173,12 @@ let cmd_unfold_initial (term:plain_term) (depth:int) : unit
     msg "term: %s" (string_of_plain_term term);
     msg "of type: %s" (string_of_type t);
     match context with
-        | _::_ -> msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context)
+        | _::_ ->
+            begin
+                msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
+                current_state.last_explore <- None
+            end
+
         | [] ->
             begin
                 let term = unfold_to_depth current_state.env term depth in
