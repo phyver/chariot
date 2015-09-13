@@ -1,48 +1,28 @@
 >> option verbose is set to 1
 >> option allow_structs is set to true
 >> coinductive type t was succesfully defined
->> Typing for f, _aux₁ successful
+>> Typing for f successful
 >> the definition for f is complete
->> the definition for _aux₁ is complete
->> the definitions f, _aux₁ are provably correct
+>> the definition f is provably correct
 
->> Typing for g, _aux₂ successful
+>> Typing for g successful
 >> the definition for g is complete
->> the definition for _aux₂ is complete
->> the definitions g, _aux₂ are provably correct
+>> the definition g is provably correct
 
->> Typing for h, _aux₃, _aux₄, _aux₅ successful
+>> Typing for h successful
 >> the definition for h is complete
->> the definition for _aux₃ is complete
->> the definition for _aux₄ is complete
->> the definition for _aux₅ is complete
->> the definitions h, _aux₃, _aux₄, _aux₅ are provably correct
+>> the definition h is provably correct
 
 >> functions in environment:
 val
    f : ('a → 'b → 'c → t) → 'a → 'b → 'c → t
-    | f a b c d = _aux₁ a b c d
-and
-   _aux₁ : ('a → 'b → 'c → t) → 'a → 'b → 'c → t
-    | (_aux₁ a b c d).D² = a b c d
+    | f a b c d = { D = a b c d }²
 
 val
    g : ('a → t) → ('b → 'a) → ('c → 'b) → 'c → t
-    | g a b c d = _aux₂ a b c d
-and
-   _aux₂ : ('a → t) → ('b → 'a) → ('c → 'b) → 'c → t
-    | (_aux₂ a b c d).D² = a (b (c d))
+    | g a b c d = { D = a (b (c d)) }²
 
 val
    h : t → t
-    | h a = _aux₃ a
-and
-   _aux₃ : t → t
-    | (_aux₃ a).D² = _aux₄ a
-and
-   _aux₄ : t → t
-    | (_aux₄ a).D² = _aux₅ a
-and
-   _aux₅ : t → t
-    | (_aux₅ a).D² = a
+    | h a = { D = { D = { D = a }² }² }²
 
