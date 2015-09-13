@@ -93,7 +93,6 @@ type 'x frozen = Frozen of 'x
 type 'x frozen_term = ('x frozen,unit,unit) raw_term
 
 (* term with case and structs *)
-(* TODO: there are structures in raw_terms. Can I remove the constructor CSStruct? *)
 type 'v case_struct_tree =
     | CSFail
     | CSLeaf of 'v
@@ -101,6 +100,13 @@ type 'v case_struct_tree =
     | CSStruct of (const_name * 'v case_struct_tree) list
 (* definitions of functions with cases and structs *)
 type case_struct_def = var_name list * (empty,unit,type_expression) raw_term case_struct_tree
+
+(* type 'v case_sp = *)
+(*     | CFail *)
+(*     | CLeaf of 'v *)
+(*     | CCase of var_name * const_name list * (const_name * (var_name list * 'v case_term)) list *)
+(* and 'v case_term = ('v case_sp,unit,type_expression) raw_term *)
+(* type case_def = var_name list * (empty,unit,type_expression) raw_term case_term *)
 
 
 (* SCT terms *)
@@ -132,9 +138,14 @@ type term = (empty,priority,type_expression) raw_term
 
 type function_clause = term * term     (* clause of a function definition *)
 
+(* terms after reduction *)
+type computed_term = plain_term frozen_term
+
+(* terms during exploration, frozen subterms are numbered *)
+type explore_term = (int*plain_term) frozen_term
+
+
 type bloc_nb = int      (* number of the block of mutual function definitions *)
-
-
 
 (* type for the environment *)
 type environment = {

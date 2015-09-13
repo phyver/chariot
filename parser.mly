@@ -168,7 +168,7 @@ let cmd_reduce (term:plain_term) : unit
     msg "term: %s" (string_of_plain_term term);
     let term = reduce current_state.env term in
     current_state.last_explore <- Some (add_frozen_nb term);
-    msg "result: %s" (string_of_unfolded_term (add_frozen_nb term));
+    msg "result: %s" (string_of_explore_term (add_frozen_nb term));
     msg "of type: %s" (string_of_type t);
     if not (context = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
@@ -178,7 +178,7 @@ let cmd_show_last ()
   = match current_state.last_explore with
         | None -> ()
         | Some t ->
-            msg "last result: %s" (string_of_unfolded_term t)
+            msg "last result: %s" (string_of_explore_term t)
 
 (* unfold a term by expanding lazy subterms up-to a given depth, and show the result *)
 let cmd_unfold_initial (term:plain_term) (depth:int) : unit
@@ -186,7 +186,7 @@ let cmd_unfold_initial (term:plain_term) (depth:int) : unit
     let t,term,context = infer_type_term current_state.env term in
     let term = reduce current_state.env term in
     let term = unfold_to_depth current_state.env (add_frozen_nb term) depth in
-    msg "%s" (string_of_unfolded_term term);
+    msg "%s" (string_of_explore_term term);
     msg "of type: %s" (string_of_type t);
     if not (context = [])
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context);
@@ -204,7 +204,7 @@ let cmd_unfold (l:int list) : unit
                     | _ ->  unfold current_state.env (fun n -> List.mem n l) t
         in
         current_state.last_explore <- Some t;
-        msg "%s" (string_of_unfolded_term t)
+        msg "%s" (string_of_explore_term t)
     with Exit -> errmsg "There is no term to unfold..."
 
 

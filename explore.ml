@@ -46,12 +46,12 @@ open Compute
 
 let struct_nb = ref 0
 
-let add_frozen_nb ?(reset=true) (v:plain_term frozen_term) : (int*plain_term) frozen_term
+let add_frozen_nb ?(reset=true) (v:computed_term) : explore_term
   = if reset then struct_nb := 0;
     map_raw_term (function Frozen v -> incr struct_nb; Frozen(!struct_nb,v)) id id v
 
-let rec unfold (env:environment) (p:int->bool) (v:(int*plain_term) frozen_term)
-  : (int*plain_term) frozen_term
+let rec unfold (env:environment) (p:int->bool) (v:explore_term)
+  : explore_term
   = match v with
         | Angel _ | Daimon _ | Var _ | Proj _ | Const _ -> v
         | App(v1,v2) -> App(unfold env p v1, unfold env p v2)

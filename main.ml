@@ -102,8 +102,6 @@ let _
         ("-v",                        Arg.Int (fun v -> set_option "verbose" (string_of_int v)),            "choose verbosity level");
         ("--verbose",                 Arg.Int (fun v -> set_option "verbose" (string_of_int v)),            "choose verbosity level");
 
-        (* ("--show_type_struct",        Arg.Unit (fun _ -> set_option "show_type_struct" "true"),             "show type of lazy structures in explore mode"); *)
-        (* ("--show_term_struct",        Arg.Unit (fun _ -> set_option "show_term_struct" "true"),             "show lazy terms in explore mode"); *)
         ("--dont_show_nats",          Arg.Unit (fun _ -> set_option "show_nats" "false"),                   "do not use decimal notation for displaying natural numbers");
         ("--dont_show_lists",         Arg.Unit (fun _ -> set_option "show_lists" "false"),                  "do not use standard notations for displaying lists");
         ("--dont_show_tuples",        Arg.Unit (fun _ -> set_option "show_tuples" "false"),                 "do not use standard notations for displaying tuples");

@@ -64,8 +64,7 @@ let current_state =
         prompt = "# "                           ;
         verbose = 0                             ;
         boolean_options = [
-            (* "show_type_struct",        false    , "show type of lazy structures in explore mode" ; *)
-            (* "show_term_struct",        false    , "show lazy terms in explore mode" ; *)
+            "show_frozen_terms",       false    , "show frozen terms in reduced terms" ;
             "show_nats",               true     , "use decimal notation for displaying natural numbers" ;
             "show_lists",              true     , "use standard notations for displaying lists" ;
             "show_tuples",             true     , "use standard notations for displaying tuples" ;
