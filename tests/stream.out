@@ -31,7 +31,9 @@
 >> the definition double is provably correct
 
 >> term: map double (arith 3 3)
->> result: map double (arith 3 3)
+>> result: { 
+>>   Head = <1> ; 
+>>   Tail = <2> }
 >> of type: stream(nat)
 
 >> term: get_nth (mult 3 3) (map double (arith 3 3))
