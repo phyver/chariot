@@ -136,7 +136,7 @@ let check_clause env (funs: var_name list) (f:var_name) (lhs:(empty,'p,'t) raw_t
 
 
 let process_function_defs (env:environment)
-                          (defs:(var_name * type_expression option * (parsed_term * parsed_term) list) list)
+                          (defs:(var_name * type_expression option * (plain_term * plain_term) list) list)
   : environment
   =
 

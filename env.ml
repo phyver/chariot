@@ -74,11 +74,10 @@ type ('s,'p,'t) raw_term =      (* 's is used to add features to terms, 'p is us
 
 (*************************************************************************
  * the main kinds of terms used are
- *   - parsed terms: 's is structure, 'p is unit, 't is unit
  *   - plain terms: 's is empty, 'p is unit, 't is unit
  *   - typed terms: 's is empty, 'p is unit, 't is type_expression
  *   - terms: 's is empty, 'p is priority, 't is type_expression
- *   - unfolded terms: 's is explore_struct, 'p is unit, 't is type_expression
+ *   - terms with frozen subterms, used for evaluation: 's is 'x frozen, 'p is unit, 't is unit
  *   - case / struct trees: trees with leafs in typed terms
  *   - approximated term: 's is approximation, 'p is priority, 't is unit
  **********************************************************************)
@@ -94,6 +93,7 @@ type 'x frozen = Frozen of 'x
 type 'x frozen_term = ('x frozen,unit,unit) raw_term
 
 (* term with case and structs *)
+(* TODO: there are structures in raw_terms. Can I remove the constructor CSStruct? *)
 type 'v case_struct_tree =
     | CSFail
     | CSLeaf of 'v
@@ -122,9 +122,6 @@ type approx_term = (approximation,priority,unit) raw_term
 
 
 (* terms from the parser *)
-type parsed_term = (empty,unit,unit) raw_term
-
-(* terms after removal of structures *)
 type plain_term = (empty,unit,unit) raw_term
 
 (* terms after typing *)
@@ -133,10 +130,10 @@ type typed_term = (empty,unit,type_expression) raw_term
 (* terms after priorities have been added *)
 type term = (empty,priority,type_expression) raw_term
 
+type function_clause = term * term     (* clause of a function definition *)
 
 type bloc_nb = int      (* number of the block of mutual function definitions *)
 
-type function_clause = term * term     (* clause of a function definition *)
 
 
 (* type for the environment *)

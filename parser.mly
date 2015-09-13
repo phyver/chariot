@@ -67,7 +67,7 @@ let list_to_product (l:type_expression list) : type_expression
     Data("prod_" ^ (string_of_int n), l)
 
 (* transforms an integer into a term by adding Succ constructors in front of u *)
-let rec int_to_term (n:int) (u:parsed_term) : parsed_term
+let rec int_to_term (n:int) (u:plain_term) : plain_term
   = if n=0
     then u
     else int_to_term (n-1) (App(Const("Succ",(),()),u))
@@ -84,13 +84,13 @@ let process_addition u v
     with Exit -> App(App(Var("add",()),u),v)
 
 (* tranform a list of terms into the corresponding list by adding Cons constructors in front of u *)
-let rec list_to_term (l:parsed_term list) (u:parsed_term) : parsed_term
+let rec list_to_term (l:plain_term list) (u:plain_term) : plain_term
   = match l with
         | [] -> u
         | v::l -> list_to_term l (App(App(Const("Cons",(),()),v),u))
 
 (* tranform a list of terms into the corresponding tuple *)
-let tuple_term (l:parsed_term list) : parsed_term =
+let tuple_term (l:plain_term list) : plain_term =
     let n = List.length l in
     app (Const("Tuple_" ^ (string_of_int n),(),())) l
 
@@ -154,7 +154,7 @@ let cmd_show_help ()
         "";
     ]
 
-let cmd_show_type (term:parsed_term) : unit
+let cmd_show_type (term:plain_term) : unit
   = let term = parsed_to_plain term in
     let t,term,context = infer_type_term current_state.env term in
     msg "%s" (string_of_typed_term term);
@@ -162,7 +162,7 @@ let cmd_show_type (term:parsed_term) : unit
     then msg "with free variables: %s" (string_of_list " , " (function x,t -> x^" : "^(string_of_type t)) context)
 
 (* reduce a term and show the result *)
-let cmd_reduce (term:parsed_term) : unit
+let cmd_reduce (term:plain_term) : unit
   = let term = parsed_to_plain term in
     let t,term,context = infer_type_term current_state.env term in
     msg "term: %s" (string_of_plain_term term);
@@ -181,7 +181,7 @@ let cmd_show_last ()
             msg "last result: %s" (string_of_unfolded_term t)
 
 (* unfold a term by expanding lazy subterms up-to a given depth, and show the result *)
-let cmd_unfold_initial (term:parsed_term) (depth:int) : unit
+let cmd_unfold_initial (term:plain_term) (depth:int) : unit
   = let term = parsed_to_plain term in
     let t,term,context = infer_type_term current_state.env term in
     let term = reduce current_state.env term in
@@ -247,7 +247,7 @@ let test_compare l1 r1 l2 r2 =
     else msg "        FALSE";
     print_newline()
 
-let test_collapse (p:parsed_term) =
+let test_collapse (p:plain_term) =
     let p = parsed_to_sct p in
     let q = collapse_sct_pattern current_state.depth p in
     let q = collapse_weight_in_pattern current_state.bound q in
@@ -280,8 +280,8 @@ let test_collapse (p:parsed_term) =
 %type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
 %type <type_name * (type_expression list) * (const_name * type_expression) list> type_def
 
-%type <var_name * type_expression option * (parsed_term * parsed_term) list> function_def
-%type <(var_name * type_expression option * (parsed_term * parsed_term) list ) list> function_defs
+%type <var_name * type_expression option * (plain_term * plain_term) list> function_def
+%type <(var_name * type_expression option * (plain_term * plain_term) list ) list> function_defs
 
 %%
 
