@@ -6,3 +6,4 @@ chariot
 _build
 tmp*
 *.tmpout
+gmon*
