@@ -262,7 +262,7 @@ let  string_of_explore_term indent v
                        (k "")
                        v
 
-let string_of_explore_term v = string_of_explore_term 2 v
+let string_of_explore_term ?(indent=2) v = string_of_explore_term indent v
 
 let  string_of_frozen_term indent v
   = string_of_raw_term indent
@@ -270,7 +270,7 @@ let  string_of_frozen_term indent v
                        (k "")
                        (k "")
                        v
-let string_of_frozen_term v = string_of_frozen_term 2 v
+let string_of_frozen_term ?(indent=2) v = string_of_frozen_term indent v
 
 (* show case / structures trees *)
 let rec
