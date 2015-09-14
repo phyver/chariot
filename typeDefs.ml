@@ -43,11 +43,10 @@ open State
 open Pretty
 
 (* check that all the type parameters of a definition are different *)
-let check_uniqueness_parameters (params:type_expression list) : unit
+let check_uniqueness_parameters (params:type_name list) : unit
   = match find_dup params with
         | None -> ()
-        | Some(TVar(x)) -> error ("parameter " ^ x ^ " appears more than once")
-        | _ -> assert false
+        | Some x -> error (fmt "type parameter %s appears more than once" x)
 
 (* check that all new types are different *)
 let check_new_types_different (types:type_name list) : unit
@@ -168,8 +167,21 @@ let process_type_defs (env:environment)
                             (consts:(const_name*type_expression) list)
       : (type_name * bloc_nb * type_name list * const_name list) * (const_name * int * type_expression) list
         =
+        let params = List.map (function TVar(x) -> x | _ -> assert false) params in
+
         (* we check that all the parameters are different *)
         check_uniqueness_parameters params;
+
+        (* we check that all the type parameters are indeed parameters *)
+        List.iter (function _,t ->
+            let params' = extract_type_variables t in
+            debug "params %s" (string_of_list ", " id params);
+            debug "params' %s" (string_of_list ", " id params');
+            match diff_uniq params' params with
+                | [] -> ()
+                | x::_ -> error (fmt "type parameter %s is free" x)
+        ) consts;
+
 
         (* we check that all instances of defined type appear with the same parameters *)
         List.iter (function _,t -> check_parameters env new_types_with_params t) consts;
@@ -182,7 +194,6 @@ let process_type_defs (env:environment)
         then List.iter (check_destructor tname) consts
         else List.iter (check_constructor tname) consts;
 
-        let params = List.map (function TVar(x) -> x | _ -> assert false) params in
         (tname, n, params, List.map fst consts) , (List.map (function c,t -> c,n,t) consts)
     in
 

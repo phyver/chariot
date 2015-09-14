@@ -59,7 +59,7 @@ let fresh_variable_nb = ref 0
 let list_type_variables = ref []
 let reset_fresh_variable_generator ts =
     fresh_variable_nb := 0;
-    list_type_variables := uniq (List.concat (List.map extract_type_variables ts))
+    list_type_variables := List.fold_left (fun r t -> union_uniq r (extract_type_variables t)) [] ts
 let fresh_variable () =
     let alpha = ["a";"b";"c";"d";"e";"f";"g";"h";"i";"j";"k";"l";"m";"n";"o";"p";"q";"r";"s";"t";"u";"v";"w";"x";"y";"z"] in
     let stop = ref false in
@@ -77,7 +77,7 @@ let fresh_variable () =
 
 (* instantiate all the variables from a type with fresh variables *)
 let instantiate_type (t:type_expression) : type_expression =
-    let vars = extract_type_variables t in
+    let vars = extract_type_variables ~stable:true t in
     let sigma = List.map (fun x -> (x,fresh_variable())) vars in
     subst_type sigma t
 
@@ -471,7 +471,7 @@ let infer_type_defs
     (* ) clauses; *)
 
     (* simplify type variables *)
-    let tvars = uniq ~stable:true (List.concat (List.map (function _,t -> extract_type_variables t) context)) in
+    let tvars = uniq ~stable:true (List.concat (List.map (function _,t -> extract_type_variables ~stable:true t) context)) in
     reset_fresh_variable_generator [];
     let sigma = List.map (fun x -> x,instantiate_type (TVar x)) tvars in
     let clauses = List.map (function f,lhs,rhs -> (f,subst_type_term sigma lhs,subst_type_term sigma rhs)) clauses in

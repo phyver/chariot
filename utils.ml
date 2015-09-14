@@ -190,14 +190,15 @@ let rec type_of (u:('a,'p,type_expression) raw_term) : type_expression
             t
 
 
-(* get all the variables from a type, keeping the order of first occurences *)
-let extract_type_variables (t:type_expression) : type_name list
+(* get all the variables from a type
+ * optional argument stable allow to keep the order of first occurences *)
+let extract_type_variables ?(stable=false) (t:type_expression) : type_name list
   = let rec extract_type_variables_aux = function
         | TVar(x) -> [x]
         | Data(_, params) -> List.concat (List.map extract_type_variables_aux params)
         | Arrow(t1,t2) -> (extract_type_variables_aux t1) @ (extract_type_variables_aux t2)
     in
-    uniq ~stable:true (extract_type_variables_aux t)
+    uniq ~stable:stable (extract_type_variables_aux t)
 
 
 let rec extract_datatypes (t:type_expression) : type_expression list
