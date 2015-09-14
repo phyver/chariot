@@ -175,8 +175,6 @@ let process_type_defs (env:environment)
         (* we check that all the type parameters are indeed parameters *)
         List.iter (function _,t ->
             let params' = extract_type_variables t in
-            debug "params %s" (string_of_list ", " id params);
-            debug "params' %s" (string_of_list ", " id params');
             match diff_uniq params' params with
                 | [] -> ()
                 | x::_ -> error (fmt "type parameter %s is free" x)
