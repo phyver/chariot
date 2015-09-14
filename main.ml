@@ -101,30 +101,42 @@ let _
         ("-v",                        Arg.Int (fun v -> set_option "verbose" (string_of_int v)),            "choose verbosity level");
         ("--verbose",                 Arg.Int (fun v -> set_option "verbose" (string_of_int v)),            "choose verbosity level");
 
-        ("--dont_show_nats",          Arg.Unit (fun _ -> set_option "show_nats" "false"),                   "do not use decimal notation for displaying natural numbers");
-        ("--dont_show_lists",         Arg.Unit (fun _ -> set_option "show_lists" "false"),                  "do not use standard notations for displaying lists");
-        ("--dont_show_tuples",        Arg.Unit (fun _ -> set_option "show_tuples" "false"),                 "do not use standard notations for displaying tuples");
-        ("--dont_allow_incomplete_defs",   Arg.Unit (fun _ -> set_option "allow_incomplete_defs" "false"),       "forbid incomplete definitions");
-        ("--keep_useless_clauses",    Arg.Unit (fun _ -> set_option "keep_useless_clauses" "true"),         "keep useless clauses in function definitions");
-        ("--dont_use_priorities",     Arg.Unit (fun _ -> set_option "show_use_priorities" "false"),         "do not use priorities for checking termination (unsound)");
-        ("--dont_show_priorities",    Arg.Unit (fun _ -> set_option "show_priorities" "false"),             "do not display priorities when showing function definitions");
-        ("--continue_on_error",       Arg.Unit (fun _ -> set_option "continue_on_error" "true"),            "do not exit on errors (only for non-interactive use)");
-        ("--squash_priorities",       Arg.Unit (fun _ -> set_option "squash_priorities" "true"),            "consecutive types of same polarity get the same priority");
-        ("--use_ansi_codes",          Arg.Unit (fun _ -> set_option "use_ansi_codes" "true"),               "use ANSI color codes to display various information");
-        ("--dont_use_subsumption",    Arg.Unit (fun _ -> set_option "use_subsumption" "false"),             "don't use subsumption to simplify sets of clauses");
-        ("--dont_collapse_graph",     Arg.Unit (fun _ -> set_option "collapse_graph" "false"),              "don't collapse initial call-graph");
-        ("--dont_allow_inadequate_defs",   Arg.Unit (fun _ -> set_option "allow_inadequate_defs" "false"),        "forbid definitions that do not pass the SCT");
-        ("--expand_clauses",            Arg.Unit (fun _ -> set_option "expand_clauses" "true"),             "use the case expression of the definitions to regenerate the clauses");
-        ("--allow_structs",           Arg.Unit (fun _ -> set_option "allow_structs" "true"),                "allow structures inside terms");
+        ("--colors",                  Arg.Unit (fun _ -> set_option "use_ansi_codes" "true"),               "use ANSI color codes to display various information");
+
+        (* ("--dont_show_nats",          Arg.Unit (fun _ -> set_option "show_nats" "false"),                   "do not use decimal notation for displaying natural numbers"); *)
+        (* ("--dont_show_lists",         Arg.Unit (fun _ -> set_option "show_lists" "false"),                  "do not use standard notations for displaying lists"); *)
+        (* ("--dont_show_tuples",        Arg.Unit (fun _ -> set_option "show_tuples" "false"),                 "do not use standard notations for displaying tuples"); *)
+        (* ("--dont_allow_incomplete_defs",   Arg.Unit (fun _ -> set_option "allow_incomplete_defs" "false"),       "forbid incomplete definitions"); *)
+        (* ("--keep_useless_clauses",    Arg.Unit (fun _ -> set_option "keep_useless_clauses" "true"),         "keep useless clauses in function definitions"); *)
+        (* ("--dont_use_priorities",     Arg.Unit (fun _ -> set_option "show_use_priorities" "false"),         "do not use priorities for checking termination (unsound)"); *)
+        (* ("--dont_show_priorities",    Arg.Unit (fun _ -> set_option "show_priorities" "false"),             "do not display priorities when showing function definitions"); *)
+        (* ("--continue_on_error",       Arg.Unit (fun _ -> set_option "continue_on_error" "true"),            "do not exit on errors (only for non-interactive use)"); *)
+        (* ("--squash_priorities",       Arg.Unit (fun _ -> set_option "squash_priorities" "true"),            "consecutive types of same polarity get the same priority"); *)
+        (* ("--dont_use_subsumption",    Arg.Unit (fun _ -> set_option "use_subsumption" "false"),             "don't use subsumption to simplify sets of clauses"); *)
+        (* ("--dont_collapse_graph",     Arg.Unit (fun _ -> set_option "collapse_graph" "false"),              "don't collapse initial call-graph"); *)
+        (* ("--dont_allow_inadequate_defs",   Arg.Unit (fun _ -> set_option "allow_inadequate_defs" "false"),        "forbid definitions that do not pass the SCT"); *)
+        (* ("--expand_clauses",            Arg.Unit (fun _ -> set_option "expand_clauses" "true"),             "use the case expression of the definitions to regenerate the clauses"); *)
+        (* ("--allow_structs",           Arg.Unit (fun _ -> set_option "allow_structs" "true"),                "allow structures inside terms"); *)
       ] in
     let help = "usage: " ^ Sys.argv.(0) ^ " [-i] [file]\n" in
-    Arg.parse args (fun f -> incr nb_files; loadfile f) help;
 
-    if !nb_files = 0 || !interactive
+
+    let files = ref [] in
+    Arg.parse args (fun f ->
+        incr nb_files;
+        files := f::!files)
+    help;
+
+    if !files = [] then interactive := true;
+
+    if !interactive
     then begin
-        print_endline "          chariot";
+        print_endline (fmt "          chariot (commit #%s)" Version.git_commit);
         print_endline "  :help for help";
         print_newline();
+        List.iter (fun f ->
+            msg "loading file %s..." f;
+            loadfile f) (List.rev !files);
         try
             mainloop()
         with Exit -> print_endline "Bye..."
