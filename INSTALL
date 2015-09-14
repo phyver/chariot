@@ -1,6 +1,17 @@
+prerequisites
+=============
 
-you need a standard OCaml distribution, with ocamlbuild
+a standard OCaml distribution with ocamlbuild
 
-to build:
+build
+=====
+
     $ make release
+
+usage
+=====
+
+    $ ./chariot
+or
+    $ ./chariot -i file1.ch file2.ch ...
 
