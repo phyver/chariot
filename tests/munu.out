@@ -1,0 +1,13 @@
+>> option verbose is set to 1
+>> inductive type c was succesfully defined
+>> coinductive type t1 was succesfully defined
+>> coinductive type d was succesfully defined
+>> inductive type t2 was succesfully defined
+>> Typing for test1 successful
+>> the definition for test1 is complete
+>> the definition test1 is provably correct
+
+>> Typing for test2 successful
+>> the definition for test2 is complete
+!! warning: the definition test2 is NOT provably correct (weight_bound: 2, depth_bound: 2)
+
