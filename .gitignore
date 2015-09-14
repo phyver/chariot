@@ -7,4 +7,4 @@ _build
 tmp*
 *.tmpout
 gmon*
-version.ml
+*.tar
