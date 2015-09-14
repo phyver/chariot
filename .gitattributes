@@ -3,4 +3,3 @@ TODO                export-ignore
 .merlin             export-ignore
 .gitignore          export-ignore
 .gitattributes      export-ignore
-version             export-ignore
