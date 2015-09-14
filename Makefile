@@ -11,18 +11,23 @@ tags:
 add_commit: FORCE
 	@sed "s/let git_commit = \"GIT_CURRENT_COMMIT\"/let git_commit=\"$(GIT_CURRENT_COMMIT)\"/" version > version.ml
 
-debug: add_commit
+help_file: FORCE
+	@echo "let help_text = [" > help.ml
+	@sed -e "s/\"/'/g" -e "s/^\(.*\)$$/  \"\1\";/" README >> help.ml
+	@echo "  ]" >> help.ml
+
+debug: add_commit help_file
 	$(OCAMLBUILD) -tag profile -tag debug main.native
 
-native: add_commit
+native: add_commit help_file
 	$(OCAMLBUILD) main.native
 	@ln -sf ./main.native ./chariot
 
-byte: add_commit
+byte: add_commit help_file
 	$(OCAMLBUILD) main.byte
 	@ln -sf ./main.byte ./chariot
 
-release: add_commit
+release:
 	$(OCAMLBUILD) main.native -cflag "-noassert"
 	@ln -sf ./main.native ./chariot
 
@@ -40,6 +45,5 @@ clean:
 	rm -f chariot
 	rm -f tags
 	rm -f gmon.out a.out
-	rm version.ml
 
 FORCE:

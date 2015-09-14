@@ -145,13 +145,7 @@ let cmd_show s =
 
 
 let cmd_show_help ()
-  = print_list "| " "\n| " "\n\n" print_string [
-        "";
-        "chariot: a language with arbitrary nested inductive and coinductive types";
-        "";
-        "TODO";
-        "";
-    ]
+  = print_list "| " "\n| " "\n\n" print_string Help.help_text
 
 let cmd_show_type (term:plain_term) : unit
   = let term = parsed_to_plain term in
