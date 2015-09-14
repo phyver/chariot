@@ -78,7 +78,7 @@ let loadfile path
 let mainloop ()
   = while true
     do
-        print_string current_state.prompt; flush_all();
+        print_string (prompt()); flush_all();
         let lexbuf = Lexing.from_channel stdin in
         flush_all ();
         try
@@ -141,3 +141,4 @@ let _
             mainloop()
         with Exit -> print_endline "Bye..."
     end
+    else List.iter (fun f -> loadfile f) (List.rev !files);

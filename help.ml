@@ -41,7 +41,7 @@ let help_text = [
   "        | D2 : ...";
   "        | ...";
   "";
-  "Each Ci is a *destructorn' and its type must start with tname(params).";
+  "Each Ci is a *destructor* and its type must start with tname(params).";
   "(Each of the tj can also be tname(params in order to define a";
   "coinductive type.)";
   "There cannot be 'nullary' destructors D : tname(params).";

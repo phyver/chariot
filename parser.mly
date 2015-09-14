@@ -218,7 +218,7 @@ let test_compose l1 r1 l2 r2 =
     let l2 = parsed_to_sct l2 in
     let r2 = parsed_to_sct r2 in
     msg "  %s    o    %s" (string_of_sct_clause (l1,r1)) (string_of_sct_clause (l2,r2));
-    let l,r = collapsed_compose current_state.bound current_state.depth (l1,r1) (l2,r2) in
+    let l,r = collapsed_compose (get_int_option "bound") (get_int_option "depth") (l1,r1) (l2,r2) in
     msg "          =  %s" (string_of_sct_clause (l,r));
     print_newline()
 
@@ -227,8 +227,8 @@ let test_compare l1 r1 l2 r2 =
     let r1 = parsed_to_sct r1 in
     let l2 = parsed_to_sct l2 in
     let r2 = parsed_to_sct r2 in
-    let l1,r1 = collapse_sct_clause current_state.bound current_state.depth (l1,r1) in
-    let l2,r2 = collapse_sct_clause current_state.bound current_state.depth (l2,r2) in
+    let l1,r1 = collapse_sct_clause (get_int_option "bound") (get_int_option "depth") (l1,r1) in
+    let l2,r2 = collapse_sct_clause (get_int_option "bound") (get_int_option "depth") (l2,r2) in
     msg "  %s    ≥    %s" (string_of_sct_clause (l1,r1)) (string_of_sct_clause (l2,r2));
     if approximates (l1,r1) (l2,r2)
     then msg "        TRUE"
@@ -237,8 +237,8 @@ let test_compare l1 r1 l2 r2 =
 
 let test_collapse (p:plain_term) =
     let p = parsed_to_sct p in
-    let q = collapse_sct_pattern current_state.depth p in
-    let q = collapse_weight_in_pattern current_state.bound q in
+    let q = collapse_sct_pattern (get_int_option "depth") p in
+    let q = collapse_weight_in_pattern (get_int_option "bound") q in
     msg "  collapse of   %s   is   %s" (string_of_sct_pattern p) (string_of_sct_pattern q);
     print_newline()
 

@@ -255,14 +255,14 @@ let process_function_defs (env:environment)
                         (plural new_functions "" "s")
                         (string_of_list ", " id new_functions)
                         (plural new_functions "is" "are")
-                        current_state.bound
-                        current_state.depth
+                        (get_int_option "bound")
+                        (get_int_option "depth")
              else error (fmt  "the definition%s %s %s NOT provably correct (weight_bound: %d, depth_bound: %d)"
                             (plural new_functions "" "s")
                             (string_of_list ", " id new_functions)
                             (plural new_functions "is" "are")
-                            current_state.bound
-                            current_state.depth)
+                            (get_int_option "bound")
+                            (get_int_option "depth"))
         end;
 
 

@@ -39,19 +39,18 @@ knowledge of the CeCILL-B license and that you accept its terms.
 open Misc
 open Env
 
+type opt = | OptBool of bool | OptString of string | OptInt of int
+
 type state =
     {
         mutable current_bloc: int                                           ;  (* counter for blocs of function definitions and type definitions *)
         mutable env: environment                                            ;
 
-        mutable prompt: string                                              ;
-        mutable verbose: int                                                ;
-        mutable boolean_options: (string*bool*string) list                  ;
-        mutable depth: int                                                  ;
-        mutable bound: int                                                  ;
+        mutable options: (string*opt*string) list                           ;
 
         mutable last_explore: (int*plain_term) frozen_term option           ;
     }
+
 
 let current_state =
     {
@@ -61,48 +60,60 @@ let current_state =
                 constants             = []      ;
                 functions             = []      ;
               }                                 ;
-        prompt = "# "                           ;
-        verbose = 0                             ;
-        boolean_options = [
-            "show_frozen_terms",       false    , "show frozen terms in reduced terms" ;
-            "show_nats",               true     , "use decimal notation for displaying natural numbers" ;
-            "show_lists",              true     , "use standard notations for displaying lists" ;
-            "show_tuples",             true     , "use standard notations for displaying tuples" ;
+        options = [
+            "depth" , OptInt 2 , "depth of exploration during the SCT"                              ;
+            "bound" , OptInt 2 , "bound for weight during the SCT"                              ;
 
-            "allow_incomplete_defs",   true     , "allow incomplete definitions";
-            "keep_useless_clauses",    false    , "keep useless clauses in function definitions";
-            "use_priorities",          true     , "use priorities for checking termination (unsound if false)" ;  (* FIXME -> only check termination *)
-            "show_priorities",         true     , "display priorities when showing function definitions" ;
-            "continue_on_error",       false    , "do not quit on errors (only for non-interactive use)" ;
-            "squash_priorities",       false    , "consecutive types of same polarity get the same priority" ;
-            "use_ansi_codes",          false    , "use ANSI color codes to display various information" ;
-            "use_subsumption",         true     , "use subsumption to simplify sets of clauses" ;
-            "collapse_graph",          true     , "collapse initial call-graph" ;
-            "allow_inadequate_defs",   true     , "allow definition that do not pass the SCT" ;
-            "expand_clauses",          false    , "use the case expansion of the clauses to regenerate the clauses";
-            "allow_structs",           true     , "allow structures inside terms";
+            "prompt" , OptString "# " , "prompt for the interactive toplevel"                          ;
+            "verbose" , OptInt 0  , "verbosity level"                           ;
+
+            "show_frozen_terms",      OptBool false    , "show frozen terms in reduced terms" ;
+            "show_nats",              OptBool true    , "use decimal notation for displaying natural numbers" ;
+            "show_lists",             OptBool true    , "use standard notations for displaying lists" ;
+            "show_tuples",            OptBool true    , "use standard notations for displaying tuples" ;
+
+            "allow_incomplete_defs",  OptBool true    , "allow incomplete definitions";
+            "keep_useless_clauses",   OptBool false    , "keep useless clauses in function definitions";
+            "use_priorities",         OptBool true    , "use priorities for checking termination (unsound if false)" ;  (* FIXME -> only check termination *)
+            "show_priorities",        OptBool true    , "display priorities when showing function definitions" ;
+            "continue_on_error",      OptBool false    , "do not quit on errors (only for non-interactive use)" ;
+            "squash_priorities",      OptBool false    , "consecutive types of same polarity get the same priority" ;
+            "use_ansi_codes",         OptBool false    , "use ANSI color codes to display various information" ;
+            "use_subsumption",        OptBool true    , "use subsumption to simplify sets of clauses" ;
+            "collapse_graph",         OptBool true    , "collapse initial call-graph" ;
+            "allow_inadequate_defs",  OptBool true    , "allow definition that do not pass the SCT" ;
+            "expand_clauses",         OptBool false    , "use the case expansion of the clauses to regenerate the clauses";
+            "allow_structs",          OptBool true    , "allow structures inside terms";
 
 (* various debuging options *)
-            "show_initial_graph",      false    , "show initial call graph when checking adequacy" ;
-            "show_final_graph",        false    , "show final call graph when checking adequacy" ;
-            "show_all_steps",          false    , "show all successive graphs when checking adequacy" ;
-            "show_coherent_loops",     false    , "show coherent loops found in the final graph when checking adequacy" ;
-            "show_bad_loops",          false    , "show the first non-decreasing coherent loop found when checking adequacy" ;
-            "incremental_SCT",         true     , "do not try the SCT at smaller depth";
+            "show_initial_graph",     OptBool false    , "show initial call graph when checking adequacy" ;
+            "show_final_graph",       OptBool false    , "show final call graph when checking adequacy" ;
+            "show_all_steps",         OptBool false    , "show all successive graphs when checking adequacy" ;
+            "show_coherent_loops",    OptBool false    , "show coherent loops found in the final graph when checking adequacy" ;
+            "show_bad_loops",         OptBool false    , "show the first non-decreasing coherent loop found when checking adequacy" ;
+            "incremental_SCT",        OptBool true    , "do not try the SCT at smaller depth";
         ]                                       ;
-        depth = 2                               ;
-        bound = 2                               ;
         last_explore = None                     ;
     }
 
-(* get boolean option in current state *)
-let option (s:string) : bool
-  = try List.assoc s (List.map (function o,v,h -> o,v) current_state.boolean_options)
+let get_option (s:string) : opt
+  = let opts = List.map (function o,v,h -> o,v) current_state.options in
+    try List.assoc s opts
     with Not_found -> error ("option " ^ s ^ " doesn't exist")
+
+(* get boolean option in current state *)
+let option s
+  = match get_option s with | OptBool v -> v | _ -> error (fmt "option %s is not boolean" s)
 
 (* return true if current verbosity is greater than k *)
 let verbose (k:int) : bool
-  = current_state.verbose >= k
+  = match get_option "verbose" with | OptInt v -> v >= k | _ -> assert false
+
+let prompt ()
+  = match get_option "prompt" with OptString p -> p | _ -> assert false
+
+let get_int_option s
+  = match get_option s with OptInt n -> n | _ -> assert false
 
 (* various helper function to print messages *)
 let msg ?(indent=2) fmt
@@ -131,50 +142,39 @@ let debug ?(indent=2) fmt
 
 
 let show_options ()
-  = msg "options:";
-    msg "    %-20s: %-10s  %s" "prompt"     current_state.prompt    "prompt for interactive use";
-    msg "    %-20s: %-10d  %s" "verbose"    current_state.verbose   "verbosity level";
-    msg "    %-20s: %-10d  %s" "depth"      current_state.depth     "depth of terms when checking adequacy";
-    msg "    %-20s: %-10d  %s" "bound"      current_state.bound     "bound for the weights of terms when checking adequacy";
-    List.iter (function o,v,h -> msg "    %-20s: %-10s  %s" o (if v then "true" else "false") h) current_state.boolean_options
+  =
+    let string_of_option_val v
+      = match v with
+            | OptBool v -> string_of_bool v
+            | OptString v -> v
+            | OptInt v -> string_of_int v
+    in
+    msg "options:";
+    List.iter (function o,v,h -> msg "    %-20s: %-10s  %s" o (string_of_option_val v) h) current_state.options
 
 let set_option s v
-  = let rec set_option_aux options s v =
+  =
+    let option_val_of_string old_value v
+      = match old_value with
+            | OptBool _ -> OptBool (bool_of_string v)
+            | OptString _ -> OptString v
+            | OptInt _ -> OptInt (int_of_string v)
+    in
+
+    let rec set_option_aux options s v =
         match options with
             | [] -> error ("option " ^ s ^ " doesn't exist")
-            | (s',_,h)::options when s'=s -> (s',v,h)::options
+            | (s',old_value,h)::options when s'=s -> (s',option_val_of_string old_value v,h)::options
             | x::options -> x::(set_option_aux options s v)
     in
     let akn () = if verbose 1 then msg "option %s is set to %s" s v
     in
     match s with
-        | "prompt" -> current_state.prompt <- v; akn()
-        | "verbose" -> (try current_state.verbose <- int_of_string v; akn() with Failure _ -> error "%s is not an integer")
-        | "depth" ->
-            begin
-                try
-                    let d = int_of_string v in
-                    if d < 0
-                    then error "depth cannot be strictly negative"
-                    else (current_state.depth <- d; akn())
-                with Failure _ -> error (fmt "%s is not an integer" v)
-            end
-        | "bound" -> 
-            begin
-                try
-                    let b = int_of_string v in
-                    if b <= 0
-                    then error "bound must be strictly positive"
-                    else (current_state.bound <- b; akn())
-                with Failure _ -> error (fmt "%s is not an integer" v)
-            end
         | "" -> show_options ()
         | s ->
             begin
-                try
-                    current_state.boolean_options <- set_option_aux current_state.boolean_options s (bool_of_string v);
+                    current_state.options <- set_option_aux current_state.options s v;
                     akn()
-                with Invalid_argument _ -> error (fmt "%s is not a boolean" v)
             end
 
 

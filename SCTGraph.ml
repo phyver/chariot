@@ -318,7 +318,7 @@ let transitive_closure initial_graph b d =
 let size_change_termination_bounds graph b d =
   assert (d>=0 && b>0) ;
   let graph = if option "collapse_graph"
-              then collapse_graph current_state.bound d graph
+              then collapse_graph b d graph
               else graph
   in
   let tc_graph = transitive_closure graph b d in
@@ -366,6 +366,9 @@ let size_change_termination env defs =
          end;
 
 
+        let bound = get_int_option "bound" in
+        let depth = get_int_option "depth" in
+
         let rec test = function
             [] -> false
           | d::ds ->
@@ -378,7 +381,7 @@ let size_change_termination env defs =
               (*   print_string " **"; *)
               (*   print_newline() *)
               (* end; *)
-              let t = size_change_termination_bounds graph current_state.bound d in
+              let t = size_change_termination_bounds graph bound d in
               if t
               then (
                 (* ifDebug "show_summary_TC" *)
@@ -392,13 +395,13 @@ let size_change_termination env defs =
                 test ds
         in
         let rec ds n acc =
-          if (current_state.depth <= n)
-          then List.rev (current_state.depth::acc)
+          if (depth <= n)
+          then List.rev (depth::acc)
           else ds (2*n) (n::acc)
         in
         let t = if option "incremental_SCT"
                 then test (ds 1 [0])
-                else test [current_state.depth]
+                else test [depth]
         in
         if t
         then true
