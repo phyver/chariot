@@ -69,9 +69,9 @@ let loadfile path
     try
         Parser.statements Lexer.tokenize lexbuf
     with
-        | Parsing.Parse_error -> parse_error lexbuf
-        | Error err -> errmsg "%s" err
-        | Sys_error err -> errmsg "%s" err
+        | Sys_error err -> errmsg "%s" err; exit 1
+        | Parsing.Parse_error -> parse_error lexbuf; exit 2
+        | Error err -> errmsg "ttt%s" err; exit 3
         | Exit -> close_in f_in
 
 
