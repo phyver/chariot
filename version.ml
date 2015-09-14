@@ -1,1 +1,1 @@
-let git_commit="6974cfc02e58b06934b6b171117c15e1cc565358"
+let git_commit=""

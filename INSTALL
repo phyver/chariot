@@ -1,0 +1,6 @@
+
+you need a standard OCaml distribution, with ocamlbuild
+
+to build:
+    $ make release
+
