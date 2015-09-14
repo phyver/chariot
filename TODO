@@ -10,8 +10,6 @@
 
   - better exceptions than "Not_found" for utils.ml functions
 
-  - use type coefficiont = Top | Prio of int*weight???
-
   - change type used for representing function clauses:
        type clause = (var_name * term list) * term
 
@@ -25,15 +23,11 @@
 
   - allow parser to read priorities in terms (for testing)???
 
-  - README file
-
   - add some assert tests
 
   - remove "continue_on_error" option (stop when loading files, continue in interactive mode)
 
   - try sorting the CASE clauses so that recursive clauses come first
-
-
 
   - use DeCap?
 
@@ -43,8 +37,6 @@
   - think again about n-ary application
         type atomic_term = Var | Proj | Const | Angel
         type term = App of atomic_term * term list | Special ...
-
-  - pygmentize / highlight to get colors???
 
   - allow "{ proj1 = u1 ; ... ; projn = un }" in terms and patterns (=> lexer,
     parser, term, ...) unification now has
