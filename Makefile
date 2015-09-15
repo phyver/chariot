@@ -38,6 +38,7 @@ noninteractive-tests: native
 
 archive: preproc
 	git archive --prefix=chariot/ -o chariot.tar HEAD
+	tar --append --file=chariot.tar version.ml --transform 's,version.ml,chariot/version.ml,'
 
 clean:
 	ocamlbuild -clean
