@@ -101,9 +101,7 @@ rule tokenize = parse
     | "=>"              { DOUBLEARROW }
     | "val"             { VAL }
     | "???"             { ANGEL }
-    | "⊤"               { ANGEL }
     | "!!!"             { DAIMON }
-    | "⊥"               { DAIMON }
     | ">"               { GT }
 
     | dummy             { DUMMY }

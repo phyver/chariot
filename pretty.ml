@@ -112,8 +112,8 @@ let rec
     try string_of_term_tuple indent ss sp st v       with Invalid_argument "string_of_term_tuple" ->
     begin
     match v with
-        | Angel t -> "⊤" ^ (st t)
-        | Daimon t -> "⊥" ^ (st t)
+        | Angel t -> "???" ^ (st t)
+        | Daimon t -> "!!!" ^ (st t)
         | Var(x,t) -> (string_of_var x) ^ (st t)
         | Const(c,p,t) -> c ^ (sp p) ^ (st t)
         | Proj(d,p,t) -> "." ^ d ^ (sp p) ^ (st t)

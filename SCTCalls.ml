@@ -181,9 +181,7 @@ let sct_pattern_add_args (f,args1:sct_pattern) (args2:approx_term list) : sct_pa
 (*     r *)
 
 
-(* simplify a sum of variables with coefficients
- * NOTE: the argument is given as an approx_term because it can be an Angel of a Daimon *)
-(* TODO: check if this can be avoided *)
+(* simplify a sum of variables with coefficients *)
 let simplify_coeffs xcs =
     let rec simplify_aux = function
         | [] -> []
