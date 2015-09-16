@@ -58,7 +58,7 @@ val
 
 val
    bad : struct_2('a,'a) → 'b
-    | bad { Fst = x ; Snd = x }² = ⊤
+    | bad { Fst = x ; Snd = x }² = ???
 
 val
    f : struct_2('a,'b) → prod_2('a,'b)

@@ -9,5 +9,30 @@
 
 >> Typing for test2 successful
 >> the definition for test2 is complete
-!! warning: the definition test2 is NOT provably correct (weight_bound: 2, depth_bound: 2)
+>> the definition test2 is provably correct
+
+>> Typing for test3 successful
+>> the definition for test3 is complete
+!! warning: the definition test3 is NOT provably correct (weight_bound: 2, depth_bound: 2)
+
+>> Typing for test4 successful
+>> the definition for test4 is complete
+>> the definition test4 is provably correct
+
+>> functions in environment:
+val
+   test1 : t1
+    | test1 = { D1 = C1¹ test1 }²
+
+val
+   test2 : c(t1)
+    | test2 = C1¹ { D1 = test2 }²
+
+val
+   test3 : t2
+    | test3 = C2³ { D2 = test3 }²
+
+val
+   test4 : d(t2)
+    | test4 = { D2 = test3 }²
 

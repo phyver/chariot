@@ -7,5 +7,14 @@ data t2 where C2 : d(t2) -> t2
 val test1 : t1
   | test1 = D1 # C1 $ test1
 
-val test2 : t2
-  | test2 = C2 $ D2 # test2
+val test2 : c(t1)
+    | test2 = C1 $ D1 # test2
+
+val test3 : t2
+  | test3 = C2 $ D2 # test3
+
+val test4 : d(t2)
+    | test4 = D2 # test3
+
+:show functions
+
