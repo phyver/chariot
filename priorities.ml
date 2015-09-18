@@ -69,15 +69,15 @@ let find_types_priorities env ts
     let nodes = ts in
 
     (* wether a type appears inside another *)
-    let rec subtype_of t1 t2
+    let subtype_of0 t1 t2
       = match t1,t2 with
             | t1,t2 when t1=t2 -> false
-            | t1,Data(tname2,params2) -> List.mem t1 params2 || List.exists (subtype_of t1) params2
+            | t1,Data(tname2,params2) -> List.mem t1 params2
             | Data _, TVar _ | TVar _, TVar _ -> false
             | _,_ -> assert false
     in
 
-    let graph = List.map (fun x -> x,List.filter (subtype_of x) nodes) nodes in
+    let graph = List.map (fun x -> x,List.filter (subtype_of0 x) nodes) nodes in
 
     (* see http://stackoverflow.com/questions/4653914/topological-sort-in-ocaml *)
     let rec dfs path seen n =
