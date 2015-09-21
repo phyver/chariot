@@ -64,7 +64,8 @@ let specialize_constant (env:environment)
           end
       | _ -> raise (Invalid_argument "specialize_constant: not a (co)data type")
 
-let find_types_priorities env ts
+let find_types_priorities env (ts:type_expression list)
+  : (type_expression*int) list
   =
     let nodes = ts in
 
@@ -79,56 +80,32 @@ let find_types_priorities env ts
 
     let graph = List.map (fun x -> x,List.filter (subtype_of0 x) nodes) nodes in
 
-    (* see http://stackoverflow.com/questions/4653914/topological-sort-in-ocaml *)
-    let rec dfs path seen n =
-        if List.mem n path then raise (Invalid_argument "dfs: found loop") else
-        if List.mem n seen then seen else
-        let path = n::path in
-        let next = List.assoc n graph in
-        let seen = List.fold_left (dfs path) seen next in
-        n::seen
-    in
-
-    (* order the nodes by dfs, to get subtypes later in the list *)
-    let nodes = List.fold_left (fun seen n -> dfs [] seen n) [] nodes
-    in
-
     (* computes the priority for type t
-     *   - acc is the list of types with priorities already computed
-     *   - on_hold contains the types whose priority has been delayed, pending some priorities for some other types
-     *
-     * NOTE: we need to consider atomic types first and composite types later:
-     * this ensures that Rose trees (and similar mutual types) get appropriate priorities:
-     *   rtree needs list(rtree)
-     * but if we start by computing the priority of list(rtree), we will assign priority 1 to rtree and 3 to list(rtree)
+     * acc is the list of types with priorities already computed
      *)
-    let rec order t acc on_hold
+    let rec order (n:int) (graph:(type_expression*(type_expression list)) list) (acc:(type_expression*int) list)
       =
-        try List.assoc t acc, acc
-        with Not_found ->
-            match t with
-                | Data(tname,params) ->
-                    let consts = get_type_constants env tname in
-                    let type_consts = uniq (List.concat (List.map (fun c -> extract_datatypes (specialize_constant env t c)) consts)) in
-                    let n,acc = List.fold_left
-                                    (fun nacc _t ->
-                                        if _t = t || List.mem _t on_hold then nacc else
-                                        let n,acc = nacc in
-                                        let _n,_acc = order _t acc (t::on_hold) in
-                                        (max n _n), _acc
-                                    )
-                                    (0,acc)
-                                    type_consts
-                    in
-                    if is_inductive env tname = odd n
-                    (* TODO: I **need** to squash priorities, otherwise, the test might be unsound (see tests/bug-priorities.ch) *)
-                    then if option "squash_priorities" then (n, (t,n)::acc) else (n+2, (t,n+2)::acc)
-                    else (n+1, (t,n+1)::acc)
-                | _ -> assert false
+        (* debug "n:%d and acc:%s" n (string_of_list "\n    " (function t,p -> (string_of_type t) ^ ":" ^ (string_of_int p)) acc); *)
+        match graph with
+            | [] -> acc
+            | graph ->
+                let terminals,graph =
+                    List.partition (function Data(tname,_),[] -> (is_inductive env tname) = (even n)
+                                           | Data _,_ -> false
+                                           | _ -> assert false
+                                   ) graph in
+                let terminals = List.map fst terminals in
+                let graph = List.map (second (List.filter (fun t -> not (List.mem t terminals)))) graph in
+                let terminals = List.map (fun t -> t,n+1) terminals in
+                let n =
+                    if terminals = [] then n+1
+                    else if option "squash_priorities" then n
+                    else n+1
+                in
+                order n graph (terminals@acc)
     in
-    let datatypes = List.filter (function Data _ -> true | _ -> assert false) nodes in
 
-    List.fold_left (fun acc t -> let n,acc = order t acc [] in acc) [] datatypes
+    order (-1) graph []
 
 let infer_priorities (env:environment)
                      (defs:(var_name * type_expression * (typed_term*typed_term) list * 'x) list)
@@ -154,7 +131,7 @@ let infer_priorities (env:environment)
 
     let local_types = find_types_priorities env datatypes in
     let local_types = List.sort (fun x y -> compare (snd x) (snd y)) local_types in
-    (* debug "priorities:\n    %s" (string_of_list "\n    " (function t,p -> (string_of_type t) ^ ":" ^ (string_of_int p)) local_types); *)
+    debug "priorities:\n    %s" (string_of_list "\n    " (function t,p -> (string_of_type t) ^ ":" ^ (string_of_int p)) local_types);
 
     let get_priority t =
         let rec aux = function
