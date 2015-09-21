@@ -1,4 +1,5 @@
 >> option verbose is set to 1
+>> option continue_on_error is set to true
 >> option verbose is set to 2
 >> inductive type empty was succesfully defined
 >> coinductive type unit was succesfully defined
@@ -57,4 +58,26 @@ val
 >> x₁ x₂ x₃ -> 
 >>   {
 >>      }
+
+** error: types with no constants are not allowed to have parameters
+** error: types with no constants are not allowed to have parameters
+** error: there already is an empty type: empty
+** error: there already is a unit type: unit
+>> Typing for i successful
+>> the definition for i is complete
+>> Incremental test at depth 0
+>> the definition i is provably correct
+
+val
+   i : unit → 'a
+    | i {  }⁰ = ???
+>> 
+>> corresponding case and struct form:
+>> x₁ -> ???
+
+>> Typing for j successful
+!! warning: useless clause 2: j {  } = !!!
+>> the definition for j is complete
+>> Incremental test at depth 0
+>> the definition j is provably correct
 
