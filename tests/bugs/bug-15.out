@@ -15,14 +15,14 @@
 >> functions in environment:
 val
    zeros4 : stream4
-    | zeros4 = { D4 = { Nu = C¹ zeros4 }² }⁴
+    | zeros4 = { D4 = { Nu = C¹ zeros4 }⁰ }²
 >> 
 >> corresponding case and struct form:
 >> { D4 = { Nu = C zeros4 } }
 
 val
    convert4 : stream4 → nat
-    | convert4 { D4 = { Nu = C¹ s }² }⁴ = 0
+    | convert4 { D4 = { Nu = C¹ s }⁰ }² = 0
 >> 
 >> corresponding case and struct form:
 >> x₁ -> 

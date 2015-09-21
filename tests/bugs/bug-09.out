@@ -5,7 +5,7 @@
 >> the definition for f is complete
 >> initial callgraph:
 >> calls from f to f:
->>     f, x => f, <1²>x
+>>     f, x => f, <1⁰>x
 
 !! warning: the definition f is NOT provably correct (weight_bound: 2, depth_bound: 2)
 

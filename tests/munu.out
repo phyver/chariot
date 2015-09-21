@@ -30,9 +30,9 @@ val
 
 val
    test3 : t2
-    | test3 = C2³ { D2 = test3 }²
+    | test3 = C2¹ { D2 = test3 }⁰
 
 val
    test4 : d(t2)
-    | test4 = { D2 = test3 }²
+    | test4 = { D2 = test3 }⁰
 

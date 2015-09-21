@@ -12,6 +12,6 @@
 
 val
    bad : nat → nat * list(nat)
-    | (bad n).Fst² = n
-    | (bad n).Snd² = Cons³ (bad (n+1))
+    | (bad n).Fst⁰ = n
+    | (bad n).Snd⁰ = Cons¹ (bad (n+1))
 

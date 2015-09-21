@@ -11,6 +11,6 @@
 
 val
    bad : stream(tree)
-    | bad.Head² = Node³ bad
-    | bad.Tail² = bad
+    | bad.Head⁰ = Node¹ bad
+    | bad.Tail⁰ = bad
 

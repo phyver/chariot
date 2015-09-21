@@ -36,15 +36,15 @@ val
 
 val
    pair : nat * nat
-    | pair = (Zero¹, Zero¹)
+    | pair = (Zero³, Zero³)
 
 val
    onetwothree : list(nat)
-    | onetwothree = Cons⁵ (Succ¹ Zero¹, Cons⁵ (Succ¹ (Succ¹ Zero¹), Cons⁵ (Succ¹ (Succ¹ (Succ¹ Zero¹)), Nil⁵ ())))
+    | onetwothree = Cons³ (Succ⁵ Zero⁵, Cons³ (Succ⁵ (Succ⁵ Zero⁵), Cons³ (Succ⁵ (Succ⁵ (Succ⁵ Zero⁵)), Nil³ ())))
 
 val
    pairs : nat * (nat * (nat * nat))
-    | pairs = (Succ¹ Zero¹, (Succ¹ (Succ¹ Zero¹), (Succ¹ (Succ¹ (Succ¹ Zero¹)), Succ¹ (Succ¹ (Succ¹ (Succ¹ Zero¹))))))
+    | pairs = (Succ⁷ Zero⁷, (Succ⁷ (Succ⁷ Zero⁷), (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷)), Succ⁷ (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷))))))
 
 >> inductive type prod_3 was succesfully defined
 >> Typing for test successful
@@ -53,7 +53,7 @@ val
 
 val
    test : nat * nat * nat
-    | test = (Succ¹ Zero¹, Succ¹ (Succ¹ Zero¹), Succ¹ (Succ¹ (Succ¹ Zero¹)))
+    | test = (Succ³ Zero³, Succ³ (Succ³ Zero³), Succ³ (Succ³ (Succ³ Zero³)))
 
 >> option continue_on_error is set to true
 ** error: cannot infer type of constant Tuple_4
@@ -69,17 +69,17 @@ val
 
 val
    pair : prod_2(nat,nat)
-    | pair = Tuple_2³ Zero¹ Zero¹
+    | pair = Tuple_2¹ Zero³ Zero³
 
 val
    onetwothree : list(nat)
-    | onetwothree = Cons⁵ (Tuple_2³ (Succ¹ Zero¹) (Cons⁵ (Tuple_2³ (Succ¹ (Succ¹ Zero¹)) (Cons⁵ (Tuple_2³ (Succ¹ (Succ¹ (Succ¹ Zero¹))) (Nil⁵ Tuple_0¹))))))
+    | onetwothree = Cons³ (Tuple_2¹ (Succ⁵ Zero⁵) (Cons³ (Tuple_2¹ (Succ⁵ (Succ⁵ Zero⁵)) (Cons³ (Tuple_2¹ (Succ⁵ (Succ⁵ (Succ⁵ Zero⁵))) (Nil³ Tuple_0¹))))))
 
 val
    pairs : prod_2(nat,prod_2(nat,prod_2(nat,nat)))
-    | pairs = Tuple_2⁷ (Succ¹ Zero¹) (Tuple_2⁵ (Succ¹ (Succ¹ Zero¹)) (Tuple_2³ (Succ¹ (Succ¹ (Succ¹ Zero¹))) (Succ¹ (Succ¹ (Succ¹ (Succ¹ Zero¹))))))
+    | pairs = Tuple_2¹ (Succ⁷ Zero⁷) (Tuple_2³ (Succ⁷ (Succ⁷ Zero⁷)) (Tuple_2⁵ (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷))) (Succ⁷ (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷))))))
 
 val
    test : prod_3(nat,nat,nat)
-    | test = Tuple_3³ (Succ¹ Zero¹) (Succ¹ (Succ¹ Zero¹)) (Succ¹ (Succ¹ (Succ¹ Zero¹)))
+    | test = Tuple_3¹ (Succ³ Zero³) (Succ³ (Succ³ Zero³)) (Succ³ (Succ³ (Succ³ Zero³)))
 
