@@ -122,8 +122,8 @@ convert_match env (xs:(var_name * const_name list) list)
 
 convert_match_aux env xs clauses fail
   =
-    (* debug "xs: [%s]" (string_of_list ", " id xs); *)
-    (* debug "clauses: {%s}" (string_of_list "," string_of_clause clauses); *)
+    (* debug "xs: [%s]" (string_of_list ", " (function x,ds -> fmt "%s%s" x (string_of_list "." id ds)) xs); *)
+    (* debug "clauses: {%s}" (string_of_list "," string_of_clause (List.map (function _,a,b -> a,b) clauses)); *)
     match xs,clauses with
         | [],[] -> assert false
 
@@ -168,7 +168,15 @@ convert_match_aux env xs clauses fail
         (* structure case *)
         | (x,ds)::xs,(_,Struct([],_,_)::_,_)::_ ->
             begin
-                todo "deal with empty structures"
+                let new_clauses
+                  = List.map
+                        (function n,(Struct([],_,_))::ps,cl ->
+                                n,ps,cl
+                            | _ -> assert false
+                        )
+                        clauses
+                in
+                convert_match env xs new_clauses fail
             end
         | (x,ds)::xs,(_,Struct((d,_)::_,_,_)::_,_)::_ ->
             begin

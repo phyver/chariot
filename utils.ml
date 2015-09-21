@@ -111,11 +111,27 @@ let get_function_case_struct (env:environment) (f:var_name)
 
 let get_other_constants (env:environment) (c:const_name) : const_name list
   = let rec get_aux = function
-        | [] -> error ("constant " ^ c ^ " doesn't exist")
+        | [] -> error (fmt "constant %s doesn't exist" c)
         | (_,_,_,consts)::_ when List.mem c consts -> consts
         | _::types -> get_aux types
     in get_aux env.types
 
+
+let get_empty_type (env:environment) : type_name
+  = let rec get_aux = function
+        | [] -> raise Not_found
+        | (tname,n,[],[])::_ when odd n -> tname
+        | (tname,n,_,[])::_ when odd n -> assert false
+        | _::types -> get_aux types
+    in get_aux env.types
+
+let get_unit_type (env:environment) : type_name
+  = let rec get_aux = function
+        | [] -> raise Not_found
+        | (tname,n,[],[])::_ when even n -> tname
+        | (tname,n,_,[])::_ when even n -> assert false
+        | _::types -> get_aux types
+    in get_aux env.types
 
 let rec type_arity (t:type_expression) : int
   = match t with

@@ -134,6 +134,23 @@ let rec check_constructor (t:type_name) (c:const_name*type_expression) : unit
     | (c,Arrow(_,_t)) -> check_constructor t (c,_t)
     | (c,_) -> error (fmt "constructor %s doesn't appropriate type" c)
 
+let check_empty_unit env n (t:type_name) params consts
+  = match params,consts with
+        | [],[] ->
+            begin
+                try
+                    if odd n
+                    then
+                        let tname = get_empty_type env in
+                        error (fmt "there already is an empty type: %s" tname)
+                    else
+                        let tname = get_unit_type env in
+                        error (fmt "there already is a unit type: %s" tname)
+                with Not_found -> ()
+            end
+        | _,[] -> error "types with no constants are not allowed to have parameters"
+        | _,_ -> ()
+
 let process_type_defs (env:environment)
                       (n:bloc_nb)
                       (defs:(type_name * (type_expression list) * (const_name * type_expression) list) list)
@@ -169,6 +186,9 @@ let process_type_defs (env:environment)
         =
         let params = List.map (function TVar(x) -> x | _ -> assert false) params in
 
+        (* we check that we are not redefining an empty / unit type *)
+        check_empty_unit env n tname params consts;
+
         (* we check that all the parameters are different *)
         check_uniqueness_parameters params;
 
@@ -179,7 +199,6 @@ let process_type_defs (env:environment)
                 | [] -> ()
                 | x::_ -> error (fmt "type parameter %s is free" x)
         ) consts;
-
 
         (* we check that all instances of defined type appear with the same parameters *)
         List.iter (function _,t -> check_parameters env new_types_with_params t) consts;
