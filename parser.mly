@@ -50,6 +50,32 @@ open FunctionDefs
 open TypeDefs
 
 
+let check_charity_type tname params var clauses
+  =
+    (* check that the fixed point variable is not a parameter *)
+    if List.mem (TVar(var)) params
+    then error (fmt "mu variable %s cannot be a parameter in definition of %s" var tname);
+
+    (* check that the new type name doesn't appear in the clauses *)
+    let rec check_type = function
+        | TVar(x) | Data(x,_) when x=tname -> error (fmt "the type %s cannot appear in its charity definition" tname)
+        | TVar(_) -> ()
+        | Data(_,params) -> List.iter check_type params
+        | Arrow(t1,t2) -> check_type t1 ; check_type t2
+    in
+    List.iter (function c,t -> check_type t) clauses;
+
+    (* substitute the fixed point variable for the defined type *)
+    let clauses =
+        List.map
+            (second
+                (subst_type [var,Data(tname,params)]))
+            clauses
+    in
+
+    tname, params, clauses
+
+
 let parsed_to_plain v
   = map_raw_term (fun _ -> error "no structure allowed for this command") id id v
 
@@ -265,8 +291,6 @@ let test_collapse (p:plain_term) =
 %type <unit> single_statement
 
 %type <int * (type_name * (type_expression list) * (const_name * type_expression) list) list> new_types
-%type <(type_name * (type_expression list) * (const_name * type_expression) list) list> type_defs
-%type <type_name * (type_expression list) * (const_name * type_expression) list> type_def
 
 %type <var_name * type_expression option * (plain_term * plain_term) list> function_def
 %type <(var_name * type_expression option * (plain_term * plain_term) list ) list> function_defs
@@ -321,15 +345,24 @@ new_types:
      *        - a list of constants (constructors for data, destructors for codata), with a type
      * No sanity checking is done by the parser, everything is done in the "process_type_defs" function in file "checkTypes.ml"...
      *)*/
-    |   DATA type_defs          { (-1,$2) }     /* the "-1" and "-2" are replaced by the appropriate bloc number in the function cmd_process_type_defs */
-    | CODATA type_defs          { (-2,$2) }
+    |   DATA data_defs          { (-1,$2) }     /* the "-1" and "-2" are replaced by the appropriate bloc number in the function cmd_process_type_defs */
+    | CODATA codata_defs          { (-2,$2) }
 
-type_defs:
-    | type_def                  { [$1] }
-    | type_def AND type_defs    { $1::$3 }
+data_defs:
+    | data_def                  { [$1] }
+    | data_def AND data_defs    { $1::$3 }
 
-type_def:
+codata_defs:
+    | codata_def                  { [$1] }
+    | codata_def AND codata_defs    { $1::$3 }
+
+data_def:
+    | IDL type_parameters WHERE const_clauses               { ($1, $2, $4) }
+    | IDL type_parameters ARROW TVAR WHERE const_clauses    { check_charity_type $1 $2 $4 $6 }
+
+codata_def:
     | IDL type_parameters WHERE const_clauses       { ($1, $2, $4) }
+    | TVAR ARROW IDL type_parameters WHERE const_clauses    { check_charity_type $3 $4 $1 $6 }
 
 type_parameters:
     | /* nothing */                         { [] }
