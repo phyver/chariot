@@ -5,7 +5,7 @@ Copyright Pierre Hyvernat, Universite Savoie Mont Blanc
 
 This software is a computer program whose purpose is to implement a
 programming language in Miranda style. The main point is to have an
-adequacy checker for recursive definitions involving nested least and
+totality checker for recursive definitions involving nested least and
 greatest fixed points.
 
 This software is governed by the CeCILL-B license under French law and
@@ -250,7 +250,7 @@ let process_function_defs (env:environment)
         end
     else
         begin
-            if option "allow_inadequate_defs"
+            if option "allow_unsafe_defs"
              then warning "the definition%s %s %s NOT provably correct (weight_bound: %d, depth_bound: %d)"
                         (plural new_functions "" "s")
                         (string_of_list ", " id new_functions)

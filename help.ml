@@ -107,7 +107,7 @@ let help_text = [
   "  - ??? for a 'generic' metavariable";
   "  - !!! for a 'generic exception'";
   "Those terms can take any type and differ only in how they behave during";
-  "evaluation / adequacy checking.";
+  "evaluation / totality checking.";
   "";
   "The type will be infered if not given. It is only necessary for";
   "functions with 0 clause.";
@@ -133,7 +133,7 @@ let help_text = [
   "Note that structures { D = ... ; ... ; D = ... } are never necessary and";
   "can be replaced by auxiliary functions.";
   "Structure are nevertheless necessary to avoid loosing too much";
-  "information for adequacy checking.";
+  "information for totality checking.";
   "";
   "";
   "Syntactic sugar";

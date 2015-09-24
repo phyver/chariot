@@ -5,7 +5,7 @@ Copyright Pierre Hyvernat, Universite Savoie Mont Blanc
 
 This software is a computer program whose purpose is to implement a
 programming language in Miranda style. The main point is to have an
-adequacy checker for recursive definitions involving nested least and
+totality checker for recursive definitions involving nested least and
 greatest fixed points.
 
 This software is governed by the CeCILL-B license under French law and
@@ -116,7 +116,7 @@ let _
         (* ("--squash_priorities",       Arg.Unit (fun _ -> set_option "squash_priorities" "true"),            "consecutive types of same polarity get the same priority"); *)
         (* ("--dont_use_subsumption",    Arg.Unit (fun _ -> set_option "use_subsumption" "false"),             "don't use subsumption to simplify sets of clauses"); *)
         (* ("--dont_collapse_graph",     Arg.Unit (fun _ -> set_option "collapse_graph" "false"),              "don't collapse initial call-graph"); *)
-        (* ("--dont_allow_inadequate_defs",   Arg.Unit (fun _ -> set_option "allow_inadequate_defs" "false"),        "forbid definitions that do not pass the SCT"); *)
+        (* ("--dont_allow_unsafe_defs",   Arg.Unit (fun _ -> set_option "allow_unsafe_defs" "false"),        "forbid definitions that do not pass the SCT"); *)
         (* ("--expand_clauses",            Arg.Unit (fun _ -> set_option "expand_clauses" "true"),             "use the case expression of the definitions to regenerate the clauses"); *)
         (* ("--allow_structs",           Arg.Unit (fun _ -> set_option "allow_structs" "true"),                "allow structures inside terms"); *)
       ] in

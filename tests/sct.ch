@@ -1,7 +1,7 @@
 :set depth 2
 :set bound 1
 
-:set allow_inadequate_defs false
+:set allow_unsafe_defs false
 :set collapse_graph true
 :set use_subsumption false
 :set continue_on_error true

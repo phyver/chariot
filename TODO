@@ -1,3 +1,5 @@
+  - only allow single type with 0 constructor / 0 destructor
+
   - file christophe.ch is very slow (test12)
 
   - flags

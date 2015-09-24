@@ -5,7 +5,7 @@ Copyright Pierre Hyvernat, Universite Savoie Mont Blanc
 
 This software is a computer program whose purpose is to implement a
 programming language in Miranda style. The main point is to have an
-adequacy checker for recursive definitions involving nested least and
+totality checker for recursive definitions involving nested least and
 greatest fixed points.
 
 This software is governed by the CeCILL-B license under French law and

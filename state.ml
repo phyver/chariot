@@ -5,7 +5,7 @@ Copyright Pierre Hyvernat, Universite Savoie Mont Blanc
 
 This software is a computer program whose purpose is to implement a
 programming language in Miranda style. The main point is to have an
-adequacy checker for recursive definitions involving nested least and
+totality checker for recursive definitions involving nested least and
 greatest fixed points.
 
 This software is governed by the CeCILL-B license under French law and
@@ -81,16 +81,16 @@ let current_state =
             "use_ansi_codes",         OptBool false    , "use ANSI color codes to display various information" ;
             "use_subsumption",        OptBool true    , "use subsumption to simplify sets of clauses" ;
             "collapse_graph",         OptBool true    , "collapse initial call-graph" ;
-            "allow_inadequate_defs",  OptBool true    , "allow definition that do not pass the SCT" ;
+            "allow_unsafe_defs",  OptBool true    , "allow definition that do not pass the SCT" ;
             "expand_clauses",         OptBool false    , "use the case expansion of the clauses to regenerate the clauses";
             "allow_structs",          OptBool true    , "allow structures inside terms";
 
 (* various debuging options *)
-            "show_initial_graph",     OptBool false    , "show initial call graph when checking adequacy" ;
-            "show_final_graph",       OptBool false    , "show final call graph when checking adequacy" ;
-            "show_all_steps",         OptBool false    , "show all successive graphs when checking adequacy" ;
-            "show_coherent_loops",    OptBool false    , "show coherent loops found in the final graph when checking adequacy" ;
-            "show_bad_loops",         OptBool false    , "show the first non-decreasing coherent loop found when checking adequacy" ;
+            "show_initial_graph",     OptBool false    , "show initial call graph when checking totality" ;
+            "show_final_graph",       OptBool false    , "show final call graph when checking totality" ;
+            "show_all_steps",         OptBool false    , "show all successive graphs when checking totality" ;
+            "show_coherent_loops",    OptBool false    , "show coherent loops found in the final graph when checking totality" ;
+            "show_bad_loops",         OptBool false    , "show the first non-decreasing coherent loop found when checking totality" ;
             "incremental_SCT",        OptBool true    , "do not try the SCT at smaller depth";
         ]                                       ;
         last_explore = None                     ;
