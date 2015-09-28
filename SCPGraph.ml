@@ -41,7 +41,7 @@ open Env
 open Utils
 open State
 open Pretty
-open SCTCalls
+open SCPCalls
 
 exception Non_terminating
 
@@ -399,7 +399,7 @@ let size_change_termination env defs =
           then List.rev (depth::acc)
           else ds (2*n) (n::acc)
         in
-        let t = if option "incremental_SCT"
+        let t = if option "incremental_SCP"
                 then test (ds 1 [0])
                 else test [depth]
         in

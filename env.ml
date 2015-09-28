@@ -109,7 +109,7 @@ type case_struct_def = var_name list * (empty,unit,type_expression) raw_term cas
 (* type case_def = var_name list * (empty,unit,type_expression) raw_term case_term *)
 
 
-(* SCT terms *)
+(* SCP terms *)
 type weight = Num of int | Infty
 
 type coeff = (priority*weight) list

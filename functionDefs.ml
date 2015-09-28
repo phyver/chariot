@@ -44,8 +44,8 @@ open Pretty
 open Typing
 open Coverage
 open Priorities
-open SCTCalls
-open SCTGraph
+open SCPCalls
+open SCPGraph
 
 (* check that a type is correct *)
 let rec check_type (env:environment) (t:type_expression) : unit
@@ -238,7 +238,7 @@ let process_function_defs (env:environment)
     (* ) defs; *)
 
 
-    (* SCT *)
+    (* SCP *)
     if size_change_termination env defs
     then
         begin

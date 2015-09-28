@@ -232,7 +232,7 @@ let string_of_approx_term (v:approx_term) : string
            fmt ".<%s>" (string_of_coeff c)
         | v -> string_of_approx_term_aux v
 
-(* show an SCT pattern *)
+(* show an SCP pattern *)
 let string_of_sct_pattern ((f,ps):sct_pattern) : string =
     (* let f = Var(f,()) in *)
     (* let v = match implode (f::ps) with *)
@@ -244,7 +244,7 @@ let string_of_sct_pattern ((f,ps):sct_pattern) : string =
         f
         (string_of_list ", " string_of_approx_term ps)
 
-(* show an SCT clause *)
+(* show an SCP clause *)
 let string_of_sct_clause (l,r:sct_clause) : string =
     fmt "%s => %s" (string_of_sct_pattern l) (string_of_sct_pattern r)
 

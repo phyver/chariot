@@ -254,7 +254,7 @@ let collapse0 ?(coeff=[]) (p:approx_term) : approx_term =
             | Struct _,_ -> assert false
 
             | Proj(_,prio,_),p::ps ->       (* TODO: there shouldn't be any
-            projection inside pattern arguments when doing the SCT, but there
+            projection inside pattern arguments when doing the SCP, but there
             can be when constructing the initial call graph or during testing from parser.mly...
             ==> add argument to allow / disallow projections... *)
                 let coeff = add_coeff coeff [prio,Num 1] in

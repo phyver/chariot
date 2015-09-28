@@ -44,7 +44,7 @@ open State
 open Typing
 open Pretty
 open Reduce
-open SCTCalls
+open SCPCalls
 open Coverage
 open FunctionDefs
 open TypeDefs

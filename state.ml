@@ -61,8 +61,8 @@ let current_state =
                 functions             = []      ;
               }                                 ;
         options = [
-            "depth" , OptInt 2 , "depth of exploration during the SCT"                              ;
-            "bound" , OptInt 2 , "bound for weight during the SCT"                              ;
+            "depth" , OptInt 2 , "depth of exploration during the SCP"                              ;
+            "bound" , OptInt 2 , "bound for weight during the SCP"                              ;
 
             "prompt" , OptString "# " , "prompt for the interactive toplevel"                          ;
             "verbose" , OptInt 0  , "verbosity level"                           ;
@@ -81,7 +81,7 @@ let current_state =
             "use_ansi_codes",         OptBool false    , "use ANSI color codes to display various information" ;
             "use_subsumption",        OptBool true    , "use subsumption to simplify sets of clauses" ;
             "collapse_graph",         OptBool true    , "collapse initial call-graph" ;
-            "allow_unsafe_defs",  OptBool true    , "allow definition that do not pass the SCT" ;
+            "allow_unsafe_defs",  OptBool true    , "allow definition that do not pass the SCP" ;
             "expand_clauses",         OptBool false    , "use the case expansion of the clauses to regenerate the clauses";
             "allow_structs",          OptBool true    , "allow structures inside terms";
 
@@ -91,7 +91,7 @@ let current_state =
             "show_all_steps",         OptBool false    , "show all successive graphs when checking totality" ;
             "show_coherent_loops",    OptBool false    , "show coherent loops found in the final graph when checking totality" ;
             "show_bad_loops",         OptBool false    , "show the first non-decreasing coherent loop found when checking totality" ;
-            "incremental_SCT",        OptBool true    , "do not try the SCT at smaller depth";
+            "incremental_SCP",        OptBool true    , "do not try the SCP at smaller depth";
         ]                                       ;
         last_explore = None                     ;
     }
