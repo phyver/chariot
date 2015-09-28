@@ -50,7 +50,7 @@ exception Non_terminating
  *****************************)
 
 (* Sets of clauses *)
-module ClauseSet = Set.Make (struct type t=sct_clause let compare=compare end)
+module ClauseSet = Set.Make (struct type t=scp_clause let compare=compare end)
 type clauseSet = ClauseSet.t
 
 (* Call graphs: maps indexed by pairs of function names *)
@@ -62,7 +62,7 @@ let print_callgraph graph
   = CallGraph.iter (fun fg cs ->
       msg "calls from %s to %s:" (fst fg) (snd fg);
       ClauseSet.iter (function clause ->
-        msg  "    %s" (string_of_sct_clause clause)) cs) graph
+        msg  "    %s" (string_of_scp_clause clause)) cs) graph
     ; print_newline(); flush_all()
 
 (*
@@ -92,7 +92,7 @@ let new_call_set clause s =
 let collapse_graph b d graph
   = CallGraph.map (fun s ->
                 ClauseSet.fold (fun clause2 s ->
-                  add_call_set (collapse_sct_clause b d clause2) s)
+                  add_call_set (collapse_scp_clause b d clause2) s)
                   s ClauseSet.empty)
                   graph
 
@@ -128,7 +128,7 @@ let callgraph_from_definitions
         let caller = fst lhs
         in
 
-        (* TODO: extract this function to term_to_sct_clause??? *)
+        (* TODO: extract this function to term_to_scp_clause??? *)
         let rec process_arg (p:term)
           : approx_term
           = match get_head p,get_args p with
@@ -169,7 +169,7 @@ let callgraph_from_definitions
                             | Data _ | TVar _ ->
                                 let _args = List.map process_arg args
                                 in
-                                let call = lhs, sct_pattern_add_args (called,_args) calling_context
+                                let call = lhs, scp_pattern_add_args (called,_args) calling_context
                                 in
                                 let graph = CallGraph.add (caller,called) (add_call_set call (try CallGraph.find (caller,called) graph with Not_found -> ClauseSet.empty)) graph
                                 in
@@ -244,7 +244,7 @@ let transitive_closure initial_graph b d =
                 (*   print_call clause2'; *)
                 (*   print_string "    with B="; print_int b; print_string " and D="; print_int d; print_string "\n** to give\n"; *)
                 (* end; *)
-                let clause1 : sct_clause = collapsed_compose b d clause2 clause2' in
+                let clause1 : scp_clause = collapsed_compose b d clause2 clause2' in
                 (* ifDebug "show_all_compositions" *)
                 (* begin fun _ -> *)
                 (*   print_call clause1; *)
@@ -335,14 +335,14 @@ let size_change_termination_bounds graph b d =
                 if option "show_coherent_loops"
                 then begin
                     msg "Found coherent loop from \"%s\" to itself:" f;
-                    msg "  %s" (string_of_sct_clause clause1)
+                    msg "  %s" (string_of_scp_clause clause1)
                 end;
                 decreasing clause1 ||
                 (
                     if option "show_bad_loops"
                     then begin
                         msg "Found non-decreasing coherent loop from \"%s\" to itself" f;
-                        msg "  %s" (string_of_sct_clause clause1)
+                        msg "  %s" (string_of_scp_clause clause1)
                 end;
                 false)
               end

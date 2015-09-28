@@ -149,7 +149,7 @@ let rec collapse_weight_in_term (b:int) (v:approx_term) : approx_term
         | Sp(AppArg [],_) -> assert false
         | Sp(AppArg xcs,t) -> Sp(AppArg(List.map (function x,c -> x, collapse_weight_in_coeff b c) xcs),t)
 
-let collapse_weight_in_pattern b (f,ps:sct_pattern) : sct_pattern
+let collapse_weight_in_pattern b (f,ps:scp_pattern) : scp_pattern
   = (f,List.map (collapse_weight_in_term b) ps)
 
 
@@ -166,7 +166,7 @@ let collapse_proj (args:approx_term list) : coeff
     in collapse_proj_aux args []
 
 (* add some pattern arguments to an existing pattern, simplifying when an AppRes is found *)
-let sct_pattern_add_args (f,args1:sct_pattern) (args2:approx_term list) : sct_pattern =
+let scp_pattern_add_args (f,args1:scp_pattern) (args2:approx_term list) : scp_pattern =
     let rec aux args = match args with
         | [] -> []
         | (Sp(AppRes _,t))::_ ->
@@ -174,10 +174,10 @@ let sct_pattern_add_args (f,args1:sct_pattern) (args2:approx_term list) : sct_pa
                 [Sp(AppRes c,t)]
         | u::args -> u::(aux args)
     in f,aux(args1@args2)
-(* let sct_pattern_add_args (f,ps) qs = *)
-(*     debug "before: %s" (string_of_sct_pattern (f,ps@qs)); *)
-(*     let r = sct_pattern_add_args (f,ps) qs in *)
-(*     debug "after: %s" (string_of_sct_pattern r); *)
+(* let scp_pattern_add_args (f,ps) qs = *)
+(*     debug "before: %s" (string_of_scp_pattern (f,ps@qs)); *)
+(*     let r = scp_pattern_add_args (f,ps) qs in *)
+(*     debug "after: %s" (string_of_scp_pattern r); *)
 (*     r *)
 
 
@@ -276,7 +276,7 @@ let collapse0 ?(coeff=[]) (p:approx_term) : approx_term =
             | xcs -> Sp(AppArg xcs,())
     with Invalid_argument "collapse0_aux: Daimon" -> Daimon ()
 
-let collapse_sct_pattern (depth:int) (f,ps:sct_pattern) : sct_pattern
+let collapse_scp_pattern (depth:int) (f,ps:scp_pattern) : scp_pattern
   =
     (* collapse the constructors at given depth from a constructor pattern with approximations *)
     let rec collapse_const d p =
@@ -312,7 +312,7 @@ let collapse_sct_pattern (depth:int) (f,ps:sct_pattern) : sct_pattern
         | p::ps -> (collapse_const depth p)::(collapse_depth dp ps)
     in
 
-    (* debug "collapse_sct_pattern = %s" (string_of_sct_pattern pattern); *)
+    (* debug "collapse_scp_pattern = %s" (string_of_scp_pattern pattern); *)
 
     f,collapse_depth depth ps
 
@@ -331,12 +331,12 @@ let collapse_sct_pattern (depth:int) (f,ps:sct_pattern) : sct_pattern
  *)
 
 (* substitution inside approx_terms *)
-let rec subst_sct_term (sigma:(var_name*approx_term) list) (v:approx_term) : approx_term
+let rec subst_scp_term (sigma:(var_name*approx_term) list) (v:approx_term) : approx_term
   = match v with
         | Var(x,t) -> (try List.assoc x sigma with Not_found -> Var(x,t))
         | (Angel _|Daimon _|Const _|Proj _|Sp(AppRes _,_)) as v -> v
-        | App(v1,v2) -> App(subst_sct_term sigma v1, subst_sct_term sigma v2)
-        | Struct(fields,p,t) -> Struct(List.map (second (subst_sct_term sigma)) fields,p,t)
+        | App(v1,v2) -> App(subst_scp_term sigma v1, subst_scp_term sigma v2)
+        | Struct(fields,p,t) -> Struct(List.map (second (subst_scp_term sigma)) fields,p,t)
         | Sp(AppArg [],_) -> assert false
         | Sp(AppArg xcs,_) ->
             try
@@ -346,7 +346,7 @@ let rec subst_sct_term (sigma:(var_name*approx_term) list) (v:approx_term) : app
                                 let u = try
                                             match collapse0 ~coeff:c (List.assoc x sigma) with
                                                 | Sp(AppArg(xcs),()) -> xcs
-                                                | Daimon _ -> raise (Invalid_argument "subst_sct_term: Daimon")
+                                                | Daimon _ -> raise (Invalid_argument "subst_scp_term: Daimon")
                                                 | Angel _ -> []
                                                 | _ -> assert false
                                         with Not_found -> [x,c] in
@@ -356,11 +356,11 @@ let rec subst_sct_term (sigma:(var_name*approx_term) list) (v:approx_term) : app
                             xcs
                 in
                 Sp(AppArg xcs, ())
-            with Invalid_argument "subst_sct_term: Daimon" -> Daimon ()
-(* let subst_sct_term sigma v = *)
+            with Invalid_argument "subst_scp_term: Daimon" -> Daimon ()
+(* let subst_scp_term sigma v = *)
 (*     debug "sigma = %s" (string_of_list " , " (function x,v -> fmt "%s:=%s" x (string_of_approx_term v)) sigma); *)
 (*     debug "before %s" (string_of_approx_term v); *)
-(*     let v = subst_sct_term sigma v in *)
+(*     let v = subst_scp_term sigma v in *)
 (*     debug "after %s" (string_of_approx_term v); *)
 (*     v *)
 
@@ -371,17 +371,17 @@ let rec subst_sct_term (sigma:(var_name*approx_term) list) (v:approx_term) : app
  *    A  a  b  =>  B  <-1>a  <-2> a b
  *)
 
-let normalize_sct_clause (lhs,rhs : sct_clause)
-  : sct_clause
+let normalize_scp_clause (lhs,rhs : scp_clause)
+  : scp_clause
   =
     let f_l,patterns_l = lhs in
     let f_r,patterns_r = rhs in
 
-    (* debug "normalize with %s" (string_of_sct_clause (lhs,rhs)); *)
+    (* debug "normalize with %s" (string_of_scp_clause (lhs,rhs)); *)
 
     (* TODO: rename dangling variables on the RHS to "!x" *)
 
-    (* debug "normalizing %s" (string_of_sct_clause (lhs,rhs)); *)
+    (* debug "normalizing %s" (string_of_scp_clause (lhs,rhs)); *)
     let n = ref 0
     in
 
@@ -456,13 +456,13 @@ let normalize_sct_clause (lhs,rhs : sct_clause)
     let patterns_l,sigma,app_res = process_lhs patterns_l
     in
 
-    let patterns_r = List.map (subst_sct_term sigma) patterns_r in
+    let patterns_r = List.map (subst_scp_term sigma) patterns_r in
 
     let cl_r = match app_res with None -> (f_r,patterns_r)
-                                | Some coeff -> sct_pattern_add_args (f_r,patterns_r) [coeff]
+                                | Some coeff -> scp_pattern_add_args (f_r,patterns_r) [coeff]
     in
 
-    (*   (1* debug "obtained %s" (string_of_sct_clause (lhs,rhs)) *1) *)
+    (*   (1* debug "obtained %s" (string_of_scp_clause (lhs,rhs)) *1) *)
 
     (f_l,patterns_l) , cl_r
 
@@ -482,7 +482,7 @@ let rec rename_var suffix v
 
 
 (* unify the rhs of a clause with the lhs of another *)
-let unify ?(allow_approx=false) (f_r,patterns_r:sct_pattern) (f_l,patterns_l:sct_pattern)
+let unify ?(allow_approx=false) (f_r,patterns_r:scp_pattern) (f_l,patterns_l:scp_pattern)
   :   (var_name * approx_term) list     (* the substitution *)
     * approx_term list                  (* the arguments that were in lhs but not in rhs *)
     * approx_term list                  (* the arguments that were in rhs but not in lhs *)  (* NOTE: at most one of those lists is non-empty *)
@@ -526,7 +526,7 @@ let unify ?(allow_approx=false) (f_r,patterns_r:sct_pattern) (f_l,patterns_l:sct
                     match collapse0 u_l with
                         | Sp(AppArg(xcs_l),()) ->
                             let tau = List.map (function x,c -> (x,Sp(AppArg(List.map (function _x,_c -> _x,add_coeff _c (op_coeff c)) xcs_r),())) ) xcs_l in
-                            unify_aux ps_r ps_l (tau @ (List.map (second (subst_sct_term sigma)) sigma))
+                            unify_aux ps_r ps_l (tau @ (List.map (second (subst_scp_term sigma)) sigma))
                         | _ -> assert false
                 else
                     assert false
@@ -546,9 +546,9 @@ let unify ?(allow_approx=false) (f_r,patterns_r:sct_pattern) (f_l,patterns_l:sct
                     assert false
 
             | Var(x_r,_)::ps_r,u_l::ps_l ->
-                unify_aux (List.map (subst_sct_term [x_r,u_l]) ps_r) ps_l ((x_r,u_l)::(List.map (second (subst_sct_term [x_r,u_l])) sigma))
+                unify_aux (List.map (subst_scp_term [x_r,u_l]) ps_r) ps_l ((x_r,u_l)::(List.map (second (subst_scp_term [x_r,u_l])) sigma))
             | u_r::ps_r,Var(x_l,_)::ps_l ->
-                unify_aux ps_r (List.map (subst_sct_term [x_l,u_r]) ps_l) ((x_l,u_r)::(List.map (second (subst_sct_term [x_l,u_r])) sigma))
+                unify_aux ps_r (List.map (subst_scp_term [x_l,u_r]) ps_l) ((x_l,u_r)::(List.map (second (subst_scp_term [x_l,u_r])) sigma))
 
             | Sp(AppRes(c),_)::_,_ -> assert false    (* AppRes should only appear at the end *)
 
@@ -563,44 +563,44 @@ let unify ?(allow_approx=false) (f_r,patterns_r:sct_pattern) (f_l,patterns_l:sct
     try
         unify_aux patterns_r patterns_l []
     with UnificationError _ ->
-            raise (UnificationError (fmt "cannot unify %s and %s" (string_of_sct_pattern (f_r,patterns_r)) (string_of_sct_pattern (f_l,patterns_l))))
+            raise (UnificationError (fmt "cannot unify %s and %s" (string_of_scp_pattern (f_r,patterns_r)) (string_of_scp_pattern (f_l,patterns_l))))
 
 
-let compose (l1,r1:sct_clause) (l2,r2:sct_clause)
-  : sct_clause
+let compose (l1,r1:scp_clause) (l2,r2:scp_clause)
+  : scp_clause
   =
     let rename s (f,pats) = (f,List.map (rename_var s) pats) in
     let l1,r1 = rename "₁" l1, rename "₁" r1 in
     let l2,r2 = rename "₂" l2, rename "₂" r2 in
-    (* debug "  %s  o    %s" (string_of_sct_clause (l1,r1)) (string_of_sct_clause (l2,r2)); *)
+    (* debug "  %s  o    %s" (string_of_scp_clause (l1,r1)) (string_of_scp_clause (l2,r2)); *)
 
     try
-        (* debug "unify %s and %s" (string_of_sct_pattern r1) (string_of_sct_pattern l2); *)
+        (* debug "unify %s and %s" (string_of_scp_pattern r1) (string_of_scp_pattern l2); *)
         let sigma,context1,context2 = unify ~allow_approx:true r1 l2 in
 (* debug "sigma: %s" (string_of_list " , " (function x,t -> x ^ ":=" ^ (string_of_approx_term t)) sigma); *)
 (* debug "context1: %s" (string_of_list " , " string_of_approx_term context1); *)
 (* debug "context2: %s" (string_of_list " , " string_of_approx_term context2); *)
-        let subst (f,pats) = (f,List.map (subst_sct_term sigma) pats) in
+        let subst (f,pats) = (f,List.map (subst_scp_term sigma) pats) in
         let l = subst l1 in
         let r = subst r2 in
-(* debug "obtained %s" (string_of_sct_clause (l,r)); *)
-        let r = normalize_sct_clause (sct_pattern_add_args l context2 , sct_pattern_add_args r context1) in
-(* debug "after renormalization %s" (string_of_sct_clause r); *)
+(* debug "obtained %s" (string_of_scp_clause (l,r)); *)
+        let r = normalize_scp_clause (scp_pattern_add_args l context2 , scp_pattern_add_args r context1) in
+(* debug "after renormalization %s" (string_of_scp_clause r); *)
         r
     with UnificationError err -> raise Impossible_case
 
 
-let collapse_sct_clause b d (l,r:sct_clause) : sct_clause
-  = let l = collapse_sct_pattern d l in
-    let r = collapse_sct_pattern d r in
-    let l,r = normalize_sct_clause (l,r) in
+let collapse_scp_clause b d (l,r:scp_clause) : scp_clause
+  = let l = collapse_scp_pattern d l in
+    let r = collapse_scp_pattern d r in
+    let l,r = normalize_scp_clause (l,r) in
     let r = collapse_weight_in_pattern b r in
     l,r
 
 
-let collapsed_compose (b:int) (d:int) (c1:sct_clause) (c2:sct_clause) : sct_clause
+let collapsed_compose (b:int) (d:int) (c1:scp_clause) (c2:scp_clause) : scp_clause
   = let l,r = compose c1 c2 in
-    let result = collapse_sct_clause b d (l,r) in
+    let result = collapse_scp_clause b d (l,r) in
     result
 
 
@@ -713,13 +713,13 @@ let approximates p1 p2 =
         let l2,r2 = rename "₂" l2, rename "₂" r2 in
         let sigma,context1,context2 = unify l1 l2 in
 
-        let subst (f,pats) = (f,List.map (subst_sct_term sigma) pats) in
+        let subst (f,pats) = (f,List.map (subst_scp_term sigma) pats) in
 
         let r1 = subst r1 in
-        let f1,pats1 = sct_pattern_add_args r1 context2 in
+        let f1,pats1 = scp_pattern_add_args r1 context2 in
         let r2 = subst r2 in
-        let f2,pats2 = sct_pattern_add_args r2 context1 in
-        (* debug "r1=%s  and  r2=%s" (string_of_sct_pattern (f1,pats1)) (string_of_sct_pattern (f2,pats2)); *)
+        let f2,pats2 = scp_pattern_add_args r2 context1 in
+        (* debug "r1=%s  and  r2=%s" (string_of_scp_pattern (f1,pats1)) (string_of_scp_pattern (f2,pats2)); *)
 
         f1 = f2 && approximates_aux pats1 pats2
 
@@ -727,13 +727,13 @@ let approximates p1 p2 =
 
 (* let approximates p1 p2 = *)
 (*     let r = approximates p1 p2 in *)
-(*     debug "approximates %s AND %s" (string_of_sct_clause p1) (string_of_sct_clause p2); *)
+(*     debug "approximates %s AND %s" (string_of_scp_clause p1) (string_of_scp_clause p2); *)
 (*     if r then debug "TRUE" else debug "FALSE"; r *)
 
 
 (* compatibility *)
 (* similar to approximates *)
-let coherent (p1:sct_clause) (p2:sct_clause) : bool =
+let coherent (p1:scp_clause) (p2:scp_clause) : bool =
 
     let rec coherent_aux pats1 pats2 =
         (* debug "pats1 = %s" (string_of_list " , " string_of_approx_term pats1); *)
@@ -833,18 +833,18 @@ let coherent (p1:sct_clause) (p2:sct_clause) : bool =
         let rename s (f,pats) = (f,List.map (rename_var s) pats) in
         let l1,r1 = rename "₁" l1, rename "₁" r1 in
         let l2,r2 = rename "₂" l2, rename "₂" r2 in
-        (* debug "        check if %s\nis coherent with %s" (string_of_sct_clause p1) (string_of_sct_clause p2); *)
+        (* debug "        check if %s\nis coherent with %s" (string_of_scp_clause p1) (string_of_scp_clause p2); *)
         let sigma,context1,context2 = unify l1 l2 in
 
         (* debug "SIGMA: %s" (string_of_list ", " (function x,v -> fmt "%s=%s" x (string_of_approx_term v)) sigma); *)
-        let subst (f,pats) = (f,List.map (subst_sct_term sigma) pats) in
+        let subst (f,pats) = (f,List.map (subst_scp_term sigma) pats) in
 
         let r1 = subst r1 in
-        let f1,pats1 = sct_pattern_add_args r1 context2 in
+        let f1,pats1 = scp_pattern_add_args r1 context2 in
         let r2 = subst r2 in
-        let f2,pats2 = sct_pattern_add_args r2 context1 in
+        let f2,pats2 = scp_pattern_add_args r2 context1 in
 
-        (* debug "  got %s and %s" (string_of_sct_pattern (f1,pats1))(string_of_sct_pattern (f2,pats2)); *)
+        (* debug "  got %s and %s" (string_of_scp_pattern (f1,pats1))(string_of_scp_pattern (f2,pats2)); *)
 
         let r = f1 = f2 && coherent_aux pats1 pats2 in
         (* debug "%s" (string_of_bool r); *)
@@ -852,12 +852,12 @@ let coherent (p1:sct_clause) (p2:sct_clause) : bool =
     with UnificationError _ -> false
 (* let coherent p1 p2 = *)
 (*     let r = coherent p1 p2 in *)
-(*     debug "coherent %s AND %s" (string_of_sct_clause p1) (string_of_sct_clause p2); *)
+(*     debug "coherent %s AND %s" (string_of_scp_clause p1) (string_of_scp_clause p2); *)
 (*     if r then debug "TRUE" else debug "FALSE"; r *)
 
 
 (* decreasing arguments *)
-let decreasing (l,r : sct_clause)
+let decreasing (l,r : scp_clause)
   : bool
   =
     let rec decreasing_aux pats1 pats2
@@ -976,7 +976,7 @@ let decreasing (l,r : sct_clause)
                 end
     in
 
-    (* debug "check decreasing in %s" (string_of_sct_clause (l,r)); *)
+    (* debug "check decreasing in %s" (string_of_scp_clause (l,r)); *)
     let f1,pats1 = l in
     let f2,pats2 = r in
     assert (f1=f2);

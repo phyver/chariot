@@ -200,7 +200,7 @@ and
 let string_of_plain_term ?(indent=(-1)) v = string_of_raw_term indent (fun o s -> s.bot) (k "") (k "") v
 let string_of_term ?(indent=(-1)) v = string_of_raw_term indent (fun o s -> s.bot) string_of_priority (k "") v
 
-(* showing sct term with approximations *)
+(* showing scp term with approximations *)
 let string_of_weight w = match w with
     | Infty -> "∞"
     | Num n -> (string_of_int n)
@@ -233,7 +233,7 @@ let string_of_approx_term (v:approx_term) : string
         | v -> string_of_approx_term_aux v
 
 (* show an SCP pattern *)
-let string_of_sct_pattern ((f,ps):sct_pattern) : string =
+let string_of_scp_pattern ((f,ps):scp_pattern) : string =
     (* let f = Var(f,()) in *)
     (* let v = match implode (f::ps) with *)
     (*             | App(v,Sp(AppRes(p,w),t),t') -> App(Sp(AppRes(p,w),t),v,t') *)
@@ -245,8 +245,8 @@ let string_of_sct_pattern ((f,ps):sct_pattern) : string =
         (string_of_list ", " string_of_approx_term ps)
 
 (* show an SCP clause *)
-let string_of_sct_clause (l,r:sct_clause) : string =
-    fmt "%s => %s" (string_of_sct_pattern l) (string_of_sct_pattern r)
+let string_of_scp_clause (l,r:scp_clause) : string =
+    fmt "%s => %s" (string_of_scp_pattern l) (string_of_scp_pattern r)
 
 
 (* show a term with unfolded parts, because the types unfolded_struct and
