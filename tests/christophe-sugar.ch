@@ -239,7 +239,7 @@ and
   | map_nuY_aux f (Cons0 a) = Cons0 (f a)
   | map_nuY_aux f (Cons1 s) = Cons1 (map_nuY f s)
 
--- the next version doesn't pass the SCT because of recursive call via map_nuY
+-- the next version doesn't pass the SCP because of recursive call via map_nuY
 val stream3_to_4_bad: stream3 -> stream4
   | stream3_to_4_bad (C3 s) = stream3_to_4_bad_aux s.Nu
 and stream3_to_4_bad_aux : plus(stream3,nuY(stream3)) -> stream4

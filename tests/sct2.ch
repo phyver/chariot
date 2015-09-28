@@ -16,6 +16,6 @@ val f2 (B (B (B (B x)))) = f2 (B (B (B (C x))))
 val f3 (B (B (B (B x)))) = f3 (B (B (B (C x))))
   | f3 _ = ???
 
-:set incremental_SCT false
+:set incremental_SCP false
 val f4 (B (B (B (B x)))) = f4 (B (B (B (C x))))
   | f4 _ = ???
