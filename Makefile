@@ -40,6 +40,14 @@ archive: preproc
 	git archive --prefix=chariot/ -o chariot.tar HEAD
 	tar --append --file=chariot.tar version.ml --transform 's,version.ml,chariot/version.ml,'
 
+install-vim:
+	@install -d  ~/.vim/ftdetect/
+	ln -sf $(PWD)/vim/ftdetect/chariot.vim  ~/.vim/ftdetect/
+	@install -d ~/.vim/ftplugin/
+	ln -sf $(PWD)/vim/ftplugin/chariot.vim  ~/.vim/ftplugin/
+	@install -d ~/.vim/syntax/
+	ln -sf $(PWD)/vim/syntax/chariot.vim  ~/.vim/syntax/
+
 clean:
 	ocamlbuild -clean
 	rm -rf _build
