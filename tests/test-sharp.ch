@@ -1,4 +1,4 @@
-:set allow_structs true
+-- :set allow_structs true
 
 codata t where D : t -> t
 

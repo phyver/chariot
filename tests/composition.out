@@ -1,5 +1,4 @@
 >> option verbose is set to 1
->> option use_priorities is set to false
 >>   f, x, y => g, x, x, y, y    o    g, a, b, l, d => h, b, l
 >>           =  f, x₁, x₂ => h, x₁, x₂
 

@@ -3,11 +3,8 @@
   - file christophe.ch is very slow (test12)
 
   - flags
-      --colors
-      --utf8
-      --fancy / --plain
       --minimal -> unary, no structs
-      --verbose
+      --only-termination
 
 
   - better exceptions than "Not_found" for utils.ml functions

@@ -13,7 +13,7 @@
 
 >> Typing for test3 successful
 >> the definition for test3 is complete
-!! warning: the definition test3 is NOT provably correct (weight_bound: 2, depth_bound: 2)
+!! warning: the definition test3 is NOT provably total (weight_bound: 2, depth_bound: 2)
 
 >> Typing for test4 successful
 >> the definition for test4 is complete

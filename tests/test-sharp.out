@@ -1,5 +1,4 @@
 >> option verbose is set to 1
->> option allow_structs is set to true
 >> coinductive type t was succesfully defined
 >> Typing for f successful
 >> the definition for f is complete

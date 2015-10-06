@@ -7,5 +7,5 @@
 >> calls from f to f:
 >>     f, x => f, <1⁰>x
 
-!! warning: the definition f is NOT provably correct (weight_bound: 2, depth_bound: 2)
+!! warning: the definition f is NOT provably total (weight_bound: 2, depth_bound: 2)
 

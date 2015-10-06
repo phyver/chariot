@@ -1,5 +1,5 @@
 :set verbose 1
-:set allow_structs true
+-- :set allow_structs true
 
 data nat where Zero : nat | Succ : nat -> nat
 

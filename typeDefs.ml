@@ -128,11 +128,19 @@ let check_destructor (t:type_name) (d:const_name*type_expression) : unit
 
 (* check the type of a constructor: it should be of the form ... -> T(...)
  * where "T(...)" is the type being defined *)
-let rec check_constructor (t:type_name) (c:const_name*type_expression) : unit
-  = match c with
+let check_constructor (t:type_name) (c:const_name*type_expression) : unit
+  = let rec check_constructor_aux c = match c with
     | (_,Data(_t,_args)) when _t=t -> ()
-    | (c,Arrow(_,_t)) -> check_constructor t (c,_t)
+    | (c,Arrow(_,_t)) -> check_constructor_aux (c,_t)
     | (c,_) -> error (fmt "constructor %s doesn't appropriate type" c)
+  in
+  if option "unary_constants"
+  then match c with
+    | (_,Arrow(_,Data(_t,_args))) when _t=t -> ()
+    | (c,_) -> error (fmt "constructor %s is not unary" c)
+  else check_constructor_aux c
+
+
 
 let check_empty_unit env n (t:type_name) params consts
   = match params,consts with

@@ -6,7 +6,7 @@
 
 >> Typing for g successful
 >> the definition for g is complete
-!! warning: the definition g is NOT provably correct (weight_bound: 2, depth_bound: 2)
+!! warning: the definition g is NOT provably total (weight_bound: 2, depth_bound: 2)
 
 >> option expand_clauses is set to true
 >> Typing for h successful

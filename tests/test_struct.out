@@ -1,7 +1,6 @@
 >> option verbose is set to 1
 >> option show_tuples is set to false
 >> option verbose is set to 1
->> option allow_structs is set to true
 >> option continue_on_error is set to true
 >> inductive type nat was succesfully defined
 >> inductive type prod_2 was succesfully defined
@@ -58,7 +57,7 @@ val
 
 val
    bad : struct_2('a,'a) → 'b
-    | bad { Fst = x ; Snd = x }⁰ = ???
+    | bad { Fst = x ; Snd = x }⁰ = ✠
 
 val
    f : struct_2('a,'b) → prod_2('a,'b)

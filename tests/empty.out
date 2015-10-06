@@ -70,13 +70,13 @@ val
 
 val
    i : unit → 'a
-    | i {  }⁰ = ???
+    | i {  }⁰ = ✠
 >> 
 >> corresponding case and struct form:
->> x₁ -> ???
+>> x₁ -> ✠
 
 >> Typing for j successful
-!! warning: useless clause 2: j {  } = !!!
+!! warning: useless clause 2: j {  } = Ω
 >> the definition for j is complete
 >> Incremental test at depth 0
 >> the definition j is provably correct

@@ -102,6 +102,12 @@ let _
         ("--verbose",                 Arg.Int (fun v -> set_option "verbose" (string_of_int v)),            "choose verbosity level");
 
         ("--colors",                  Arg.Unit (fun _ -> set_option "use_ansi_codes" "true"),               "use ANSI color codes to display various information");
+        ("--utf8",                    Arg.Unit (fun _ -> set_option "use_utf8" "true"),                     "use UTF8 symbols");
+        ("--no-colors",               Arg.Unit (fun _ -> set_option "use_ansi_codes" "false"),              "do not use ANSI color codes to display various information");
+        ("--no-utf8",                 Arg.Unit (fun _ -> set_option "use_utf8" "false"),                    "do not use UTF8 symbols");
+        ("--fancy",                   Arg.Unit (fun _ -> set_option "use_utf8" "true"; set_option "use_ansi_codes" "true"),                       "same as --colors --utf8");
+        ("--plain",                   Arg.Unit (fun _ -> set_option "use_utf8" "false"; set_option "use_ansi_codes" "false"),                     "same as --no-colors --no-utf8");
+
 
         ("--doc",                     Arg.Unit (fun _ -> print_list "| " "\n| " "\n\n" print_string Help.help_text; exit 0),               "display the documentation and exits");
 

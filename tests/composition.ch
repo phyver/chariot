@@ -1,4 +1,4 @@
-:set use_priorities false
+-- :set use_priorities false
 
 :test compose
    f x y => g x x y y

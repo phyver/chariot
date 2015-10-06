@@ -1,0 +1,17 @@
+>> option verbose is set to 1
+>> option unary_constants is set to true
+>> option continue_on_error is set to true
+>> coinductive type unit was succesfully defined
+>> inductive type nat was succesfully defined
+>> coinductive type prod was succesfully defined
+>> inductive type list was succesfully defined
+** error: destructor Zero doesn't appropriate type
+>> Typing for map_list successful
+>> the definition for map_list is complete
+>> the definition map_list is provably correct
+
+val
+   map_list : ('a → 'b) → list('a) → list('b)
+    | map_list f ([] {  }⁰) = [] {  }⁰
+    | map_list f (Cons¹ { Fst = x ; Snd = xs }⁰) = Cons¹ { Fst = f x ; Snd = map_list f xs }⁰
+

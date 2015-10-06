@@ -1,5 +1,4 @@
 >> option verbose is set to 1
->> option use_priorities is set to false
 >> TRUE means that the first pattern is an approximation of the second
 >> expect TRUE
 >>   f, x₁ => g, x₁    ≥    f, x₁ => g, x₁

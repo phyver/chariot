@@ -3,7 +3,7 @@
  *********************************************************************)
 
 :set verbose 1
-:set allow_structs true
+-- :set allow_structs true
 :set keep_useless_clauses true
 
 --------------

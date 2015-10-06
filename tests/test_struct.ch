@@ -1,6 +1,6 @@
 :set show_tuples false
 :set verbose 1
-:set allow_structs true
+-- :set allow_structs true
 
 :set continue_on_error true
 

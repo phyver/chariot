@@ -13,7 +13,7 @@
 
 >> Typing for di successful
 >> the definition for di is complete
-** error: the definition di is NOT provably correct (weight_bound: 1, depth_bound: 2)
+** error: the definition di is NOT provably total (weight_bound: 1, depth_bound: 2)
 >> Typing for l successful
 >> the definition for l is complete
 >> the definition l is provably correct
@@ -25,7 +25,7 @@
 >> inductive type tree was succesfully defined
 >> Typing for comb successful
 >> the definition for comb is complete
-** error: the definition comb is NOT provably correct (weight_bound: 1, depth_bound: 2)
+** error: the definition comb is NOT provably total (weight_bound: 1, depth_bound: 2)
 >> Typing for comb_size successful
 >> the definition for comb_size is complete
 >> the definition comb_size is provably correct

@@ -61,37 +61,40 @@ let current_state =
                 functions             = []      ;
               }                                 ;
         options = [
-            "depth" , OptInt 2 , "depth of exploration during the SCP"                              ;
-            "bound" , OptInt 2 , "bound for weight during the SCP"                              ;
+            "depth",                 OptInt 2,       "depth of exploration during the SCP"                              ;
+            "bound",                 OptInt 2,       "bound for weight during the SCP"                              ;
 
-            "prompt" , OptString "# " , "prompt for the interactive toplevel"                          ;
-            "verbose" , OptInt 0  , "verbosity level"                           ;
+            "prompt",                OptString "# ", "prompt for the interactive toplevel"                          ;
+            "verbose",               OptInt 0,       "verbosity level"                           ;
+            "use_utf8",              OptBool true,   "use UTF8 symbols" ;
+            "use_ansi_codes",        OptBool false,  "use ANSI color codes to display various information" ;
 
-            "show_frozen_terms",      OptBool false    , "show frozen terms in reduced terms" ;
-            "show_nats",              OptBool true    , "use decimal notation for displaying natural numbers" ;
-            "show_lists",             OptBool true    , "use standard notations for displaying lists" ;
-            "show_tuples",            OptBool true    , "use standard notations for displaying tuples" ;
+            "show_priorities",       OptBool true,   "display priorities when showing function definitions" ;
+            "show_frozen_terms",     OptBool false,  "show frozen terms in reduced terms" ;
+            "show_nats",             OptBool true,   "use decimal notation for displaying natural numbers" ;
+            "show_lists",            OptBool true,   "use standard notations for displaying lists" ;
+            "show_tuples",           OptBool true,   "use standard notations for displaying tuples" ;
 
-            "allow_incomplete_defs",  OptBool true    , "allow incomplete definitions";
-            "keep_useless_clauses",   OptBool false    , "keep useless clauses in function definitions";
-            "use_priorities",         OptBool true    , "use priorities for checking termination (unsound if false)" ;  (* FIXME -> only check termination *)
-            "show_priorities",        OptBool true    , "display priorities when showing function definitions" ;
-            "continue_on_error",      OptBool false    , "do not quit on errors (only for non-interactive use)" ;
-            "squash_priorities",      OptBool false    , "consecutive types of same polarity get the same priority" ;
-            "use_ansi_codes",         OptBool false    , "use ANSI color codes to display various information" ;
-            "use_subsumption",        OptBool true    , "use subsumption to simplify sets of clauses" ;
-            "collapse_graph",         OptBool true    , "collapse initial call-graph" ;
-            "allow_unsafe_defs",  OptBool true    , "allow definition that do not pass the SCP" ;
-            "expand_clauses",         OptBool false    , "use the case expansion of the clauses to regenerate the clauses";
-            "allow_structs",          OptBool true    , "allow structures inside terms";
+            "unary_constants",       OptBool false,   "enforce that all constructors / destructors are unary" ;  (* TODO *)
+            "only_termination",      OptBool false,   "only check termination and not totality (unsound)" ;  (* TODO *)
+            "allow_incomplete_defs", OptBool true,   "allow incomplete definitions";
+            "keep_useless_clauses",  OptBool false,  "keep useless clauses in function definitions";
+            "continue_on_error",     OptBool false,  "do not quit on errors (only for non-interactive use)" ;
+            "squash_priorities",     OptBool false,  "consecutive types of same polarity get the same priority" ;
+            "use_subsumption",       OptBool true,   "use subsumption to simplify sets of clauses" ;
+            "collapse_graph",        OptBool true,   "collapse initial call-graph" ;
+            "allow_unsafe_defs",     OptBool true,   "allow definition that do not pass the SCP" ;
+            "expand_clauses",        OptBool false,  "use the case expansion of the clauses to regenerate the clauses";
+            (* "allow_structs",         OptBool true,   "allow structures inside terms"; *)
+            (* "use_priorities",        OptBool true,   "use priorities for checking termination (unsound if false)" ;  (1* FIXME -> only check termination *1) *)
 
-(* various debuging options *)
-            "show_initial_graph",     OptBool false    , "show initial call graph when checking totality" ;
-            "show_final_graph",       OptBool false    , "show final call graph when checking totality" ;
-            "show_all_steps",         OptBool false    , "show all successive graphs when checking totality" ;
-            "show_coherent_loops",    OptBool false    , "show coherent loops found in the final graph when checking totality" ;
-            "show_bad_loops",         OptBool false    , "show the first non-decreasing coherent loop found when checking totality" ;
-            "incremental_SCP",        OptBool true    , "do not try the SCP at smaller depth";
+            (* various debuging options *)
+            "show_initial_graph",    OptBool false,  "show initial call graph when checking totality" ;
+            "show_final_graph",      OptBool false,  "show final call graph when checking totality" ;
+            "show_all_steps",        OptBool false,  "show all successive graphs when checking totality" ;
+            "show_coherent_loops",   OptBool false,  "show coherent loops found in the final graph when checking totality" ;
+            "show_bad_loops",        OptBool false,  "show the first non-decreasing coherent loop found when checking totality" ;
+            "incremental_SCP",       OptBool true,   "do not try the SCP at smaller depth";
         ]                                       ;
         last_explore = None                     ;
     }

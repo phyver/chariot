@@ -1,6 +1,5 @@
 >> option verbose is set to 1
 >> option verbose is set to 1
->> option allow_structs is set to true
 >> option keep_useless_clauses is set to true
 >> inductive type nat was succesfully defined
 >> inductive type plus was succesfully defined

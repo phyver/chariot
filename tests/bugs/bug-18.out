@@ -1,6 +1,5 @@
 >> option verbose is set to 1
 >> option verbose is set to 1
->> option allow_structs is set to true
 >> inductive type nat was succesfully defined
 >> coinductive type stream was succesfully defined
 >> coinductive type prod was succesfully defined

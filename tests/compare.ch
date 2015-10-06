@@ -1,4 +1,4 @@
-:set use_priorities false
+-- :set use_priorities false
 
 :echo "TRUE means that the first pattern is an approximation of the second"
 
