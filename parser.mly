@@ -123,7 +123,7 @@ let tuple_term (l:plain_term list) : plain_term =
 (* a reference to number dummy arguments in terms *)
 let dummy_nb = ref 0
 (* generate a fresh dummy variable *)
-let dummy () = incr dummy_nb; Var("_" ^ (string_of_sub !dummy_nb),())
+let dummy () = incr dummy_nb; Var("_" ^ (if option "use_utf8" then (string_of_sub !dummy_nb) else string_of_int !dummy_nb),())
 
 (* execute a statement and catch appropriate errors *)
 let exec_cmd (cmd:unit->unit) : unit
@@ -255,7 +255,8 @@ let test_compare l1 r1 l2 r2 =
     let r2 = parsed_to_scp r2 in
     let l1,r1 = collapse_scp_clause (get_int_option "bound") (get_int_option "depth") (l1,r1) in
     let l2,r2 = collapse_scp_clause (get_int_option "bound") (get_int_option "depth") (l2,r2) in
-    msg "  %s    ≥    %s" (string_of_scp_clause (l1,r1)) (string_of_scp_clause (l2,r2));
+    let geq = if option "use_utf8" then "≥" else ">=" in
+    msg "  %s    %s    %s" (string_of_scp_clause (l1,r1)) geq (string_of_scp_clause (l2,r2));
     if approximates (l1,r1) (l2,r2)
     then msg "        TRUE"
     else msg "        FALSE";

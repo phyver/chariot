@@ -41,6 +41,7 @@ open Utils
 open State
 open Pretty
 
+(* TODO: use closures and avoid substitutions *)
 
 let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
   =

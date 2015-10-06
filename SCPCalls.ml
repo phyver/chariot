@@ -385,7 +385,7 @@ let normalize_scp_clause (lhs,rhs : scp_clause)
     let n = ref 0
     in
 
-    let new_var () = incr n; "x"^string_of_sub !n
+    let new_var () = incr n; if option "use_utf8" then "x"^string_of_sub !n else fmt "x_%d" !n
     in
 
     (* process a constructor pattern to get the approximations:
@@ -570,8 +570,10 @@ let compose (l1,r1:scp_clause) (l2,r2:scp_clause)
   : scp_clause
   =
     let rename s (f,pats) = (f,List.map (rename_var s) pats) in
-    let l1,r1 = rename "₁" l1, rename "₁" r1 in
-    let l2,r2 = rename "₂" l2, rename "₂" r2 in
+    let one = if option "use_utf8" then "₁" else "_1" in
+    let two = if option "use_utf8" then "₂" else "_2" in
+    let l1,r1 = rename one l1, rename one r1 in
+    let l2,r2 = rename two l2, rename two r2 in
     (* debug "  %s  o    %s" (string_of_scp_clause (l1,r1)) (string_of_scp_clause (l2,r2)); *)
 
     try
@@ -709,8 +711,10 @@ let approximates p1 p2 =
         let l1,r1 = p1 in
         let l2,r2 = p2 in
         let rename s (f,pats) = (f,List.map (rename_var s) pats) in
-        let l1,r1 = rename "₁" l1, rename "₁" r1 in
-        let l2,r2 = rename "₂" l2, rename "₂" r2 in
+        let one = if option "use_utf8" then "₁" else "_1" in
+        let two = if option "use_utf8" then "₂" else "_2" in
+        let l1,r1 = rename one l1, rename one r1 in
+        let l2,r2 = rename two l2, rename two r2 in
         let sigma,context1,context2 = unify l1 l2 in
 
         let subst (f,pats) = (f,List.map (subst_scp_term sigma) pats) in
@@ -831,8 +835,10 @@ let coherent (p1:scp_clause) (p2:scp_clause) : bool =
         let l1,r1 = p1 in
         let l2,r2 = p2 in
         let rename s (f,pats) = (f,List.map (rename_var s) pats) in
-        let l1,r1 = rename "₁" l1, rename "₁" r1 in
-        let l2,r2 = rename "₂" l2, rename "₂" r2 in
+        let one = if option "use_utf8" then "₁" else "_1" in
+        let two = if option "use_utf8" then "₂" else "_2" in
+        let l1,r1 = rename one l1, rename one r1 in
+        let l2,r2 = rename two l2, rename two r2 in
         (* debug "        check if %s\nis coherent with %s" (string_of_scp_clause p1) (string_of_scp_clause p2); *)
         let sigma,context1,context2 = unify l1 l2 in
 

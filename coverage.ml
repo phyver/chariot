@@ -77,7 +77,7 @@ let choose_constructor (c:const_name) (clauses:(int*'p match_pattern*(empty,'p,t
 let counter = ref 0
 let new_var () =
     incr counter;
-    "x"^(string_of_sub !counter)
+    "x"^(if option "use_utf8" then string_of_sub !counter else fmt "_%d" !counter)
 
 let string_of_clause (pat,def) = fmt "[%s] -> %s" (string_of_list " " string_of_plain_term pat) (string_of_plain_term def)
 

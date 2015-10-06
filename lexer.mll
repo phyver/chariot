@@ -40,21 +40,20 @@ knowledge of the CeCILL-B license and that you accept its terms.
 open Parser
 
 let remove_exp s =
-    let re = Str.regexp "\\(⁰\\|¹\\|²\\|³\\|⁴\\|⁵\\|⁶\\|⁷\\|⁸\\|⁹\\)*$" in
+    let re = Str.regexp "\\(⁰\\|¹\\|²\\|³\\|⁴\\|⁵\\|⁶\\|⁷\\|⁸\\|⁹\\)*$\\|\\(\\^{[0-9]+}\\)" in
     Str.global_replace re "" s
 
 }
 let upper = [ 'A'-'Z' ]
 let lower = [ 'a'-'z' ]
 let other = [ '0'-'9' '_']
-let exp = ("⁰" | "¹" | "²" | "³" | "⁴" | "⁵" | "⁶" | "⁷" | "⁸" | "⁹")*
-let sub = ("₀" | "₁" | "₂" | "₃" | "₄" | "₅" | "₆" | "₇" | "₈" | "₉")*
+let exp = ("⁰" | "¹" | "²" | "³" | "⁴" | "⁵" | "⁶" | "⁷" | "⁸" | "⁹")* | ("\\^{" [ '0'-'9' ]+ "}")
 let idU = upper(lower|upper|other)*exp
 let idL = lower(lower|upper|other)*exp
 let str = "\"" ([^ '"'] | "\\\"")* "\""
 let tvar = "'" lower(lower|upper|other)*exp
-let int = [ '0'-'9' ][ '0'-'9' ]*
-let dummy = "_" sub
+let int = [ '0'-'9' ]+
+let dummy = "_" (("₀" | "₁" | "₂" | "₃" | "₄" | "₅" | "₆" | "₇" | "₈" | "₉")* | ['0'-'9']*)
 
 
 rule tokenize = parse

@@ -47,10 +47,12 @@ let string_of_priority p
     then ""
     else
         match p with
-        (* | None ->  "⁽⁾" *)
-        (* | None ->  "⁻" *)
-        | None -> if option "use_ansi_codes" then ansi_code "red" "⁼" else "⁼"
-        | Some p -> if option "use_ansi_codes" then ansi_code "green" (string_of_exp p) else (string_of_exp p)
+        (* "⁽⁾" *)
+        (* "⁻" *)
+        | None -> let exp = if option "use_utf8" then "⁼" else "^{}" in
+                  if option "use_ansi_codes" then ansi_code "red" exp else exp
+        | Some p -> let exp = if option "use_utf8" then string_of_exp p else fmt "^{%d}" p in
+                    if option "use_ansi_codes" then ansi_code "green" exp else exp
 
 (* check if a type is atomic in order to know where to put parenthesis *)
 let is_atomic_type = function
@@ -74,8 +76,8 @@ let rec string_of_type = function
         t ^ "(" ^ (String.concat "," (List.map string_of_type params)) ^ ")"
     | Arrow(t1,t2) ->
         if is_atomic_type t1
-        then (string_of_type t1) ^ " → " ^ (string_of_type t2)
-        else ("(" ^ (string_of_type t1) ^ ")" ^ " → " ^ (string_of_type t2))
+        then (string_of_type t1) ^ (if option "use_utf8" then " → " else " -> ") ^ (string_of_type t2)
+        else ("(" ^ (string_of_type t1) ^ ")" ^ (if option "use_utf8" then " → " else " -> ") ^ (string_of_type t2))
 
 
 (* check if a term is atomic in order to know where to put parenthesis *)
@@ -88,7 +90,7 @@ let rec is_atomic_term (v:('a,'p,'t) raw_term) = match v with
 (* show a variables, taking care of the special cases *)
 let string_of_var s
   =
-    let re_dummy = Str.regexp "_\\(₀\\|₁\\|₂\\|₃\\|₄\\|₅\\|₆\\|₇\\|₈\\|₉\\)*$" in
+    let re_dummy = Str.regexp "_\\(\\(₀\\|₁\\|₂\\|₃\\|₄\\|₅\\|₆\\|₇\\|₈\\|₉\\)*\\|[0-9]*\\)$" in
     assert (s<>"");
 
     if s = "()" then "()"
@@ -202,7 +204,7 @@ let string_of_term ?(indent=(-1)) v = string_of_raw_term indent (fun o s -> s.bo
 
 (* showing scp term with approximations *)
 let string_of_weight w = match w with
-    | Infty -> "∞"
+    | Infty -> if option "use_utf8" then "∞" else "oo"
     | Num n -> (string_of_int n)
 
 let string_of_coeff (c:coeff) : string
@@ -304,7 +306,7 @@ let string_of_typed_term v
     let show_type t =
         let n = new_i() in
         all_types := (n,t)::!all_types;
-        string_of_exp n
+        if option "use_utf8" then string_of_exp n else fmt "^{%d}" n
     in
 
     let s_term = string_of_raw_term (-1) (fun o s -> s.bot) (k "") show_type v in
@@ -370,7 +372,7 @@ let show_function f t clauses (args,cst) =
                 clauses;
     if (verbose 2)
     then
-        let tmp = if args = [] then "" else (string_of_list " " id args) ^ " -> " in
+        let tmp = if args = [] then "" else (string_of_list " " id args) ^ (if option "use_utf8" then " → " else " -> ") in
         msg "\ncorresponding case and struct form:\n%s%s" tmp (string_of_case_struct_term cst)
 
 let show_function_bloc env funs
