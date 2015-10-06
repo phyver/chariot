@@ -24,38 +24,38 @@
 val
    f : 'a → 'a → 'b → empty → 'b>> 
 >> corresponding case and struct form:
->> x₁ x₂ x₃ x₄ -> 
+>> x₁ x₂ x₃ x₄ → 
 >>   case x₄ of
 >>   
 
 val
    g : 'a → 'a → 'b → empty>> 
 >> corresponding case and struct form:
->> x₁ x₂ x₃ -> FAIL
+>> x₁ x₂ x₃ → FAIL
 
 val
    h : 'a → 'a → 'b → unit>> 
 >> corresponding case and struct form:
->> x₁ x₂ x₃ -> 
+>> x₁ x₂ x₃ → 
 >>   {
 >>      }
 
 val
    f : 'a → 'a → 'b → empty → 'b>> 
 >> corresponding case and struct form:
->> x₁ x₂ x₃ x₄ -> 
+>> x₁ x₂ x₃ x₄ → 
 >>   case x₄ of
 >>   
 
 val
    g : 'a → 'a → 'b → empty>> 
 >> corresponding case and struct form:
->> x₁ x₂ x₃ -> FAIL
+>> x₁ x₂ x₃ → FAIL
 
 val
    h : 'a → 'a → 'b → unit>> 
 >> corresponding case and struct form:
->> x₁ x₂ x₃ -> 
+>> x₁ x₂ x₃ → 
 >>   {
 >>      }
 
@@ -73,7 +73,7 @@ val
     | i {  }⁰ = ✠
 >> 
 >> corresponding case and struct form:
->> x₁ -> ✠
+>> x₁ → ✠
 
 >> Typing for j successful
 !! warning: useless clause 2: j {  } = Ω

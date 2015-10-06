@@ -25,7 +25,7 @@ val
     | convert4 { D4 = { Nu = C¹ s }⁰ }² = 0
 >> 
 >> corresponding case and struct form:
->> x₁ -> 
+>> x₁ → 
 >>   case x₁.D4.Nu of
 >>     C x₂  ->  0
 

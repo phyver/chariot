@@ -5,7 +5,7 @@
 >> inductive type nat was succesfully defined
 >> coinductive type prod was succesfully defined
 >> inductive type list was succesfully defined
-** error: destructor Zero doesn't appropriate type
+** error: constructor Zero is not unary
 >> Typing for map_list successful
 >> the definition for map_list is complete
 >> the definition map_list is provably correct
