@@ -193,6 +193,7 @@ let process_type_defs (env:environment)
       : (type_name * bloc_nb * type_name list * const_name list) * (const_name * int * type_expression) list
         =
         let params = List.map (function TVar(x) -> x | _ -> assert false) params in
+        let params = List.sort compare params in
 
         (* we check that we are not redefining an empty / unit type *)
         check_empty_unit env n tname params consts;
@@ -205,7 +206,7 @@ let process_type_defs (env:environment)
             let params' = extract_type_variables t in
             match diff_uniq params' params with
                 | [] -> ()
-                | x::_ -> error (fmt "type parameter %s is free" x)
+                | x::_ -> error (fmt "type parameter '%s is free" x)
         ) consts;
 
         (* we check that all instances of defined type appear with the same parameters *)
