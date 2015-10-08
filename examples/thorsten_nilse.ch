@@ -1,4 +1,5 @@
-(* example from Thorsten and Nilse *)
+-- example from Thorsten and Nilse
+-- it doesn't pass the totality test...
 
 codata stream('x) where
     | Head : stream('x) -> 'x

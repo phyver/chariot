@@ -6,8 +6,8 @@ val length : list('x) -> nat
     | length [] = 0
     | length (x::xs) = (length xs) + 1
 
-val map f [] = []
-  | map f (x::xs) = (f x)::(map f xs)
+val map_list f [] = []
+  | map_list f (x::xs) = (f x)::(map_list f xs)
 
 val fold_right f [] o = o
   | fold_right f (x::xs) o = f x (fold_right f xs o)
