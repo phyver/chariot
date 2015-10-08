@@ -1,11 +1,14 @@
-  - only allow single type with 0 constructor / 0 destructor
+  - go back to original representation of calls as substitutions (+result) using C- and projections
+
+  - think about static flow analysis à la PML1
+
+  - add functions (fun x -> ...)???
 
   - file christophe.ch is very slow (test12)
 
   - flags
       --minimal -> unary, no structs
       --only-termination
-
 
   - better exceptions than "Not_found" for utils.ml functions
 
