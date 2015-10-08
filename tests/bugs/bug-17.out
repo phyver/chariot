@@ -1,2 +1,2 @@
 >> option verbose is set to 1
-** error: type parameter x is free
+** error: type parameter 'x is free
