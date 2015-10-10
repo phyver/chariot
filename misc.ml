@@ -274,3 +274,13 @@ let plural (l:'a list) (sing:string) (plur:string) : string
         | [_] -> sing
         | _ -> plur
 
+(* same as List.assoc, but removes the entry as well *)
+let rec assoc_del (k:'k) (l:('k*'x) list) : 'x * ('k*'x) list
+  = match l with
+        | [] -> raise Not_found
+        | (k',v)::l when k=k' -> v,l
+        | (k',v')::l ->
+            let v,l = assoc_del k l in
+            v,(k',v')::l
+
+

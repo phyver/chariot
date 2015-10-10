@@ -1,11 +1,12 @@
-data conat_aux('n) where
-    | Zero : conat_aux('n)
-    | Succ : 'n -> conat_aux('n)
+codata pair('x,'y) where
+    | Fst : pair('x,'y) -> 'x
+    | Snd : pair('x,'y) -> 'y
 
-codata conat where
-    Dn : conat -> conat_aux(conat)
+data t('x) where
+    | C : 'x -> t('x)
 
 :set expand_clauses true
-:set show_nats false
-val test (Dn # 0) = ???
-  | test n = ???
+val h  { Fst = C y ; Snd = { Fst = C z ; Snd = zs }} = z
+
+:set verbose 2
+:show h

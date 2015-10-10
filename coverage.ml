@@ -185,6 +185,7 @@ convert_match_aux env xs clauses fail
                 let projs = get_other_constants env d in
                 let new_xs = List.map (fun d -> x,ds@[d]) projs in
                 let new_xs = new_xs@xs in
+                (* debug "new_xs: [%s]" (string_of_list ", " (function x,ds -> fmt "%s.%s" x (string_of_list "." id ds)) new_xs); *)
 
                 let new_clauses
                   = List.map
@@ -338,15 +339,45 @@ let extract_clause_numbers cs
             | CSLeaf(n,v) -> [n]
     in uniq (extract_clause_numbers_aux cs)
 
-let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:(empty,'p,type_expression) raw_term case_struct_tree)
-  : ((empty, unit, unit) raw_term * (empty, 'p, unit) raw_term) list
-  (* I need unit for priorities on the left because I need to invent priorities in the convert_cs_to_clauses_aux function *)
+let convert_cs_to_clauses env (f:var_name) (xs:var_name list) (cs:(empty,unit,type_expression) raw_term case_struct_tree)
+  : ((empty, unit, unit) raw_term * (empty, unit, unit) raw_term) list
   =
 
     let process_pats xs sigma pat =
+        (* debug "xs: %s" (string_of_list ", " id xs); *)
+        (* debug "sigma: %s" (string_of_term_substitution sigma); *)
+        (* debug "pat: %s" (string_of_list ", " string_of_plain_term pat); *)
         let xs = List.map (fun x -> Var(x,())) xs in
         let xs = List.fold_left (fun xs xv -> List.map (subst_term [fst xv,snd xv]) xs) xs sigma in
         pat@xs
+    in
+
+    let rec add_constraint st ds v
+      =
+          (* debug "add_constraint: st = %s" (string_of_plain_term st); *)
+          (* debug "                ds = %s" (string_of_list "." id ds); *)
+          (* debug "                 v = %s" (string_of_plain_term v); *)
+        match ds with
+            | [] -> assert (match st with Var _ -> true | _ -> false); v
+            | d::ds ->
+                begin
+                    match st with
+                        | Struct(fields,p,t) ->
+                            begin
+                                try
+                                    let w,fields = assoc_del d fields in
+                                    let r = add_constraint w ds v in
+                                    Struct(((d,r)::fields),p,t)
+                                with Not_found ->
+                                    let r = add_constraint (Var("_",t)) ds v in     (* FIXME: this shouldn't be type "t" *)
+                                    Struct(((d,r)::fields),p,t)
+                            end
+                        | Var(x,t) ->
+                            let r = add_constraint (Var("_",t)) ds v in     (* FIXME: this shouldn't be type "t" *)
+                            Struct([d,r],(),t)
+
+                        | v -> debug "oops: %s" (string_of_plain_term v); assert false
+                end
     in
 
     let rec convert_cs_to_clauses_aux (xs:var_name list) sigma pat (cs:(empty,'p,type_expression) raw_term case_struct_tree)
@@ -354,11 +385,13 @@ let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:(empty,'p,type_exp
         | CSFail -> []
         | CSLeaf(v) -> [implode (process_pats xs sigma pat),map_type_term (fun t->()) v]
         | CSCase(x,ds,cases) ->
+                (* todo "convert_cs_to_clauses_aux: deal with destructors ds..." *)
             List.concat (
                 List.map (function c,(xs',cs) ->
                                 let xs' = List.map (function x->Var(x,())) xs' in
                                 let c = app (Const(c,(),())) xs' in
-                                let sigma = List.map (second (subst_term [x,c])) sigma in
+                                (* let sigma = List.map (second (subst_term [x,c])) sigma in *)
+                                let sigma = List.map (function x',v when x'=x -> x',add_constraint v (List.rev ds) c | x,v -> x,v) sigma in
                                 convert_cs_to_clauses_aux xs sigma pat cs)
                             cases)
         | CSStruct(fields) ->
@@ -370,9 +403,39 @@ let convert_cs_to_clauses (f:var_name) (xs:var_name list) (cs:(empty,'p,type_exp
                             fields)
     in
 
+    let counter_dummy = ref 0 in
+
+    let rec reorder_fields v
+      = match v with
+            | Var _ | Proj _ | Const _ | Daimon _ | Angel _ -> v
+            | App(v1,v2) -> App(reorder_fields v1, reorder_fields v2)
+            | Struct([],p,t) -> v
+            | Struct(((d,_)::_) as fields,p,t) ->
+                let ds = get_other_constants env d in
+                let fields =
+                    List.map
+                        (fun d ->
+                            try
+                                let v = List.assoc d fields in
+                                let v = reorder_fields v in
+                                d,v
+                            with Not_found ->
+                                incr counter_dummy;
+                                let n = if option "use_utf8" then string_of_sub !counter_dummy else string_of_int !counter_dummy in
+                                (d,Var("_"^n,t))        (* FIXME: shouldn't be t *)
+                        )
+                        ds
+                in
+                Struct(fields, p, t)
+            | Sp(s,_) -> s.bot
+    in
+
+    (* debug "clauses:\n  %s" (string_of_case_struct_term cs); *)
+
     let clauses = convert_cs_to_clauses_aux xs (List.map (fun x -> x,Var(x,())) xs) [Var(f,())] cs in
 
     (* debug "new clauses:\n  %s" (string_of_list "\n  " (function p,d -> fmt "%s => %s" (string_of_plain_term p) (string_of_plain_term d)) clauses); *)
+    let clauses = List.map (first reorder_fields) clauses in
 
     clauses
 

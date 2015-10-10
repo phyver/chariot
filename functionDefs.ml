@@ -206,7 +206,7 @@ let process_function_defs (env:environment)
     let (defs:(var_name * type_expression * (typed_term * typed_term) list * case_struct_def) list)
       = if option "expand_clauses"
         then
-            let new_defs = List.map (function f,t,_,(xs,pat) -> f, Some t, convert_cs_to_clauses f xs pat) defs in
+            let new_defs = List.map (function f,t,_,(xs,pat) -> f, Some t, convert_cs_to_clauses env f xs pat) defs in
             let new_defs = infer_type_defs env new_defs in
             List.map2 (fun f_orig f_new ->
                             let f,t,_,cs = f_orig in
