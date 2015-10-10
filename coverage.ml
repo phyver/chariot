@@ -134,7 +134,7 @@ convert_match_aux env xs clauses fail
                   = List.map
                         (fun cl -> match cl with
                             | (n,Var(y,t)::ps,def) ->
-                                    let xds = add_type_projs env t x ds in
+                                    let xds = add_type_projs env t x (List.rev ds) in
                                     (n,ps,subst_term [y,xds] def)
                             | _ -> assert false)
                         clauses
@@ -216,7 +216,7 @@ convert_match_aux env xs clauses fail
                         c', (new_xs, convert_match env ((List.map (fun x -> x,[]) new_xs)@xs) clauses fail)
                     )
                     constants in
-                CSCase(x,ds,case_clauses)
+                CSCase(x,List.rev ds,case_clauses)
             end
 
         | _ -> assert false

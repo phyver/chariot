@@ -161,7 +161,7 @@ let rec reduce env (v:(empty,'p,'t) raw_term) : computed_term
                 Struct(fields,(),())
             | CSCase(x,ds,cases) ->
                 let v = try List.assoc x sigma with Not_found -> assert false in
-                let v = implode (v::(List.map (fun d -> Proj(d,(),())) ds)) in
+                let v = implode (v::(List.rev_map (fun d -> Proj(d,(),())) ds)) in
                 let v = normal_form v in
                 match get_head v,get_args v with
                     | Const(c,_,_),args ->

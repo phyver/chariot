@@ -1,0 +1,14 @@
+>> option verbose is set to 1
+>> coinductive type stream was succesfully defined
+>> Typing for f successful
+>> the definition for f is complete
+>> the definition f is provably correct
+
+>> option verbose is set to 2
+val
+   f : stream('a) → 'a
+    | f { Head = x ; Tail = { Head = y ; Tail = { Head = z ; Tail = zs }⁰ }⁰ }⁰ = z
+>> 
+>> corresponding case and struct form:
+>> x₁ → x₁.Tail.Tail.Head
+

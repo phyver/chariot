@@ -284,7 +284,7 @@ let rec
         match v with
         | CSFail -> "FAIL"
         | CSCase(x,ds,l) ->
-             prefix ^ (fmt "case %s%s of" x (string_of_list "" (fun d -> "."^d)ds)) ^
+             prefix ^ (fmt "case %s%s of" x (string_of_list "" (fun d -> "."^d) (List.rev ds))) ^
              prefix ^ (String.concat prefix
                                      (List.map (function c,(args,v) -> fmt "  %s%s  ->  %s" c (if args=[] then "" else " " ^ String.concat " " args) (string_of_case_struct_tree new_indent sv v)) l))
         | CSStruct fields ->
