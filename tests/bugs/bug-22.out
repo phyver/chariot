@@ -1,0 +1,19 @@
+>> option verbose is set to 1
+>> coinductive type pair was succesfully defined
+>> inductive type t was succesfully defined
+>> Typing for h successful
+>> the definition for h is complete
+>> the definition h is provably correct
+
+>> option verbose is set to 2
+val
+   h : pair(t('a),pair(t('b),'c)) → 'b
+    | h { Fst = C¹ y ; Snd = { Fst = C¹ z ; Snd = zs }² }⁰ = z
+>> 
+>> corresponding case and struct form:
+>> x₁ → 
+>>   case x₁.Fst of
+>>     C x₂  ->  
+>>       case x₁.Snd.Fst of
+>>         C x₃  ->  x₃
+
