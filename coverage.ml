@@ -79,7 +79,7 @@ let new_var () =
     incr counter;
     "x"^(if option "use_utf8" then string_of_sub !counter else fmt "_%d" !counter)
 
-let string_of_clause (pat,def) = fmt "[%s] -> %s" (string_of_list " " string_of_plain_term pat) (string_of_plain_term def)
+let string_of_clause (pat,def) = fmt "[%s] -> %s" (string_of_list " , " string_of_plain_term pat) (string_of_plain_term def)
 
 let rec add_type_projs (env:environment) (t:type_expression) (x:var_name) (ds:const_name list)
   : (empty,unit,type_expression) raw_term
@@ -105,7 +105,7 @@ convert_match env (xs:(var_name * const_name list) list)
                   (fail: (int*(empty,'p,type_expression) raw_term) case_struct_tree)
   : (int * (empty,'p,type_expression) raw_term) case_struct_tree
   =
-    (* debug "clauses: {%s}" (string_of_list "," string_of_clause clauses); *)
+    (* debug "convert: {%s}" (string_of_list "," string_of_clause (List.map (function _,a,b -> a,b) clauses)); *)
       match xs,clauses with
         | [],[] -> fail
         | (x,ds)::xs,[] -> fail  (* TODO: keep types and check that x is not in a type with 0 constructor *)
@@ -122,8 +122,9 @@ convert_match env (xs:(var_name * const_name list) list)
 
 convert_match_aux env xs clauses fail
   =
-    (* debug "xs: [%s]" (string_of_list ", " (function x,ds -> fmt "%s%s" x (string_of_list "." id ds)) xs); *)
+    (* debug "xs: [%s]" (string_of_list ", " (function x,ds -> fmt "%s.%s" x (string_of_list "." id ds)) xs); *)
     (* debug "clauses: {%s}" (string_of_list "," string_of_clause (List.map (function _,a,b -> a,b) clauses)); *)
+    (* debug ""; *)
     match xs,clauses with
         | [],[] -> assert false
 
@@ -166,6 +167,7 @@ convert_match_aux env xs clauses fail
             end
 
         (* structure case *)
+        (* empty structure *)
         | (x,ds)::xs,(_,Struct([],_,_)::_,_)::_ ->
             begin
                 let new_clauses
@@ -253,12 +255,12 @@ let simplify_case_struct v =
             | CSFail -> CSFail
             | CSCase(x,ds,cases) ->
                 begin try
-                    let c,xs = List.assoc x branch in
+                    let c,xs = List.assoc (x,ds) branch in
                     let ys,v = List.assoc c cases in
                     let v = rename (List.combine ys xs) v in
                     simplify_aux branch v
                 with Not_found ->
-                    let cases = List.map (function c,(xs,v) -> c,(xs,simplify_aux ((x,(c,xs))::branch) v)) cases in
+                    let cases = List.map (function c,(xs,v) -> c,(xs,simplify_aux (((x,ds),(c,xs))::branch) v)) cases in
                     CSCase(x,ds,cases)
                 end
             | CSStruct(fields) ->
