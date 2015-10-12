@@ -355,7 +355,9 @@ let rec subst_scp_term (sigma:(var_name*approx_term) list) (v:approx_term) : app
                             []
                             xcs
                 in
-                Sp(AppArg xcs, ())
+                match xcs with
+                    | [] -> Angel()  (* this can only happen if we've only encountered angels *)
+                    | xcs -> Sp(AppArg xcs, ())
             with Invalid_argument "subst_scp_term: Daimon" -> Daimon ()
 (* let subst_scp_term sigma v = *)
 (*     debug "sigma = %s" (string_of_list " , " (function x,v -> fmt "%s:=%s" x (string_of_approx_term v)) sigma); *)
