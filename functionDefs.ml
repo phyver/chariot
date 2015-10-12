@@ -143,7 +143,7 @@ let remove_funs (env:environment) (defs:(var_name * type_expression option * (pl
     let new_aux f =
         incr counter;
         let sub = if option "use_utf8" then string_of_sub !counter else fmt "_%d" !counter in
-        fmt "_%s%s" f sub
+        fmt "_%s_aux%s" f sub
     in
 
     let rec process_rhs (f:var_name) (xs:var_name list) (rhs:parsed_term) : plain_term * (var_name * (plain_term * parsed_term) list) list
