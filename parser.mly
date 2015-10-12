@@ -123,7 +123,7 @@ let tuple_term (l:parsed_term list) : parsed_term =
 (* a reference to number dummy arguments in terms *)
 let dummy_nb = ref 0
 (* generate a fresh dummy variable *)
-let dummy () = incr dummy_nb; Var("_" ^ (if option "use_utf8" then (string_of_sub !dummy_nb) else string_of_int !dummy_nb),())
+let dummy () = incr dummy_nb; ("_" ^ (if option "use_utf8" then (string_of_sub !dummy_nb) else string_of_int !dummy_nb))
 
 (* execute a statement and catch appropriate errors *)
 let exec_cmd (cmd:unit->unit) : unit
@@ -452,7 +452,9 @@ term:
 
 vars:
     | IDL                       { [$1] }
+    | DUMMY                     { [dummy()] }
     | IDL vars                  { $1::$2 }
+    | DUMMY vars                { (dummy())::$2 }
 
 app_term:
     | app_term atomic_term      { App($1,$2) }
@@ -462,7 +464,7 @@ atomic_term:
     | LPAR term RPAR                        { $2 }
     | atomic_term DOT IDU                   { App(Proj($3,(),()), $1) }
     | IDL                                   { Var($1,()) }
-    | DUMMY                                 { dummy() }
+    | DUMMY                                 { Var(dummy(),()) }
     | IDU                                   { Const($1,(),()) }
     | ANGEL                                 { Angel() }
     | DAIMON                                { Daimon() }
