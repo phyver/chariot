@@ -75,18 +75,17 @@ let current_state =
             "show_lists",            OptBool true,   "use standard notations for displaying lists" ;
             "show_tuples",           OptBool true,   "use standard notations for displaying tuples" ;
 
-            "unary_constants",       OptBool false,   "enforce that all constructors / destructors are unary" ;  (* TODO *)
-            "only_termination",      OptBool false,   "only check termination and not totality (unsound)" ;  (* TODO *)
+            "unary_constants",       OptBool false,  "enforce that all constructors / destructors are unary" ;
+            "only_termination",      OptBool false,  "only check termination and not totality (unsound) (TODO)" ;  (* TODO *)
             "allow_incomplete_defs", OptBool true,   "allow incomplete definitions";
             "keep_useless_clauses",  OptBool false,  "keep useless clauses in function definitions";
-            "continue_on_error",     OptBool false,  "do not quit on errors (only for non-interactive use)" ;
+            "continue_on_error",     OptBool false,  "do not quit on errors (for non-interactive use)" ;
             "squash_priorities",     OptBool false,  "consecutive types of same polarity get the same priority" ;
             "use_subsumption",       OptBool true,   "use subsumption to simplify sets of clauses" ;
             "collapse_graph",        OptBool true,   "collapse initial call-graph" ;
-            "allow_unsafe_defs",     OptBool true,   "allow definition that do not pass the SCP" ;
-            "expand_clauses",        OptBool false,  "use the case expansion of the clauses to regenerate the clauses";
+            "allow_unsafe_defs",     OptBool true,   "allow definitions that do not pass the SCP" ;
+            "expand_clauses",        OptBool false,  "use the case expression of the clauses to regenerate the clauses";
             (* "allow_structs",         OptBool true,   "allow structures inside terms"; *)
-            (* "use_priorities",        OptBool true,   "use priorities for checking termination (unsound if false)" ;  (1* FIXME -> only check termination *1) *)
 
             (* various debuging options *)
             "show_initial_graph",    OptBool false,  "show initial call graph when checking totality" ;
@@ -153,7 +152,10 @@ let show_options ()
             | OptInt v -> string_of_int v
     in
     msg "options:";
-    List.iter (function o,v,h -> msg "    %-20s: %-10s  %s" o (string_of_option_val v) h) current_state.options
+    List.iter (function o,v,h -> msg "    %-25s: %-10s  %s" o (string_of_option_val v) h) current_state.options;
+    msg "";
+    msg "to change an option:";
+    msg "    :set option value"
 
 let set_option s v
   =

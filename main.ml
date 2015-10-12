@@ -95,21 +95,22 @@ let _
     let nb_files = ref 0 in
 
       let args = [
-        ("-i",                        Arg.Unit (fun _ -> interactive := true),                              "enter interactive mode after reading file");
-        ("--interactive",             Arg.Unit (fun _ -> interactive := true),                              "enter interactive mode after reading file");
+        ("-i",            Arg.Unit (fun _ -> interactive := true),                   "enter interactive mode after reading file");
+        ("--interactive", Arg.Unit (fun _ -> interactive := true),                   "enter interactive mode after reading file");
 
-        ("-v",                        Arg.Int (fun v -> set_option "verbose" (string_of_int v)),            "choose verbosity level");
-        ("--verbose",                 Arg.Int (fun v -> set_option "verbose" (string_of_int v)),            "choose verbosity level");
+        ("-v",            Arg.Int (fun v -> set_option "verbose" (string_of_int v)), "choose verbosity level");
+        ("--verbose",     Arg.Int (fun v -> set_option "verbose" (string_of_int v)), "choose verbosity level");
 
-        ("--colors",                  Arg.Unit (fun _ -> set_option "use_ansi_codes" "true"),               "use ANSI color codes to display various information");
-        ("--utf8",                    Arg.Unit (fun _ -> set_option "use_utf8" "true"),                     "use UTF8 symbols");
-        ("--no-colors",               Arg.Unit (fun _ -> set_option "use_ansi_codes" "false"),              "do not use ANSI color codes to display various information");
-        ("--no-utf8",                 Arg.Unit (fun _ -> set_option "use_utf8" "false"),                    "do not use UTF8 symbols");
-        ("--fancy",                   Arg.Unit (fun _ -> set_option "use_utf8" "true"; set_option "use_ansi_codes" "true"),                       "same as --colors --utf8");
-        ("--plain",                   Arg.Unit (fun _ -> set_option "use_utf8" "false"; set_option "use_ansi_codes" "false"),                     "same as --no-colors --no-utf8");
+        ("--colors",      Arg.Unit (fun _ -> set_option "use_ansi_codes" "true"),    "use ANSI color codes to display various information");
+        ("--utf8",        Arg.Unit (fun _ -> set_option "use_utf8" "true"),          "use UTF8 symbols");
+        ("--no-colors",   Arg.Unit (fun _ -> set_option "use_ansi_codes" "false"),   "do not use ANSI color codes to display various information");
+        ("--no-utf8",     Arg.Unit (fun _ -> set_option "use_utf8" "false"),         "do not use UTF8 symbols");
+        ("--fancy",       Arg.Unit (fun _ -> set_option "use_utf8" "true";
+                                             set_option "use_ansi_codes" "true"),    "same as --colors --utf8");
+        ("--plain",       Arg.Unit (fun _ -> set_option "use_utf8" "false";
+                                             set_option "use_ansi_codes" "false"),   "same as --no-colors --no-utf8");
 
-
-        ("--doc",                     Arg.Unit (fun _ -> print_list "| " "\n| " "\n\n" print_string Help.help_text; exit 0),               "display the documentation and exits");
+        ("--doc",         Arg.Unit (fun _ -> print_list "| " "\n| " "\n\n" print_string Help.help_text; exit 0),  "display the documentation and exits");
 
         (* ("--dont_show_nats",          Arg.Unit (fun _ -> set_option "show_nats" "false"),                   "do not use decimal notation for displaying natural numbers"); *)
         (* ("--dont_show_lists",         Arg.Unit (fun _ -> set_option "show_lists" "false"),                  "do not use standard notations for displaying lists"); *)
@@ -141,6 +142,7 @@ let _
     then begin
         print_endline (fmt "          chariot (commit #%s)" Version.git_commit);
         print_endline "  :help for help";
+        print_endline "  :set for the list of options";
         print_newline();
         List.iter (fun f ->
             msg "loading file %s..." f;
