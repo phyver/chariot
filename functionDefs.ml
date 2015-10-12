@@ -136,9 +136,29 @@ let check_clause env (funs: var_name list) (f:var_name) (lhs:(empty,'p,'t) raw_t
 
 
 let process_function_defs (env:environment)
-                          (defs:(var_name * type_expression option * (plain_term * plain_term) list) list)
+                          (defs:(var_name * type_expression option * (parsed_term * parsed_term) list) list)
   : environment
   =
+
+    (* remove "fun ... -> ..." by adding auxiliary functions *)
+    let defs:(var_name * type_expression option * (plain_term * parsed_term) list) list
+      = List.map
+            (function f,t,clauses ->
+                let clauses =
+                    List.map
+                        (first (map_raw_term
+                            (fun _sp ->
+                                error (fmt "'fun' keyword not allowed in pattern for %s" f)) id id))
+                        clauses
+                in
+                f,t,clauses)
+            defs in
+
+    let defs:(var_name * type_expression option * (plain_term * plain_term) list) list
+      = List.map
+            (function f,t,clauses ->
+                f,t,List.map (second (map_raw_term (fun _ -> todo "transform 'fun' into auxiliary functions") id id)) clauses)
+            defs in
 
     (* check that the functions are all different *)
     let new_functions = List.map (function f,_,_ -> f) defs in

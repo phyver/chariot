@@ -123,11 +123,15 @@ type coeff = (priority*weight) list
 type approximation = AppRes of coeff | AppArg of (var_name*coeff) list
 type approx_term = (approximation,priority,unit) raw_term
 (* type scp_clause = approx_term * approx_term *)
- type scp_pattern = (var_name * approx_term list)
- type scp_clause = scp_pattern * scp_pattern
+type scp_pattern = (var_name * approx_term list)
+type scp_clause = scp_pattern * scp_pattern
 
 
 (* terms from the parser *)
+type fun_term = Fun of var_name list * parsed_term
+and parsed_term = (fun_term,unit,unit) raw_term
+
+(* plain terms, after removing of "fun -> ..." *)
 type plain_term = (empty,unit,unit) raw_term
 
 (* terms after typing *)

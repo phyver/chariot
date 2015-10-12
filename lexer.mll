@@ -95,6 +95,7 @@ rule tokenize = parse
     | "codata"          { CODATA }
     | "where"           { WHERE }
     | "and"             { AND }
+    | "fun"             { FUN }
     | "->"              { ARROW }
     | "→"               { ARROW }
     | "=>"              { DOUBLEARROW }
