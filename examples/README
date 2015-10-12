@@ -1,0 +1,7 @@
+various small examples
+
+Note: to test the lists examples:
+
+  $ chariot 02_nat.ch 03_lists.ch -i
+
+
