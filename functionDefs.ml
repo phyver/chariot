@@ -135,12 +135,93 @@ let check_clause env (funs: var_name list) (f:var_name) (lhs:(empty,'p,'t) raw_t
     check_constructor_arity env lhs
 
 
+(* remove "fun ... -> ..." by adding auxiliary functions *)
+let remove_funs (env:environment) (defs:(var_name * type_expression option * (plain_term * parsed_term) list) list)
+  : (var_name * type_expression option * (plain_term * plain_term) list) list
+  =
+    let counter = ref 0 in
+    let new_aux f =
+        incr counter;
+        let sub = if option "use_utf8" then string_of_sub !counter else fmt "_%d" !counter in
+        fmt "_%s%s" f sub
+    in
+
+    let rec process_rhs (f:var_name) (xs:var_name list) (rhs:parsed_term) : plain_term * (var_name * (plain_term * parsed_term) list) list
+      =
+        match rhs with
+            | Var(x,t) -> Var(x,t),[]
+            | Const(c,p,t) -> Const(c,p,t),[]
+            | Proj(d,p,t) -> Proj(d,p,t),[]
+            | Daimon(t) -> Daimon(t),[]
+            | Angel(t) -> Angel(t),[]
+            | App(v1,v2) ->
+                let v1,aux1 = process_rhs f xs v1 in
+                let v2,aux2 = process_rhs f xs v2 in
+                App(v1,v2), aux1@aux2
+            | Struct(fields,p,t) ->
+                let fields,aux_defs
+                  = List.fold_right (fun dv r ->
+                      let fields,aux_defs = r in
+                      let d,v = dv in
+                      let v,new_aux = process_rhs f xs v in
+                      (d,v)::fields , new_aux@aux_defs
+                    ) fields ([],[])
+                in
+                Struct(fields,p,t),aux_defs
+            | Sp(Fun(ys,v),t) ->
+                (* check that all y's are different *)
+                (match find_dup ys with
+                    | None -> ()
+                    | Some y -> error (fmt "local function has duplicate argument %s" y));
+                let xs = let ys = List.sort compare ys in diff_uniq xs ys in
+                let xs = List.map (fun x -> Var(x,())) xs in
+                let ys = List.map (fun x -> Var(x,())) ys in
+                let args = xs @ ys in
+                let f_aux = new_aux f in
+                let f_aux_xs = app (Var(f_aux,())) xs in
+                let aux_def = app (Var(f_aux,())) args, v in
+                f_aux_xs,[f_aux,[aux_def]]
+    in
+
+    let process_clause (f:var_name) (cl:plain_term * parsed_term)
+      : (plain_term*plain_term) * (var_name * (plain_term * parsed_term) list) list
+      = let lhs,rhs = cl in
+        let xs = List.sort compare (extract_pattern_variables lhs) in
+        let rhs,aux_defs = process_rhs f xs rhs in
+        (lhs,rhs), aux_defs
+    in
+
+    let process_function (f:var_name) (clauses:(plain_term * parsed_term) list)
+      : (plain_term * plain_term) list * (var_name * (plain_term * parsed_term) list) list
+      =
+        counter := 0;
+        let tmp = List.map (function lhs,rhs -> process_clause f (lhs,rhs)) clauses in
+        let clauses,aux_defs = List.split tmp in
+        let aux_defs = List.concat aux_defs in
+        clauses, aux_defs
+    in
+
+    let rec process_functions  (defs:(var_name * type_expression option * (plain_term * parsed_term) list) list)
+      : (var_name * type_expression option * (plain_term * plain_term) list) list
+      =
+        let tmp = List.map (function f,t,clauses -> let f_cls,aux_functions = process_function f clauses in (f,t,f_cls),aux_functions) defs in
+        let defs,aux_defs = List.split tmp in
+        let aux_defs = List.concat aux_defs in
+        let aux_defs = List.map (function f_aux,cls -> f_aux,None,cls) aux_defs in
+        match aux_defs with
+            | [] -> defs
+            | aux_defs -> defs @ (process_functions aux_defs)
+    in
+
+    process_functions defs
+
+
 let process_function_defs (env:environment)
                           (defs:(var_name * type_expression option * (parsed_term * parsed_term) list) list)
   : environment
   =
 
-    (* remove "fun ... -> ..." by adding auxiliary functions *)
+    (* check that the LHS of each clauses doesn't contain functions *)
     let defs:(var_name * type_expression option * (plain_term * parsed_term) list) list
       = List.map
             (function f,t,clauses ->
@@ -154,11 +235,9 @@ let process_function_defs (env:environment)
                 f,t,clauses)
             defs in
 
+    (* remove "fun ... -> ..." by adding auxiliary functions *)
     let defs:(var_name * type_expression option * (plain_term * plain_term) list) list
-      = List.map
-            (function f,t,clauses ->
-                f,t,List.map (second (map_raw_term (fun _ -> todo "transform 'fun' into auxiliary functions") id id)) clauses)
-            defs in
+      = remove_funs env defs in
 
     (* check that the functions are all different *)
     let new_functions = List.map (function f,_,_ -> f) defs in
