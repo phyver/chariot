@@ -1,0 +1,17 @@
+>> option verbose is set to 1
+>> inductive type nat was succesfully defined
+>> Typing for add successful
+>> the definition for add is complete
+>> the definition add is provably correct
+
+>> option expand_clauses is set to true
+>> Typing for mult successful
+>> the definition for mult is complete
+>> the definition mult is provably correct
+
+val
+   mult : nat → nat → nat
+    | mult 0 x₂ = 0
+    | mult (x₄+1) 0 = 0
+    | mult (x₄+1) (x₃+1) = add (x₄+1) (mult (x₄+1) x₃)
+

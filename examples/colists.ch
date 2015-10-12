@@ -15,13 +15,24 @@ val add : conat -> conat -> conat
 --   - we cannot add infinitely many 0s => special case
 --   - we need to explicitly add the Succ constructor so that the tests sees
 --     the definition is productive (it wouldn't be necessary with PML's flow analysis)
+val zero = Dn # 0
 val one = Dn # Succ $ Dn # 0
 val infinity = Dn # Succ infinity
 
 val mult : conat -> conat -> conat
-  | mult (Dn # 0) _ = one
-  | mult _ (Dn # 0) = one
+  | mult (Dn # 0) _ = zero
+  | mult _ (Dn # 0) = zero
+  -- to make sure the test detects productivity, we move the "+1" from "m" to the recursive call
   | mult (Dn # m+1) (Dn # (n+1)) = m + (Dn # (mult (Dn # m+1) n) + 1)
+
+(* ideally, with PML's flow analysis, the following would pass the totality test:
+:set expand_clauses true
+val mult : conat -> conat -> conat
+  | mult (Dn # 0) _ = zero
+  | mult _ (Dn # 0) = zero
+  | mult m (Dn # (n+1)) = m + (mult m n)
+*)
+
 
 -- substraction isn't total: sub infinity infinity is undefined...
 val sub : conat -> conat -> conat

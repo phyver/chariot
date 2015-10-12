@@ -383,7 +383,7 @@ let convert_cs_to_clauses env (f:var_name) (xs:var_name list) (cs:(empty,unit,ty
     let rec convert_cs_to_clauses_aux (xs:var_name list) sigma pat (cs:(empty,'p,type_expression) raw_term case_struct_tree)
       = match cs with
         | CSFail -> []
-        | CSLeaf(v) -> [implode (process_pats xs sigma pat),map_type_term (fun t->()) v]
+        | CSLeaf(v) -> [implode (process_pats xs sigma pat),subst_term sigma (map_type_term (fun t->()) v)]
         | CSCase(x,ds,cases) ->
                 (* todo "convert_cs_to_clauses_aux: deal with destructors ds..." *)
             List.concat (
