@@ -40,63 +40,35 @@ val eating : process('a,'b) -> stream('a) -> stream('b)
 val compose : process('a,'b) -> process('b,'c) -> process('a,'c)
   | compose p1 (D # Output c p2) = D # Output c (compose p1 p2)
   | compose (D # Output b p1) (D # Input phi2) = compose p1 (D # phi2 b)
-  | compose (D # Input phi1) p2 = D # Input $ compose_aux phi1 p2
-and
-  | compose_aux : ('a -> process_aux('a,'b,process('a,'b))) ->
-                  process('b,'c) ->
-                  'a ->
-                  process_aux('a,'c,process('a,'c))
-  | compose_aux phi1 p2 a = (compose (D # phi1 a) p2).D  --compose (D # phi1 a) ???
-
+  | compose (D # Input phi1) p2 = D # Input $ fun a -> (compose (D # phi1 a) p2).D
 
 
 -- examples
 -- the identity function as a stream processor
 val id : process('x,'x)
-  | id = D # Input id_aux
--- it would be nice to have lambdas:
---  | id = D # Input (fun x -> Output x id)
-and
-    id_aux : 'x -> process_aux('x,'x,process('x,'x))
-  | id_aux x = Output x id
+  | id = D # Input (fun x -> Output x id)
 
 
 -- the "jump" function as a stream processes:
 --   take the first element, remove that many elements
 --   start over
 val jump : process(nat,nat)
-  | jump = D # Input jump_input
+  | jump = D # Input jump_aux
 and
-  | jump_input : nat -> process_aux(nat,nat,process(nat,nat))
-  | jump_input 0 = Input output_aux         -- output the next element
-  | jump_input (n+1) = Input $ jump_aux n   -- throw away the next element, start over
--- it would be nice to have lambdas:
---  | jump_input 0 = Input $ fun n -> Output n jump
---  | jump_input (n+1) = Input $ fun n _ -> jump_input n
-and
-  | jump_aux : nat -> nat -> process_aux(nat,nat,process(nat,nat))
-  | jump_aux n _ = jump_input n
-and
-  | output_aux : nat -> process_aux(nat,nat,process(nat,nat))
-  | output_aux n = Output n jump
+  | jump_aux : nat -> process_aux(nat,nat,process(nat,nat))
+  | jump_aux 0 = Input $ fun n -> Output n jump
+  | jump_aux (n+1) = Input $ fun _ -> jump_aux n
 
 
 -- the "partial sums" function as a stream processor:
 --   take the first element, sum that number of following elements
 --   start over
 val partial_sums : process(nat,nat)
-  | partial_sums = D # Input in_sums
-and
-  | in_sums : nat -> process_aux(nat,nat,process(nat,nat))
-  | in_sums 0 = Output 0 partial_sums
-  | in_sums (n+1) = sums_aux 0 (n+1)
+  | partial_sums = D # Input $ sums_aux 0
 and
     sums_aux : nat -> nat -> process_aux(nat,nat,process(nat,nat))
   | sums_aux acc 0 = Output acc partial_sums
-  | sums_aux acc (n+1) = Input $ aux acc n
-and
-  | aux : nat -> nat -> nat -> process_aux(nat,nat,process(nat,nat))
-  | aux acc n m = sums_aux (add acc m) n
+  | sums_aux acc (n+1) = Input $ fun m -> sums_aux (add acc m) n
 
 
 
