@@ -1,8 +1,8 @@
-  - go back to original representation of calls as substitutions (+result) using C- and projections
-
   - think about static flow analysis à la PML1
 
-  - add functions (fun x -> ...)???
+  - go back to original representation of calls as substitutions (+result) using C- and projections
+
+  - add functions (fun x -> ...) as a syntactic sugar in definitions???
 
   - file christophe.ch is very slow (test12)
 
