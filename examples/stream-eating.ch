@@ -22,8 +22,8 @@ val eating : process('a,'b) -> stream('a) -> stream('b)
   | eating (D # Input phi) { Head = a ; Tail = s } = eating (D # phi a) s
 
 
--- example: they do not pass the totality test because the static analysis is too simple
--- PML1 flow analysis would solve the problem...
+-- examples
+-- the identity function as a stream processor
 val id : process('x,'x)
   | id = D # Input in_id
 and
@@ -42,7 +42,9 @@ val arith n r = { Head = n ; Tail = arith (add n r) r }
 
 val test = eating id (arith 0 1)
 
-
+-- the "partial sums" function as a stream processor:
+--   take the first element, sum that number of following elements
+--   start over
 val partial_sums : process(nat,nat)
   | partial_sums = D # Input in_sums
 and

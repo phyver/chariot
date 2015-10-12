@@ -158,7 +158,22 @@ let callgraph_from_definitions
                 | App _,_ -> assert false
         in
 
-        let rec process_rhs (graph:call_graph) (rhs:term) (calling_context:approx_term list)
+        let add_lambda_variables v t
+          = let nb = ref 0 in
+            let rec lambda_variables t
+              = match t with
+                    | Arrow(t1,t2) ->
+                        incr nb;
+                        let n = if option "use_utf8" then string_of_sub !nb else fmt "_%d" !nb in
+                        Var(fmt "X%s" n,t1)::(lambda_variables t2)
+                    | t -> []
+            in
+            app v (lambda_variables t)
+        in
+
+        (* the "allow_partial" flag is used to detect partial application of the recursive functions in arguments.
+         * Such partial application are not allowed as argument of another function... *)
+        let rec process_rhs ~allow_partial (graph:call_graph) (rhs:term) (calling_context:approx_term list)
           : call_graph
           =
               match explode rhs with
@@ -173,28 +188,30 @@ let callgraph_from_definitions
                                 in
                                 let graph = CallGraph.add (caller,called) (add_call_set call (try CallGraph.find (caller,called) graph with Not_found -> ClauseSet.empty)) graph
                                 in
-                                List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes([None,Infty]),())]) graph args
+                                List.fold_left (fun graph rhs -> process_rhs ~allow_partial:false graph rhs [Sp(AppRes([None,Infty]),())]) graph args
+                            | Arrow _ as t when allow_partial ->
+                                    process_rhs ~allow_partial:false graph (add_lambda_variables rhs t) calling_context
                             | t ->
                                     if verbose 1 then warning "the function %s appears not fully applied!" called; raise Non_terminating (* FIXME change exception *)
                     end
                 | Var _::args ->
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs [Sp(AppRes([None,Infty]),())]) graph args
+                    List.fold_left (fun graph rhs -> process_rhs ~allow_partial:false graph rhs [Sp(AppRes([None,Infty]),())]) graph args
                 | [Angel _] | [Daimon _] -> graph
                 | Angel _::_ | Daimon _::_ -> assert false       (* we already removed all the arguments to Angel / Daimon *)
                 | Const(c,p,t)::args ->
-                    List.fold_left (fun graph rhs -> process_rhs graph rhs ((Sp(AppRes([p,Num 1]),()))::calling_context)) graph args
+                    List.fold_left (fun graph rhs -> process_rhs ~allow_partial:true graph rhs ((Sp(AppRes([p,Num 1]),()))::calling_context)) graph args
                 | [Proj(d,p,t)] ->
                         graph
                 | [Struct(fields,p,t)] ->
                     List.fold_left (fun graph drhs ->
                         let d,rhs = drhs in
-                        process_rhs graph rhs ((Sp(AppRes([p,Num (-1)]),()))::calling_context)) graph fields
+                        process_rhs ~allow_partial:true graph rhs ((Sp(AppRes([p,Num (-1)]),()))::calling_context)) graph fields
                 | Struct _::_ -> assert false
                 | Sp(s,_)::_ -> s.bot
                 | App _::_ -> assert false
                 | Proj _::_ -> assert false
         in
-        process_rhs graph rhs []
+        process_rhs ~allow_partial:true graph rhs []
     in
 
     let graph = List.fold_left
