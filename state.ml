@@ -76,7 +76,7 @@ let current_state =
             "show_tuples",           OptBool true,   "use standard notations for displaying tuples" ;
 
             "unary_constants",       OptBool false,  "enforce that all constructors / destructors are unary" ;
-            "only_termination",      OptBool false,  "only check termination and not totality (unsound) (TODO)" ;  (* TODO *)
+            (* "only_termination",      OptBool false,  "only check termination and not totality (unsound) (TODO)" ;  (1* TODO *1) *)
             "allow_incomplete_defs", OptBool true,   "allow incomplete definitions";
             "keep_useless_clauses",  OptBool false,  "keep useless clauses in function definitions";
             "continue_on_error",     OptBool false,  "do not quit on errors (for non-interactive use)" ;
