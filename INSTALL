@@ -6,7 +6,7 @@ a standard OCaml distribution with ocamlbuild
 build
 =====
 
-    $ make release
+    $ make
 
 usage
 =====
