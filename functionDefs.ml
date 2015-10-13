@@ -136,14 +136,14 @@ let check_clause env (funs: var_name list) (f:var_name) (lhs:(empty,'p,'t) raw_t
 
 
 (* remove "fun ... -> ..." by adding auxiliary functions *)
+let fun_aux_counter = ref 0
 let remove_funs (env:environment) (defs:(var_name * type_expression option * (plain_term * parsed_term) list) list)
   : (var_name * type_expression option * (plain_term * plain_term) list) list
   =
-    let counter = ref 0 in
-    let new_aux f =
-        incr counter;
-        let sub = if option "use_utf8" then string_of_sub !counter else fmt "_%d" !counter in
-        fmt "_%s_aux%s" f sub
+    let new_aux () =
+        incr fun_aux_counter;
+        let sub = if option "use_utf8" then string_of_sub !fun_aux_counter else fmt "_%d" !fun_aux_counter in
+        fmt "_fun_aux%s" sub
     in
 
     let rec process_rhs (f:var_name) (xs:var_name list) (rhs:parsed_term) : plain_term * (var_name * (plain_term * parsed_term) list) list
@@ -177,7 +177,7 @@ let remove_funs (env:environment) (defs:(var_name * type_expression option * (pl
                 let xs = List.map (fun x -> Var(x,())) xs in
                 let ys = List.map (fun x -> Var(x,())) ys in
                 let args = xs @ ys in
-                let f_aux = new_aux f in
+                let f_aux = new_aux () in
                 let f_aux_xs = app (Var(f_aux,())) xs in
                 let aux_def = app (Var(f_aux,())) args, v in
                 f_aux_xs,[f_aux,[aux_def]]
@@ -187,6 +187,7 @@ let remove_funs (env:environment) (defs:(var_name * type_expression option * (pl
       : (plain_term*plain_term) * (var_name * (plain_term * parsed_term) list) list
       = let lhs,rhs = cl in
         let xs = List.sort compare (extract_pattern_variables lhs) in
+        let xs = List.filter (fun x -> x.[0] <> '_') xs in
         let rhs,aux_defs = process_rhs f xs rhs in
         (lhs,rhs), aux_defs
     in
@@ -194,7 +195,6 @@ let remove_funs (env:environment) (defs:(var_name * type_expression option * (pl
     let process_function (f:var_name) (clauses:(plain_term * parsed_term) list)
       : (plain_term * plain_term) list * (var_name * (plain_term * parsed_term) list) list
       =
-        counter := 0;
         let tmp = List.map (function lhs,rhs -> process_clause f (lhs,rhs)) clauses in
         let clauses,aux_defs = List.split tmp in
         let aux_defs = List.concat aux_defs in
