@@ -129,7 +129,7 @@ let dummy () = incr dummy_nb; ("_" ^ (if option "use_utf8" then (string_of_sub !
 let exec_cmd (cmd:unit->unit) : unit
   = try cmd ()
     with
-        | Error err ->
+        | Error err | UnificationError err ->
             if option "continue_on_error"
             then errmsg "%s" err
             else error err
