@@ -170,8 +170,20 @@ let cmd_show s =
         with Not_found -> errmsg "no type or function %s in environment" s
 
 
-let cmd_show_help ()
-  = print_list "| " "\n| " "\n\n" print_string Help.help_text
+let cmd_show_help s
+  = match s with
+        | "types" | "type" -> print_list "| " "\n| " "\n\n" print_string DocTypes.help_text
+        | "defs" | "def" | "definitions" | "definition" -> print_list "| " "\n| " "\n\n" print_string DocDef.help_text
+        | "syntax" -> print_list "| " "\n| " "\n\n" print_string DocSyntax.help_text
+        | "commands" | "command" | "options" | "option" -> print_list "| " "\n| " "\n\n" print_string DocCommands.help_text
+        | _ ->  print_list "| " "\n| " "\n\n" print_string [
+            "";
+            ":help types            help about type definitions";
+            ":help def              help about value definitions";
+            ":help syntax           help about the syntax";
+            ":help commands         help about the commands and options";
+            "";
+            ]
 
 let cmd_show_type (term:parsed_term) : unit
   = let term = parsed_to_plain term in
@@ -325,7 +337,8 @@ command:
     | CMDSET string string                              { fun () -> set_option $2 $3 }
     | CMDSET string INT                                 { fun () -> set_option $2 (string_of_int $3) }
     | CMDSET                                            { fun () -> show_options () }
-    | CMDHELP                                           { fun () -> cmd_show_help () }
+    | CMDHELP                                           { fun () -> cmd_show_help "" }
+    | CMDHELP string                                    { fun () -> cmd_show_help $2 }
     | CMDECHO string                                    { fun () -> msg "%s" $2 }
 
     | CMDUNFOLD term COMMA INT                          { fun () -> cmd_unfold_initial $2 $4 }

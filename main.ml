@@ -110,8 +110,6 @@ let _
         ("--plain",       Arg.Unit (fun _ -> set_option "use_utf8" "false";
                                              set_option "use_ansi_codes" "false"),   "same as --no-colors --no-utf8");
 
-        ("--doc",         Arg.Unit (fun _ -> print_list "| " "\n| " "\n\n" print_string Help.help_text; exit 0),  "display the documentation and exits");
-
         (* ("--dont_show_nats",          Arg.Unit (fun _ -> set_option "show_nats" "false"),                   "do not use decimal notation for displaying natural numbers"); *)
         (* ("--dont_show_lists",         Arg.Unit (fun _ -> set_option "show_lists" "false"),                  "do not use standard notations for displaying lists"); *)
         (* ("--dont_show_tuples",        Arg.Unit (fun _ -> set_option "show_tuples" "false"),                 "do not use standard notations for displaying tuples"); *)

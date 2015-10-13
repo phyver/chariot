@@ -1,0 +1,117 @@
+Comments
+--------
+
+Comments are either
+  - single line comments started with "--" (anywhere on a line)
+  - multiline comments delimited with "(*" and "*)".
+
+
+Syntax
+------
+
+//Types// (:help types) are given by the syntax
+
+  t  ::=  'x  |  name(t1,...,tn)  |  t1 -> t2
+
+Variables 'x are universally quantified (ML polymorphism) and a type name
+without parameters can be written without parenthesis.
+
+As usual, the "->" constructor is right associative: "t1 -> t2 -> t3" really
+means "t1 -> (t2 -> t3)".
+
+
+//Terms// are given by the syntax
+
+  u  ::=  x  |  C  |  u.D  |  { D1 = u1 ; ... ; Dn = un }  |  u1 u2
+
+where
+  - "x" is a variables
+  - "C" is a constructor
+  - "D", "D1", ..., "Dn" are destructors
+  - application is left associative: "u1 u2 u3" really means "(u1 u2) u3".
+
+There are two additional term constructors:
+  - "???" for a "generic metavariable" (possibly shown as "✠" by the system)
+  - "!!!" for a "generic looping term" (possibly show as "Ω" by the system)
+
+Those terms can take any type and differ only in how they behave during
+evaluation / totality checking.
+In particular, the system always assumes that "!!!" loops and that "???" is as
+good as possible. (The system tries to check that it could be filled with an
+appropriate term making the definition total.)
+
+
+//Constructor patterns// are a subset of terms. They are given by
+
+  p  ::=  _  |  x  |  C  |  { D1 = u1 ; ... ; Dn = un }
+
+The special variable "_" corresponds to a variable that will not be used in
+the right-side of the corresponding clause.
+
+//Clause patterns// are used to define recursive values. They are given by the
+syntax
+
+  cp  ::=  f  |  cp p  |  cp.D
+
+where
+  - "f" is a variable name (corresponding to one of the values being defined)
+  - "p" is a constructor pattern
+  - "D" is a destructor.
+
+
+Syntactic sugar (types)
+-----------------------
+
+There is a single syntactic sugar for types: "t1 * t2 * t3" really means
+"prod_3(t1,t2,t3)". Of course, the type prod_3 needs to be defined in order to
+use this...
+
+
+Syntactic sugar (terms)
+-----------------------
+
+Several syntactic sugar are available at the level of terms:
+
+  - a decimal integer is expanded to Succ (Succ ... Zero)
+
+  - "v + k" where "k" is a decimal integer is expanded to Succ (Succ ... v)
+
+    For example, the following is a valid definition
+
+    val fib 0 = 0
+      | fib 1 = 1
+      | fib (n+2) = add (fib (n+1)) (fib n)
+
+  - Lists can be given using Caml notation:
+      - "[]" for the empty list "Nil"
+      - "x::xs" for "Cons x xs"
+      - "[x1; x2; ...; xn]" for "Cons x1 (Cons x2 ... (Cons xn Nil)...)"
+
+    For example, the following is a valid definition
+
+    val rev_append [] l = l
+      | rev_append (x::xs) l = rev_append xs (x::l)
+
+  - Tuple notation corresponds to special constructors Tuple_0, Tuple_1, ...
+    For example, "(a,b,c)" really means "Tuple_3 a b c".
+
+
+  - $ can be used for right-associative application: "u1 $ u2 $ u3 u4" really
+    means "u1 (u2 (u3 u4))"
+
+  - a structure with a single label (destructor) D can be written as
+    with a #: "D#v" really means "{ D = v }".
+
+  - it is possible to use "fun x1 x2 -> v" inside a definition. This is
+    translated into a additional (mutually recurive) function with clause
+
+    _fun_aux ... x1 x2 = v
+
+    where "..." contains all the free variables from the original clause.
+
+
+The system tries to display natural numbers (constructors Succ and Zero),
+lists (constructors Nil and Cons) and tuples (contructors Tuple_0, Tuple_1,
+...) using the corresponding syntactic sugar. Each can be turned off with the
+options "show_nats", "show_lists" and "show_tuples".
+

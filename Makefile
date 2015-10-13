@@ -1,4 +1,4 @@
-OCAMLBUILD=ocamlbuild -libs str,unix
+OCAMLBUILD=ocamlbuild -libs str,unix -I doc
 
 
 all: native
@@ -8,9 +8,7 @@ tags:
 
 preproc: FORCE
 	@echo "let git_commit=\"$(shell git rev-parse HEAD)\"" > version.ml
-	@echo "let help_text = [" > help.ml
-	@sed -e "s/\"/'/g" -e "s/^\(.*\)$$/  \"\1\";/" README >> help.ml
-	@echo "  ]" >> help.ml
+	@make -C doc
 
 debug:
 	$(OCAMLBUILD) -tag profile -tag debug main.native
@@ -39,6 +37,7 @@ noninteractive-tests: native
 archive: preproc
 	git archive --prefix=chariot/ -o chariot.tar HEAD
 	tar --append --file=chariot.tar version.ml --transform 's,version.ml,chariot/version.ml,'
+	tar --append --file=chariot.tar doc/*.ml --transform 's,doc/,chariot/doc/,'
 
 install-vim:
 	@install -d  ~/.vim/ftdetect/

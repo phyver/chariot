@@ -1,0 +1,53 @@
+Toplevel and Commands
+---------------------
+
+Each command to the toplevel needs to end with a ";" or a blank line.
+
+The top level interprets type definitions (:help types) and recursive
+definitions (:help def) and adds them to the context.
+
+A single term given after the prompt is evaluated and the result is printed.
+
+Structures are evaluated lazily and the system prints a "hole" with a number
+for each subterm whose evaluation is frozen:
+
+    # arith 0 1;
+    >> term: arith 0 1
+    >> of type: stream(nat)
+    >> result: {
+    >>   Head = <1> ;
+    >>   Tail = <2> }
+
+<1> and <2> are examples of such holes.
+
+
+To reduce them, we give the command
+
+    # > 1,2
+
+If no hole is given, the system with evaluate all the holes...
+
+
+
+The other commands are
+    :help                   to display this help
+    :help types             to display help about type definitions
+    :help def               to display help about value definitions
+    :help commands          to display this message
+    :help syntax            to display help about chariot's syntax
+
+    :set                    to list the available options with there current value
+    :set <option> <value>   to change the value of an optiond
+
+    :show <name>            to show a function definition or a type definition
+    :show env               to show the whole environment
+    :show types             to show all the type definitions
+    :show functions         to show all the recursive definitions
+
+    :type <term>            to infer the type of a term and show the types of all its components
+    :reduce <term>          to reduce a term and show the result
+    :unfold <term>, <depth> to reduce a term and unfold all its frozen components, up to a given depth
+    :echo <string>          to echo some statis message
+    :quit                   to quit!
+
+

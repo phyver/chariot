@@ -1,0 +1,82 @@
+Types
+-----
+
+Types come in two flavors: strict/inductive or lazy/coinductive.
+
+A strict/inductive type is defined with
+    data tname(params)
+    where C1 : t0 -> t1 -> ... -> tn -> tname(params)
+        | C2 : ...
+        | ...
+
+Each Ci is a *constructor* and its type must end with tname(params).
+(Each of the tj can also be tname(params) in order to define an
+inductive type.)
+
+For example
+    data nat
+    where Zero : nat
+        | Succ : nat -> nat
+
+    data list('a)
+    where Nil : list('a)
+        | Cons : 'a -> list('a) -> list('a)
+
+    data empty
+    where
+        -- no constructor!
+
+
+A lazy/coinductive type is defined with
+    codata tname(params)
+    where D1 : tname(params) -> t1 -> t2 -> ... -> tn
+        | D2 : ...
+        | ...
+
+Each Di is a *destructor* and its type must start with tname(params).
+(Each of the tj can also be tname(params) in order to define a
+coinductive type.)
+There cannot be "nullary" destructors D : tname(params).
+
+For example
+    codata stream('x)
+    where Head : stream('x) -> 'x
+        | Tail : stream('x) -> stream('x)
+
+    codata prod('a,'b)
+    where Fst : prod('a,'b) -> 'a
+        | Snd : prod('a,'b) -> 'b
+
+    codata one
+    where
+        -- no destructor!
+
+    codata tree('b,'x)      -- infinite trees branching on 'b with data in 'x
+    where Root : tree('b,'x) -> 'x
+        | Branch : tree('b,'x) -> 'b -> tree('b,'x)
+
+
+Note: there can be at most one type with zero destructors (like "one" above).
+
+
+Note: to define a coinductive type with several "constructors", we have
+to define an auxiliary strict parametrized type:
+
+    data colist_aux('x,'l)
+    where Nil : colist_aux('x,'l)
+        | Cons : 'x -> 'l -> colist_aux('x,'l)
+    codata colist('x)
+    where D : colist('x) -> colist_aux('x,colist('x))
+
+or
+
+    data process_aux('p)
+    where End : process_aux('p)
+        | Out : nat -> process_aux('p)
+        | In : nat -> (nat -> 'p) -> process_aux('p)
+    codata process
+    where D : process -> process_aux(process)
+
+
+Note: no two constructors / destructor may have the same name.
+

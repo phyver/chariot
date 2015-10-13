@@ -1,4 +1,5 @@
 version.ml
+doc/*.ml
 tags
 main.native
 main.byte

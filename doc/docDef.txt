@@ -1,0 +1,36 @@
+Recursive Definitions
+---------------------
+
+A definition is of the form
+
+    val f : t1 -> t2 -> ... -> tn
+      | clause0 = v0
+      | clause1 = v1
+      | ...
+
+where
+  - each "clause" is a clause pattern (:help syntax)
+  - each "v" is a term (:help syntax)
+
+The type is only strictly necessary for function without any defining clause
+(their codomain is empty). In all other cases, the type will be infered if not given.
+
+For example:
+
+    val add n Zero = n
+      | add n (Succ m) = Succ (add n m)
+
+    val bot : empty -> 'a       -- empty is a type with no constructor
+      -- no defining clause
+
+    val map : ('a -> 'b) -> list('a) -> list('b)
+      | map _ Nil = Nil
+      | map f (Cons x xs) = Cons (f x) (map f xs)
+
+    val (map_stream f s).Head = f (s.Head)
+      | (map_stream f s).Tail = map_stream f (s.Tail)
+
+    val branch : tree('b,'x) -> list('b) -> list('x)
+      | branch t Nil = t.Root
+      | branch t (Cons b bs) = Cons (t.Root) (branch (t.Branch b) bs)
+
