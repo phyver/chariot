@@ -458,7 +458,6 @@ term:
     | app_term                  { $1 }
 
     /* syntactic sugar */
-    | term PLUS term            { process_addition $1 $3 }
     | IDU SHARP term            { Struct([$1,$3], (), ()) }
     | term DOLLAR term          { App($1,$3) }
     | FUN vars ARROW app_term   { Sp(Fun($2,$4),()) }       /* transformed into auxiliary functions */
@@ -472,6 +471,9 @@ vars:
 app_term:
     | app_term atomic_term      { App($1,$2) }
     | atomic_term               { $1 }
+
+    /* syntactic sugar */
+    | app_term PLUS atomic_term { process_addition $1 $3 }
 
 atomic_term:
     | LPAR term RPAR                        { $2 }
