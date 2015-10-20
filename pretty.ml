@@ -181,7 +181,7 @@ and
                 | l,None -> "[" ^ (String.concat "; " (List.map (string_of_raw_term indent ss sp st) (List.rev l))) ^ "]"
                 | [],Some v -> raise (Invalid_argument "string_of_term_list")
                 | l,Some v -> if p
-                              then "(" ^ (String.concat "::" (List.map (string_of_raw_term indent ss sp st) (List.rev l))) ^ "::" ^ (string_of_raw_term indent ss sp st v) ^ ")"
+                              then "(" ^ (String.concat "::" (List.map (string_of_raw_term indent ss sp st) (List.rev l))) ^ "::" ^ (string_of_raw_term_paren indent ss sp st v) ^ ")"
                               else String.concat "::" (List.map (string_of_raw_term_paren indent ss sp st) (List.rev l)) ^ "::" ^ (string_of_raw_term_paren indent ss sp st v)
 and
   (* try showing the term as a tuple *)
