@@ -1,0 +1,16 @@
+>> option verbose is set to 1
+>> inductive type bool was succesfully defined
+>> Typing for if successful
+>> the definition for if is complete
+>> the definition if is provably correct
+
+>> inductive type nat was succesfully defined
+>> Typing for le successful
+>> the definition for le is complete
+>> the definition le is provably correct
+
+>> inductive type tree was succesfully defined
+>> Typing for insert_t successful
+>> the definition for insert_t is complete
+>> the definition insert_t is provably correct
+
