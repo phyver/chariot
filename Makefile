@@ -1,7 +1,7 @@
 OCAMLBUILD=ocamlbuild -libs str,unix -I doc
 
 
-all: native
+all: native tests
 
 tags:
 	ctags *.ml
