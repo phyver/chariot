@@ -299,7 +299,7 @@ let infer_type (env:environment)
                     let t2,v2,context,sigma2 = infer_type_aux v2 context in
                     let t1,v1,context,sigma1 = infer_type_aux v1 context in
                     (* debug "1"; *)
-                    let sigma = compose_type_substitution sigma1 sigma2 in
+                    let sigma = compose_type_substitution sigma2 sigma1 in  (* do not interchange sigma3 sigma *)
 
                     let tfunc = instantiate_type (Arrow(TVar("arg"),TVar("result"))) in
                     let sigma3 = unify_type_mgu t1 tfunc in
