@@ -77,6 +77,7 @@ let current_state =
 
             "unary_constants",       OptBool false,  "enforce that all constructors / destructors are unary" ;
             (* "only_termination",      OptBool false,  "only check termination and not totality (unsound) (TODO)" ;  (1* TODO *1) *)
+            "no_totality_test",     OptBool false,   "do not perform the totality test (unsound)";
             "allow_incomplete_defs", OptBool true,   "allow incomplete definitions";
             "keep_useless_clauses",  OptBool false,  "keep useless clauses in function definitions";
             "continue_on_error",     OptBool false,  "do not quit on errors (for non-interactive use)" ;

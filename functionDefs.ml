@@ -338,31 +338,33 @@ let process_function_defs (env:environment)
 
 
     (* SCP *)
-    if size_change_termination env defs
+    if not (option "no_totality_test")
     then
-        begin
-            if verbose 1
-            then msg "the definition%s %s %s provably correct"
-                    (plural new_functions "" "s")
-                    (string_of_list ", " id new_functions)
-                    (plural new_functions "is" "are")
-        end
-    else
-        begin
-            if option "allow_unsafe_defs"
-             then warning "the definition%s %s %s NOT provably total (weight_bound: %d, depth_bound: %d)"
+        if size_change_termination env defs
+        then
+            begin
+                if verbose 1
+                then msg "the definition%s %s %s provably correct"
                         (plural new_functions "" "s")
                         (string_of_list ", " id new_functions)
                         (plural new_functions "is" "are")
-                        (get_int_option "bound")
-                        (get_int_option "depth")
-             else error (fmt  "the definition%s %s %s NOT provably total (weight_bound: %d, depth_bound: %d)"
+            end
+        else
+            begin
+                if option "allow_unsafe_defs"
+                 then warning "the definition%s %s %s NOT provably total (weight_bound: %d, depth_bound: %d)"
                             (plural new_functions "" "s")
                             (string_of_list ", " id new_functions)
                             (plural new_functions "is" "are")
                             (get_int_option "bound")
-                            (get_int_option "depth"))
-        end;
+                            (get_int_option "depth")
+                 else error (fmt  "the definition%s %s %s NOT provably total (weight_bound: %d, depth_bound: %d)"
+                                (plural new_functions "" "s")
+                                (string_of_list ", " id new_functions)
+                                (plural new_functions "is" "are")
+                                (get_int_option "bound")
+                                (get_int_option "depth"))
+            end;
 
 
 
