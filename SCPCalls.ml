@@ -795,21 +795,26 @@ let coherent (p1:scp_clause) (p2:scp_clause) : bool =
                     (* FIXME: or simply "true" because both are approximations of the empty approximation?
                      * Note that the empty approximation doesn't have any decreasing argument... *)
 
-            (* FIXME: too lax:      TODO: isn't it done?
+            (* NOTE:
             *     f x => f x
             * isn't coherent with
             *     f x => f <-1>x
-            * note that this is sound: it may add some loops to check that aren't necessary... *)
+            *)
+            (* FIXME: what if u2 / u1 contain approximations ?
+             * f x => f (S <1>x)
+             * and
+             * f x => f <1>x
+             *)
             | (Sp(AppArg _,_) as a)::pats1,u2::pats2 ->
+                    (* (approximates p1 p2)  || *)
                 begin
                     match get_head u2,get_args u2 with
                         | Const(_,p,_),args -> coherent_aux ((repeat a (List.length args))@pats1) (args@pats2)
 
                         | _ -> assert false
                 end
-
-            | u1::_pats1,Sp(AppArg _,_)::_ ->
-                    coherent_aux ((collapse0 u1)::_pats1) pats2
+            | _::_,Sp(AppArg _,_)::_ ->
+                    coherent_aux pats2 pats1
 
             | Sp(AppArg _,_)::_,[] -> false
             | [],Sp(AppArg _,_)::_ -> false
