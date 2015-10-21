@@ -5,19 +5,19 @@
 >> coinductive type unit was succesfully defined
 >> Typing for f successful
 >> the definition for f is complete
->> Incremental test at depth 0
+>> test at depth 0
 >> the definition f is provably correct
 
 >> Typing for g successful
 !! warning: match failures:
 !! warning:   g x₁ x₂ x₃
 !! warning: the definition for g is incomplete
->> Incremental test at depth 0
+>> test at depth 0
 >> the definition g is provably correct
 
 >> Typing for h successful
 >> the definition for h is complete
->> Incremental test at depth 0
+>> test at depth 0
 >> the definition h is provably correct
 
 >> functions in environment:
@@ -65,7 +65,7 @@ val
 ** error: there already is a unit type: unit
 >> Typing for i successful
 >> the definition for i is complete
->> Incremental test at depth 0
+>> test at depth 0
 >> the definition i is provably correct
 
 val
@@ -78,6 +78,6 @@ val
 >> Typing for j successful
 !! warning: useless clause 2: j {  } = Ω
 >> the definition for j is complete
->> Incremental test at depth 0
+>> test at depth 0
 >> the definition j is provably correct
 

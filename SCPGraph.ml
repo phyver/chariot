@@ -390,7 +390,7 @@ let size_change_termination env defs =
             [] -> false
           | d::ds ->
                 if option "show_all_steps" || verbose 2
-                then msg "Incremental test at depth %d" d;
+                then msg "test at depth %d" d;
               (* ifDebug "show_summary_TC" *)
               (* begin fun _ -> *)
               (*   print_string "** Incremental test: using d = "; *)
