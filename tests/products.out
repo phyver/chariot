@@ -27,24 +27,24 @@
 
 >> functions in environment:
 val
-   fst : ('a * 'b) → 'a
-    | fst (x, y) = x
+    fst : ('a * 'b) → 'a
+  | fst (x, y) = x
 
 val
-   snd : ('a * 'b) → 'b
-    | snd (x, y) = y
+    snd : ('a * 'b) → 'b
+  | snd (x, y) = y
 
 val
-   pair : nat * nat
-    | pair = (Zero³, Zero³)
+    pair : nat * nat
+  | pair = (Zero³, Zero³)
 
 val
-   onetwothree : list(nat)
-    | onetwothree = Cons³ (Succ⁵ Zero⁵, Cons³ (Succ⁵ (Succ⁵ Zero⁵), Cons³ (Succ⁵ (Succ⁵ (Succ⁵ Zero⁵)), Nil³ ())))
+    onetwothree : list(nat)
+  | onetwothree = Cons³ (Succ⁵ Zero⁵, Cons³ (Succ⁵ (Succ⁵ Zero⁵), Cons³ (Succ⁵ (Succ⁵ (Succ⁵ Zero⁵)), Nil³ ())))
 
 val
-   pairs : nat * (nat * (nat * nat))
-    | pairs = (Succ⁷ Zero⁷, (Succ⁷ (Succ⁷ Zero⁷), (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷)), Succ⁷ (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷))))))
+    pairs : nat * (nat * (nat * nat))
+  | pairs = (Succ⁷ Zero⁷, (Succ⁷ (Succ⁷ Zero⁷), (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷)), Succ⁷ (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷))))))
 
 >> inductive type prod_3 was succesfully defined
 >> Typing for test successful
@@ -52,34 +52,34 @@ val
 >> the definition test is provably correct
 
 val
-   test : nat * nat * nat
-    | test = (Succ³ Zero³, Succ³ (Succ³ Zero³), Succ³ (Succ³ (Succ³ Zero³)))
+    test : nat * nat * nat
+  | test = (Succ³ Zero³, Succ³ (Succ³ Zero³), Succ³ (Succ³ (Succ³ Zero³)))
 
 >> option continue_on_error is set to true
 ** error: cannot infer type of constant Tuple_4
 >> option show_tuples is set to false
 >> functions in environment:
 val
-   fst : prod_2('a,'b) → 'a
-    | fst (Tuple_2¹ x y) = x
+    fst : prod_2('a,'b) → 'a
+  | fst (Tuple_2¹ x y) = x
 
 val
-   snd : prod_2('a,'b) → 'b
-    | snd (Tuple_2¹ x y) = y
+    snd : prod_2('a,'b) → 'b
+  | snd (Tuple_2¹ x y) = y
 
 val
-   pair : prod_2(nat,nat)
-    | pair = Tuple_2¹ Zero³ Zero³
+    pair : prod_2(nat,nat)
+  | pair = Tuple_2¹ Zero³ Zero³
 
 val
-   onetwothree : list(nat)
-    | onetwothree = Cons³ (Tuple_2¹ (Succ⁵ Zero⁵) (Cons³ (Tuple_2¹ (Succ⁵ (Succ⁵ Zero⁵)) (Cons³ (Tuple_2¹ (Succ⁵ (Succ⁵ (Succ⁵ Zero⁵))) (Nil³ Tuple_0¹))))))
+    onetwothree : list(nat)
+  | onetwothree = Cons³ (Tuple_2¹ (Succ⁵ Zero⁵) (Cons³ (Tuple_2¹ (Succ⁵ (Succ⁵ Zero⁵)) (Cons³ (Tuple_2¹ (Succ⁵ (Succ⁵ (Succ⁵ Zero⁵))) (Nil³ Tuple_0¹))))))
 
 val
-   pairs : prod_2(nat,prod_2(nat,prod_2(nat,nat)))
-    | pairs = Tuple_2¹ (Succ⁷ Zero⁷) (Tuple_2³ (Succ⁷ (Succ⁷ Zero⁷)) (Tuple_2⁵ (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷))) (Succ⁷ (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷))))))
+    pairs : prod_2(nat,prod_2(nat,prod_2(nat,nat)))
+  | pairs = Tuple_2¹ (Succ⁷ Zero⁷) (Tuple_2³ (Succ⁷ (Succ⁷ Zero⁷)) (Tuple_2⁵ (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷))) (Succ⁷ (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷))))))
 
 val
-   test : prod_3(nat,nat,nat)
-    | test = Tuple_3¹ (Succ³ Zero³) (Succ³ (Succ³ Zero³)) (Succ³ (Succ³ (Succ³ Zero³)))
+    test : prod_3(nat,nat,nat)
+  | test = Tuple_3¹ (Succ³ Zero³) (Succ³ (Succ³ Zero³)) (Succ³ (Succ³ (Succ³ Zero³)))
 

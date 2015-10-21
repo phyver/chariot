@@ -22,38 +22,38 @@
 
 >> functions in environment:
 val
-   f : 'a → 'a → 'b → empty → 'b>> 
+    f : 'a → 'a → 'b → empty → 'b>> 
 >> corresponding case and struct form:
 >> x₁ x₂ x₃ x₄ → 
 >>   case x₄ of
 >>   
 
 val
-   g : 'a → 'a → 'b → empty>> 
+    g : 'a → 'a → 'b → empty>> 
 >> corresponding case and struct form:
 >> x₁ x₂ x₃ → FAIL
 
 val
-   h : 'a → 'a → 'b → unit>> 
+    h : 'a → 'a → 'b → unit>> 
 >> corresponding case and struct form:
 >> x₁ x₂ x₃ → 
 >>   {
 >>      }
 
 val
-   f : 'a → 'a → 'b → empty → 'b>> 
+    f : 'a → 'a → 'b → empty → 'b>> 
 >> corresponding case and struct form:
 >> x₁ x₂ x₃ x₄ → 
 >>   case x₄ of
 >>   
 
 val
-   g : 'a → 'a → 'b → empty>> 
+    g : 'a → 'a → 'b → empty>> 
 >> corresponding case and struct form:
 >> x₁ x₂ x₃ → FAIL
 
 val
-   h : 'a → 'a → 'b → unit>> 
+    h : 'a → 'a → 'b → unit>> 
 >> corresponding case and struct form:
 >> x₁ x₂ x₃ → 
 >>   {
@@ -69,8 +69,8 @@ val
 >> the definition i is provably correct
 
 val
-   i : unit → 'a
-    | i {  }⁰ = ✠
+    i : unit → 'a
+  | i {  }⁰ = ✠
 >> 
 >> corresponding case and struct form:
 >> x₁ → ✠

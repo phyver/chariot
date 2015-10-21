@@ -37,8 +37,8 @@
 >> the definition test2 is provably correct
 
 val
-   test2 : list('a) → 'b
-    | test2 x = ✠
+    test2 : list('a) → 'b
+  | test2 x = ✠
 
 >> Typing for test3 successful
 !! warning: useless clause 4: test3 _₁ = ✠
@@ -46,10 +46,10 @@ val
 >> the definition test3 is provably correct
 
 val
-   test3 : list(list('a)) → 'b
-    | test3 [] = ✠
-    | test3 ([]::xs) = ✠
-    | test3 (y::ys::xs) = ✠
+    test3 : list(list('a)) → 'b
+  | test3 [] = ✠
+  | test3 ([]::xs) = ✠
+  | test3 (y::ys::xs) = ✠
 
 >> option keep_useless_clauses is set to true
 >> Typing for test4 successful
@@ -58,9 +58,9 @@ val
 >> the definition test4 is provably correct
 
 val
-   test4 : list('a) → 'b
-    | test4 x = ✠
-    | test4 [] = ✠
+    test4 : list('a) → 'b
+  | test4 x = ✠
+  | test4 [] = ✠
 
 >> Typing for test5 successful
 !! warning: useless clause 4: test5 _₁ = ✠
@@ -68,9 +68,9 @@ val
 >> the definition test5 is provably correct
 
 val
-   test5 : list(list('a)) → 'b
-    | test5 [] = ✠
-    | test5 ([]::xs) = ✠
-    | test5 (y::ys::xs) = ✠
-    | test5 _₁ = ✠
+    test5 : list(list('a)) → 'b
+  | test5 [] = ✠
+  | test5 ([]::xs) = ✠
+  | test5 (y::ys::xs) = ✠
+  | test5 _₁ = ✠
 

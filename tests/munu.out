@@ -21,18 +21,18 @@
 
 >> functions in environment:
 val
-   test1 : t1
-    | test1 = { D1 = C1¹ test1 }²
+    test1 : t1
+  | test1 = { D1 = C1¹ test1 }²
 
 val
-   test2 : c(t1)
-    | test2 = C1¹ { D1 = test2 }²
+    test2 : c(t1)
+  | test2 = C1¹ { D1 = test2 }²
 
 val
-   test3 : t2
-    | test3 = C2¹ { D2 = test3 }⁰
+    test3 : t2
+  | test3 = C2¹ { D2 = test3 }⁰
 
 val
-   test4 : d(t2)
-    | test4 = { D2 = test3 }⁰
+    test4 : d(t2)
+  | test4 = { D2 = test3 }⁰
 

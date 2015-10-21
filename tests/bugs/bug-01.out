@@ -6,6 +6,6 @@
 >> the definition test is provably correct
 
 val
-   test : list('a) → list('b)
-    | test x = []
+    test : list('a) → list('b)
+  | test x = []
 

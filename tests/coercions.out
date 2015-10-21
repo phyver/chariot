@@ -21,29 +21,29 @@
 ** error: function map4_2 cannot be coerced to type ('a → 'b) → list('a) → list('b)
 >> functions in environment:
 val
-   map_1 : ('a → 'b) → list('a) → list('b)
-    | map_1 f [] = []
-    | map_1 f (x::xs) = (f x)::(map_2 f xs)
+    map_1 : ('a → 'b) → list('a) → list('b)
+  | map_1 f [] = []
+  | map_1 f (x::xs) = (f x)::(map_2 f xs)
 and
-   map_2 : ('a → 'b) → list('a) → list('b)
-    | map_2 f [] = []
-    | map_2 f (x::xs) = (f x)::(map_1 f xs)
+    map_2 : ('a → 'b) → list('a) → list('b)
+  | map_2 f [] = []
+  | map_2 f (x::xs) = (f x)::(map_1 f xs)
 
 val
-   map1_1 : ('a → 'b) → list('a) → list('b)
-    | map1_1 f [] = []
-    | map1_1 f (x::xs) = (f x)::(map1_2 f xs)
+    map1_1 : ('a → 'b) → list('a) → list('b)
+  | map1_1 f [] = []
+  | map1_1 f (x::xs) = (f x)::(map1_2 f xs)
 and
-   map1_2 : ('a → 'b) → list('a) → list('b)
-    | map1_2 f [] = []
-    | map1_2 f (x::xs) = (f x)::(map1_1 f xs)
+    map1_2 : ('a → 'b) → list('a) → list('b)
+  | map1_2 f [] = []
+  | map1_2 f (x::xs) = (f x)::(map1_1 f xs)
 
 val
-   map2_1 : (nat → nat) → list(nat) → list(nat)
-    | map2_1 f [] = []
-    | map2_1 f (x::xs) = (f x)::(map2_2 f xs)
+    map2_1 : (nat → nat) → list(nat) → list(nat)
+  | map2_1 f [] = []
+  | map2_1 f (x::xs) = (f x)::(map2_2 f xs)
 and
-   map2_2 : (nat → nat) → list(nat) → list(nat)
-    | map2_2 f [] = []
-    | map2_2 f (x::xs) = (f x)::(map2_1 f xs)
+    map2_2 : (nat → nat) → list(nat) → list(nat)
+  | map2_2 f [] = []
+  | map2_2 f (x::xs) = (f x)::(map2_1 f xs)
 

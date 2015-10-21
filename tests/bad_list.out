@@ -11,7 +11,7 @@
 >> the definition inf is provably correct
 
 val
-   bad : nat → nat * list(nat)
-    | (bad n).Fst⁰ = n
-    | (bad n).Snd⁰ = Cons¹ (bad (n+1))
+    bad : nat → nat * list(nat)
+  | (bad n).Fst⁰ = n
+  | (bad n).Snd⁰ = Cons¹ (bad (n+1))
 

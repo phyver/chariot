@@ -366,8 +366,8 @@ let show_types env =
 
 
 let show_function f t clauses (args,cst) =
-    print_string (fmt "   %s : %s" f (string_of_type t));
-    print_list "\n    | " "\n    | " "\n"
+    print_string (fmt "    %s : %s" f (string_of_type t));
+    print_list "\n  | " "\n  | " "\n"
                 (function pattern,term -> print_string (fmt "%s = %s" (string_of_term pattern) (string_of_term term)))
                 clauses;
     if (verbose 2)

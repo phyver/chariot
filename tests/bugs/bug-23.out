@@ -10,8 +10,8 @@
 >> the definition mult is provably correct
 
 val
-   mult : nat → nat → nat
-    | mult 0 x₂ = 0
-    | mult (x₄+1) 0 = 0
-    | mult (x₄+1) (x₃+1) = add (x₄+1) (mult (x₄+1) x₃)
+    mult : nat → nat → nat
+  | mult 0 x₂ = 0
+  | mult (x₄+1) 0 = 0
+  | mult (x₄+1) (x₃+1) = add (x₄+1) (mult (x₄+1) x₃)
 

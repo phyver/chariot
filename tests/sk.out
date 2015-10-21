@@ -13,16 +13,16 @@
 
 >> functions in environment:
 val
-   k : 'a → 'b → 'a
-    | k x y = x
+    k : 'a → 'b → 'a
+  | k x y = x
 
 val
-   s : ('a → 'b → 'c) → ('a → 'b) → 'a → 'c
-    | s x y z = x z (y z)
+    s : ('a → 'b → 'c) → ('a → 'b) → 'a → 'c
+  | s x y z = x z (y z)
 
 val
-   i : 'a → 'a
-    | i = s k k
+    i : 'a → 'a
+  | i = s k k
 
 >> Typing for a successful
 >> the definition for a is complete
@@ -42,32 +42,32 @@ val
 
 >> functions in environment:
 val
-   k : 'a → 'b → 'a
-    | k x y = x
+    k : 'a → 'b → 'a
+  | k x y = x
 
 val
-   s : ('a → 'b → 'c) → ('a → 'b) → 'a → 'c
-    | s x y z = x z (y z)
+    s : ('a → 'b → 'c) → ('a → 'b) → 'a → 'c
+  | s x y z = x z (y z)
 
 val
-   i : 'a → 'a
-    | i = s k k
+    i : 'a → 'a
+  | i = s k k
 
 val
-   a : ('a → 'b → 'c) → ('a → 'd → 'b) → 'a → 'd → 'c
-    | a i j f x = i f (j f x)
+    a : ('a → 'b → 'c) → ('a → 'd → 'b) → 'a → 'd → 'c
+  | a i j f x = i f (j f x)
 
 val
-   m : ('a → 'b) → ('c → 'a) → 'c → 'b
-    | m i j f = i (j f)
+    m : ('a → 'b) → ('c → 'a) → 'c → 'b
+  | m i j f = i (j f)
 
 val
-   e : 'a → ('a → 'b) → 'b
-    | e i j = j i
+    e : 'a → ('a → 'b) → 'b
+  | e i j = j i
 
 val
-   n : 'a → 'b → 'b
-    | n f x = x
+    n : 'a → 'b → 'b
+  | n f x = x
 
 >> Typing for one successful
 >> the definition for one is complete

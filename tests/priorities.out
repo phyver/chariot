@@ -17,17 +17,17 @@
 >> option show_nats is set to false
 >> functions in environment:
 val
-   f : list(list(list(list(nat)))) → nat
-    | f (Cons¹ (Cons³ (Cons⁵ (Cons⁷ Zero⁹ Nil⁷) Nil⁵) Nil³) Nil¹) = Zero⁹
-    | f x = Zero⁹
+    f : list(list(list(list(nat)))) → nat
+  | f (Cons¹ (Cons³ (Cons⁵ (Cons⁷ Zero⁹ Nil⁷) Nil⁵) Nil³) Nil¹) = Zero⁹
+  | f x = Zero⁹
 
 val
-   g1 : 'a → list('b)
-    | g1 x = Nil¹
+    g1 : 'a → list('b)
+  | g1 x = Nil¹
 
 val
-   g2 : nat → list(list(list(nat)))
-    | g2 x = Nil¹
+    g2 : nat → list(list(list(nat)))
+  | g2 x = Nil¹
 
 >> option squash_priorities is set to true
 >> Typing for f1 successful
@@ -35,7 +35,7 @@ val
 >> the definition f1 is provably correct
 
 val
-   f1 : list(list(list(list(nat)))) → nat
-    | f1 (Cons¹ (Cons¹ (Cons¹ (Cons¹ Zero¹ Nil¹) Nil¹) Nil¹) Nil¹) = Zero¹
-    | f1 x = Zero¹
+    f1 : list(list(list(list(nat)))) → nat
+  | f1 (Cons¹ (Cons¹ (Cons¹ (Cons¹ Zero¹ Nil¹) Nil¹) Nil¹) Nil¹) = Zero¹
+  | f1 x = Zero¹
 

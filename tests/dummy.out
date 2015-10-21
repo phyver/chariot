@@ -14,27 +14,27 @@
 
 >> functions in environment:
 val
-   f : 'a → 'b → 'c → 'a
-    | f x _₁ y = x
+    f : 'a → 'b → 'c → 'a
+  | f x _₁ y = x
 
 val
-   g : 'a → 'b → 'c → 'b
-    | g _₁ x _₂ = x
+    g : 'a → 'b → 'c → 'b
+  | g _₁ x _₂ = x
 
 val
-   h : 'a → 'b → 'c → 'd → unit
-    | h _₁ _₂ _₃ _₄ = ()
+    h : 'a → 'b → 'c → 'd → unit
+  | h _₁ _₂ _₃ _₄ = ()
 
 >> functions in environment:
 val
-   f : 'a → 'b → 'c → 'a
-    | f x _ y = x
+    f : 'a → 'b → 'c → 'a
+  | f x _ y = x
 
 val
-   g : 'a → 'b → 'c → 'b
-    | g _ x _ = x
+    g : 'a → 'b → 'c → 'b
+  | g _ x _ = x
 
 val
-   h : 'a → 'b → 'c → 'd → unit
-    | h _ _ _ _ = ()
+    h : 'a → 'b → 'c → 'd → unit
+  | h _ _ _ _ = ()
 

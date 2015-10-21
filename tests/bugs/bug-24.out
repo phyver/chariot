@@ -6,10 +6,10 @@
 >> the definitions f, g are provably correct
 
 val
-   f : tree('a,'b) → tree('c,'b)
-    | f (Branch¹ x b) = Branch¹ x (g b)
+    f : tree('a,'b) → tree('c,'b)
+  | f (Branch¹ x b) = Branch¹ x (g b)
 
 val
-   g : ('a → tree('a,'b)) → 'c → tree('c,'b)
-    | g b x = f ✠
+    g : ('a → tree('a,'b)) → 'c → tree('c,'b)
+  | g b x = f ✠
 

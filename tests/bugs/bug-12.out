@@ -18,28 +18,28 @@
 
 >> functions in environment:
 val
-   a : nat
-    | a = b
+    a : nat
+  | a = b
 and
-   b : nat
-    | b = c
+    b : nat
+  | b = c
 and
-   c : nat
-    | c = d
+    c : nat
+  | c = d
 and
-   d : nat
-    | d = 0
+    d : nat
+  | d = 0
 
 val
-   e : nat
-    | e = 0
+    e : nat
+  | e = 0
 and
-   f : nat
-    | f = e
+    f : nat
+  | f = e
 and
-   g : nat
-    | g = f
+    g : nat
+  | g = f
 and
-   h : nat
-    | h = f
+    h : nat
+  | h = f
 

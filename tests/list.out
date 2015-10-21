@@ -37,82 +37,82 @@
 >> option show_lists is set to false
 >> functions in environment:
 val
-   add : nat → nat → nat
-    | add n 0 = n
-    | add n (m+1) = (add n m) + 1
+    add : nat → nat → nat
+  | add n 0 = n
+  | add n (m+1) = (add n m) + 1
 
 val
-   mult : nat → nat → nat
-    | mult n 0 = 0
-    | mult n (m+1) = add n (mult n m)
+    mult : nat → nat → nat
+  | mult n 0 = 0
+  | mult n (m+1) = add n (mult n m)
 
 val
-   pow : nat → nat → nat
-    | pow n 0 = 1
-    | pow n (m+1) = mult n (pow n m)
+    pow : nat → nat → nat
+  | pow n 0 = 1
+  | pow n (m+1) = mult n (pow n m)
 
 val
-   length : list('x) → nat
-    | length Nil = 0
-    | length (Cons x xs) = (length xs) + 1
+    length : list('x) → nat
+  | length Nil = 0
+  | length (Cons x xs) = (length xs) + 1
 
 val
-   map : ('a → 'b) → list('a) → list('b)
-    | map f Nil = Nil
-    | map f (Cons x xs) = Cons (f x) (map f xs)
+    map : ('a → 'b) → list('a) → list('b)
+  | map f Nil = Nil
+  | map f (Cons x xs) = Cons (f x) (map f xs)
 
 val
-   decr : nat → list(nat)
-    | decr 0 = Nil
-    | decr (n+1) = Cons n (decr n)
+    decr : nat → list(nat)
+  | decr 0 = Nil
+  | decr (n+1) = Cons n (decr n)
 
 val
-   rev_append : list('a) → list('a) → list('a)
-    | rev_append l Nil = l
-    | rev_append l (Cons x xs) = rev_append (Cons x l) xs
+    rev_append : list('a) → list('a) → list('a)
+  | rev_append l Nil = l
+  | rev_append l (Cons x xs) = rev_append (Cons x l) xs
 
 val
-   rev : list('a) → list('a)
-    | rev l = rev_append Nil l
+    rev : list('a) → list('a)
+  | rev l = rev_append Nil l
 
 >> option show_lists is set to true
 >> functions in environment:
 val
-   add : nat → nat → nat
-    | add n 0 = n
-    | add n (m+1) = (add n m) + 1
+    add : nat → nat → nat
+  | add n 0 = n
+  | add n (m+1) = (add n m) + 1
 
 val
-   mult : nat → nat → nat
-    | mult n 0 = 0
-    | mult n (m+1) = add n (mult n m)
+    mult : nat → nat → nat
+  | mult n 0 = 0
+  | mult n (m+1) = add n (mult n m)
 
 val
-   pow : nat → nat → nat
-    | pow n 0 = 1
-    | pow n (m+1) = mult n (pow n m)
+    pow : nat → nat → nat
+  | pow n 0 = 1
+  | pow n (m+1) = mult n (pow n m)
 
 val
-   length : list('x) → nat
-    | length [] = 0
-    | length (x::xs) = (length xs) + 1
+    length : list('x) → nat
+  | length [] = 0
+  | length (x::xs) = (length xs) + 1
 
 val
-   map : ('a → 'b) → list('a) → list('b)
-    | map f [] = []
-    | map f (x::xs) = (f x)::(map f xs)
+    map : ('a → 'b) → list('a) → list('b)
+  | map f [] = []
+  | map f (x::xs) = (f x)::(map f xs)
 
 val
-   decr : nat → list(nat)
-    | decr 0 = []
-    | decr (n+1) = n::(decr n)
+    decr : nat → list(nat)
+  | decr 0 = []
+  | decr (n+1) = n::(decr n)
 
 val
-   rev_append : list('a) → list('a) → list('a)
-    | rev_append l [] = l
-    | rev_append l (x::xs) = rev_append (x::l) xs
+    rev_append : list('a) → list('a) → list('a)
+  | rev_append l [] = l
+  | rev_append l (x::xs) = rev_append (x::l) xs
 
 val
-   rev : list('a) → list('a)
-    | rev l = rev_append [] l
+    rev : list('a) → list('a)
+  | rev l = rev_append [] l
 

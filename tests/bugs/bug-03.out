@@ -9,10 +9,10 @@
 
 >> functions in environment:
 val
-   oops : 'a → 'b
-    | oops a = ✠
+    oops : 'a → 'b
+  | oops a = ✠
 
 val
-   oops2 : 'a → 'b
-    | oops2 = ✠
+    oops2 : 'a → 'b
+  | oops2 = ✠
 

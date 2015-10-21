@@ -10,7 +10,7 @@
 >> the definition t is provably correct
 
 val
-   bad : stream(tree)
-    | bad.Head⁰ = Node¹ bad
-    | bad.Tail⁰ = bad
+    bad : stream(tree)
+  | bad.Head⁰ = Node¹ bad
+  | bad.Tail⁰ = bad
 

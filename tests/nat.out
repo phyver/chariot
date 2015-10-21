@@ -16,36 +16,36 @@
 >> option show_nats is set to false
 >> functions in environment:
 val
-   add : nat → nat → nat
-    | add n Zero = n
-    | add n (Succ m) = Succ (add n m)
+    add : nat → nat → nat
+  | add n Zero = n
+  | add n (Succ m) = Succ (add n m)
 
 val
-   mult : nat → nat → nat
-    | mult n Zero = Zero
-    | mult n (Succ m) = add n (mult n m)
+    mult : nat → nat → nat
+  | mult n Zero = Zero
+  | mult n (Succ m) = add n (mult n m)
 
 val
-   pow : nat → nat → nat
-    | pow n Zero = Succ Zero
-    | pow n (Succ m) = mult n (pow n m)
+    pow : nat → nat → nat
+  | pow n Zero = Succ Zero
+  | pow n (Succ m) = mult n (pow n m)
 
 >> option show_nats is set to true
 >> functions in environment:
 val
-   add : nat → nat → nat
-    | add n 0 = n
-    | add n (m+1) = (add n m) + 1
+    add : nat → nat → nat
+  | add n 0 = n
+  | add n (m+1) = (add n m) + 1
 
 val
-   mult : nat → nat → nat
-    | mult n 0 = 0
-    | mult n (m+1) = add n (mult n m)
+    mult : nat → nat → nat
+  | mult n 0 = 0
+  | mult n (m+1) = add n (mult n m)
 
 val
-   pow : nat → nat → nat
-    | pow n 0 = 1
-    | pow n (m+1) = mult n (pow n m)
+    pow : nat → nat → nat
+  | pow n 0 = 1
+  | pow n (m+1) = mult n (pow n m)
 
 >> term: 15
 >> of type: nat
@@ -65,8 +65,8 @@ val
 >> the definition ack is provably correct
 
 val
-   ack : nat → nat → nat
-    | ack Zero n = Succ n
-    | ack (Succ m) Zero = ack m (Succ Zero)
-    | ack (Succ m) (Succ n) = ack m (ack (Succ m) n)
+    ack : nat → nat → nat
+  | ack Zero n = Succ n
+  | ack (Succ m) Zero = ack m (Succ Zero)
+  | ack (Succ m) (Succ n) = ack m (ack (Succ m) n)
 

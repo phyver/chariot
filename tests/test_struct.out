@@ -44,38 +44,38 @@
 
 >> functions in environment:
 val
-   s01 : struct_2(nat,nat)
-    | s01 = { Fst = 0 ; Snd = 1 }⁰
+    s01 : struct_2(nat,nat)
+  | s01 = { Fst = 0 ; Snd = 1 }⁰
 
 val
-   s012 : struct_2(nat,struct_2(nat,nat))
-    | s012 = { Fst = 0 ; Snd = { Fst = 1 ; Snd = 2 }² }⁰
+    s012 : struct_2(nat,struct_2(nat,nat))
+  | s012 = { Fst = 0 ; Snd = { Fst = 1 ; Snd = 2 }² }⁰
 
 val
-   s0101 : struct_2(struct_2(nat,nat),struct_2(nat,nat))
-    | s0101 = { Fst = s01 ; Snd = s01 }⁰
+    s0101 : struct_2(struct_2(nat,nat),struct_2(nat,nat))
+  | s0101 = { Fst = s01 ; Snd = s01 }⁰
 
 val
-   bad : struct_2('a,'a) → 'b
-    | bad { Fst = x ; Snd = x }⁰ = ✠
+    bad : struct_2('a,'a) → 'b
+  | bad { Fst = x ; Snd = x }⁰ = ✠
 
 val
-   f : struct_2('a,'b) → prod_2('a,'b)
-    | f p = Tuple_2¹ p.Fst⁰ p.Snd⁰
+    f : struct_2('a,'b) → prod_2('a,'b)
+  | f p = Tuple_2¹ p.Fst⁰ p.Snd⁰
 
 val
-   g : struct_2('a,'b) → prod_2('a,'b)
-    | g { Fst = x ; Snd = y }⁰ = Tuple_2¹ x y
+    g : struct_2('a,'b) → prod_2('a,'b)
+  | g { Fst = x ; Snd = y }⁰ = Tuple_2¹ x y
 
 val
-   h : struct_2('a,struct_2('b,'c)) → prod_2(prod_2('a,'b),'c)
-    | h { Fst = x ; Snd = { Fst = y ; Snd = z }² }⁰ = Tuple_2¹ (Tuple_2³ x y) z
+    h : struct_2('a,struct_2('b,'c)) → prod_2(prod_2('a,'b),'c)
+  | h { Fst = x ; Snd = { Fst = y ; Snd = z }² }⁰ = Tuple_2¹ (Tuple_2³ x y) z
 
 val
-   s : struct_2('a,struct_2('b,'c)) → struct_2(struct_2('a,'b),'c)
-    | s { Fst = x ; Snd = { Fst = y ; Snd = z }² }⁰ = { Fst = { Fst = x ; Snd = y }² ; Snd = z }⁰
+    s : struct_2('a,struct_2('b,'c)) → struct_2(struct_2('a,'b),'c)
+  | s { Fst = x ; Snd = { Fst = y ; Snd = z }² }⁰ = { Fst = { Fst = x ; Snd = y }² ; Snd = z }⁰
 
 val
-   map : ('a → 'b) → stream('a) → stream('b)
-    | map f { Head = x ; Tail = s }⁰ = { Head = f x ; Tail = map f s }⁰
+    map : ('a → 'b) → stream('a) → stream('b)
+  | map f { Head = x ; Tail = s }⁰ = { Head = f x ; Tail = map f s }⁰
 

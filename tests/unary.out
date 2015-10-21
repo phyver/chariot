@@ -11,7 +11,7 @@
 >> the definition map_list is provably correct
 
 val
-   map_list : ('a → 'b) → list('a) → list('b)
-    | map_list f ([] {  }⁰) = [] {  }⁰
-    | map_list f (Cons¹ { Fst = x ; Snd = xs }⁰) = Cons¹ { Fst = f x ; Snd = map_list f xs }⁰
+    map_list : ('a → 'b) → list('a) → list('b)
+  | map_list f ([] {  }⁰) = [] {  }⁰
+  | map_list f (Cons¹ { Fst = x ; Snd = xs }⁰) = Cons¹ { Fst = f x ; Snd = map_list f xs }⁰
 

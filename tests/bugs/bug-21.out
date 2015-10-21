@@ -6,8 +6,8 @@
 
 >> option verbose is set to 2
 val
-   f : stream('a) → 'a
-    | f { Head = x ; Tail = { Head = y ; Tail = { Head = z ; Tail = zs }⁰ }⁰ }⁰ = z
+    f : stream('a) → 'a
+  | f { Head = x ; Tail = { Head = y ; Tail = { Head = z ; Tail = zs }⁰ }⁰ }⁰ = z
 >> 
 >> corresponding case and struct form:
 >> x₁ → x₁.Tail.Tail.Head
