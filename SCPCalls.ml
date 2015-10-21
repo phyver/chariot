@@ -633,8 +633,11 @@ let approximates p1 p2 =
             | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 when c1=c2 -> approximates_aux pats1 pats2
             | Const(c1,_,_)::pats1,Const(c2,_,_)::pats2 (*c1<>c2*) -> false
             | Const _::_,[] | [],Const _::_-> assert false
-            | Const _::_,(Var _ | Sp(AppArg _,_))::_ -> false
-            | Const _::_,(Proj _ | Struct _ | App _ | Sp(AppRes _,_))::_ -> assert false
+            | Const _::_,(Var _ | App _ | Sp(AppArg _,_))::_ -> false
+            | Const _::_,(Proj _ | Struct _ | Sp(AppRes _,_))::_ ->
+        (* debug "pats1 = %s" (string_of_list " , " string_of_approx_term pats1); *)
+        (* debug "pats2 = %s" (string_of_list " , " string_of_approx_term pats2); *)
+                    assert false
 
             | Struct(fields1,_,_)::pats1,Struct(fields2,_,_)::pats2 ->
                 let fields1 = List.sort compare fields1 in
@@ -653,9 +656,11 @@ let approximates p1 p2 =
             | Var _::_ , Sp(AppRes _,_)::_ -> assert false
 
             | (App _ as u1)::_pats1,(App _ as u2)::_pats2 ->
+        (* debug "pats1 = %s" (string_of_list " , " string_of_approx_term pats1); *)
+        (* debug "pats2 = %s" (string_of_list " , " string_of_approx_term pats2); *)
                     approximates_aux ((get_head u1)::(get_args u1)@_pats1) ((get_head u2)::(get_args u2)@_pats2)
             | App _::_,[] | [],App _::_-> false
-            | App _::_,(Const _ | Struct _ | Proj _ | Sp(AppRes _,_))::_ -> assert false
+            | App _::_,(Const _ | Struct _ | Proj _ | Sp(AppRes _,_))::_ -> false
             | App _::_,(Var _ | Sp(AppArg _,_))::_ -> false
 
             | Sp(AppArg [],_)::_,_
@@ -810,7 +815,7 @@ let coherent (p1:scp_clause) (p2:scp_clause) : bool =
                 begin
                     match get_head u2,get_args u2 with
                         | Const(_,p,_),args -> coherent_aux ((repeat a (List.length args))@pats1) (args@pats2)
-
+                        | Struct(fields,_,_),[] -> coherent_aux ((repeat a (List.length fields))@pats1) ((List.map snd fields)@pats2)
                         | _ -> assert false
                 end
             | _::_,Sp(AppArg _,_)::_ ->

@@ -1,0 +1,19 @@
+>> option verbose is set to 1
+>> option incremental_SCP is set to false
+>> option depth is set to 3
+>> option show_lists is set to false
+>> inductive type nat was succesfully defined
+>> Typing for add successful
+>> the definition for add is complete
+>> the definition add is provably correct
+
+>> inductive type list was succesfully defined
+>> Typing for sum successful
+>> the definition for sum is complete
+>> the definition sum is provably correct
+
+>> coinductive type stream was succesfully defined
+>> Typing for sums successful
+>> the definition for sums is complete
+>> the definition sums is provably correct
+
