@@ -1,6 +1,7 @@
 :set incremental_SCP false
 :set depth 3
 :set show_lists false
+-- :set show_all_steps true
 
 data nat where
     | Zero : nat

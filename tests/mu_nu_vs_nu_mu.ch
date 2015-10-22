@@ -222,7 +222,7 @@ val test10 = map_length1 (ones_f2 id)
 
 -- blocs of 1s of increasing length, after conversion to stream4
 val test12 = convert4 (stream2_to_4 (ones_f2 id))
-:unfold test12, 16
+-- :unfold test12, 16
 
 -- increasing blocks of 1s, then only 1s, after conversion to stream4
 val test13 = convert4 (stream3_to_4 (get_n_ones3 11 (ones_f2 id)))

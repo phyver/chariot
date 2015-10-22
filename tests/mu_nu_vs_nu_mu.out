@@ -402,44 +402,6 @@
 >> the definition for test12 is complete
 >> the definition test12 is provably correct
 
->> term: test12
->> of type: stream(nat)
->> result: { 
->>   Head = 0 ; 
->>   Tail = { 
->>     Head = 0 ; 
->>     Tail = { 
->>       Head = 1 ; 
->>       Tail = { 
->>         Head = 0 ; 
->>         Tail = { 
->>           Head = 1 ; 
->>           Tail = { 
->>             Head = 1 ; 
->>             Tail = { 
->>               Head = 0 ; 
->>               Tail = { 
->>                 Head = 1 ; 
->>                 Tail = { 
->>                   Head = 1 ; 
->>                   Tail = { 
->>                     Head = 1 ; 
->>                     Tail = { 
->>                       Head = 0 ; 
->>                       Tail = { 
->>                         Head = 1 ; 
->>                         Tail = { 
->>                           Head = 1 ; 
->>                           Tail = { 
->>                             Head = 1 ; 
->>                             Tail = { 
->>                               Head = 1 ; 
->>                               Tail = { 
->>                                 Head = 0 ; 
->>                                 Tail = { 
->>                                   Head = <1> ; 
->>                                   Tail = <2> } } } } } } } } } } } } } } } } }
-
 >> Typing for test13 successful
 >> the definition for test13 is complete
 >> the definition test13 is provably correct
