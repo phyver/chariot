@@ -7,7 +7,7 @@ tags:
 	ctags *.ml
 
 preproc: FORCE
-	@echo "let git_commit=\"$(shell git rev-parse HEAD)\"" > version.ml
+	echo "let git_commit=\"$(shell git rev-parse HEAD)\"" > version.ml
 	@make -C doc
 
 debug:
