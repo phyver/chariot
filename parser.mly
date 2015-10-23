@@ -201,6 +201,11 @@ let cmd_show_last ()
 (* unfold a term by expanding lazy subterms up-to a given depth, and show the result *)
 let cmd_unfold_initial (term:parsed_term) (depth:int) : unit
   = let term = parsed_to_plain term in
+(************************* april's fool *)
+(* match term with *)
+(* | Var("ack42",t) -> Ack42.print_ack_4_2 () *)
+(* | term -> *) 
+(* april's fool *************************)
     let t,term,context = infer_type_term current_state.env term in
     msg "term: %s" (string_of_plain_term term);
     msg "of type: %s" (string_of_type t);
