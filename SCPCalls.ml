@@ -554,13 +554,30 @@ let unify ?(allow_approx=false) (f_r,patterns_r:scp_pattern) (f_l,patterns_l:scp
 
             | Sp(AppRes(c),_)::_,_ -> assert false    (* AppRes should only appear at the end *)
 
-            | Const _::_,(Proj _ | Angel _ | Daimon _ | App _ | Struct _)::_
-            | Proj _::_,(Const _ | Angel _ | Daimon _ | App _ | Struct _)::_
-            | Angel _::_,(Const _ | Proj _ | Daimon _ | App _ | Struct _)::_
-            | Daimon _::_,(Const _ | Proj _ | Angel _ | App _ | Struct _)::_
-            | App _::_,(Const _ | Proj _ | Angel _ | Daimon _ | Struct _)::_
-            | Struct _::_,(Const _ | Proj _ | Angel _ | Daimon _ | App _)::_
+            | Const _::_,(Proj _ | App _ | Struct _)::_
+            | Proj _::_,(Const _ | App _ | Struct _)::_
+            | App _::_,(Const _ | Proj _ | Struct _)::_
+            | Struct _::_,(Const _ | Proj _ | App _)::_
                 -> raise (UnificationError "oops")
+
+            (* there should never be Angels or Daimons on the LHS of a rule *)
+            | _, Angel _::_
+            | _, Daimon _::_
+                -> assert false
+
+            (* TODO: Daimon / Angel -> all variables should be unified with Daimon / Angel *)
+            | Angel tmp ::ps_r,pat_l::ps_l ->
+                    let pat_l = map_raw_term (fun a -> assert false) (id) (id) pat_l in
+                    let xs = extract_term_variables pat_l in
+                    let sigma_angel = List.map (fun x -> (x, Angel tmp)) xs in
+                    unify_aux (List.map (subst_scp_term sigma_angel) ps_r) ps_l (sigma_angel @ (List.map (second (subst_scp_term sigma_angel)) sigma))
+
+            | Daimon tmp ::ps_r,pat_l::ps_l ->
+                    let pat_l = map_raw_term (fun a -> assert false) (id) (id) pat_l in
+                    let xs = extract_term_variables pat_l in
+                    let sigma_daimon = List.map (fun x -> (x, Daimon tmp)) xs in
+                    unify_aux (List.map (subst_scp_term sigma_daimon) ps_r) ps_l (sigma_daimon @ (List.map (second (subst_scp_term sigma_daimon)) sigma))
+
     in
     try
         unify_aux patterns_r patterns_l []

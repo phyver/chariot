@@ -1,0 +1,6 @@
+>> option verbose is set to 1
+>> inductive type ifexp was succesfully defined
+>> Typing for nm successful
+>> the definition for nm is complete
+!! warning: the definition nm is NOT provably total (weight_bound: 2, depth_bound: 2)
+
