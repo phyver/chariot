@@ -196,7 +196,7 @@ let help_text = [
   "The other commands are";
   "    :help                   to display this help";
   "    :echo <string>          to echo some statis message";
-  "    :set                    to list the available options with there current value";
+  "    :set                    to list the available options with their current value";
   "    :set <option> <value>   to change the value of an optiond";
   "    :show <name>            to show a function definition or a type definition";
   "    :show env               to show the whole environment";
