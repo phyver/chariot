@@ -1,0 +1,324 @@
+    Chariot
+    =======
+
+    A language with arbitrary nested inductive and coinductive types
+    ================================================================
+
+
+Installation
+------------
+
+=== Prerequisites ===
+
+a standard OCaml distribution with ocamlbuild
+
+
+=== Build ===
+
+    $ make
+
+
+=== Usage ===
+
+    $ ./chariot
+
+or
+
+    $ ./chariot -i file1.ch file2.ch ...
+
+to have readline capabilities, use rlwrap or ledit
+
+    $ rlwrap -H ~/.chariot_history ./chariot --colors
+or
+    $ ledit -h ~/.chariot_history -x -u -l $COLUMNS ./chariot --colors
+(note the -u switch for unicode and the -l switch to prevent line cutting)
+
+
+
+Toplevel and Commands
+---------------------
+
+Each command to the toplevel needs to end with a ";" or a blank line.
+
+The top level interprets type definitions (:help types) and recursive
+definitions (:help def) and adds them to the context.
+
+A single term given after the prompt is evaluated and the result is printed.
+
+Structures are evaluated lazily and the system prints a "hole" with a number
+for each subterm whose evaluation is frozen:
+
+    # arith 0 1;
+    >> term: arith 0 1
+    >> of type: stream(nat)
+    >> result: {
+    >>   Head = <1> ;
+    >>   Tail = <2> }
+
+<1> and <2> are examples of such holes.
+
+
+To reduce them, we give the command
+
+    # > 1,2
+
+If no hole is given, the system with evaluate all the holes...
+
+
+
+The other commands are
+    :help                   to display this help
+    :help types             to display help about type definitions
+    :help def               to display help about value definitions
+    :help commands          to display this message
+    :help syntax            to display help about chariot's syntax
+
+    :set                    to list the available options with there current value
+    :set <option> <value>   to change the value of an optiond
+
+    :show <name>            to show a function definition or a type definition
+    :show env               to show the whole environment
+    :show types             to show all the type definitions
+    :show functions         to show all the recursive definitions
+
+    :type <term>            to infer the type of a term and show the types of all its components
+    :reduce <term>          to reduce a term and show the result
+    :unfold <term>, <depth> to reduce a term and unfold all its frozen components, up to a given depth
+    :echo <string>          to echo some statis message
+    :quit                   to quit!
+
+
+Comments
+--------
+
+Comments are either
+  - single line comments started with "--" (anywhere on a line)
+  - multiline comments delimited with "(*" and "*)".
+
+
+Syntax
+------
+
+//Types// (:help types) are given by the syntax
+
+  t  ::=  'x  |  name(t1,...,tn)  |  t1 -> t2
+
+Variables 'x are universally quantified (ML polymorphism) and a type name
+without parameters can be written without parenthesis.
+
+As usual, the "->" constructor is right associative: "t1 -> t2 -> t3" really
+means "t1 -> (t2 -> t3)".
+
+
+//Terms// are given by the syntax
+
+  u  ::=  x  |  C  |  u.D  |  { D1 = u1 ; ... ; Dn = un }  |  u1 u2
+
+where
+  - "x" is a variables
+  - "C" is a constructor
+  - "D", "D1", ..., "Dn" are destructors
+  - application is left associative: "u1 u2 u3" really means "(u1 u2) u3".
+
+There are two additional term constructors:
+  - "???" for a "generic metavariable" (possibly shown as "✠" by the system)
+  - "!!!" for a "generic looping term" (possibly show as "Ω" by the system)
+
+Those terms can take any type and differ only in how they behave during
+evaluation / totality checking.
+In particular, the system always assumes that "!!!" loops and that "???" is as
+good as possible. (The system tries to check that it could be filled with an
+appropriate term making the definition total.)
+
+
+//Constructor patterns// are a subset of terms. They are given by
+
+  p  ::=  _  |  x  |  C  |  { D1 = u1 ; ... ; Dn = un }
+
+The special variable "_" corresponds to a variable that will not be used in
+the right-side of the corresponding clause.
+
+//Clause patterns// are used to define recursive values. They are given by the
+syntax
+
+  cp  ::=  f  |  cp p  |  cp.D
+
+where
+  - "f" is a variable name (corresponding to one of the values being defined)
+  - "p" is a constructor pattern
+  - "D" is a destructor.
+
+
+Syntactic sugar (types)
+-----------------------
+
+There is a single syntactic sugar for types: "t1 * t2 * t3" really means
+"prod_3(t1,t2,t3)". Of course, the type prod_3 needs to be defined in order to
+use this...
+
+
+Syntactic sugar (terms)
+-----------------------
+
+Several syntactic sugar are available at the level of terms:
+
+  - a decimal integer is expanded to Succ (Succ ... Zero)
+
+  - "v + k" where "k" is a decimal integer is expanded to Succ (Succ ... v)
+
+    For example, the following is a valid definition
+
+    val fib 0 = 0
+      | fib 1 = 1
+      | fib (n+2) = add (fib (n+1)) (fib n)
+
+  - Lists can be given using Caml notation:
+      - "[]" for the empty list "Nil"
+      - "x::xs" for "Cons x xs"
+      - "[x1; x2; ...; xn]" for "Cons x1 (Cons x2 ... (Cons xn Nil)...)"
+
+    For example, the following is a valid definition
+
+    val rev_append [] l = l
+      | rev_append (x::xs) l = rev_append xs (x::l)
+
+  - Tuple notation corresponds to special constructors Tuple_0, Tuple_1, ...
+    For example, "(a,b,c)" really means "Tuple_3 a b c".
+
+
+  - $ can be used for right-associative application: "u1 $ u2 $ u3 u4" really
+    means "u1 (u2 (u3 u4))"
+
+  - a structure with a single label (destructor) D can be written as
+    with a #: "D#v" really means "{ D = v }".
+
+  - it is possible to use "fun x1 x2 -> v" inside a definition. This is
+    translated into a additional (mutually recurive) function with clause
+
+    _fun_aux ... x1 x2 = v
+
+    where "..." contains all the free variables from the original clause.
+
+
+The system tries to display natural numbers (constructors Succ and Zero),
+lists (constructors Nil and Cons) and tuples (contructors Tuple_0, Tuple_1,
+...) using the corresponding syntactic sugar. Each can be turned off with the
+options "show_nats", "show_lists" and "show_tuples".
+
+Recursive Definitions
+---------------------
+
+A definition is of the form
+
+    val f : t1 -> t2 -> ... -> tn
+      | clause0 = v0
+      | clause1 = v1
+      | ...
+
+where
+  - each "clause" is a clause pattern (:help syntax)
+  - each "v" is a term (:help syntax)
+
+The type is only strictly necessary for function without any defining clause
+(their codomain is empty). In all other cases, the type will be infered if not given.
+
+For example:
+
+    val add n Zero = n
+      | add n (Succ m) = Succ (add n m)
+
+    val bot : empty -> 'a       -- empty is a type with no constructor
+      -- no defining clause
+
+    val map : ('a -> 'b) -> list('a) -> list('b)
+      | map _ Nil = Nil
+      | map f (Cons x xs) = Cons (f x) (map f xs)
+
+    val (map_stream f s).Head = f (s.Head)
+      | (map_stream f s).Tail = map_stream f (s.Tail)
+
+    val branch : tree('b,'x) -> list('b) -> list('x)
+      | branch t Nil = t.Root
+      | branch t (Cons b bs) = Cons (t.Root) (branch (t.Branch b) bs)
+
+Types
+-----
+
+Types come in two flavors: strict/inductive or lazy/coinductive.
+
+A strict/inductive type is defined with
+    data tname(params)
+    where C1 : t0 -> t1 -> ... -> tn -> tname(params)
+        | C2 : ...
+        | ...
+
+Each Ci is a *constructor* and its type must end with tname(params).
+(Each of the tj can also be tname(params) in order to define an
+inductive type.)
+
+For example
+    data nat
+    where Zero : nat
+        | Succ : nat -> nat
+
+    data list('a)
+    where Nil : list('a)
+        | Cons : 'a -> list('a) -> list('a)
+
+    data empty
+    where
+        -- no constructor!
+
+
+A lazy/coinductive type is defined with
+    codata tname(params)
+    where D1 : tname(params) -> t1 -> t2 -> ... -> tn
+        | D2 : ...
+        | ...
+
+Each Di is a *destructor* and its type must start with tname(params).
+(Each of the tj can also be tname(params) in order to define a
+coinductive type.)
+There cannot be "nullary" destructors D : tname(params).
+
+For example
+    codata stream('x)
+    where Head : stream('x) -> 'x
+        | Tail : stream('x) -> stream('x)
+
+    codata prod('a,'b)
+    where Fst : prod('a,'b) -> 'a
+        | Snd : prod('a,'b) -> 'b
+
+    codata one
+    where
+        -- no destructor!
+
+    codata tree('b,'x)      -- infinite trees branching on 'b with data in 'x
+    where Root : tree('b,'x) -> 'x
+        | Branch : tree('b,'x) -> 'b -> tree('b,'x)
+
+
+Note: there can be at most one type with zero destructors (like "one" above).
+
+
+Note: to define a coinductive type with several "constructors", we have
+to define an auxiliary strict parametrized type:
+
+    data colist_aux('x,'l)
+    where Nil : colist_aux('x,'l)
+        | Cons : 'x -> 'l -> colist_aux('x,'l)
+    codata colist('x)
+    where D : colist('x) -> colist_aux('x,colist('x))
+
+or
+
+    data process_aux('p)
+    where End : process_aux('p)
+        | Out : nat -> process_aux('p)
+        | In : nat -> (nat -> 'p) -> process_aux('p)
+    codata process
+    where D : process -> process_aux(process)
+
+
+Note: no two constructors / destructor may have the same name.
