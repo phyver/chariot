@@ -10,4 +10,6 @@ val land True True = True
 val lor False False = False
   | lor _ _ = True
 
+val if True t _ = t
+  | if False _ f = f
 
