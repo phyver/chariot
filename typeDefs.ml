@@ -147,7 +147,7 @@ let check_empty_unit env n (t:type_name) params consts
         | [],[] ->
             begin
                 try
-                    if even n
+                    if odd n
                     then
                         let tname = get_empty_type env in
                         error (fmt "there already is an empty type: %s" tname)
@@ -216,7 +216,7 @@ let process_type_defs (env:environment)
         List.iter (function _,t -> check_is_strictly_positive_arguments t tname) consts;
 
         (* we check the shapes of types of constructors / destructors *)
-        if odd n
+        if even n
         then List.iter (check_destructor tname) consts
         else List.iter (check_constructor tname) consts;
 
@@ -238,7 +238,7 @@ let process_type_defs (env:environment)
     then
         begin
             msg "%s type%s %s %s succesfully defined"
-                (if odd n then "coinductive" else "inductive")
+                (if even n then "coinductive" else "inductive")
                 (plural defs "" "s")
                 (string_of_list  " and " (function (t,_,_) -> t) defs)
                 (plural defs "was" "were")

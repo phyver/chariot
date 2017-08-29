@@ -348,7 +348,7 @@ let show_type_bloc env types
     match types with
         | [] -> assert false
         | (_,n,_,_)::_ ->
-            if odd n
+            if even n
             then print_endline "codata"
             else print_endline "data";
             show_type_bloc_aux types;

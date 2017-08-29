@@ -82,7 +82,7 @@ type ('s,'p,'t) raw_term =      (* 's is used to add features to terms, 'p is us
  *   - approximated term: 's is approximation, 'p is priority, 't is unit
  **********************************************************************)
 
-type priority = int option      (* priority of types and constants: even for data and odd for codata *)
+type priority = int option      (* priority of types and constants: odd for data and even for codata *)
                                 (* NOTE: I need an "infinity" priority to deal with unknown approximation on results *)
 type empty = { bot: 'a .'a }
 
@@ -156,11 +156,11 @@ type environment = {
     (* we keep the names of type arguments of a definition in the environment,
      * together with its bloc number and the list of its constants
      * (constructors/destructors)
-     * The bloc number is even for inductive types and odd for coinductive types *)
+     * The bloc number is odd for inductive types and even for coinductive types *)
     types:     (type_name * bloc_nb * (type_name list) * const_name list) list         ;
 
     (* each constant (type constructor/destructor) has a type and a bloc number
-     * the bloc number is even for constructors and odd for destructors *)
+     * the bloc number is odd for constructors and even for destructors *)
     constants: (const_name * bloc_nb * type_expression) list                           ;
 
     (* each function is defined inside a bloc of definitions and has a type and

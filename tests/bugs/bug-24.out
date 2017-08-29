@@ -7,7 +7,7 @@
 
 val
     f : tree('a,'b) → tree('c,'b)
-  | f (Branch⁰ x b) = Branch⁰ x (g b)
+  | f (Branch¹ x b) = Branch¹ x (g b)
 
 val
     g : ('a → tree('a,'b)) → 'c → tree('c,'b)

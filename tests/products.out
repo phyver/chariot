@@ -36,15 +36,15 @@ val
 
 val
     pair : nat * nat
-  | pair = (Zero², Zero²)
+  | pair = (Zero³, Zero³)
 
 val
     onetwothree : list(nat)
-  | onetwothree = Cons² (Succ⁴ Zero⁴, Cons² (Succ⁴ (Succ⁴ Zero⁴), Cons² (Succ⁴ (Succ⁴ (Succ⁴ Zero⁴)), Nil² ())))
+  | onetwothree = Cons³ (Succ⁵ Zero⁵, Cons³ (Succ⁵ (Succ⁵ Zero⁵), Cons³ (Succ⁵ (Succ⁵ (Succ⁵ Zero⁵)), Nil³ ())))
 
 val
     pairs : nat * (nat * (nat * nat))
-  | pairs = (Succ⁶ Zero⁶, (Succ⁶ (Succ⁶ Zero⁶), (Succ⁶ (Succ⁶ (Succ⁶ Zero⁶)), Succ⁶ (Succ⁶ (Succ⁶ (Succ⁶ Zero⁶))))))
+  | pairs = (Succ⁷ Zero⁷, (Succ⁷ (Succ⁷ Zero⁷), (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷)), Succ⁷ (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷))))))
 
 >> inductive type prod_3 was succesfully defined
 >> Typing for test successful
@@ -53,7 +53,7 @@ val
 
 val
     test : nat * nat * nat
-  | test = (Succ² Zero², Succ² (Succ² Zero²), Succ² (Succ² (Succ² Zero²)))
+  | test = (Succ³ Zero³, Succ³ (Succ³ Zero³), Succ³ (Succ³ (Succ³ Zero³)))
 
 >> option continue_on_error is set to true
 ** error: cannot infer type of constant Tuple_4
@@ -61,25 +61,25 @@ val
 >> functions in environment:
 val
     fst : prod_2('a,'b) → 'a
-  | fst (Tuple_2⁰ x y) = x
+  | fst (Tuple_2¹ x y) = x
 
 val
     snd : prod_2('a,'b) → 'b
-  | snd (Tuple_2⁰ x y) = y
+  | snd (Tuple_2¹ x y) = y
 
 val
     pair : prod_2(nat,nat)
-  | pair = Tuple_2⁰ Zero² Zero²
+  | pair = Tuple_2¹ Zero³ Zero³
 
 val
     onetwothree : list(nat)
-  | onetwothree = Cons² (Tuple_2⁰ (Succ⁴ Zero⁴) (Cons² (Tuple_2⁰ (Succ⁴ (Succ⁴ Zero⁴)) (Cons² (Tuple_2⁰ (Succ⁴ (Succ⁴ (Succ⁴ Zero⁴))) (Nil² Tuple_0⁰))))))
+  | onetwothree = Cons³ (Tuple_2¹ (Succ⁵ Zero⁵) (Cons³ (Tuple_2¹ (Succ⁵ (Succ⁵ Zero⁵)) (Cons³ (Tuple_2¹ (Succ⁵ (Succ⁵ (Succ⁵ Zero⁵))) (Nil³ Tuple_0¹))))))
 
 val
     pairs : prod_2(nat,prod_2(nat,prod_2(nat,nat)))
-  | pairs = Tuple_2⁰ (Succ⁶ Zero⁶) (Tuple_2² (Succ⁶ (Succ⁶ Zero⁶)) (Tuple_2⁴ (Succ⁶ (Succ⁶ (Succ⁶ Zero⁶))) (Succ⁶ (Succ⁶ (Succ⁶ (Succ⁶ Zero⁶))))))
+  | pairs = Tuple_2¹ (Succ⁷ Zero⁷) (Tuple_2³ (Succ⁷ (Succ⁷ Zero⁷)) (Tuple_2⁵ (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷))) (Succ⁷ (Succ⁷ (Succ⁷ (Succ⁷ Zero⁷))))))
 
 val
     test : prod_3(nat,nat,nat)
-  | test = Tuple_3⁰ (Succ² Zero²) (Succ² (Succ² Zero²)) (Succ² (Succ² (Succ² Zero²)))
+  | test = Tuple_3¹ (Succ³ Zero³) (Succ³ (Succ³ Zero³)) (Succ³ (Succ³ (Succ³ Zero³)))
 

@@ -18,16 +18,16 @@
 >> functions in environment:
 val
     f : list(list(list(list(nat)))) → nat
-  | f (Cons⁰ (Cons² (Cons⁴ (Cons⁶ Zero⁸ Nil⁶) Nil⁴) Nil²) Nil⁰) = Zero⁸
-  | f x = Zero⁸
+  | f (Cons¹ (Cons³ (Cons⁵ (Cons⁷ Zero⁹ Nil⁷) Nil⁵) Nil³) Nil¹) = Zero⁹
+  | f x = Zero⁹
 
 val
     g1 : 'a → list('b)
-  | g1 x = Nil⁰
+  | g1 x = Nil¹
 
 val
     g2 : nat → list(list(list(nat)))
-  | g2 x = Nil⁰
+  | g2 x = Nil¹
 
 >> option squash_priorities is set to true
 >> Typing for f1 successful
@@ -36,6 +36,6 @@ val
 
 val
     f1 : list(list(list(list(nat)))) → nat
-  | f1 (Cons⁰ (Cons⁰ (Cons⁰ (Cons⁰ Zero⁰ Nil⁰) Nil⁰) Nil⁰) Nil⁰) = Zero⁰
-  | f1 x = Zero⁰
+  | f1 (Cons¹ (Cons¹ (Cons¹ (Cons¹ Zero¹ Nil¹) Nil¹) Nil¹) Nil¹) = Zero¹
+  | f1 x = Zero¹
 

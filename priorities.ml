@@ -90,7 +90,7 @@ let find_types_priorities env (ts:type_expression list)
             | [] -> acc
             | graph ->
                 let terminals,graph =
-                    List.partition (function Data(tname,_),[] -> (is_inductive env tname) = (odd n)
+                    List.partition (function Data(tname,_),[] -> (is_inductive env tname) = (even n)
                                            | Data _,_ -> false
                                            | _ -> assert false
                                    ) graph in

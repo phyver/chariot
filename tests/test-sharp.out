@@ -15,13 +15,13 @@
 >> functions in environment:
 val
     f : ('a → 'b → 'c → t) → 'a → 'b → 'c → t
-  | f a b c d = { D = a b c d }¹
+  | f a b c d = { D = a b c d }⁰
 
 val
     g : ('a → t) → ('b → 'a) → ('c → 'b) → 'c → t
-  | g a b c d = { D = a (b (c d)) }¹
+  | g a b c d = { D = a (b (c d)) }⁰
 
 val
     h : t → t
-  | h a = { D = { D = { D = a }¹ }¹ }¹
+  | h a = { D = { D = { D = a }⁰ }⁰ }⁰
 

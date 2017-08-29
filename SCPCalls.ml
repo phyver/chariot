@@ -909,7 +909,7 @@ let decreasing (l,r : scp_clause)
                     let tmp = List.filter (function p,w -> w <> (Num 0)) c in
                     try
                         match last tmp with
-                            | (Some p,w) when odd p -> negative_weight w
+                            | (Some p,w) when even p -> negative_weight w
                             | _ -> false
                     with Invalid_argument "last" -> false
                 end
@@ -944,7 +944,7 @@ let decreasing (l,r : scp_clause)
                                             let tmp = List.filter (function p,w -> w <> (Num 0)) c in
                                             try
                                                 match last tmp with
-                                                    | (Some p,w) when even p -> negative_weight w || decreasing_aux pats1 pats2
+                                                    | (Some p,w) when odd p -> negative_weight w || decreasing_aux pats1 pats2
                                                     | _ -> decreasing_aux pats1 pats2
                                             with Invalid_argument "last" -> decreasing_aux pats1 pats2
                                         end
@@ -962,7 +962,7 @@ let decreasing (l,r : scp_clause)
                                             let tmp = List.filter (function p,w -> w <> (Num 0)) (op_coeff c) in
                                             try
                                                 match last tmp with
-                                                    | (Some p,w) when even p -> negative_weight w || decreasing_aux pats1 pats2
+                                                    | (Some p,w) when odd p -> negative_weight w || decreasing_aux pats1 pats2
                                                     | _ -> decreasing_aux pats1 pats2
                                             with Invalid_argument "last" -> false
                                         end

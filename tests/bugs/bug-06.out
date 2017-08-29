@@ -10,9 +10,9 @@
 >> functions in environment:
 val
     map : ('a → 'b) → colist('a) → colist('b)
-  | (map f s).Unfreeze¹ = map_aux f s.Unfreeze¹
+  | (map f s).Unfreeze² = map_aux f s.Unfreeze²
 and
     map_aux : ('a → 'b) → list_aux('a,colist('a)) → list_aux('b,colist('b))
-  | map_aux f Nil⁰ = Nil⁰
-  | map_aux f (Cons⁰ x s) = Cons⁰ (f x) (map f s)
+  | map_aux f Nil¹ = Nil¹
+  | map_aux f (Cons¹ x s) = Cons¹ (f x) (map f s)
 
