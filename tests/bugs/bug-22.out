@@ -8,7 +8,7 @@
 >> option verbose is set to 2
 val
     h : pair(t('a),pair(t('b),'c)) → 'b
-  | h { Fst = C¹ y ; Snd = { Fst = C¹ z ; Snd = zs }² }⁰ = z
+  | h { Fst = C² y ; Snd = { Fst = C² z ; Snd = zs }³ }¹ = z
 >> 
 >> corresponding case and struct form:
 >> x₁ → 

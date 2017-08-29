@@ -62,7 +62,7 @@ let get_type_arity (env:environment) (t:type_name) : int
 
 let is_inductive (env:environment) (t:type_name) : bool
   = match env_type_assoc env t with
-        (n,_,_) -> odd n
+        (n,_,_) -> even n
 
 let get_type_constants (env:environment) (t:type_name) : const_name list
   = match env_type_assoc env t with
@@ -83,7 +83,7 @@ let get_constant_type (env:environment) (c:const_name)
 
 let is_projection (env:environment) (c:const_name) : bool
   = match env_const_assoc env c with
-        (n,t) -> even n
+        (n,t) -> odd n
 
 
 
@@ -120,16 +120,16 @@ let get_other_constants (env:environment) (c:const_name) : const_name list
 let get_empty_type (env:environment) : type_name
   = let rec get_aux = function
         | [] -> raise Not_found
-        | (tname,n,[],[])::_ when odd n -> tname
-        | (tname,n,_,[])::_ when odd n -> assert false
+        | (tname,n,[],[])::_ when even n -> tname
+        | (tname,n,_,[])::_ when even n -> assert false
         | _::types -> get_aux types
     in get_aux env.types
 
 let get_unit_type (env:environment) : type_name
   = let rec get_aux = function
         | [] -> raise Not_found
-        | (tname,n,[],[])::_ when even n -> tname
-        | (tname,n,_,[])::_ when even n -> assert false
+        | (tname,n,[],[])::_ when odd n -> tname
+        | (tname,n,_,[])::_ when odd n -> assert false
         | _::types -> get_aux types
     in get_aux env.types
 

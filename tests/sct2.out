@@ -7,7 +7,7 @@
 >> the definition for f1 is complete
 >> initial callgraph:
 >> calls from f1 to f1:
->>     f1, B¹ (B¹ (B¹ (B¹ x))) => f1, B¹ (B¹ (B¹ (C¹ x)))
+>>     f1, B⁰ (B⁰ (B⁰ (B⁰ x))) => f1, B⁰ (B⁰ (B⁰ (C⁰ x)))
 
 !! warning: the definition f1 is NOT provably total (weight_bound: 2, depth_bound: 3)
 
@@ -16,7 +16,7 @@
 >> the definition for f2 is complete
 >> initial callgraph:
 >> calls from f2 to f2:
->>     f2, B¹ (B¹ (B¹ (B¹ x))) => f2, B¹ (B¹ (B¹ (C¹ x)))
+>>     f2, B⁰ (B⁰ (B⁰ (B⁰ x))) => f2, B⁰ (B⁰ (B⁰ (C⁰ x)))
 
 >> the definition f2 is provably correct
 
@@ -25,7 +25,7 @@
 >> the definition for f3 is complete
 >> initial callgraph:
 >> calls from f3 to f3:
->>     f3, B¹ (B¹ (B¹ (B¹ x))) => f3, B¹ (B¹ (B¹ (C¹ x)))
+>>     f3, B⁰ (B⁰ (B⁰ (B⁰ x))) => f3, B⁰ (B⁰ (B⁰ (C⁰ x)))
 
 >> the definition f3 is provably correct
 
@@ -34,7 +34,7 @@
 >> the definition for f4 is complete
 >> initial callgraph:
 >> calls from f4 to f4:
->>     f4, B¹ (B¹ (B¹ (B¹ x))) => f4, B¹ (B¹ (B¹ (C¹ x)))
+>>     f4, B⁰ (B⁰ (B⁰ (B⁰ x))) => f4, B⁰ (B⁰ (B⁰ (C⁰ x)))
 
 >> the definition f4 is provably correct
 

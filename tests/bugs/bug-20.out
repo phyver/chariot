@@ -9,7 +9,7 @@
 >> option verbose is set to 2
 val
     h : pair(t('a),pair(t('b),'c)) → 'b
-  | h { Fst = C¹ x₂ ; Snd = { Fst = C¹ x₃ ; Snd = _₁ }² }⁰ = x₃
+  | h { Fst = C² x₂ ; Snd = { Fst = C² x₃ ; Snd = _₁ }³ }¹ = x₃
 >> 
 >> corresponding case and struct form:
 >> x₁ → 

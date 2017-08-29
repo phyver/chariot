@@ -10,25 +10,25 @@
 >> test at depth 3
 >> Graph of paths at iteration 0
 >> calls from length to length:
->>     length, x₁::x₂ => length, x₂, .<<1¹>>
+>>     length, x₁::x₂ => length, x₂, .<<1⁰>>
 
 >> Graph of paths at iteration 1
 >> calls from length to length:
->>     length, x₁::x₂ => length, x₂, .<<1¹>>
->>     length, x₁::x₂::x₃ => length, x₃, .<<∞¹>>
+>>     length, x₁::x₂ => length, x₂, .<<1⁰>>
+>>     length, x₁::x₂::x₃ => length, x₃, .<<∞⁰>>
 
 >> Graph of paths at iteration 2
 >> calls from length to length:
->>     length, x₁::x₂ => length, x₂, .<<1¹>>
->>     length, x₁::x₂::x₃ => length, x₃, .<<∞¹>>
->>     length, x₁::x₂::x₃::x₄ => length, x₄, .<<∞¹>>
+>>     length, x₁::x₂ => length, x₂, .<<1⁰>>
+>>     length, x₁::x₂::x₃ => length, x₃, .<<∞⁰>>
+>>     length, x₁::x₂::x₃::x₄ => length, x₄, .<<∞⁰>>
 
 >> Graph of paths at iteration 3
 >> calls from length to length:
->>     length, x₁::x₂ => length, x₂, .<<1¹>>
->>     length, x₁::x₂::x₃ => length, x₃, .<<∞¹>>
->>     length, x₁::x₂::x₃::x₄ => length, x₄, .<<∞¹>>
->>     length, x₁::x₂::x₃::x₄ => length, <-1¹>x₄, .<<∞¹>>
+>>     length, x₁::x₂ => length, x₂, .<<1⁰>>
+>>     length, x₁::x₂::x₃ => length, x₃, .<<∞⁰>>
+>>     length, x₁::x₂::x₃::x₄ => length, x₄, .<<∞⁰>>
+>>     length, x₁::x₂::x₃::x₄ => length, <-1⁰>x₄, .<<∞⁰>>
 
 >> the definition length is provably correct
 

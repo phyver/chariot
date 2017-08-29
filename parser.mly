@@ -357,15 +357,15 @@ command:
 
 new_types:
     /*(* The output of a type definition from the parser consists of
-     *   - a bloc number odd/even to distinguish data / codada types
+     *   - a bloc number even/odd to distinguish data / codada types
      *   - a list of (possibly) mutual type definitions:
      *        - a type name
      *        - a list of type parameters, all of the form TVar(true,x)
      *        - a list of constants (constructors for data, destructors for codata), with a type
      * No sanity checking is done by the parser, everything is done in the "process_type_defs" function in file "checkTypes.ml"...
      *)*/
-    |   DATA data_defs          { (-1,$2) }     /* the "-1" and "-2" are replaced by the appropriate bloc number in the function cmd_process_type_defs */
-    | CODATA codata_defs          { (-2,$2) }
+    |   DATA data_defs          { (-2,$2) }     /* the "-1" and "-2" are replaced by the appropriate bloc number in the function cmd_process_type_defs */
+    | CODATA codata_defs        { (-1,$2) }
 
 data_defs:
     | data_def                  { [$1] }

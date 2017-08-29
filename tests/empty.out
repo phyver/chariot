@@ -70,7 +70,7 @@ val
 
 val
     i : unit → 'a
-  | i {  }⁰ = ✠
+  | i {  }¹ = ✠
 >> 
 >> corresponding case and struct form:
 >> x₁ → ✠
